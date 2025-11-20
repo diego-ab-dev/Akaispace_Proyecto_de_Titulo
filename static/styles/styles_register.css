@@ -1,0 +1,54 @@
+body {
+  background: #d7ccc8;
+  background: linear-gradient(to right, #d7ccc8, #ffece6);
+}
+
+.container {
+  height: 100vh; 
+}
+
+/* Imagen de fondo */
+.card-img-left {
+  width: 45%;
+  background: scroll center url('https://images.pexels.com/photos/275033/pexels-photo-275033.jpeg?cs=srgb&dl=pexels-pixabay-275033.jpg&fm=jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* Texto encima de la imagen */
+.card-img-left .image-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  font-style: italic;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  z-index: 1;
+}
+
+/* Sombra en la imagen */
+.card-img-left:before {
+  background-color: rgba(0, 0, 0, 0.6);
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+}
+
+/* Estilo de botón */
+.btn-login {
+  font-size: 0.9rem;
+  letter-spacing: 0.05rem;
+  padding: 0.75rem 1rem;
+}
+
+
+

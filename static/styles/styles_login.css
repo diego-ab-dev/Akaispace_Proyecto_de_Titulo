@@ -1,0 +1,61 @@
+body{
+    background-color: #d7ccc8;
+}
+
+.login {
+    min-height: 100vh;
+  }
+  
+  .bg-image {
+    background-image: url('https://berlitzoaxaca.com.mx/wp-content/uploads/2022/08/aprende-ingles-jugando-oax.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+  }
+
+  .bg-image:before {
+    background-color: rgba(0,0,0,0.6);
+    content:'';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+  
+  .login-heading {
+    font-weight: 300;
+  }
+  
+  .btn-login {
+    font-size: 0.9rem;
+    letter-spacing: 0.05rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .form-floating {
+    margin-bottom: 2rem; 
+  }
+
+.is-invalid {
+    border-color: #dc3545; 
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem; 
+    position: relative;
+    z-index: 1;
+}
+
+#togglePassword {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3; 
+  display: none;
+}

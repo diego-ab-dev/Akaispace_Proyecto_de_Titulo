@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link href="https://raw.githubusercontent.com/daneden/animate.css/master/animate.css" rel="stylesheet">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+  <link rel="stylesheet" href="{% static 'styles/styles_home.css' %}">
+  <title>SD Games - Home</title>
+</head>
+
+<body>
+  <!--Nav de la web-->
+  <nav>
+    <div class="navbar">
+      <i class='bx bx-menu'></i>
+      <div class="logo"><a href="/home">SD Games</a></div>
+      <div class="nav-links">
+        <div class="sidebar-logo">
+          <span class="logo-name">SD Games</span>
+          <i class='bx bx-x' ></i>
+        </div>
+        <ul class="links">
+          <li><a href="/home">Home</a></li>
+          <li><a href="/menu">Productos</a></li>
+          <li><a href="#nosotros">Nosotros</a></li>
+          <li><a href="#local">Local</a></li>
+          <li><a href="#redes">Redes</a></li>
+        </ul>
+        <div class="sidebar-login">
+          <button onclick="window.location.href='/login'">
+            Iniciar Sesión
+            <div class="arrow-wrapper">
+                <div class="arrow"></div>
+            </div>
+        </button>
+        </div>
+
+      </div>
+
+      <div class="d-flex login-desktop">
+        {% if usuario %}
+          <div class="menu">
+            <div class="item">
+              <a href="/perfil" class="link">
+                <span> Mi Perfil </span>
+                <svg viewBox="0 0 360 360" xml:space="preserve">
+                  <g id="SVGRepo_iconCarrier">
+                    <path
+                      id="XMLID_225_"
+                      d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"
+                    ></path>
+                  </g>
+                </svg>
+              </a>
+              <div class="submenu">
+                <div class="submenu-item">
+                  <a href="/logout" class="submenu-link">Cerrar Sesión</a>
+                </div>
+                {% if usuario.es_administrador %}
+                <div class="submenu-item item2" style="background-color: #4e84a8;">
+                  <a href="/admin-panel" class="submenu-link">Panel de Administración</a>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <button onclick="window.location.href='/login'">
+            Iniciar Sesión
+            <div class="arrow-wrapper">
+              <div class="arrow"></div>
+            </div>
+          </button>
+        {% endif %}
+      </div>      
+      <div class="icons d-flex gap-3">
+        <a href="/favorites" style="color: #9c9592;">
+            <i class="fas fa-heart"></i>
+        </a>
+        <a href="{% url 'ver_carrito' %}" style="color: #9c9592;">
+            <i class="fas fa-shopping-cart"></i>
+        </a>
+    </div>
+      <div class="search-box">
+        <i class='bx bx-search'></i>
+        <div class="input-box">
+          <form method="get" action="{% url 'productos_menu_vista' %}" class="d-flex mx-auto" role="search" style="width: 50%;">
+            <input class="form-control me-2" type="text" placeholder="Buscar productos" aria-label="Search" id="name" name="buscar">
+          </form>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!--Fondo Principal con nombre de la tienda y frase-->
+  <div id="fondo">
+    <div class="text container">
+      <h1 class="fw-bold fst-italic text-center">SD Games</h1>
+      <p class="fw-bold text-center">
+        Donde cada juego es una nueva aventura...
+      </p>
+    </div>
+  </div>
+
+  <!--Parrafos-->
+  <a name="nosotros"></a>
+  <div class="cont container">
+    <section id="hero" class="paused">
+      <h1 class="anim-down fw-bold fst-italic text-center">Bienvenido a SD Games</h1>
+      <div class="containerparrafo container">
+        <div class="row">
+          <div class="col-md-6">
+            <p class="anim-up fs-5 lead text-dark" style="text-align: justify;">SD Games es la tienda de videojuegos
+              líder en Valdivia, que ofrece una amplia
+              selección de
+              títulos para todas las plataformas y edades. Desde los últimos lanzamientos hasta clásicos retro,
+              SD Games tiene algo para cada tipo de jugador. La tienda se enorgullece de su equipo experto, siempre
+              dispuesto a
+              recomendar juegos y a brindar un excelente servicio al cliente.</p>
+          </div>
+          <div class="col-md-6">
+            <p class="anim-up fs-5 lead text-dark" style="text-align: justify;">Ubicada en el corazón de Valdivia, SD
+              Games se ha convertido en un punto de
+              encuentro para la
+              comunidad gamer local. Con un compromiso hacia
+              la innovación y las últimas tendencias en tecnología de entretenimiento, SD Games es el destino
+              ideal para todos los jugadores de la región y el resto del país que buscan calidad, variedad y una
+              experiencia única
+              en cada visita.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!--Cards-->
+  <section id="hero" class="wrapper paused">
+    <div class="container">
+      <div class="row">
+        <div class="col text-center mb-5">
+          <h1 class="anim-down display-6 fw-bold fst-italic text-center">Acciones Rápidas...</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-12 col-md-6 col-lg-4 mb-4">
+          <a href="#local" class="text-decoration-none">
+            <div class="card anim-up text-dark card-has-bg click-col"
+              style="background-image:url('https://chileestuyo.cl/wp-content/uploads/2015/08/Valdivia.jpg');">
+              <img class="card-img d-none" src="https://source.unsplash.com/600x900/?tech,street"
+                alt="Creative Manner Design Lorem Ipsum Sit Amet Consectetur dipisi?">
+              <div class="card-img-overlay d-flex flex-column">
+                <div class="card-body" style="color: white;">
+                  <small class="card-meta mb-2" style="color: white;">SD Games</small>
+                  <h4 class="card-title mt-0" style="color: white;">Ubicados en Valdivia</h4>
+                  <small><i style="color: white;"></i> Dirección en: Av. Simpson 641</small>
+                </div>
+              </div>
+            </div>
+          </a>
+
+        </div>
+        <div class="col-sm-12 col-md-6 col-lg-4 mb-4">
+          <a href="/menu" class="text-decoration-none">
+            <div class="card anim-up  text-dark card-has-bg click-col"
+              style="background-image:url('https://i.blogs.es/9458c1/original/650_1200.jpeg');">
+              <img class="card-img d-none" src="https://source.unsplash.com/600x900/?tree,nature"
+                alt="Creative Manner Design Lorem Ipsum Sit Amet Consectetur dipisi?">
+              <div class="card-img-overlay d-flex flex-column">
+                <div class="card-body" style="color: white;">
+                  <small class="card-meta mb-2" style="color: white;">SD Games</small>
+                  <h4 class="card-title mt-0" style="color: white;">Nuestro catálogo de videojuegos</h4>
+                  <small><i style="color: white;"></i>Visita nuestro ampliado catálogo de videojuegos...</small>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+
+
+        <div class="col-sm-12 col-md-6 col-lg-4 mb-4">
+          <a href="#local" class="text-decoration-none">
+            <div class="card anim-up text-dark card-has-bg click-col"
+              style="background-image:url('https://cdn-nv.mo.cloudinary.net/media/uploads/2021/11/social-media-icons-logos-applications-mobile-phone-screen-3d.jpg');">
+              <img class="card-img d-none" src="https://source.unsplash.com/600x900/?computer,design"
+                alt="Creative Manner Design Lorem Ipsum Sit Amet Consectetur dipisi?">
+              <div class="card-img-overlay d-flex flex-column">
+                <div class="card-body" style="color: white;">
+                  <small class="card-meta mb-2" style="color: white;">SD Games</small>
+                  <h4 class="card-title mt-0 " style="color: white;">Nuestras Redes Sociales</h4>
+                  <small><i style="color: white;"></i> Te invitamos a seguirnos en nuestras redes...</small>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!--Mapa del local-->
+  <div class="localcont container">
+    <section id="hero" class="paused">
+      <a name="local"></a>
+      <div class="row">
+        <div class="col-12 col-md-6 mb-3">
+          <h1 class="anim-down text-center fw-bold fst-italic">Visita Nuestro Local</h1>
+          <p class="anim-down text-center">Ven a nuestro local ubicado en Av. Simpson 641</p>
+        </div>
+        <div class="anim-up col-12 col-md-6">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2576.4116103434917!2d-73.23774048775765!3d-39.83195073679427!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9615ee6744a5d19d%3A0xac5dbad0a17c5394!2sI%20-%20Simpson%20%2F%20Dr.%20A%20Gunther!5e0!3m2!1ses-419!2scl!4v1730999229159!5m2!1ses-419!2scl"
+            height="450" style="border:0; border-radius: 50px; width: 100%;" allowfullscreen="" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section id="hero" class="section-redes paused">
+    <a name="redes"></a>
+    <h1 class="anim-down text-center fw-bold fst-italic" style="margin-bottom: 20px;">Nuestras redes sociales...</h1>
+    <div class="contsociales container">
+      <div class="img-content anim-up">
+        <div class="img"></div>
+        <div class="info">
+          <h2 class="text-center fw-bold fst-italic">SD Games</h2>
+          <h4 class="text-center fw-bold">Visita nuestras redes sociales</h4>
+        </div>
+        <div class="social">
+          <ul>
+            <li><a href="https://www.facebook.com/" target="_blank"><i class="fab fa-facebook-f"></i></a></li>
+            <li><a href="https://www.instagram.com/" target="_blank"><i class="fab fa-instagram"></i></a></li>
+            <li><a href="https://www.x.com/" target="_blank"><i class="fab fa-x-twitter"></i></a></li>
+            <li><a href="https://www.tiktok.com/" target="_blank"><i class="fab fa-tiktok"></i></a></li>
+            <li><a href="https://www.youtube.com/" target="_blank"><i class="fab fa-youtube"></i></a></li>
+            <li><a href="https://www.whatsapp.com/" target="_blank"><i class="fab fa-whatsapp"></i></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!--Boton para ir hacia arriba-->
+  <div class="go-top-container">
+    <div class="go-top-button">
+      <img src="{% static 'images/navegar-flecha-hacia-arriba.png' %}" alt="">
+    </div>
+  </div>
+
+  <!--Script para el boton de ir hacia arriba-->
+  <script>
+    window.onscroll = function () {
+      console.log(document.documentElement.scrollTop);
+      if (document.documentElement.scrollTop > 100) {
+        document.querySelector('.go-top-container').classList.add('show');
+
+      }
+      else {
+        document.querySelector('.go-top-container').classList.remove('show');
+      }
+    }
+
+    document.querySelector('.go-top-container').addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+
+    function isVisible(elm) {
+      var rect = elm.getBoundingClientRect();
+      var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+      return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+    }
+
+    window.addEventListener('DOMContentLoaded', (ev0) => {
+      window.addEventListener('scroll', (ev1) => {
+        document.querySelectorAll(".paused").forEach(elm => {
+          if (isVisible(elm))
+            elm.classList.remove("paused");
+        })
+      });
+    });
+
+  let navbar = document.querySelector(".navbar");
+  let searchBox = document.querySelector(".search-box .bx-search");
+  // let searchBoxCancel = document.querySelector(".search-box .bx-x");
+  searchBox.addEventListener("click", ()=>{
+    navbar.classList.toggle("showInput");
+    if(navbar.classList.contains("showInput")){
+      searchBox.classList.replace("bx-search" ,"bx-x");
+    }else {
+      searchBox.classList.replace("bx-x" ,"bx-search");
+    }
+  });
+  // sidebar open close js code
+  let navLinks = document.querySelector(".nav-links");
+  let menuOpenBtn = document.querySelector(".navbar .bx-menu");
+  let menuCloseBtn = document.querySelector(".nav-links .bx-x");
+  menuOpenBtn.onclick = function() {
+  navLinks.style.left = "0";
+  }
+  menuCloseBtn.onclick = function() {
+  navLinks.style.left = "-100%";
+  }
+  // sidebar submenu open close js code
+  let htmlcssArrow = document.querySelector(".htmlcss-arrow");
+  htmlcssArrow.onclick = function() {
+  navLinks.classList.toggle("show1");
+  }
+  let moreArrow = document.querySelector(".more-arrow");
+  moreArrow.onclick = function() {
+  navLinks.classList.toggle("show2");
+  }
+  let jsArrow = document.querySelector(".js-arrow");
+  jsArrow.onclick = function() {
+  navLinks.classList.toggle("show3");
+  }
+  </script>
+
+  <!--footer-->
+  <footer class="text-center text-lg-start text-light">
+    <section class="">
+      <div class="container text-center text-md-start mt-5">
+        <div class="row mt-3">
+          <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
+            <h6 class="text-uppercase fw-bold mb-4">
+              SD Games
+            </h6>
+            <p>
+              SD Games es la tienda de videojuegos líder en Valdivia, que ofrece una amplia
+              selección de
+              títulos para todas las plataformas y edades. Desde los últimos lanzamientos hasta clásicos retro,
+              SD Games tiene algo para cada tipo de jugador. La tienda se enorgullece de su equipo experto, siempre
+              dispuesto a
+              recomendar juegos y a brindar un excelente servicio al cliente.
+            </p>
+          </div>
+          <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
+            <h6 class="text-uppercase fw-bold mb-4">
+              Enlaces Rápidos:
+            </h6>
+            <p>
+              <a href="/home" class="footerli text-reset">Home</a>
+            </p>
+            <p>
+              <a href="/menu" class="footerli text-reset">Productos</a>
+            </p>
+            <p>
+              <a href="#nosotros" class="footerli text-reset">Sobre Nosotros</a>
+            </p>
+            <p>
+              <a href="#local" class="footerli text-reset">Local</a>
+            </p>
+            <p>
+              <a href="#redes" class="footerli text-reset">Redes</a>
+            </p>
+          </div>
+          <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
+            <h6 class="text-uppercase fw-bold mb-4">Contacto:</h6>
+            <p><i class="fas fa-home me-3"></i> Valdivia, Av. Simpson 641, Chile</p>
+            <p>
+              <i class="fas fa-envelope me-3"></i>
+              sdgames@gmail.com
+            </p>
+            <p><i class="fas fa-phone me-3"></i> 9 2344 5674</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="text-center p-4" style="background-color: #8e8f94;">
+      SD Games
+    </div>
+  </footer>
+</body>
+
+</html>

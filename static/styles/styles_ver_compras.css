@@ -1,0 +1,170 @@
+body{
+    height: 100%;
+    margin: 0;
+    text-align: left;
+    background-color: #d7ccc8;
+    font-family: Arial, sans-serif;
+    overflow-x: hidden;   
+}
+
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Cambiado a flex-start para evitar forzar centrado */
+    align-items: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+
+
+/* Encabezado */
+h1.fs-4 {
+    font-size: 1.5rem;
+    color: #4a4a4a;
+    margin-bottom: 20px;
+}
+
+/* Estilos minimalistas para la tabla */
+.table {
+    width: 100%; /* Ajusta el ancho para dispositivos móviles */
+    max-width: 1200px; /* Máximo ancho en pantallas grandes */
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.table-responsive {
+  width: 100%; /* Asegura que ocupe todo el ancho del contenedor */
+  max-width: 1200px; /* Máximo ancho */
+  overflow-x: auto; /* Scroll horizontal si es necesario */
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  margin-bottom: 20px;
+}
+
+
+.table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.table thead {
+    background-color: #34974d;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #ddd;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: #f2f2f2;
+}
+
+.table ul {
+  margin: 0;
+  padding-left: 15px;
+  list-style-type: disc;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .table th, .table td {
+      padding: 8px 10px;
+      font-size: 0.8rem;
+  }
+  .button {
+      width: 100%; /* Botones adaptados a pantallas pequeñas */
+  }
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #34974d;
+  border-radius: 4px;
+}
+
+/* Botón centrado */
+td a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* From Uiverse.io by andrew-demchenk0 */ 
+.button {
+    position: relative;
+    width: 230px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border: 1px solid #34974d;
+    background-color: #3aa856;
+  }
+  
+  .button, .button__icon, .button__text {
+    transition: all 0.3s;
+  }
+  
+  .button .button__text {
+    transform: translateX(30px);
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .button .button__icon {
+    position: absolute;
+    transform: translateX(185px);
+    height: 100%;
+    width: 39px;
+    background-color: #34974d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .button .svg {
+    width: 30px;
+    stroke: #fff;
+  }
+  
+  .button:hover {
+    background: #34974d;
+  }
+  
+  .button:hover .button__text {
+    color: transparent;
+  }
+  
+  .button:hover .button__icon {
+    width: 148px;
+    transform: translateX(0);
+  }
+  
+  .button:active .button__icon {
+    background-color: #2e8644;
+  }
+  
+  .button:active {
+    border: 1px solid #2e8644;
+  }
+
+  a{
+    text-decoration: none;
+  }

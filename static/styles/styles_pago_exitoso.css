@@ -1,0 +1,98 @@
+body{
+    background-color: #d7ccc8;
+}
+
+
+/* Contenedor principal */
+.payment-success-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Card de éxito */
+.payment-success-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    max-width: 600px;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Encabezado principal */
+.payment-success-card h1 {
+    color: #000000;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Texto y listas */
+.payment-success-card p, 
+.payment-success-card ul {
+    color: #333;
+    font-size: 16px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+/* Títulos secundarios */
+.payment-success-card h3 {
+    color: #555;
+    font-size: 18px;
+    margin-top: 20px;
+}
+
+/* Botón */
+.back-button {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+
+.back-button:hover {
+    background-color: #45a049;
+}
+
+/* From Uiverse.io by Jedi-hongbin */ 
+button {
+    display: flex;
+    height: 3em;
+    width: 150px;
+    align-items: center;
+    justify-content: center;
+    background-color: #eeeeee4b;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    transition: all 0.2s linear;
+    cursor: pointer;
+    border: none;
+    background: #9c9592;
+    color: #ffffff;
+   }
+   
+   button > svg {
+    margin-right: 5px;
+    margin-left: 5px;
+    font-size: 20px;
+    transition: all 0.4s ease-in;
+   }
+   
+   button:hover > svg {
+    font-size: 1.2em;
+    transform: translateX(-5px);
+   }
+   
+   button:hover {
+    box-shadow: 2px 2px 10px #d1d1d1, -2px -2px 10px #ffffff83;
+    transform: translateY(-2px);
+   }

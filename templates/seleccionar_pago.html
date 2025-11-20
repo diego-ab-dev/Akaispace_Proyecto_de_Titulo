@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+{% load static %}
+{% load custom_filters %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Selecciona el Método de Pago</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+    <link rel="stylesheet" href="{% static 'styles/styles_metodo.css' %}">
+    <style>
+        .hidden {
+        display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Selecciona el método de pago</h1>
+        <h3>Total a pagar: ${{ total|formato_chileno }}</h3> 
+        <form method="post" action="{% url 'compra_exitosa' usuario.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="metodo_pago" class="form-label">Método de pago:</label>
+                <select class="form-select" name="metodo_pago" id="metodo_pago" onchange="mostrarFormulario()">
+                    <option value="" selected disabled>Selecciona un método</option>
+                    <option value="tarjeta">Tarjeta de crédito/débito</option>
+                    <option value="transferencia">Transferencia bancaria</option>
+                </select>
+            </div>
+            <!-- Formulario de tarjeta -->
+            <div id="form-tarjeta" class="hidden form-container">
+                <h4>Detalles de la tarjeta</h4>
+                <div class="mb-3">
+                    <label for="numero_tarjeta" class="form-label">Número de tarjeta:</label>
+                    <input type="text" class="form-control" id="numero_tarjeta" maxlength="19" 
+                           placeholder="XXXX XXXX XXXX XXXX" oninput="formatearNumeroTarjeta()" required>
+                    <img id="logo_tarjeta" class="tarjeta-logo hidden" src="" alt="Tarjeta">
+                </div>
+                <div class="mb-3">
+                    <label for="expiracion" class="form-label">Fecha de expiración:</label>
+                    <input type="text" class="form-control" id="expiracion" maxlength="5"
+                           placeholder="MM/AA" oninput="formatearFechaExpiracion()" required>
+                </div>
+                <div class="mb-3 position-relative">
+                    <label for="cvv" class="form-label">CVV:</label>
+                    <div class="input-group position-relative">
+                        <input type="password" class="form-control pe-5" id="cvv" maxlength="3" 
+                            pattern="\d{3}" placeholder="XXX" required>
+                    </div>
+                </div>
+            </div>
+            
+
+            <!-- Formulario de transferencia -->
+            <div id="form-transferencia" class="hidden form-container">
+                <h4>Datos de transferencia bancaria</h4>
+                <p><strong>Banco:</strong> Banco Chile</p>
+                <p><strong>Cuenta:</strong> 12345678</p>
+                <p><strong>Rut:</strong> 12.345.678-9</p>
+                <p><strong>Nombre:</strong> Sdgames</p>
+                <p><strong>Email:</strong> sdgames@gmail.com</p>
+            </div>
+
+            <button type="submit" class="Btn">
+                Pagar
+            <svg class="svgIcon" viewBox="0 0 576 512"><path d="M512 80c8.8 0 16 7.2 16 16v32H48V96c0-8.8 7.2-16 16-16H512zm16 144V416c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V224H528zM64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm56 304c-13.3 0-24 10.7-24 24s10.7 24 24 24h48c13.3 0 24-10.7 24-24s-10.7-24-24-24H120zm128 0c-13.3 0-24 10.7-24 24s10.7 24 24 24H360c13.3 0 24-10.7 24-24s-10.7-24-24-24H248z"></path></svg>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function mostrarFormulario() {
+        const metodo = document.getElementById("metodo_pago").value;
+
+        const formTarjeta = document.getElementById("form-tarjeta");
+        const formTransferencia = document.getElementById("form-transferencia");
+
+        formTarjeta.classList.add("hidden");
+        formTransferencia.classList.add("hidden");
+
+        Array.from(formTarjeta.querySelectorAll("input")).forEach(input => {
+            input.required = false;
+        });
+
+        if (metodo === "tarjeta") {
+            formTarjeta.classList.remove("hidden");
+            Array.from(formTarjeta.querySelectorAll("input")).forEach(input => {
+                input.required = true;
+            });
+        } else if (metodo === "transferencia") {
+            formTransferencia.classList.remove("hidden");
+        }
+    }
+
+
+        function formatearNumeroTarjeta() {
+            const input = document.getElementById("numero_tarjeta");
+            const valor = input.value.replace(/\D/g, ""); 
+            const grupos = valor.match(/.{1,4}/g) || [];
+            input.value = grupos.join(" "); 
+            detectarTarjeta(); 
+        }
+
+        function formatearFechaExpiracion() {
+            const input = document.getElementById("expiracion");
+            const valor = input.value.replace(/\D/g, "");
+            if (valor.length <= 2) {
+                input.value = valor;
+            } else {
+                input.value = valor.slice(0, 2) + "/" + valor.slice(2, 4);
+            }
+        }
+
+
+        function detectarTarjeta() {
+            const numero = document.getElementById("numero_tarjeta").value.replace(/\s/g, '');
+            const logo = document.getElementById("logo_tarjeta");
+
+            if (/^4/.test(numero)) {
+                logo.src = "https://1000marcas.net/wp-content/uploads/2019/12/VISA-emblema-1.jpg";
+                logo.classList.remove("hidden");
+            } else if (/^5[1-5]/.test(numero)) {
+                logo.src = "https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg";
+                logo.classList.remove("hidden");
+            } else if (/^3[47]/.test(numero)) {
+                logo.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/2052px-American_Express_logo_%282018%29.svg.png";
+                logo.classList.remove("hidden");
+            } else {
+                logo.classList.add("hidden");
+            }
+        }
+    </script>
+</body>
+</html>

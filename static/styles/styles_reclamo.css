@@ -1,0 +1,206 @@
+body{
+    background-color: #d7ccc8;
+}
+
+/* Contenedor principal centrado verticalmente */
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #d7ccc8;
+}
+
+/* Encabezado */
+h1.fs-4 {
+    font-size: 1.8rem;
+    color: #4a4a4a;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Formulario */
+form {
+    background: #ffffff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Espaciado entre los elementos */
+}
+
+/* Botones alineados */
+form div.btn-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px; /* Espaciado entre botones */
+}
+
+/* Estilo del textarea */
+.form-control {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: none;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #34974d;
+    outline: none;
+    box-shadow: 0 0 5px rgba(52, 151, 77, 0.5);
+}
+
+/* Botón principal personalizado */
+button {
+    font-family: inherit;
+    font-size: 20px;
+    background: royalblue;
+    color: white;
+    padding: 0.7em 1em;
+    padding-left: 0.9em;
+    display: flex;
+    align-items: center;
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+button span {
+    display: block;
+    margin-left: 0.3em;
+    transition: all 0.3s ease-in-out;
+}
+
+button svg {
+    display: block;
+    transform-origin: center center;
+    transition: transform 0.3s ease-in-out;
+}
+
+button:hover .svg-wrapper {
+    animation: fly-1 0.6s ease-in-out infinite alternate;
+}
+
+button:hover svg {
+    transform: translateX(3em) rotate(45deg) scale(1.1);
+}
+
+button:hover span {
+    transform: translateX(8em);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+@keyframes fly-1 {
+    from {
+        transform: translateY(0.1em);
+    }
+
+    to {
+        transform: translateY(-0.1em);
+    }
+}
+
+/* Botón de cancelar */
+a.btn-danger {
+    background-color: #d9534f;
+    color: #fff;
+    padding-top: 15px;
+    font-size: 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+a.btn-danger:hover {
+    background-color: #c9302c;
+}
+
+
+
+body { 
+    color: #333; 
+    font-family: 'Arial', sans-serif;
+}
+
+.reclamos-container {
+    background-color: #ffffff; 
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.reclamos-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reclamo-item {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+}
+
+.reclamo-item:last-child {
+    border-bottom: none;
+}
+
+.reclamo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.reclamo-estado {
+    background-color: #e7f5ff;
+    color: #0056b3;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.reclamo-fecha {
+    font-size: 12px;
+    color: #666;
+}
+
+.reclamo-asunto {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.reclamo-descripcion {
+    font-size: 14px;
+    color: #555;
+}
+
+.btn-minimal {
+    display: inline-block;
+    background-color: #f5f5dc;
+    border: 1px solid #ccc;
+    color: #333;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-minimal:hover {
+    background-color: #e0e0d1;
+    color: #000;
+}
