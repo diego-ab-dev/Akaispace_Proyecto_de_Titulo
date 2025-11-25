@@ -4,10 +4,10 @@ body {
     margin: 0;
     color: #333;
     text-align: left;
-    background-color: #d7ccc8; /* Fondo beige */
+    background-color: #EEF1F4;
     font-family: Arial, sans-serif;
     display: flex;
-    justify-content: center; /* Centrado horizontal */
+    justify-content: center; 
     align-items: center;
 }
 

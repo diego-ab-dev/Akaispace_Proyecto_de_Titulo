@@ -181,10 +181,10 @@
         {% endif %}
       </div>      
       <div class="icons d-flex gap-3">
-        <a href="/favorites" style="color: #9c9592;">
+        <a href="/favorites" style="color: #FFFFFF;">
           <i class="fas fa-heart"></i>
         </a>
-        <a href="{% url 'ver_carrito' %}" style="color: #9c9592;">
+        <a href="{% url 'ver_carrito' %}" style="color: #FFFFFF;">
           <i class="fas fa-shopping-cart"></i>
         </a>
       </div>
@@ -215,7 +215,7 @@
                 <p class="parrafos-carrousel text-dark">Prepárate para la adrenalina de Call of Duty: Black Ops 6. Vive
                   una experiencia de combate que no querrás dejar. ¡Consíguelo ahora!</p>
                 {% if cod6 %}
-                <a class="btn-comprar" href="{% url 'producto_detalle' cod6.id %}">COMPRAR</a>
+                <a class="btn-comprar" href="{% url 'producto_detalle' cod6.id %}">Ver Producto</a>
                 {% else %}
                 <p class="parrafos-carrousel text-muted">Producto no disponible</p>
                 {% endif %}
@@ -321,7 +321,6 @@
                     style="background-color: white; border-radius: 20px; padding: 20px;">
                     <div class="part-1">
                       <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
-                      <span class="new">Tendencia</span>
                       <ul>
                         <li>
                           <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" style="display: inline;">
@@ -351,7 +350,7 @@
                       <h3 class="product-title fw-bold fs-6">{{ producto.nombre }}</h3>
                       <h4 class="precioprod product-price fw-bold fs-4">${{ producto.precio|formato_chileno }}</h4>
                     </div>
-                    <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Detalles</a>
+                    <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Producto</a>
                   </div>
                 </div>
               {% endif %}
@@ -447,7 +446,7 @@
           <div class="container text-center text-md-start mt-5">
             <div class="row mt-3">
               <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold mb-4">
+                <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
                   <a href="">SD Games</a>
                 </h6>
                 <p class="parrafo-footer">
@@ -462,7 +461,7 @@
                 </p>
               </div>
               <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold mb-4">
+                <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
                   Enlaces Rápidos:
                 </h6>
                 <p>
@@ -479,7 +478,7 @@
                 </p>
               </div>
               <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
-                <h6 class="text-uppercase fw-bold mb-4">Contacto:</h6>
+                <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">Contacto:</h6>
                 <p><i class="fas fa-home me-3"></i> Valdivia, Av. Simpson 641, Chile</p>
                 <p>
                   <i class="fas fa-envelope me-3"></i>
@@ -490,8 +489,8 @@
             </div>
           </div>
         </section>
-        <div class="text-center p-4" style="background-color: #8e8f94;">
-          SD Games
+        <div class="text-center p-4" style="background-color: #252e46;">
+          Copyright © 2025 - 2025 SdGames   Privacy Policy
         </div>
       </footer>
 

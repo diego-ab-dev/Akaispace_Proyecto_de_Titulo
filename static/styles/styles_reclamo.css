@@ -1,5 +1,5 @@
 body{
-    background-color: #d7ccc8;
+    background-color: #EEF1F4;
 }
 
 /* Contenedor principal centrado verticalmente */
@@ -9,7 +9,7 @@ body{
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #d7ccc8;
+    background-color: #EEF1F4;
 }
 
 /* Encabezado */

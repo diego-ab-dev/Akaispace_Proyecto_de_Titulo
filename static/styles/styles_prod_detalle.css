@@ -1,14 +1,14 @@
  body {
     font-family: sans-serif;
-    background-color: #d7ccc8;
+    background-color: #EEF1F4;
     overflow-x: hidden;
   }
 
  /*botones del nav*/
  button {
-  --primary-color: #9c9592;
-  --secondary-color: #fff;
-  --hover-color: #6e6e6e;
+  --primary-color: #FFFFFF;
+  --secondary-color: #000000;
+  --hover-color: #d3d1d1;
   --arrow-width: 10px;
   --arrow-stroke: 2px;
   box-sizing: border-box;
@@ -91,7 +91,7 @@ button:hover .arrow:before {
   }
   
   .link {
-    background-color: #9c9592;
+    background-color: #ffffff;
   }
   
   .menu .link {
@@ -162,7 +162,7 @@ button:hover .arrow:before {
   }
   
   .menu .item:hover .link {
-    color: #ffffff;
+    color: #000000;
     border-radius: 16px 16px 0 0;
   }
   
@@ -172,7 +172,7 @@ button:hover .arrow:before {
   }
   
   .menu .item:hover .link svg {
-    fill: #ffffff;
+    fill: #000000;
     transform: rotate(-180deg);
   }
   
@@ -233,7 +233,7 @@ nav{
   width: 100%;
   height: 100%;
   height: 70px;
-  background: #2c2e33;
+  background: #1C253B;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   z-index: 99;
 }
@@ -296,7 +296,7 @@ nav .navbar .links li .sub-menu{
   top: 70px;
   left: 0;
   line-height: 40px;
-  background: #2c2e33;
+  background: #1C253B;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   border-radius: 0 0 4px 4px;
   display: none;
@@ -353,7 +353,7 @@ nav .navbar .links li:hover .js-sub-menu{
   top: 80px;
   height: 60px;
   width: 300px;
-  background: #2c2e33;
+  background: #1C253B;
   border-radius: 6px;
   opacity: 0;
   pointer-events: none;
@@ -363,14 +363,14 @@ nav .navbar .links li:hover .js-sub-menu{
   top: 65px;
   opacity: 1;
   pointer-events: auto;
-  background: #2c2e33;
+  background: #1C253B;
 }
 .search-box .input-box::before{
   content: '';
   position: absolute;
   height: 20px;
   width: 20px;
-  background: #2c2e33;
+  background: #1C253B;
   right: 10px;
   top: -6px;
   transform: rotate(45deg);
@@ -439,7 +439,7 @@ nav .navbar .links li:hover .js-sub-menu{
     display: block;
     max-width: 270px;
     width: 100%;
-    background:  #2c2e33;
+    background:  #1C253B;
     line-height: 40px;
     padding: 20px;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);

@@ -1,12 +1,12 @@
 /* General Styles */
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #d7ccc8;
+    background-color: #EEF1F4;
     margin: 0;
-    display: flex; /* Centrado vertical y horizontal */
+    display: flex; 
     justify-content: center;
     align-items: center;
-    height: 100vh; /* Altura de la ventana */
+    height: 100vh;
     color: #333;
 }
 

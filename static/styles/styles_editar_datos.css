@@ -3,22 +3,22 @@ body {
     margin: 0;
     color: #333;
     text-align: center;
-    background-color: #d7ccc8; /* Fondo beige claro */
+    background-color: #EEF1F4; 
     font-family: Arial, sans-serif;
     display: flex;
-    justify-content: center; /* Centrar horizontal */
-    align-items: center;    /* Centrar vertical */
+    justify-content: center; 
+    align-items: center;    
 }
 
 /* Contenedor general */
 .container {
-    background-color: #fff; /* Fondo blanco */
-    border-radius: 10px; /* Bordes redondeados */
+    background-color: #fff; 
+    border-radius: 10px; 
     padding: 20px;
     width: 90%;
-    max-width: 500px; /* Ancho máximo */
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-    text-align: left; /* Alinear contenido */
+    max-width: 500px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+    text-align: left; 
 }
 
 /* Título */

@@ -3,7 +3,7 @@ body{
     margin: 0;
     color: #1a202c;
     text-align: left;
-    background-color: #d7ccc8;
+    background-color: #EEF1F4;
     font-family: Arial, sans-serif;
     overflow-x: hidden;   
 }
@@ -118,8 +118,6 @@ h3{
   }
 
 
-
-  /* From Uiverse.io by cssbuttons-io */ 
 button {
     position: relative;
     display: inline-block;
