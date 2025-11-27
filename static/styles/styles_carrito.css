@@ -575,7 +575,7 @@ nav .navbar .links li .sub-menu li{
 }
 
 .cart {
-  background-color: #fff;
+  background-color: #FAFAFA;
   padding: 4vh 5vh;
   border-bottom-left-radius: 1rem;
   border-top-left-radius: 1rem;
@@ -590,7 +590,7 @@ nav .navbar .links li .sub-menu li{
 }
 
 .summary {
-  background-color: #ddd;
+  background-color: #ffffff;
   border-top-right-radius: 1rem;
   border-bottom-right-radius: 1rem;
   padding: 4vh;
@@ -671,7 +671,7 @@ button {
   font-size: 14px;
   padding: 1em 2.7em;
   font-weight: 400;
-  background: #2c2e33;
+  background: #4E84A8;
   color: white;
   border: none;
   position: relative;
@@ -688,11 +688,6 @@ button {
   top: 0;
   border-radius: 0.6em;
   margin-top: -0.25em;
-  background-image: linear-gradient(
-    rgba(0, 0, 0, 0),
-    rgba(0, 0, 0, 0),
-    rgba(0, 0, 0, 0.3)
-  );
 }
 
 .label {
@@ -703,7 +698,7 @@ button {
 .transition {
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
   transition-duration: 500ms;
-  background-color: #d7ccc8;
+  background-color: #1C253B;
   border-radius: 9999px;
   width: 0;
   height: 0;
@@ -729,6 +724,73 @@ a:hover {
   color: black;
   text-decoration: none;
 }
+
+
+.envio-box {
+    background: white;
+    border-radius: 0.6rem;
+    border: 1px solid #bbb;
+}
+
+.edit-btn {
+  background-color:white;
+}
+
+.modal-envio {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content-envio {
+    background: white;
+    padding: 20px;
+    width: 350px;
+    border-radius: 10px;
+}
+
+.modal-content-envio input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-save {
+    width: 100%;
+    padding: 10px;
+    background: #2c6ea8;
+    border: none;
+    color: white;
+    margin-bottom: 5px;
+    border-radius: 6px;
+}
+
+.btn-cancel {
+    width: 100%;
+    padding: 10px;
+    background: #999;
+    border: none;
+    color: white;
+    border-radius: 6px;
+}
+
+.edit-icon {
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.edit-icon:hover {
+  transform: scale(1.1);
+}
+
+
 
 /*footer*/
 footer {

@@ -853,6 +853,33 @@ def ver_carrito(request):
 def carrito(request):
     return render(request, 'carrito.html')
 
+def guardar_datos_envio(request):
+    if request.method == "POST":
+
+        usuario_id = request.session.get("usuario_id")
+        if not usuario_id:
+            return JsonResponse({'success': False, 'error': 'Usuario no autenticado'}, status=401)
+
+        usuario = get_object_or_404(Usuario, id=usuario_id)
+
+        region = request.POST.get("region")
+        ciudad = request.POST.get("ciudad")
+        direccion = request.POST.get("direccion")
+
+        usuario.region = region
+        usuario.ciudad = ciudad
+        usuario.direccion = direccion
+        usuario.save()
+
+        return JsonResponse({
+            'success': True,
+            'region': region,
+            'ciudad': ciudad,
+            'direccion': direccion,
+        })
+
+    return JsonResponse({'success': False}, status=400)
+
 # fin de vistas relacionadas con carrito:
 
 

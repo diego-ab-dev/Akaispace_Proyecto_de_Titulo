@@ -176,8 +176,9 @@
                               <h4><b>Carrito de Compras</b></h4>
                           </div>
                           <div class="col align-self-center text-right text-muted">
-                            <span class="total-items">{{ total_items }}</span> items
+                              <span id="total-items-count-summary">{{ total_items }}</span> items
                           </div>
+
                       </div>
                   </div>
   
@@ -217,34 +218,133 @@
                   </div>
               </div>
   
-              <!-- Resumen del carrito -->
               <div class="col-md-4 summary">
-                  <div><h5><b>Resumen</b></h5></div>
-                  <hr>
-                  <div class="row">
-                    <div class="col" style="padding-left:0;">
-                      <span class="total-items">{{ total_items }}</span> items
-                    </div>
-                      <div class="col text-right" id="total">${{ total|formato_chileno }}</div>
+                <div><h5><b>Resumen</b></h5></div>
+                <hr>
+
+                <div class="row">
+                  <div class="col total-items-text">
+                      <span id="total-items-count">{{ total_items }}</span> ítems
                   </div>
-                  {% if productos %}
-                  <form method="GET" action="{% url 'seleccionar_pago' usuario.id %}">
+                  <div class="col text-right" id="subtotal-resumen">
+                      {{ total|formato_chileno }}
+                  </div>
+              </div>
+
+
+                {% if productos %}
+                <div class="row">
+                    <div class="col">Envío</div>
+                    <div class="col text-right">$5.990</div>
+                </div>
+                {% endif %}
+
+
+                <hr>
+
+                {% if productos %}
+                <div class="row">
+                    <div class="col"><b>Total</b></div>
+                    <div class="col text-right">
+                        <b id="total-final">
+                            ${{ total|add:5990|formato_chileno }}
+                        </b>
+                    </div>
+                </div>
+                {% endif %}
+
+
+                {% if productos %}
+                <div class="envio-box mt-3 p-3">
+                    <div class="d-flex justify-content-between">
+                        <b>Entrega en</b>
+                        <i class="fas fa-edit edit-icon" onclick="abrirModal()"></i>
+                    </div>
+
+                    <p><b>Región:</b> <span id="envio-region">{{ usuario.region }}</span></p>
+                    <p><b>Ciudad:</b> <span id="envio-ciudad">{{ usuario.ciudad }}</span></p>
+                    <p><b>Dirección:</b> <span id="envio-direccion">{{ usuario.direccion }}</span></p>
+                </div>
+                {% endif %}
+
+                {% if productos %}
+                <form method="GET" action="{% url 'seleccionar_pago' usuario.id %}">
                       <button type="submit">
                           <span class="transition"></span>
                           <span class="gradient"></span>
                           <span class="label">Proceder a la compra</span>
                       </button>
                   </form>
-                  {% else %}
-                  <p class="text-muted">No puedes proceder a la compra porque tu carrito está vacío.</p>
-                  {% endif %}
-              </div>
+                {% else %}
+                <p class="text-muted mt-3">Tu carrito está vacío.</p>
+                {% endif %}
+            </div>
+
+            <!-- MODAL -->
+            <div id="modal-envio" class="modal-envio">
+                <div class="modal-content-envio">
+                    <h5><b>Editar datos de envío</b></h5>
+
+                    <label>Región</label>
+                    <select id="input-region" onchange="cargarCiudades()"></select>
+
+                    <label>Ciudad</label>
+                    <select id="input-ciudad"></select>
+
+
+                    <label>Dirección</label>
+                    <input type="text" id="input-direccion">
+
+                    <button onclick="guardarEnvio()" class="btn-save">Guardar</button>
+                    <button onclick="cerrarModal()" class="btn-cancel">Cancelar</button>
+                </div>
+            </div>
           </div>
       </div>
   </div>
 
 
     <script>
+    const regionesCiudades = {
+        'ARICA Y PARINACOTA': ['Arica', 'Putre'],
+        'TARAPACA': ['Iquique', 'Alto Hospicio'],
+        'ANTOFAGASTA': ['Antofagasta', 'Calama', 'Tocopilla'],
+        'ATACAMA': ['Copiapó', 'Vallenar', 'Chañaral'],
+        'COQUIMBO': ['La Serena', 'Coquimbo', 'Ovalle'],
+        'VALPARAISO': ['Valparaíso', 'Viña del Mar', 'Quillota', 'San Antonio'],
+        'METROPOLITANA': ['Santiago', 'Puente Alto', 'Maipú', 'La Florida'],
+        'OHIGGINS': ['Rancagua', 'San Fernando', 'Pichilemu'],
+        'MAULE': ['Talca', 'Curicó', 'Linares'],
+        'ÑUBLE': ['Chillán', 'San Carlos'],
+        'BIOBIO': ['Concepción', 'Los Ángeles', 'Coronel'],
+        'ARAUCANIA': ['Temuco', 'Villarrica', 'Angol'],
+        'LOS RIOS': ['Valdivia', 'La Unión'],
+        'LOS LAGOS': ['Puerto Montt', 'Osorno', 'Castro'],
+        'AYSEN': ['Coyhaique', 'Puerto Aysén'],
+        'MAGALLANES': ['Punta Arenas', 'Puerto Natales'],
+    };
+
+
+    function cargarRegiones() {
+    let selectRegion = document.getElementById("input-region");
+    selectRegion.innerHTML = "";
+
+    for (const region in regionesCiudades) {
+        selectRegion.innerHTML += `<option value="${region}">${region}</option>`;
+    }
+      }
+
+      function cargarCiudades() {
+          let region = document.getElementById("input-region").value;
+          let selectCiudad = document.getElementById("input-ciudad");
+
+          selectCiudad.innerHTML = "";
+
+          regionesCiudades[region].forEach(ciudad => {
+              selectCiudad.innerHTML += `<option value="${ciudad}">${ciudad}</option>`;
+          });
+      }
+
     function formatoChileno(valor) {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -254,65 +354,93 @@
     }
 
     function actualizarCantidad(itemId) {
-        const form = document.getElementById(`form-${itemId}`);
-        const formData = new FormData(form);
+    const form = document.getElementById(`form-${itemId}`);
+    const formData = new FormData(form);
 
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.querySelectorAll('.total-items').forEach(el => el.textContent = data.total_items);
-                const totalFormateado = formatoChileno(data.total);
-                document.getElementById('total').textContent = totalFormateado;
-            } else if (data.error) {
-                alert(data.error); 
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    }
-
-    function eliminarItem(itemId, element) {
-    const url = element.getAttribute('data-url');
-
-    fetch(url, {
+    fetch(form.action, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-        },
+        body: formData,
+        headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') },
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            document.getElementById(`item-${itemId}`).remove();
+            // número de items (solo el número)
+            // Contador del resumen
+            const mainCount = document.getElementById('total-items-count');
+            if (mainCount) mainCount.textContent = data.total_items;
 
-            document.querySelectorAll('.total-items').forEach(el => el.textContent = data.total_items);
+            // Contador de la parte superior derecha
+            const summaryCount = document.getElementById('total-items-count-summary');
+            if (summaryCount) summaryCount.textContent = data.total_items;
 
-            const totalFormateado = formatoChileno(data.total);
-            document.getElementById('total').textContent = totalFormateado;
 
-            if (data.total_items === 0) {
-                const container = document.querySelector('.cart');
-                container.innerHTML = '<div class="text-center p-4"><h5 class="text-muted">Tu carrito está vacío.</h5></div>';
 
-                const resumen = document.querySelector('.summary');
-                resumen.innerHTML = `
-                    <div><h5><b>Resumen</b></h5></div>
-                    <hr>
-                    <p class="text-muted">No puedes proceder a la compra porque tu carrito está vacío.</p>
-                `;
-            }
+            // subtotal
+            const subtotalElem = document.getElementById('subtotal-resumen');
+            if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
+
+            // total final (subtotal + envío)
+            const envio = 5990;
+            const totalFinalElem = document.getElementById('total-final');
+            if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
+
+            // si el carrito quedó vacío puede que otras partes deban actualizarse (opcional)
         } else if (data.error) {
-            alert(data.error); 
+            alert(data.error);
         }
     })
     .catch(error => console.error('Error:', error));
 }
+
+function eliminarItem(itemId, element) {
+    const url = element.getAttribute('data-url');
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // quitar fila
+            const row = document.getElementById(`item-${itemId}`);
+            if (row) row.remove();
+
+            // actualizar contador numérico
+            document.querySelectorAll('#total-items-count').forEach(el => el.textContent = data.total_items);
+
+            // actualizar subtotal si existe
+            const subtotalElem = document.getElementById('subtotal-resumen');
+            if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
+
+            const envio = 5990;
+
+            if (data.total_items === 0) {
+                // reemplazar el área del carrito por mensaje vacío
+                const container = document.querySelector('.cart');
+                if (container) container.innerHTML = '<div class="text-center p-4"><h5 class="text-muted">Tu carrito está vacío.</h5></div>';
+
+                // reemplazar la summary por mensaje (sin IDs)
+                const resumen = document.querySelector('.summary');
+                if (resumen) {
+                    resumen.innerHTML = `
+                        <div><h5><b>Resumen</b></h5></div>
+                        <hr>
+                        <p class="text-muted">No puedes proceder a la compra porque tu carrito está vacío.</p>
+                    `;
+                }
+            } else {
+                const totalFinalElem = document.getElementById('total-final');
+                if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
+            }
+        } else if (data.error) {
+            alert(data.error);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
 
 
         let navbar = document.querySelector(".navbar");
@@ -346,6 +474,49 @@
         jsArrow.onclick = function() {
         navLinks.classList.toggle("show3");
         }
+
+        function abrirModal() {
+            document.getElementById("modal-envio").style.display = "flex";
+
+            cargarRegiones();
+
+            let regionActual = document.getElementById("envio-region").innerText;
+            let ciudadActual = document.getElementById("envio-ciudad").innerText;
+            let direccionActual = document.getElementById("envio-direccion").innerText;
+
+            document.getElementById("input-region").value = regionActual;
+            cargarCiudades();
+            document.getElementById("input-ciudad").value = ciudadActual;
+            document.getElementById("input-direccion").value = direccionActual;
+        }
+
+
+        function cerrarModal() {
+            document.getElementById("modal-envio").style.display = "none";
+        }
+
+        function guardarEnvio() {
+            const data = new FormData();
+            data.append("region", document.getElementById("input-region").value);
+            data.append("ciudad", document.getElementById("input-ciudad").value);
+            data.append("direccion", document.getElementById("input-direccion").value);
+            data.append("csrfmiddlewaretoken", document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch("/guardar_datos_envio/", {
+                method: "POST",
+                body: data,
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("envio-region").innerText = data.region;
+                    document.getElementById("envio-ciudad").innerText = data.ciudad;
+                    document.getElementById("envio-direccion").innerText = data.direccion;
+                    cerrarModal();
+                }
+            });
+        }
+
     </script>
 
     <!--footer-->
