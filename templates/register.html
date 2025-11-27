@@ -28,13 +28,11 @@
                             {% csrf_token %}
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="floatingRut" name="rut" 
-                                       placeholder="12345678-9" 
-                                       pattern="\d{1,8}-[0-9Kk]" 
-                                       maxlength="10" 
-                                       title="Ingrese un RUT en el formato 12345678-9" 
-                                       required autofocus>
+                                    placeholder="12.345.678-9" 
+                                    oninput="darFormatoRut(this)"
+                                    required autofocus>
                                 <label for="floatingRut">RUT</label>
-                                <small class="text-muted">Formato: 12345678-9</small>
+                                <small class="text-muted">Formato: 12.345.678-9</small>
                             </div>
     
                             <div class="form-floating mb-3">
@@ -105,6 +103,70 @@
     </div>
 
 <script>
+    function validarRut(rutCompleto) {
+        if (!rutCompleto) return false;
+        
+        // Limpiar el RUT de puntos y guiones
+        let valor = rutCompleto.replace(/\./g, '').replace(/-/g, '');
+        
+        // Validar largo mínimo (ej. 1.111.111-1)
+        if (valor.length < 8) return false;
+    
+        // Separar cuerpo y dígito verificador
+        let cuerpo = valor.slice(0, -1);
+        let dv = valor.slice(-1).toUpperCase();
+        
+        // Validar que el cuerpo sean solo números
+        if (!/^\d+$/.test(cuerpo)) return false;
+    
+        // Calcular Dígito Verificador Esperado (Algoritmo Módulo 11)
+        let suma = 0;
+        let multiplo = 2;
+    
+        for (let i = 1; i <= cuerpo.length; i++) {
+            let index = multiplo * valor.charAt(cuerpo.length - i);
+            suma = suma + index;
+            if (multiplo < 7) { multiplo = multiplo + 1; } else { multiplo = 2; }
+        }
+    
+        let dvEsperado = 11 - (suma % 11);
+        
+        // Casos especiales (11 es 0, 10 es K)
+        dvEsperado = (dvEsperado == 11) ? '0' : (dvEsperado == 10) ? 'K' : dvEsperado.toString();
+    
+        // Comparar
+        return dv === dvEsperado;
+    }
+    
+    function darFormatoRut(rutInput) {
+        // Eliminar cualquier caracter que no sea número o K
+        let valor = rutInput.value.replace(/[^0-9kK]/g, '').toUpperCase();
+        
+        // Si está vacío, no hacer nada
+        if (valor.length === 0) {
+            rutInput.value = "";
+            return;
+        }
+    
+        // Separar cuerpo y DV
+        let cuerpo = valor.slice(0, -1);
+        let dv = valor.slice(-1);
+    
+        rutInput.value = cuerpo + (cuerpo.length > 0 ? "-" + dv : dv);
+    
+        // Poner puntos a los miles si el cuerpo es largo
+        if (cuerpo.length > 3) {
+            // Lógica para formatear con puntos (XX.XXX.XXX-Y)
+            let cuerpoFormateado = "";
+            for (let i = cuerpo.length - 1, j = 1; i >= 0; i--, j++) {
+                cuerpoFormateado = cuerpo.charAt(i) + cuerpoFormateado;
+                if (j % 3 === 0 && i !== 0) {
+                    cuerpoFormateado = "." + cuerpoFormateado;
+                }
+            }
+            rutInput.value = cuerpoFormateado + "-" + dv;
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
             const form = document.querySelector('form');
@@ -146,6 +208,13 @@
                     isValid = false;
                     alert("El nombre solo debe contener letras.");
                     nombre.focus();
+                }
+                const rutInput = document.getElementById('floatingRut');
+                if (!validarRut(rutInput.value)) {
+                    isValid = false;
+                    alert("El RUT ingresado no es válido o no existe.");
+                    rutInput.focus();
+                    return; // Detener ejecución aquí si el RUT falla
                 }
                 const email = document.getElementById('floatingInputEmail');
                 if (!email.value.includes('@')) {
