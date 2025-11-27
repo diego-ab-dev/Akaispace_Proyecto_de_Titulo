@@ -21,8 +21,14 @@
 		</div>
 		<form id="form-editar-perfil">
 			<div class="mb-3">
-				<label for="telefono" class="form-label">Teléfono</label>
-				<input type="text" id="telefono" name="telefono" class="form-control" value="{{ usuario.telefono }}">
+				<label for="visiblePhone" class="form-label">Teléfono</label>
+				<div class="input-group">
+					<span class="input-group-text">+56 9</span>
+					<input type="text" id="visiblePhone" class="form-control" 
+						maxlength="8" oninput="syncPhone(this)" 
+						value="{{ usuario.telefono|slice:'6:' }}" required>
+				</div>
+				<input type="hidden" id="finalPhone" name="telefono" value="{{ usuario.telefono }}">
 			</div>
 			<div class="mb-3">
 				<label for="direccion" class="form-label">Dirección</label>
@@ -57,37 +63,128 @@
 	</div>
 	
 	<script>
-		document.getElementById('region').addEventListener('change', function () {
-			const region = this.value;
-			fetch(`/obtener_ciudades/?region=${region}`)
+		// Mostrar notificación minimalista
+		function mostrarNotificacion(mensaje, tipo) {
+			if (tipo === undefined) tipo = 'error';
+			
+			let alertDiv = document.getElementById('notificacion-registro');
+			if (!alertDiv) {
+				alertDiv = document.createElement('div');
+				alertDiv.id = 'notificacion-registro';
+				document.body.insertAdjacentElement('afterbegin', alertDiv);
+			}
+			
+			const claseColor = tipo === 'success' ? 'alert-success' : 'alert-danger';
+			const alertHTML = '<div class="alert ' + claseColor + ' alert-dismissible fade show position-fixed" role="alert" style="top: 20px; right: 20px; width: auto; max-width: 350px; z-index: 9999;">' +
+							  mensaje +
+							  '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+							  '</div>';
+			alertDiv.innerHTML = alertHTML;
+			
+			setTimeout(function() {
+				const alert = alertDiv.querySelector('.alert');
+				if (alert) alert.remove();
+			}, 4000);
+		}
+
+		// Limpiar notificaciones anteriores
+		function limpiarNotificaciones() {
+			const alertDiv = document.getElementById('notificacion-registro');
+			if (alertDiv) alertDiv.innerHTML = '';
+		}
+
+		function syncPhone(input) {
+			let numeros = input.value.replace(/\D/g, '');
+			
+			if (numeros.length > 8) {
+				numeros = numeros.slice(0, 8);
+			}
+			input.value = numeros;
+
+			const hiddenInput = document.getElementById('finalPhone');
+			if (numeros.length > 0) {
+				hiddenInput.value = "+56 9 " + numeros;
+			} else {
+				hiddenInput.value = "";
+			}
+		}
+
+		document.addEventListener('DOMContentLoaded', function () {
+			const form = document.getElementById('form-editar-perfil');
+			const regionSelect = document.getElementById('region');
+			const ciudadSelect = document.getElementById('ciudad');
+
+			// Cargar ciudades cuando cambia la región
+			function cargarCiudades(region) {
+				fetch(`/obtener_ciudades/?region=${region}`)
+					.then(response => response.json())
+					.then(data => {
+						ciudadSelect.innerHTML = '<option value="" disabled selected>Seleccione una ciudad</option>';
+						if (data.ciudades && data.ciudades.length > 0) {
+							ciudadSelect.disabled = false;
+							data.ciudades.forEach(function (ciudad) {
+								const option = document.createElement('option');
+								option.value = ciudad;
+								option.textContent = ciudad;
+								ciudadSelect.appendChild(option);
+							});
+						} else {
+							ciudadSelect.disabled = true;
+						}
+					})
+					.catch(error => console.log('Error al cargar ciudades:', error));
+			}
+			
+			regionSelect.addEventListener('change', function () {
+				cargarCiudades(this.value);
+			});
+
+			// Manejo del envío del formulario
+			form.addEventListener('submit', function (event) {
+				event.preventDefault();
+				limpiarNotificaciones();
+				
+				let isValid = true;
+				
+				// Validar teléfono
+				const telefonoInput = document.getElementById('visiblePhone');
+				const telefonoRegex = /^\d{8}$/;
+				
+				if (!telefonoRegex.test(telefonoInput.value.trim())) {
+					isValid = false;
+					mostrarNotificacion("El teléfono debe tener exactamente 8 números.");
+					telefonoInput.focus();
+					return;
+				}
+
+				if (!isValid) return;
+
+				// Enviar formulario
+				const formData = new FormData(form);
+
+				fetch(form.action, {
+					method: 'POST',
+					body: formData,
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest',
+						'X-CSRFToken': '{{ csrf_token }}'
+					}
+				})
 				.then(response => response.json())
 				.then(data => {
-					const ciudadSelect = document.getElementById('ciudad');
-					ciudadSelect.innerHTML = '';
-					data.ciudades.forEach(ciudad => {
-						const option = document.createElement('option');
-						option.value = ciudad;
-						option.textContent = ciudad;
-						ciudadSelect.appendChild(option);
-					});
+					if (data.success) {
+						mostrarNotificacion(data.success || "¡Cambios realizados exitosamente!", 'success');
+						setTimeout(() => {
+							window.history.back();
+						}, 2000);
+					} else {
+						mostrarNotificacion(data.error || "Error al actualizar los datos.");
+					}
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					mostrarNotificacion("Error al procesar la solicitud.");
 				});
-		});
-	
-		document.getElementById('form-editar-perfil').addEventListener('submit', function (e) {
-			e.preventDefault();
-			const formData = new FormData(this);
-			fetch('{% url "editar" %}', {
-				method: 'POST',
-				headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-				body: formData
-			})
-			.then(response => response.json())
-			.then(data => {
-				if (data.error) {
-					alert(data.error);
-				} else {
-					alert(data.success);
-				}
 			});
 		});
 	</script>
