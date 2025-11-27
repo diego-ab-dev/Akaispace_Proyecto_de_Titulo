@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{% static 'styles/styles_register.css' %}">
 </head>
 <body>
-    <div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="container d-flex justify-content-center align-items-start min-vh-100 pt-5 mt-4">
         <div class="row w-100">
             <div class="col-lg-10 col-xl-9 mx-auto">
                 <div class="card flex-row border-0 shadow rounded-3 overflow-hidden">
@@ -46,10 +46,15 @@
                                 <label for="floatingInputEmail">Correo Electrónico</label>
                             </div>
     
-                            <div class="form-floating mb-3">
-                                <input type="number" class="form-control" id="floatingInputNumber" name="telefono"
-                                       placeholder="9 4444 4444">
-                                <label for="floatingInputNumber">Teléfono</label>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text">+56 9</span>
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="visiblePhone" 
+                                        placeholder="12345678" maxlength="8" 
+                                        oninput="syncPhone(this)" required>
+                                    <label for="visiblePhone">Teléfono (8 dígitos)</label>
+                                </div>
+                                <input type="hidden" name="telefono" id="finalPhone">
                             </div>
     
                             <div class="form-floating mb-3">
@@ -137,6 +142,25 @@
         // Comparar
         return dv === dvEsperado;
     }
+    function syncPhone(input) {
+        // 1. Dejar solo números
+        let numeros = input.value.replace(/\D/g, '');
+        
+        // 2. Limitar visualmente a 8 dígitos
+        if (numeros.length > 8) {
+            numeros = numeros.slice(0, 8);
+        }
+        input.value = numeros;
+
+        // 3. Actualizar el input oculto que se enviará a la base de datos
+        // Si hay números, guardamos "+56 9 XXXXXXXX", si no, vacío
+        const hiddenInput = document.getElementById('finalPhone');
+        if (numeros.length > 0) {
+            hiddenInput.value = "+56 9 " + numeros;
+        } else {
+            hiddenInput.value = "";
+        }
+    }
     
     function darFormatoRut(rutInput) {
         // Eliminar cualquier caracter que no sea número o K
@@ -223,12 +247,14 @@
                     email.focus();
                 }
     
-                const telefono = document.getElementById('floatingInputNumber');
-                const telefonoRegex = /^\d{9}$/;
-                if (!telefonoRegex.test(telefono.value.trim())) {
+                const telefonoInput = document.getElementById('visiblePhone');
+    // Validamos que el usuario haya escrito exactamente 8 dígitos en la caja visible
+                const telefonoRegex = /^\d{8}$/; 
+                
+                if (!telefonoRegex.test(telefonoInput.value.trim())) {
                     isValid = false;
-                    alert("El teléfono debe tener exactamente 9 dígitos.");
-                    telefono.focus();
+                    alert("El teléfono debe tener exactamente 8 números (después del +56 9).");
+                    telefonoInput.focus();
                 }
     
                 const contraseña = document.getElementById('floatingPassword');
