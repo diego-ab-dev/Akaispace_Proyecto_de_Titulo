@@ -108,23 +108,48 @@
     </div>
 
 <script>
+    // Mostrar notificación minimalista
+    function mostrarNotificacion(mensaje, tipo) {
+        if (tipo === undefined) tipo = 'error';
+        
+        let alertDiv = document.getElementById('notificacion-registro');
+        if (!alertDiv) {
+            alertDiv = document.createElement('div');
+            alertDiv.id = 'notificacion-registro';
+            document.body.insertAdjacentElement('afterbegin', alertDiv);
+        }
+        
+        const claseColor = tipo === 'success' ? 'alert-success' : 'alert-danger';
+        const alertHTML = '<div class="alert ' + claseColor + ' alert-dismissible fade show position-fixed" role="alert" style="top: 20px; right: 20px; width: auto; max-width: 350px; z-index: 9999;">' +
+                          mensaje +
+                          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                          '</div>';
+        alertDiv.innerHTML = alertHTML;
+        
+        setTimeout(function() {
+            const alert = alertDiv.querySelector('.alert');
+            if (alert) alert.remove();
+        }, 4000);
+    }
+
+    // Limpiar notificaciones anteriores
+    function limpiarNotificaciones() {
+        const alertDiv = document.getElementById('notificacion-registro');
+        if (alertDiv) alertDiv.innerHTML = '';
+    }
+
     function validarRut(rutCompleto) {
         if (!rutCompleto) return false;
         
-        // Limpiar el RUT de puntos y guiones
         let valor = rutCompleto.replace(/\./g, '').replace(/-/g, '');
         
-        // Validar largo mínimo (ej. 1.111.111-1)
         if (valor.length < 8) return false;
     
-        // Separar cuerpo y dígito verificador
         let cuerpo = valor.slice(0, -1);
         let dv = valor.slice(-1).toUpperCase();
         
-        // Validar que el cuerpo sean solo números
         if (!/^\d+$/.test(cuerpo)) return false;
     
-        // Calcular Dígito Verificador Esperado (Algoritmo Módulo 11)
         let suma = 0;
         let multiplo = 2;
     
@@ -135,25 +160,19 @@
         }
     
         let dvEsperado = 11 - (suma % 11);
-        
-        // Casos especiales (11 es 0, 10 es K)
         dvEsperado = (dvEsperado == 11) ? '0' : (dvEsperado == 10) ? 'K' : dvEsperado.toString();
     
-        // Comparar
         return dv === dvEsperado;
     }
+
     function syncPhone(input) {
-        // 1. Dejar solo números
         let numeros = input.value.replace(/\D/g, '');
         
-        // 2. Limitar visualmente a 8 dígitos
         if (numeros.length > 8) {
             numeros = numeros.slice(0, 8);
         }
         input.value = numeros;
 
-        // 3. Actualizar el input oculto que se enviará a la base de datos
-        // Si hay números, guardamos "+56 9 XXXXXXXX", si no, vacío
         const hiddenInput = document.getElementById('finalPhone');
         if (numeros.length > 0) {
             hiddenInput.value = "+56 9 " + numeros;
@@ -163,24 +182,24 @@
     }
     
     function darFormatoRut(rutInput) {
-        // Eliminar cualquier caracter que no sea número o K
         let valor = rutInput.value.replace(/[^0-9kK]/g, '').toUpperCase();
         
-        // Si está vacío, no hacer nada
+        // Limitar a máximo 9 dígitos (8 del cuerpo + 1 dígito verificador)
+        if (valor.length > 9) {
+            valor = valor.slice(0, 9);
+        }
+        
         if (valor.length === 0) {
             rutInput.value = "";
             return;
         }
     
-        // Separar cuerpo y DV
         let cuerpo = valor.slice(0, -1);
         let dv = valor.slice(-1);
     
         rutInput.value = cuerpo + (cuerpo.length > 0 ? "-" + dv : dv);
     
-        // Poner puntos a los miles si el cuerpo es largo
         if (cuerpo.length > 3) {
-            // Lógica para formatear con puntos (XX.XXX.XXX-Y)
             let cuerpoFormateado = "";
             for (let i = cuerpo.length - 1, j = 1; i >= 0; i--, j++) {
                 cuerpoFormateado = cuerpo.charAt(i) + cuerpoFormateado;
@@ -193,110 +212,119 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-            const form = document.querySelector('form');
-    
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-    
-                const formData = new FormData(form);
-    
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert(data.message);
-                            window.location.href = '/'; 
-                        } else {
-                            alert(data.message); 
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            });
-        });
-         
-        document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        const regionSelect = document.getElementById('region');
+        const ciudadSelect = document.getElementById('ciudad');
+
+        // Manejo del envío del formulario
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            limpiarNotificaciones();
             
-            const form = document.querySelector('form');
-    
-            form.addEventListener('submit', function (event) {
-                let isValid = true;
-                const nombre = document.getElementById('floatingInputUsername');
-                const nombreRegex = /^[a-zA-Z\s]+$/;
-                if (!nombreRegex.test(nombre.value.trim())) {
-                    isValid = false;
-                    alert("El nombre solo debe contener letras.");
-                    nombre.focus();
-                }
-                const rutInput = document.getElementById('floatingRut');
-                if (!validarRut(rutInput.value)) {
-                    isValid = false;
-                    alert("El RUT ingresado no es válido o no existe.");
-                    rutInput.focus();
-                    return; // Detener ejecución aquí si el RUT falla
-                }
-                const email = document.getElementById('floatingInputEmail');
-                if (!email.value.includes('@')) {
-                    isValid = false;
-                    alert("El correo debe contener un '@'.");
-                    email.focus();
-                }
-    
-                const telefonoInput = document.getElementById('visiblePhone');
-    // Validamos que el usuario haya escrito exactamente 8 dígitos en la caja visible
-                const telefonoRegex = /^\d{8}$/; 
-                
-                if (!telefonoRegex.test(telefonoInput.value.trim())) {
-                    isValid = false;
-                    alert("El teléfono debe tener exactamente 8 números (después del +56 9).");
-                    telefonoInput.focus();
-                }
-    
-                const contraseña = document.getElementById('floatingPassword');
-                const confirmarContraseña = document.getElementById('floatingPasswordConfirm');
-                if (contraseña.value !== confirmarContraseña.value) {
-                    isValid = false;
-                    alert("Las contraseñas no coinciden. Por favor, verifique.");
-                    confirmarContraseña.focus();
-                }
-                if (!isValid) {
-                    event.preventDefault(); 
-                }
-            });
-        });
-      
-    const regionSelect = document.getElementById('region');
-    const ciudadSelect = document.getElementById('ciudad');
-    
-    function cargarCiudades(region) {
-        fetch(`/obtener_ciudades/?region=${region}`)
-            .then(response => response.json())
-            .then(data => {
-                ciudadSelect.innerHTML = '<option value="" disabled selected>Seleccione una ciudad</option>';
-                if (data.ciudades && data.ciudades.length > 0) {
-                    ciudadSelect.disabled = false;
-                    data.ciudades.forEach(function (ciudad) {
-                        const option = document.createElement('option');
-                        option.value = ciudad;
-                        option.textContent = ciudad;
-                        ciudadSelect.appendChild(option);
-                    });
-                } else {
-                    ciudadSelect.disabled = true;
+            let isValid = true;
+            
+            // Validar nombre
+            const nombre = document.getElementById('floatingInputUsername');
+            const nombreRegex = /^[a-zA-Z\s]+$/;
+            if (!nombreRegex.test(nombre.value.trim())) {
+                isValid = false;
+                mostrarNotificacion("El nombre solo debe contener letras.");
+                nombre.focus();
+                return;
+            }
+            
+            // Validar RUT
+            const rutInput = document.getElementById('floatingRut');
+            if (!validarRut(rutInput.value)) {
+                isValid = false;
+                mostrarNotificacion("El RUT ingresado no es válido.");
+                rutInput.focus();
+                return;
+            }
+            
+            // Validar email
+            const email = document.getElementById('floatingInputEmail');
+            if (!email.value.includes('@')) {
+                isValid = false;
+                mostrarNotificacion("El correo debe contener un '@'.");
+                email.focus();
+                return;
+            }
+
+            // Validar teléfono
+            const telefonoInput = document.getElementById('visiblePhone');
+            const telefonoRegex = /^\d{8}$/;
+            if (!telefonoRegex.test(telefonoInput.value.trim())) {
+                isValid = false;
+                mostrarNotificacion("El teléfono debe tener 8 números.");
+                telefonoInput.focus();
+                return;
+            }
+
+            // Validar contraseñas
+            const contraseña = document.getElementById('floatingPassword');
+            const confirmarContraseña = document.getElementById('floatingPasswordConfirm');
+            if (contraseña.value !== confirmarContraseña.value) {
+                isValid = false;
+                mostrarNotificacion("Las contraseñas no coinciden.");
+                confirmarContraseña.focus();
+                return;
+            }
+
+            if (!isValid) return;
+
+            // Enviar formulario
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .catch(error => console.log('Error al cargar ciudades:', error));
-    }
-    
-    regionSelect.addEventListener('change', function () {
-        cargarCiudades(this.value);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarNotificacion(data.message || "¡Registro exitoso!", 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        mostrarNotificacion(data.message || "Error en el registro.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarNotificacion("Error al procesar el registro.");
+                });
+        });
+
+        // Cargar ciudades
+        function cargarCiudades(region) {
+            fetch(`/obtener_ciudades/?region=${region}`)
+                .then(response => response.json())
+                .then(data => {
+                    ciudadSelect.innerHTML = '<option value="" disabled selected>Seleccione una ciudad</option>';
+                    if (data.ciudades && data.ciudades.length > 0) {
+                        ciudadSelect.disabled = false;
+                        data.ciudades.forEach(function (ciudad) {
+                            const option = document.createElement('option');
+                            option.value = ciudad;
+                            option.textContent = ciudad;
+                            ciudadSelect.appendChild(option);
+                        });
+                    } else {
+                        ciudadSelect.disabled = true;
+                    }
+                })
+                .catch(error => console.log('Error al cargar ciudades:', error));
+        }
+        
+        regionSelect.addEventListener('change', function () {
+            cargarCiudades(this.value);
+        });
     });
-    
-    </script>
+</script>
 </body>
 </html>
