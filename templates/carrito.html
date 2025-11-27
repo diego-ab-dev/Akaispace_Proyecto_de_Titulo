@@ -166,8 +166,12 @@
       </div>
     </nav>
 
+
+
     <div id="carrito-container">
       <div class="card">
+        <div id="mensaje-error" style="display:none;" 
+     class="alert alert-danger text-center mt-3"></div>
           <div class="row">
               <div class="col-md-8 cart">
                   <div class="title">
@@ -353,6 +357,26 @@
         }).format(valor);
     }
 
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('keydown', function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            this.blur(); // opcional: forzar que salga del input
+        }
+        });
+    });
+
+    function mostrarError(mensaje) {
+    const errorBox = document.getElementById("mensaje-error");
+    errorBox.textContent = mensaje;
+    errorBox.style.display = "block";
+
+    setTimeout(() => {
+        errorBox.style.display = "none";
+    }, 3000);
+    }
+
+
     function actualizarCantidad(itemId) {
     const form = document.getElementById(`form-${itemId}`);
     const formData = new FormData(form);
@@ -387,7 +411,7 @@
 
             // si el carrito quedó vacío puede que otras partes deban actualizarse (opcional)
         } else if (data.error) {
-            alert(data.error);
+            mostrarError(data.error);
         }
     })
     .catch(error => console.error('Error:', error));
@@ -435,7 +459,7 @@ function eliminarItem(itemId, element) {
                 if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
             }
         } else if (data.error) {
-            alert(data.error);
+            mostrarError(data.error);
         }
     })
     .catch(error => console.error('Error:', error));
