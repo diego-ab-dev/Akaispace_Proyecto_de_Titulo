@@ -685,6 +685,20 @@ def lista_reclamos(request):
         'todos_reclamos': todos_reclamos,
     })
 
+def ver_detalle_reclamo(request, reclamo_id):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+    
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    
+    # Obtenemos el reclamo y verificamos que pertenezca a ese usuario
+    reclamo = get_object_or_404(Reclamo, id=reclamo_id, usuario=usuario)
+    
+    return render(request, 'detalle_reclamo.html', {
+        'reclamo': reclamo
+    })
+
 def cambiar_contraseña(request):
     errores = []
     if request.method == 'POST':

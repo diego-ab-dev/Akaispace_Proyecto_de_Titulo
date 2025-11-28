@@ -1,44 +1,219 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="{% static 'styles/styles_reclamo.css' %}">
-    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
-    <title>Reclamos - {{ usuario.nombre }}</title>
+    <title>Lista de Reclamos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- ESTILOS VISUALES (Igual a la imagen) --- */
+        body {
+            background-color: #EEF1F4;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #1a202c;
+            padding-bottom: 40px;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* --- HEADER --- */
+        .page-header {
+            position: relative;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .btn-regresar {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            text-decoration: none;
+            color: #000;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 2rem;
+            margin: 0;
+            color: #000;
+        }
+
+        /* --- TARJETA DE RECLAMO --- */
+        .reclamo-card {
+            background-color: white;
+            border-radius: 15px; /* Bordes redondeados */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+            padding: 25px;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        /* Tipografía dentro de la tarjeta */
+        .info-col {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        .label-bold {
+            font-weight: 800; /* Negrita fuerte como en la foto */
+            color: #000;
+        }
+
+        .text-value {
+            color: #333;
+        }
+
+        .desc-text {
+            color: #555;
+            font-size: 0.95rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 4; /* Limita a 4 líneas si es muy largo */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Botón Ver Más (Píldora Azul) */
+        .btn-ver-mas {
+            background-color: #527e99;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .btn-ver-mas:hover {
+            background-color: #3e6279;
+            color: white;
+        }
+
+        /* --- PAGINACIÓN --- */
+        .pagination-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 40px;
+            gap: 15px;
+        }
+
+        .page-item {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .page-item.active {
+            background-color: #527e99;
+            color: white;
+        }
+
+        .page-nav i { font-size: 1.2rem; color: #000; cursor: pointer; }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .page-header { display: flex; flex-direction: column; gap: 10px; }
+            .btn-regresar { position: relative; transform: none; }
+            .reclamo-card .row > div { margin-bottom: 15px; }
+            .btn-container-col { text-align: left !important; }
+        }
+    </style>
 </head>
 <body>
-    <div class="container my-5">
-        <h1 class="text-center fw-semibold fst-italic">Lista de Reclamos</h1>
-        <div class="reclamos-container">
-            <ul class="reclamos-list">
-                {% for reclamo in todos_reclamos %}
-                    <li class="reclamo-item">
-                        <div class="reclamo-header">
-                            <span class="reclamo-estado">Estado: {{ reclamo.estado }}</span>
-                            <span class="reclamo-fecha">{{ reclamo.fecha|date:"d/m/Y H:i" }}</span>
+
+    <div class="main-container">
+        
+        <div class="page-header">
+            <a href="{% url 'perfil' %}" class="btn-regresar">
+                <i class="fa-solid fa-arrow-left-long"></i> Regresar
+            </a>
+            <h1>Lista de Reclamos Realizados</h1>
+        </div>
+
+        <div class="reclamos-list">
+            {% for reclamo in todos_reclamos %}
+            <div class="reclamo-card">
+                <div class="row align-items-center">
+                    
+                    <div class="col-lg-3 info-col">
+                        <div><span class="label-bold">ID {{ reclamo.id }}</span></div>
+                        
+                        <div class="mt-2">
+                            <span class="label-bold">Estado:</span> 
+                            <span class="text-value">{{ reclamo.estado }}</span>
                         </div>
-                        <p class="reclamo-asunto"><strong>Asunto:</strong> {{ reclamo.asunto }}</p>
-                        <p class="reclamo-descripcion">{{ reclamo.descripcion }}</p>
+                        
+                        <div>
+                            <span class="label-bold">Fecha:</span> 
+                            <span class="text-value">{{ reclamo.fecha|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 info-col">
+                        <span class="label-bold">Asunto:</span> 
+                        <span class="text-value">{{ reclamo.asunto }}</span>
+                    </div>
+
+                    <div class="col-lg-4 info-col">
+                        <span class="label-bold">Descripción:</span> 
+                        <span class="desc-text">
+                            {{ reclamo.descripcion }}
+                        </span>
                         {% if reclamo.respuesta %}
-                            <p class="reclamo-respuesta"><strong>Respuesta del administrador:</strong> {{ reclamo.respuesta }}</p>
+                            <small class="text-success fw-bold d-block mt-1">
+                                <i class="fa-solid fa-check"></i> Respondido
+                            </small>
                         {% endif %}
-                    </li>
-                {% empty %}
-                    <li class="reclamo-item text-center">No hay reclamos disponibles.</li>
-                {% endfor %}
-            </ul>
-            
+                    </div>
+
+                    <div class="col-lg-2 text-end btn-container-col">
+                        <a href="{% url 'ver_detalle_reclamo' reclamo.id %}" class="btn-ver-mas">
+                            Ver Más
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <p class="h5 text-muted">No tienes reclamos registrados.</p>
+            </div>
+            {% endfor %}
         </div>
-        <div class="text-center mt-4">
-            <a href="{% url 'perfil' %}" class="btn btn-minimal">Volver</a>
+
+        <div class="pagination-wrapper">
+            <a href="#" class="page-nav"><i class="fa-solid fa-chevron-left"></i></a>
+            <span class="page-item active">1</span>
+            <a href="#" class="page-item">2</a>
+            <a href="#" class="page-item">3</a>
+            <span class="page-dots">...</span>
+            <a href="#" class="page-nav"><i class="fa-solid fa-chevron-right"></i></a>
         </div>
-    </div>  
+
+    </div>
+
 </body>
 </html>
