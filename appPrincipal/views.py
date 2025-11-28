@@ -361,7 +361,7 @@ def productos_menu(request):
 
     productos = Producto.objects.filter(stock__gt=0).order_by('-id')
 
-    paginator = Paginator(productos, 8)  # 👉 MUESTRA 8 productos por página
+    paginator = Paginator(productos, 16) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
