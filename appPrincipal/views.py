@@ -105,26 +105,6 @@ def admin_usuarios(request):
     return render(request, 'admin_panel/usuarios.html', {'usuarios': usuarios})
 
 @admin_required
-def editar_usuario(request, usuario_id):
-    usuario = get_object_or_404(Usuario, id=usuario_id)
-    if request.method == 'POST':
-        form = UsuarioForm(request.POST, instance=usuario)
-        if form.is_valid():
-            form.save()
-            print("Usuario actualizado:", form.cleaned_data)
-            return redirect('admin_usuarios')  
-        else:
-            print("Errores en el formulario:", form.errors)
-    else:
-        form = UsuarioForm(instance=usuario)
-    
-    return render(request, 'admin_panel/editar_usuario.html', {
-        'form': form,
-        'usuario': usuario,
-        'regiones_ciudades': regiones_ciudades,
-    })
-
-@admin_required
 def eliminar_usuario(request, usuario_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     usuario.delete()
@@ -296,11 +276,10 @@ def editar_producto(request, producto_id):
 # fin
 
 
-# opiniones en administracion
+# devoluciones en administracion
 @admin_required
-def admin_opiniones(request):
-    opiniones = Opinion.objects.select_related('usuario', 'producto').all()
-    return render(request, 'admin_panel/opiniones.html', {'opiniones': opiniones})
+def admin_devoluciones(request):
+    return render(request, 'admin_panel/devoluciones.html')
 #fin
 
 
