@@ -1026,6 +1026,64 @@ a:hover {
 }
 
 
+/* --- Estilos Paginación Forzada --- */
+
+.pagination-wrapper {
+    margin-top: 40px;
+    margin-bottom: 60px; /* Espacio vital antes del footer */
+    z-index: 10; /* Asegura que esté por encima de otros elementos */
+    position: relative;
+}
+
+.custom-page-link {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important; /* Círculos perfectos */
+    margin: 0 8px; /* Separación entre botones */
+    border: 1px solid #dee2e6;
+    color: #1C253B; /* Tu azul oscuro */
+    font-weight: bold;
+    font-size: 1.1rem;
+    background-color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+/* Estado Hover */
+.custom-page-link:hover {
+    background-color: #EEF1F4;
+    color: #00D2D5; /* Tu color cyan al pasar el mouse */
+    transform: translateY(-3px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    border-color: #00D2D5;
+}
+
+/* Estado Activo (Página actual) */
+.page-item.active .custom-page-link {
+    background-color: #1C253B;
+    border-color: #1C253B;
+    color: #ffffff;
+    pointer-events: none; /* No clicable */
+}
+
+/* Estado Deshabilitado (Flechas sin función) */
+.page-item.disabled .custom-page-link {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    border-color: #dee2e6;
+    cursor: default;
+}
+
+/* Eliminar estilos por defecto de Bootstrap que molestan */
+.page-item:first-child .page-link, 
+.page-item:last-child .page-link {
+    border-radius: 50% !important;
+}
+
+
 
 @keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1 } }		
 
@@ -1059,7 +1117,7 @@ a:hover {
 .go-top-button {
   width: 0rem;
   height: 0rem;
-  background: #5a5d64;
+  background: #1C253B;
   border-radius: 50%;
   cursor: pointer;
   transition: 0.2s;

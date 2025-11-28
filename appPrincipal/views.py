@@ -18,6 +18,7 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 from django.contrib import messages
 from .forms import OpinionForm
+from django.core.paginator import Paginator
 
 # Create your views here.
 
@@ -371,17 +372,32 @@ def home(request):
 
 def productos_menu(request):
     query = request.GET.get('buscar')
+    
     if query:
         productos = Producto.objects.filter(nombre__icontains=query, stock__gt=0)
-        return render(request, 'resultado_busqueda.html', {'productos': productos, 'query': query})
-    else:
-        productos = Producto.objects.filter(stock__gt=0) 
-        productos_recientes = Producto.objects.filter(stock__gt=0).order_by('-id')[:10]
-        return render(request, 'productosmenu.html', {
+        return render(request, 'resultado_busqueda.html', {
             'productos': productos,
-            'productos_recientes': productos_recientes,
+            'query': query
         })
-    
+
+    productos = Producto.objects.filter(stock__gt=0).order_by('-id')
+
+    paginator = Paginator(productos, 8)  # 👉 MUESTRA 8 productos por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
+    fc25 = Producto.objects.filter(nombre="Fc 25").first()
+    silent = Producto.objects.filter(nombre="Silent Hill 2").first()
+
+    return render(request, 'productosmenu.html', {
+        'page_obj': page_obj,
+        'productos': page_obj.object_list,  
+        'cod6': cod6,
+        'fc25': fc25,
+        'silent': silent,
+    })
+
 def producto_detalle(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     rango_cantidad = range(1, producto.stock + 1)
