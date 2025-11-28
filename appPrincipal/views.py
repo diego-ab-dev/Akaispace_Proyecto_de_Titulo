@@ -995,4 +995,10 @@ def compra_exitosa(request, usuario_id):
         'venta': venta,
         'metodo_pago': metodo_pago,
     })
+
+
+def ver_boleta(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+    # Aquí puedes añadir validación para que solo el dueño de la venta pueda verla
+    return render(request, 'boleta.html', {'venta': venta})
 # fin de vistas relacionadas con pago y envio

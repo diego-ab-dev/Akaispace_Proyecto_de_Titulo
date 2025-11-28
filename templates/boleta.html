@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+{% load static %}
+{% load custom_filters %} <html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Boleta Nº {{ venta.id }} - SD Games</title>
+    <style>
+        body {
+            background-color: #555; /* Fondo oscuro para resaltar la boleta */
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            padding-top: 30px;
+        }
+        .boleta-container {
+            width: 380px; /* Ancho típico de boleta */
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        .header, .footer { text-align: center; }
+        .header h2 { margin: 0; text-transform: uppercase; }
+        .info-empresa { font-size: 12px; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 10px;}
+        .info-cliente { font-size: 13px; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 10px;}
+        
+        .tabla-productos { width: 100%; font-size: 12px; margin-bottom: 10px; }
+        .tabla-productos td { padding: 2px 0; }
+        .precio { text-align: right; }
+        
+        .totales { border-top: 1px dashed #000; padding-top: 5px; font-size: 14px; }
+        .row-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-top: 5px;}
+        
+        .barcode { text-align: center; margin-top: 20px; font-size: 24px; letter-spacing: 3px; font-family: sans-serif;}
+        
+        .btn-print {
+            display: block; width: 100%; padding: 10px; background: #000; color: #fff;
+            border: none; margin-top: 20px; cursor: pointer; font-family: sans-serif;
+            text-transform: uppercase; font-weight: bold;
+        }
+        
+        @media print {
+            body { background: none; }
+            .btn-print { display: none; }
+            .boleta-container { box-shadow: none; width: 100%; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="boleta-container">
+        <div class="header">
+            <h2>SD GAMES</h2>
+            <div class="info-empresa">
+                <p>R.U.T.: 76.999.888-K</p>
+                <p>Boleta Electrónica Nº {{ venta.id }}</p>
+                <p>Valdivia, Av. Simpson 641</p>
+                <p>Fecha: {% now "d/m/Y H:i" %}</p> </div>
+        </div>
+
+        <div class="info-cliente">
+            <strong>Cliente:</strong> {{ venta.usuario.nombre }}<br>
+            <strong>RUT:</strong> {{ venta.usuario.rut }}<br>
+            <strong>Dirección:</strong> {{ venta.usuario.direccion }}<br>
+            <strong>Ciudad:</strong> {{ venta.usuario.ciudad }}
+        </div>
+
+        <table class="tabla-productos">
+            {% for item in venta.producto_venta.all %}
+            <tr>
+                <td>{{ item.cantidad }} x {{ item.producto.nombre|truncatechars:20 }}</td>
+                <td class="precio">${{ item.total_producto|formato_chileno }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="totales">
+            <div style="display:flex; justify-content:space-between;">
+                <span>Subtotal:</span>
+                <span>${{ venta.subtotal|formato_chileno }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span>Envío:</span>
+                <span>${{ venta.envio|formato_chileno }}</span>
+            </div>
+            <br>
+            <div class="row-total">
+                <span>TOTAL:</span>
+                <span>${{ venta.total|formato_chileno }}</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p style="font-size: 10px; margin-top: 20px;">Timbre Electrónico SII<br>Res. 80 de 2025</p>
+            <div class="barcode">||| |||| || | |||| ||</div>
+            <p style="font-size: 12px;">¡Gracias por preferirnos!</p>
+        </div>
+
+        <button onclick="window.print()" class="btn-print">Imprimir Boleta</button>
+    </div>
+
+</body>
+</html>

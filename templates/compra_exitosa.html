@@ -67,6 +67,12 @@
                 {% endfor %}
             </div>
         </div>
+        <div class="text-center mt-4 d-flex justify-content-center gap-3">
+            <a href="{% url 'ver_boleta' venta.id %}" target="_blank" class="btn btn-dark">
+                📄 Ver Boleta Electrónica
+            </a>
+
+        </div>
         <div class="text-center mt-4">
             <a href="{% url 'home' %}" class="btn btn-minimal">Volver</a>
         </div>
