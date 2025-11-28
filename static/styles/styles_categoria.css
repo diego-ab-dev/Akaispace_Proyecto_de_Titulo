@@ -701,24 +701,24 @@ nav .navbar .links li .sub-menu li{
     filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.8));
   }
   
-  .btn-detalles {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 20px auto; 
-    width: fit-content; 
-    padding: 10px 20px;
-    background-color: #9c9592; 
-    color: #fff;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-  }
-  
-  .btn-detalles:hover {
-    background-color: #6e6e6e; 
-    color: #fff;
-  }
+.btn-detalles {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px auto; 
+  width: fit-content; 
+  padding: 10px 20px;
+  background-color: #1C253B; 
+  color: #fff;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: background-color 0.3s;
+}
+
+.btn-detalles:hover {
+  background-color: #344266; 
+  color: #fff;
+}
 
 @keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1 } }		
 
@@ -744,7 +744,7 @@ nav .navbar .links li .sub-menu li{
     position: sticky;
     top: 20px;
     z-index: 1;
-    background-color: #2c2e33;
+    background-color: #1C253B;
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
@@ -756,11 +756,13 @@ nav .navbar .links li .sub-menu li{
 }
 
 .btn{
-  background-color: #9c9592;
+  background-color: #4E84A8;
+  color: #FFFFFF;
 }
 
 .btn:hover{
-  background-color: #6e6e6e;
+  background-color: #93c4e5;
+  color: #000000;
 }
 
 @media (max-width: 768px) {
@@ -788,7 +790,7 @@ nav .navbar .links li .sub-menu li{
 .go-top-button {
   width: 0rem;
   height: 0rem;
-  background: #5a5d64;
+  background: #1C253B;
   border-radius: 50%;
   cursor: pointer;
   transition: 0.2s;

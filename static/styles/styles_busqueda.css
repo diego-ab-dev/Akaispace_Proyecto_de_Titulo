@@ -714,15 +714,15 @@ a:hover {
   margin: 20px auto; 
   width: fit-content; 
   padding: 10px 20px;
-  background-color: #9c9592; 
+  background-color: #1C253B; 
   color: #fff;
   text-decoration: none;
-  border-radius: 5px;
+  border-radius: 2px;
   transition: background-color 0.3s;
 }
 
 .btn-detalles:hover {
-  background-color: #6e6e6e; 
+  background-color: #344266; 
   color: #fff;
 }
 
@@ -781,7 +781,7 @@ animation-play-state: paused;
 .go-top-button {
   width: 0rem;
   height: 0rem;
-  background: #5a5d64;
+  background: #1C253B;
   border-radius: 50%;
   cursor: pointer;
   transition: 0.2s;
