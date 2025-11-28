@@ -1,103 +1,114 @@
-/* Fondo del formulario */
+/* Fondo general igual a la imagen */
 body {
     height: 100vh;
     margin: 0;
-    color: #333;
-    text-align: left;
-    background-color: #EEF1F4;
-    font-family: Arial, sans-serif;
+    background-color: #EEF1F4; /* Gris azulado claro */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
-    justify-content: center; 
+    justify-content: center;
     align-items: center;
-}
-
-/* Contenedor del formulario */
-.form-container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Título del formulario */
-.form-title {
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 20px;
     color: #333;
 }
 
-/* Grupos de formulario */
-.form-group {
-    margin-bottom: 15px;
+/* La tarjeta blanca centrada */
+.pass-card {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 480px;
+}
+
+/* Título */
+.form-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 25px;
+    color: #000;
 }
 
 /* Etiquetas */
 .form-label {
+    font-weight: 500;
+    font-size: 1.05rem;
+    color: #000;
+    margin-bottom: 6px;
     display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
-    color: #555;
 }
 
-/* Entradas */
-.form-input {
+/* Inputs */
+.form-control {
     width: 100%;
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
-    background-color: #f9f9f9;
-    transition: border-color 0.3s;
-}
-
-.form-input:focus {
-    border-color: #a1887f;
-    outline: none;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
     background-color: #fff;
+    box-sizing: border-box; /* Asegura que el padding no rompa el ancho */
 }
 
-/* Botón */
-.form-button {
-    width: 100%;
-    padding: 10px 15px;
-    background-color: #a1887f; /* Marrón suave */
-    border: none;
-    border-radius: 5px;
-    color: #fff;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s;
+.form-control:focus {
+    border-color: #5A84A5;
+    box-shadow: 0 0 0 3px rgba(90, 132, 165, 0.15);
+    outline: none;
 }
 
-.form-button:hover {
-    background-color: #8d6e63; /* Marrón más oscuro */
-}
-
-/* Mensajes */
-#message-container {
+/* Espaciado de grupos */
+.mb-3 {
     margin-bottom: 15px;
 }
 
-.message {
-    font-size: 14px;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    text-align: center;
+/* Grupo de Botones (Lado a lado) */
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 35px;
 }
 
-.message.error {
-    background-color: #e57373; /* Rojo */
-    color: #fff;
+/* Botón Guardar (Azul grisáceo de la foto) */
+.btn-guardar {
+    background-color: #5A84A5;
+    color: white;
+    border: none;
+    padding: 10px 0;
+    width: 140px;
+    border-radius: 20px; /* Redondeado */
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
-.message.success {
-    background-color: #81c784; /* Verde */
-    color: #fff;
+.btn-guardar:hover {
+    background-color: #4a6f8a;
 }
 
+/* Botón Cancelar (Azul oscuro/Negro de la foto) */
+.btn-cancelar {
+    background-color: #1F2533;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    padding: 10px 0;
+    border-radius: 20px; /* Redondeado */
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.btn-cancelar:hover {
+    background-color: #000;
+    color: white;
+}
+
+/* Ajuste para las alertas de Bootstrap dentro de la tarjeta */
+.alert {
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
