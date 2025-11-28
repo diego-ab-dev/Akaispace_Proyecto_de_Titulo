@@ -18,7 +18,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
-from appPrincipal.views import home,ver_boleta, login, register, productos_menu, producto_detalle, carrito, vista_carrusel, logout, productos_por_categoria, perfil, editar_perfil, obtener_ciudades, cambiar_contraseña,  agregar_al_carrito, eliminar_del_carrito, actualizar_cantidad_carrito, ver_carrito, lista_favoritos, agregar_favorito, eliminar_favorito, password_reset_request, ver_compras, lista_opiniones, crear_reclamo, lista_reclamos, seleccionar_envio, seleccionar_pago, compra_exitosa, admin_dashboard, admin_productos, admin_usuarios, editar_producto, editar_usuario, agregar_producto, buscar_productos, buscar_usuarios, eliminar_producto, eliminar_usuario, admin_opiniones, admin_reclamos, responder_reclamo, admin_ventas, crear_usuario, get_dashboard_counts, admin_cambiar_estado_venta, enviar_opinion, guardar_datos_envio 
+from appPrincipal.views import home,ver_boleta, login, register, productos_menu, producto_detalle, carrito, vista_carrusel, logout, productos_por_categoria, perfil, editar_perfil, obtener_ciudades, cambiar_contraseña,  agregar_al_carrito, eliminar_del_carrito, actualizar_cantidad_carrito, ver_carrito, lista_favoritos, agregar_favorito, eliminar_favorito, password_reset_request, ver_compras, lista_opiniones, crear_reclamo, lista_reclamos, seleccionar_envio, seleccionar_pago, compra_exitosa, admin_dashboard, admin_productos, admin_usuarios, editar_producto, editar_usuario, agregar_producto, buscar_productos, buscar_usuarios, eliminar_producto, eliminar_usuario, admin_opiniones, admin_reclamos, responder_reclamo, admin_ventas, crear_usuario, get_dashboard_counts, admin_cambiar_estado_venta, enviar_opinion, guardar_datos_envio, eliminar_favoritos_seleccionados 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -48,6 +48,7 @@ urlpatterns = [
     path('favorites/', lista_favoritos, name='lista_favorito'),
     path('agregar_favorito/<int:producto_id>/', agregar_favorito, name='agregar_favorito'),
     path('remove_favorito/<int:item_id>/', eliminar_favorito, name='eliminar_favorito'),
+    path('eliminar_favoritos_seleccionados/', eliminar_favoritos_seleccionados, name='eliminar_favoritos_seleccionados'),
     path('obtener_ciudades/', obtener_ciudades, name='obtener_ciudades'),
     path('password-reset/', password_reset_request, name='password_reset'),
     path('seleccionar-envio/<int:usuario_id>/', seleccionar_envio, name='seleccionar_envio'),

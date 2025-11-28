@@ -540,22 +540,18 @@ nav .navbar .links li:hover .js-sub-menu {
   }
 }
 
-/* --- Estilos Pantalla Favoritos --- */
-body {
-  background-color: #EEF1F4;
-}
 
+/* whish list principal */
 .wishlist-container {
-    min-height: 500px; /* Altura mínima para que se vea bien */
+    min-height: 500px; 
 }
 
 .wishlist-item:last-child {
-    border-bottom: none !important; /* Quitar borde al último elemento */
+    border-bottom: none !important; 
 }
 
-/* Botón Ver Producto Oscuro */
 .btn-dark {
-    background-color: #1C253B; /* Tu azul oscuro corporativo */
+    background-color: #1C253B; 
     border-color: #1C253B;
     font-size: 0.9rem;
     transition: all 0.3s ease;
@@ -566,21 +562,20 @@ body {
     transform: translateY(-2px);
 }
 
-/* Checkbox estilo cuadrado */
 .form-check-input {
     width: 1.2em;
     height: 1.2em;
     cursor: pointer;
 }
 
-/* Paginación Limpia */
 .page-link {
     background-color: transparent;
 }
 .page-item.active .page-link {
-    background-color: #4E84A8 !important; /* Azul medio para el activo */
-    color: white !important;
+    background-color: #4E84A8 !important; 
 }
+
+
 /*footer*/
 footer {
   background-color: #1C253B;

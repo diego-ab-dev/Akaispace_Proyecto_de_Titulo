@@ -927,6 +927,26 @@ def eliminar_favorito(request, item_id):
     favorito = get_object_or_404(Favorito, id=item_id)
     favorito.delete()
     return JsonResponse({'message': 'Artículo eliminado correctamente'}, status=200)
+
+@require_http_methods(["POST"])
+def eliminar_favoritos_seleccionados(request):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return JsonResponse({'success': False, 'error': 'No autorizado'}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        item_ids = data.get('ids', [])
+
+        if item_ids:
+            # Borramos solo los favoritos que pertenezcan a este usuario para seguridad
+            Favorito.objects.filter(id__in=item_ids, usuario__id=usuario_id).delete()
+            return JsonResponse({'success': True})
+        
+        return JsonResponse({'success': False, 'error': 'No se seleccionaron items'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
 # fin de las vistas de los favoritos
 
 
