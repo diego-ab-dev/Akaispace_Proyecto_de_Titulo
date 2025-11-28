@@ -592,6 +592,8 @@ def ver_compras(request):
     if not usuario_id:
         return redirect('login')
     
+
+    
     usuario = get_object_or_404(Usuario, id=usuario_id)
     compras = Venta.objects.filter(usuario=usuario).prefetch_related(
         'producto_venta__producto'
@@ -604,39 +606,49 @@ def ver_compras(request):
 
     return render(request, 'ver_compras.html', {'usuario': usuario, 'compras': compras})
 
+def ver_detalle_compra(request, compra_id):
+    # Obtenemos la compra específica
+    compra = get_object_or_404(Venta, id=compra_id)
+    return render(request, 'detalle_compra.html', {
+        'compra': compra
+    })
 
 def enviar_opinion(request, producto_id):
+    # 1. Validación de Sesión (Estilo de tu proyecto)
     usuario_id = request.session.get('usuario_id')
     if not usuario_id:
-        return redirect('login') 
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
-    producto = get_object_or_404(Producto, id=producto_id)
+        return redirect('login') # Si no hay sesión, manda al login
     
-    producto_comprado = ProductoVenta.objects.filter(
-        venta__usuario=usuario,
-        producto=producto
-    ).exists()
+    # 2. Obtener objetos (Usuario y Producto)
+    usuario_actual = get_object_or_404(Usuario, id=usuario_id)
+    producto = get_object_or_404(Producto, id=producto_id)
 
-    if not producto_comprado:
-        return redirect('ver_compras')  
+    # 3. VERIFICACIÓN: ¿Ya existe la opinión?
+    ya_opino = Opinion.objects.filter(usuario=usuario_actual, producto=producto).exists()
 
+    if ya_opino:
+        # Si es True, mostramos el template de aviso
+        return render(request, 'ya_opinaste.html', {'producto': producto})
+
+    # 4. Lógica normal del formulario
     if request.method == 'POST':
         form = OpinionForm(request.POST)
         if form.is_valid():
-            opinion = form.save(commit=False)
-            opinion.usuario = usuario  
-            opinion.producto = producto
-            opinion.save()
-            return redirect('ver_compras')  
+            try:
+                nueva_opinion = form.save(commit=False)
+                nueva_opinion.usuario = usuario_actual
+                nueva_opinion.producto = producto
+                nueva_opinion.save()
+                return redirect('perfil') 
+            except Exception as e:
+                print(e)
     else:
         form = OpinionForm()
 
     return render(request, 'enviar_opinion.html', {
-        'producto': producto,
         'form': form,
+        'producto': producto
     })
-
 
 def crear_reclamo(request, compra_id):
     usuario_id = request.session.get('usuario_id')

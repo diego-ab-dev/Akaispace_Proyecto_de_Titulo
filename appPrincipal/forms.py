@@ -102,10 +102,7 @@ class OpinionForm(forms.ModelForm):
     class Meta:
         model = Opinion
         fields = ['puntuacion', 'comentario']
-        widgets = {
-            'puntuacion': forms.Select(choices=[(i, str(i)) for i in range(1, 6)]),
-            'comentario': forms.Textarea(attrs={'rows': 4}),
-        }
+        
 
 
 # administracion

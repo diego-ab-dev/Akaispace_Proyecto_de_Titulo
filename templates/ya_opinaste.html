@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ya opinaste</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #EEF1F4;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .message-card {
+            background-color: white;
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            background-color: #FFF3CD; /* Fondo amarillo suave */
+            color: #856404; /* Color texto amarillo oscuro */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            margin: 0 auto 20px auto;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .btn-volver {
+            background-color: #1F2533;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            transition: 0.2s;
+        }
+
+        .btn-volver:hover {
+            background-color: #000;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="message-card">
+        <div class="icon-circle">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h1>¡Ya opinaste!</h1>
+        <p>Ya registramos tu valoración para el producto <strong>"{{ producto.nombre }}"</strong>. Solo puedes opinar una vez por producto.</p>
+        
+        <a href="javascript:history.back()" class="btn-volver">Volver atrás</a>
+    </div>
+
+</body>
+</html>
