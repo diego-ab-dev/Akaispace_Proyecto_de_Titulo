@@ -4,7 +4,7 @@ from appPrincipal import forms
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
@@ -402,31 +402,46 @@ def producto_detalle(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     rango_cantidad = range(1, producto.stock + 1)
 
-    promedio_puntuacion = producto.opiniones.aggregate(Avg('puntuacion'))['puntuacion__avg']
-    promedio_puntuacion = round(promedio_puntuacion, 1) if promedio_puntuacion else 0
+    # Ordenamos las opiniones por fecha descendente (lo más nuevo primero)
+    opiniones = producto.opiniones.all().order_by('-fecha_creacion')
 
-    opiniones = producto.opiniones.all()
-    opiniones_list = [
-        {
-            "usuario": opinion.usuario.nombre,
-            "comentario": opinion.comentario,
-            "fecha": opinion.fecha_creacion,
-            "estrellas_llenas": range(opinion.puntuacion),  
-            "estrellas_vacias": range(5 - opinion.puntuacion),  
-        }
-        for opinion in opiniones
-    ]
+    # Promedio
+    promedio_puntuacion = opiniones.aggregate(avg=Avg('puntuacion'))['avg'] or 0
+    promedio_puntuacion = round(promedio_puntuacion, 1)
 
-    return render(
-        request,
-        'producto_detalle.html',
-        {
-            'producto': producto,
-            'rango_cantidad': rango_cantidad,
-            'promedio_puntuacion': promedio_puntuacion,
-            'opiniones_list': opiniones_list,  
-        },
-    )
+    # Estrellas para el promedio general
+    full_stars = int(promedio_puntuacion)
+    half_star = (promedio_puntuacion - full_stars) >= 0.5
+    # Truco: range en python para el template
+    full_stars_range = range(full_stars)
+    empty_stars_range = range(5 - full_stars - (1 if half_star else 0))
+
+    # Conteo para las barras (Histograma)
+    total_opiniones = opiniones.count()
+    ratings_data = []
+    
+    # Iteramos de 5 a 1 para que la barra de 5 estrellas salga primero
+    for score in range(5, 0, -1):
+        count = opiniones.filter(puntuacion=score).count()
+        percent = (count / total_opiniones * 100) if total_opiniones > 0 else 0
+        ratings_data.append({
+            "score": score,
+            "count": count,
+            "percent": round(percent, 1)
+        })
+
+    return render(request, "producto_detalle.html", {
+        "producto": producto,
+        "rango_cantidad": rango_cantidad,
+        "opiniones": opiniones, # Ahora ordenadas
+        "promedio_puntuacion": promedio_puntuacion,
+        "full_stars_range": full_stars_range, # Pasamos rangos, no listas de ints
+        "half_star": half_star,
+        "empty_stars_range": empty_stars_range,
+        "ratings": ratings_data, # Datos listos para iterar
+        "total_opiniones": total_opiniones,
+    })
+
     
 def vista_carrusel(request):
     productos = Producto.objects.all()
