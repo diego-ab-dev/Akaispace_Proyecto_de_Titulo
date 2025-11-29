@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+{% load static %}
+{% load custom_filters %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitudes de Devolución</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #EEF1F4;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #1a202c;
+            padding-bottom: 40px;
+        }
+
+        .main-container {
+            max-width: 1000px; /* Ancho controlado */
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Título y Botón Volver */
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .page-header h2 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #111;
+        }
+
+        .btn-regresar {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            text-decoration: none;
+            color: #000;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* --- TARJETA DE DEVOLUCIÓN (Estilo exacto a la imagen) --- */
+        .devolucion-card {
+            background-color: white;
+            border-radius: 16px; /* Bordes muy redondeados */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease;
+        }
+
+        .devolucion-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+        }
+
+        /* Imagen Placeholder */
+        .product-thumb {
+            width: 80px;
+            height: 80px;
+            background-color: #E2E8F0; /* Gris claro */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px; /* Borde suave */
+            overflow: hidden;
+        }
+        
+        .product-thumb i {
+            font-size: 2rem;
+            color: #A0AEC0; /* Gris icono */
+        }
+
+        .product-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Textos */
+        .info-label {
+            font-weight: 800; /* Negrita fuerte */
+            color: #000;
+            font-size: 1rem;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .info-value {
+            color: #4A5568;
+            font-weight: 500;
+        }
+
+        /* ID */
+        .devolucion-id {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #000;
+            margin-bottom: 5px;
+        }
+
+        /* Botón Ver Más */
+        .btn-ver-mas {
+            background-color: #527e99; /* Azul acero */
+            color: white;
+            border: none;
+            border-radius: 30px; /* Píldora */
+            padding: 10px 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-ver-mas:hover {
+            background-color: #3e6279;
+            color: white;
+        }
+
+        /* Paginación (Círculo azul) */
+        .pagination-container {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-number {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .page-number.active {
+            width: 45px;
+            height: 45px;
+            background-color: #527e99;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .arrow-nav {
+            font-size: 1.2rem;
+            color: #000;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header { margin-top: 50px; }
+            .btn-regresar { top: 0; }
+            .devolucion-card .row > div { text-align: center; margin-bottom: 15px; }
+            .product-thumb { margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        
+        <div class="page-header">
+            <a href="{% url 'perfil' %}" class="btn-regresar">
+                <i class="fa-solid fa-arrow-left"></i> Regresar
+            </a>
+            <h2>Solicitudes Enviadas de Devolución</h2>
+        </div>
+
+        <div class="devoluciones-list">
+            
+            {% for devolucion in todos_devoluciones %}
+            <div class="devolucion-card">
+                <div class="row align-items-center">
+                    
+                    <div class="col-md-2 text-center">
+                        <div class="product-thumb">
+                            {% if devolucion.producto.imagen_principal %}
+                                <img src="{{ devolucion.producto.imagen_principal.url }}" alt="{{ devolucion.producto.nombre }}">
+                            {% else %}
+                                <i class="far fa-image"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="devolucion-id">ID #{{ devolucion.id }}</div>
+                        
+                        <div class="mb-1">
+                            <span class="info-label">Nombre del Producto</span>
+                            <div class="info-value fw-bold text-dark">{{ devolucion.producto.nombre }}</div>
+                        </div>
+
+                        <div>
+                            <span class="info-label" style="display:inline;">Estado: </span>
+                            <span class="info-value">{{ devolucion.estado }}</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 text-center">
+                        <span class="info-label" style="display:inline;">Fecha: </span>
+                        <span class="info-value">{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</span>
+                    </div>
+
+                    <div class="col-md-3 text-end">
+                        <a href="#" class="btn-ver-mas">Ver Más</a>
+                    </div>
+
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <h5 class="text-muted">No has realizado solicitudes de devolución.</h5>
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="pagination-container">
+            <a href="#" class="arrow-nav"><i class="fa-solid fa-chevron-left"></i></a>
+            <span class="page-number active">1</span>
+            <a href="#" class="page-number">2</a>
+            <a href="#" class="page-number">3</a>
+            <span class="fw-bold">...</span>
+            <a href="#" class="arrow-nav"><i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+
+    </div>
+
+</body>
+</html>

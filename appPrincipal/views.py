@@ -753,6 +753,19 @@ def crear_devolucion(request, compra_id, producto_id):
     })
 
 
+def listar_devoluciones(request):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    todos_devoluciones = Devolucion.objects.filter(usuario=usuario).order_by('-id')
+
+    return render(request, 'lista_devoluciones.html', {
+        'todos_devoluciones': todos_devoluciones,
+    })
+
+
 
 
 def cambiar_contraseña(request):
@@ -1117,6 +1130,5 @@ def compra_exitosa(request, usuario_id):
 
 def ver_boleta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
-    # Aquí puedes añadir validación para que solo el dueño de la venta pueda verla
     return render(request, 'boleta.html', {'venta': venta})
 # fin de vistas relacionadas con pago y envio
