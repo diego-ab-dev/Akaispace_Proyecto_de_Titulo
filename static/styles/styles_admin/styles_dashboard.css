@@ -185,8 +185,8 @@ margin-top: 18px;
             overflow: hidden;
         }
         .main_counter_area .main_counter_content .single_counter{
-            background: #7a99bd;
-                color: #fff;
+            background: #fafafa;
+                color: #000000;
                 padding: 20px;
         }
         .main_counter_area .main_counter_content .single_counter i{
@@ -218,12 +218,12 @@ margin-top: 18px;
         
         .single_counter i {
             font-size: 36px;
-            color: #ffffff;
+            color: #000000;
         }
         
         .card-link {
             text-decoration: none;
-            color: white;
+            color: rgb(0, 0, 0);
         }
         
         .card-link:hover p {

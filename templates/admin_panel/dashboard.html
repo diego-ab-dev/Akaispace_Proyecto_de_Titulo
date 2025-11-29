@@ -57,8 +57,8 @@
                         <span class="nav_name">Reclamos</span> 
                     </a> 
                     <a href="{% url 'admin_devoluciones' %}" class="nav_link"> 
-                        <i class='bx bx-chat nav_icon'></i> 
-                        <span class="nav_name">Opiniones</span> 
+                        <i class='bx bx-revision nav_icon'></i> 
+                        <span class="nav_name">Devoluciones</span> 
                     </a> 
                 </div>
             </div> 
@@ -76,14 +76,6 @@
                         <div class="row">
                             <h3>Resumen de SD Games:</h3>
                             <div class="main_counter_content d-flex justify-content-center flex-wrap gap-4">
-                                <!-- Card de Usuarios -->
-                                <div class="single_counter p-y-2 m-t-1">
-                                    <a href="{% url 'admin_usuarios' %}" class="card-link">
-                                        <i class="fa fa-users m-b-1"></i>
-                                        <h2 class="statistic-counter" id="usuarios-count">0</h2>
-                                        <p>Usuarios</p>
-                                    </a>
-                                </div>
                                 <!-- Card de Ventas -->
                                 <div class="single_counter p-y-2 m-t-1">
                                     <a href="{% url 'admin_ventas' %}" class="card-link">
@@ -92,20 +84,28 @@
                                         <p>Ventas</p>
                                     </a>
                                 </div>
+                                <!-- Card de Usuarios -->
+                                <div class="single_counter p-y-2 m-t-1">
+                                    <a href="{% url 'admin_usuarios' %}" class="card-link">
+                                        <i class="fa fa-truck m-b-1"></i>
+                                        <h2 class="statistic-counter" id="usuarios-count">0</h2>
+                                        <p>Envíos Pendientes</p>
+                                    </a>
+                                </div>
+                                <!-- Card de Devoluciones -->
+                                <div class="single_counter p-y-2 m-t-1">
+                                    <a href="{% url 'admin_devoluciones' %}" class="card-link">
+                                        <i class="fa fa-undo m-b-1"></i>
+                                        <h2 class="statistic-counter" id="opiniones-count">0</h2>
+                                        <p>Devoluciones</p>
+                                    </a>
+                                </div>
                                 <!-- Card de Reclamos -->
                                 <div class="single_counter p-y-2 m-t-1">
                                     <a href="{% url 'admin_reclamos' %}" class="card-link">
                                         <i class="fa fa-exclamation-circle m-b-1"></i>
                                         <h2 class="statistic-counter" id="reclamos-count">0</h2>
                                         <p>Reclamos</p>
-                                    </a>
-                                </div>
-                                <!-- Card de Devoluciones -->
-                                <div class="single_counter p-y-2 m-t-1">
-                                    <a href="{% url 'admin_devoluciones' %}" class="card-link">
-                                        <i class="fa fa-comments m-b-1"></i>
-                                        <h2 class="statistic-counter" id="opiniones-count">0</h2>
-                                        <p>Devoluciones</p>
                                     </a>
                                 </div>
                             </div>                            
