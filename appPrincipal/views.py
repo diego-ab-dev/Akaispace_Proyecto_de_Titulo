@@ -591,12 +591,14 @@ def perfil(request):
     compras = Venta.objects.filter(usuario=usuario).order_by('-fecha')[:3]
     opiniones = Opinion.objects.filter(usuario=usuario).order_by('-fecha_creacion')[:2]
     reclamos_recientes = Reclamo.objects.filter(usuario=usuario).order_by('-fecha')[:2]
+    devoluciones_recientes = Devolucion.objects.filter(usuario=usuario).order_by('-fecha_solicitud')[:2]
     
     return render(request, 'perfil_usuario.html', {
         'usuario': usuario,
         'compras': compras,
         'opiniones': opiniones,
         'reclamos_recientes': reclamos_recientes,
+        'devoluciones_recientes': devoluciones_recientes,
     })
 
 def lista_opiniones(request):
@@ -763,6 +765,19 @@ def listar_devoluciones(request):
 
     return render(request, 'lista_devoluciones.html', {
         'todos_devoluciones': todos_devoluciones,
+    })
+
+def ver_detalle_devolucion(request, devolucion_id):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+    
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    
+    devolucion = get_object_or_404(Devolucion, id=devolucion_id, usuario=usuario)
+    
+    return render(request, 'detalle_devolucion.html', {
+        'devolucion': devolucion
     })
 
 

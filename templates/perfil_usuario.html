@@ -87,9 +87,13 @@
                 <div class="profile-card h-100">
                     <h3 class="card-header-title text-center">Mis Devoluciones</h3>
                     <div class="card-content">
-                        <p><strong>Producto:</strong> Producto 1</p>
-                        <p class="text-muted small">Motivo: Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                        <p class="text-muted small">Fecha: 28/09/2025 18:22</p>
+                        {% for devolucion in devoluciones_recientes|slice:":1" %}
+                            <p><strong>Producto:</strong> {{ devolucion.producto.nombre }}</p>
+                            <p class="text-muted small">Devolución: {{ devolucion.motivo|truncatechars:60 }}</p>
+                            <p class="text-muted small">Fecha: {{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</p>
+                        {% empty %}
+                            <p class="text-muted small">No hay devoluciones recientes.</p>
+                        {% endfor %}
                     </div>
                     <div class="mt-auto">
                         <a href="{% url 'lista_devoluciones' %}" class="btn-dark-custom">Ver Más</a>
