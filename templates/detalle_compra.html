@@ -286,7 +286,9 @@
                         Opinar
                     </a>
                     
-                    <button class="btn-devolucion">Pedir Devolución</button>
+                    <a href="{% url 'crear_devolucion' compra.id item.producto.id %}" class="btn-devolucion" style="text-decoration: none;">
+                        Pedir Devolución
+                    </a>
                 </div>
             </div>
             {% endfor %}

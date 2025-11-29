@@ -18,7 +18,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
-from appPrincipal.views import home,ver_boleta,ver_detalle_compra, ver_detalle_reclamo, login, register, productos_menu, producto_detalle, carrito, logout, productos_por_categoria, perfil, editar_perfil, obtener_ciudades, cambiar_contraseña,  agregar_al_carrito, eliminar_del_carrito, actualizar_cantidad_carrito, ver_carrito, lista_favoritos, agregar_favorito, eliminar_favorito, password_reset_request, ver_compras, lista_opiniones, crear_reclamo, lista_reclamos, seleccionar_envio, seleccionar_pago, compra_exitosa, admin_dashboard, admin_productos, admin_usuarios, editar_producto, agregar_producto, buscar_productos, buscar_usuarios, eliminar_producto, eliminar_usuario, admin_devoluciones, admin_reclamos, responder_reclamo, admin_ventas, crear_usuario, get_dashboard_counts, admin_cambiar_estado_venta, enviar_opinion, guardar_datos_envio, eliminar_favoritos_seleccionados 
+from appPrincipal.views import home,ver_boleta,ver_detalle_compra, ver_detalle_reclamo, login, register, productos_menu, producto_detalle, carrito, logout, productos_por_categoria, perfil, editar_perfil, obtener_ciudades, cambiar_contraseña,  agregar_al_carrito, eliminar_del_carrito, actualizar_cantidad_carrito, ver_carrito, lista_favoritos, agregar_favorito, eliminar_favorito, password_reset_request, ver_compras, lista_opiniones, crear_reclamo, lista_reclamos, seleccionar_envio, seleccionar_pago, compra_exitosa, admin_dashboard, admin_productos, admin_usuarios, editar_producto, agregar_producto, buscar_productos, buscar_usuarios, eliminar_producto, eliminar_usuario, admin_devoluciones, admin_reclamos, responder_reclamo, admin_ventas, crear_usuario, get_dashboard_counts, admin_cambiar_estado_venta, enviar_opinion, guardar_datos_envio, eliminar_favoritos_seleccionados, responder_devolucion, crear_devolucion 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -57,6 +57,7 @@ urlpatterns = [
     path('boleta/<int:venta_id>/', ver_boleta, name='ver_boleta'),
     path('compra/<int:compra_id>/detalle/', ver_detalle_compra, name='ver_detalle'),
     path('reclamos/<int:reclamo_id>/detalle/', ver_detalle_reclamo, name='ver_detalle_reclamo'),
+    path('devolucion/crear/<int:compra_id>/<int:producto_id>/', crear_devolucion, name='crear_devolucion'),
     # urls de admin
     path('admin-panel/', admin_dashboard, name='admin_dashboard'),
     path('api/dashboard-counts/', get_dashboard_counts, name='get_dashboard_counts'),
@@ -70,6 +71,7 @@ urlpatterns = [
     path('admin-panel/productos/eliminar/<int:producto_id>/', eliminar_producto, name='eliminar_producto'),
     path('admin-panel/productos/editar/<int:producto_id>/', editar_producto, name='editar_producto'),
     path('admin-panel/devoluciones/', admin_devoluciones, name='admin_devoluciones'),
+    path('admin-panel/devoluciones/responder/<int:devolucion_id>/', responder_devolucion, name='responder_devolucion'),
     path('admin-panel/reclamos/', admin_reclamos, name='admin_reclamos'),
     path('admin-panel/reclamos/responder/<int:reclamo_id>/', responder_reclamo, name='responder_reclamo'),
     path('admin-panel/ventas/', admin_ventas, name='admin_ventas'),

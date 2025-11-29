@@ -220,6 +220,84 @@ class Reclamo(models.Model):
     def editar_reclamo(self):
         pass
 
+
+class Devolucion(models.Model):
+    ESTADO_CHOICES = [
+        ('Pendiente', 'Pendiente'),
+        ('Aprobada', 'Aprobada'),
+        ('Rechazada', 'Rechazada'),
+    ]
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='devoluciones', null=True, blank=True)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, null=True, blank=True)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    motivo = models.TextField(verbose_name="Motivo de la devolución")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Pendiente')
+    respuesta_admin = models.TextField(blank=True, null=True, verbose_name="Respuesta del administrador")
+    fecha_resolucion = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Devolución {self.id} - {self.usuario.nombre}"
+
+    # Métodos del Diagrama de Clases
+    def solicitar(self):
+        pass
+    
+    def aprobar(self):
+        self.estado = 'Aprobada'
+        self.fecha_resolucion = now()
+        self.save()
+        
+    def rechazar(self):
+        self.estado = 'Rechazada'
+        self.fecha_resolucion = now()
+        self.save()
+
+class Envio(models.Model):
+    ESTADO_CHOICES = [
+        ('En Preparación', 'En Preparación'),
+        ('Enviado', 'Enviado'),
+        ('En Tránsito', 'En Tránsito'),
+        ('Entregado', 'Entregado'),
+    ]
+    
+    venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='datos_envio')
+    numero_seguimiento = models.CharField(max_length=50, blank=True, null=True)
+    fecha_envio = models.DateTimeField(null=True, blank=True)
+    fecha_entrega = models.DateTimeField(null=True, blank=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='En Preparación')
+    transportista = models.CharField(max_length=50, default='Starken')
+
+    def __str__(self):
+        return f"Envío #{self.id} para Venta {self.venta.id}"
+
+    def registrar_envio(self, tracking):
+        self.numero_seguimiento = tracking
+        self.estado = 'Enviado'
+        self.fecha_envio = now()
+        self.save()
+        
+    def actualizar_estado(self, nuevo_estado):
+        self.estado = nuevo_estado
+        self.save()
+
+
+class Boleta(models.Model):
+    venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='boleta')
+    fecha_emision = models.DateTimeField(auto_now_add=True)
+    archivo_pdf = models.FileField(upload_to='boletas/', null=True, blank=True)
+    
+    def __str__(self):
+        return f"Boleta #{self.id} - Venta {self.venta.id}"
+
+    def generar_pdf(self):
+        pass
+        
+    def enviar_correo(self):
+        pass
+
+
 class Favorito(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)

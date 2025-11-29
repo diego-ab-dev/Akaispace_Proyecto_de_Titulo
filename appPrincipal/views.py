@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Producto ,ItemCarritoProducto, Usuario, Carrito, Venta, ProductoVenta ,Opinion, Favorito, Reclamo
+from .models import Producto ,ItemCarritoProducto, Usuario, Carrito, Venta, ProductoVenta ,Opinion, Favorito, Reclamo, Devolucion, Boleta, Envio
 from appPrincipal import forms
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -19,6 +19,7 @@ from django.utils.dateparse import parse_date
 from django.contrib import messages
 from .forms import OpinionForm
 from django.core.paginator import Paginator
+from django.utils.timezone import now
 
 # Create your views here.
 
@@ -277,9 +278,36 @@ def editar_producto(request, producto_id):
 
 
 # devoluciones en administracion
+# --- SECCIÓN DEVOLUCIONES ---
+
 @admin_required
 def admin_devoluciones(request):
-    return render(request, 'admin_panel/devoluciones.html')
+    devoluciones = Devolucion.objects.select_related('usuario').all().order_by('-fecha_solicitud')
+    return render(request, 'admin_panel/devoluciones.html', {'devoluciones': devoluciones})
+
+@admin_required
+def responder_devolucion(request, devolucion_id):
+    devolucion = get_object_or_404(Devolucion, id=devolucion_id)
+    
+    if request.method == 'POST':
+        accion = request.POST.get('accion') 
+        respuesta = request.POST.get('respuesta')
+        
+        if accion == 'aceptar':
+            devolucion.estado = 'Aprobada'
+            # Aquí podrías sumar lógica extra como devolver stock si aplica
+            # devolucion.producto.stock += 1
+            # devolucion.producto.save()
+        elif accion == 'rechazar':
+            devolucion.estado = 'Rechazada'
+            
+        devolucion.respuesta_admin = respuesta
+        devolucion.fecha_resolucion = now()
+        devolucion.save()
+        
+        return redirect('admin_devoluciones')
+
+    return render(request, 'admin_panel/responder_devolucion.html', {'devolucion': devolucion})
 #fin
 
 
@@ -686,12 +714,46 @@ def ver_detalle_reclamo(request, reclamo_id):
     
     usuario = get_object_or_404(Usuario, id=usuario_id)
     
-    # Obtenemos el reclamo y verificamos que pertenezca a ese usuario
     reclamo = get_object_or_404(Reclamo, id=reclamo_id, usuario=usuario)
     
     return render(request, 'detalle_reclamo.html', {
         'reclamo': reclamo
     })
+
+
+def crear_devolucion(request, compra_id, producto_id):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    # Verificamos que la compra pertenezca al usuario
+    compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
+    producto = get_object_or_404(Producto, id=producto_id)
+
+    if request.method == 'POST':
+        # El name de tu textarea en el HTML es "descripcion"
+        motivo = request.POST.get('descripcion') 
+
+        if motivo:
+            # Crear la devolución usando el modelo que agregamos antes
+            Devolucion.objects.create(
+                usuario=usuario,
+                venta=compra,
+                producto=producto,
+                motivo=motivo,
+                estado='Pendiente' # Estado inicial
+            )
+            # Redirigir al historial o perfil con mensaje de éxito
+            return redirect('perfil') # O 'ver_compras'
+        
+    return render(request, 'crear_devolucion.html', {
+        'compra': compra,
+        'producto': producto
+    })
+
+
+
 
 def cambiar_contraseña(request):
     errores = []
