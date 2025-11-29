@@ -104,7 +104,8 @@
                     <td>{{ usuario.ciudad }}</td>
                     <td>{{ usuario.es_administrador|yesno:"Sí,No" }}</td>
                     <td>
-                        <a href="{% url 'eliminar_usuario' usuario.id %}" onclick="confirmarEliminacion(event, this)" style="color: red;">Eliminar</a>
+                        <a href="{% url 'eliminar_usuario' usuario.id %}" onclick="confirmarEliminacion(event, this)" style="color: red;">Eliminar</a>|
+                        <a href="{% url 'detalle_usuario'%}" class="btn-edit">Ver Más</a>
                     </td>
                 </tr>
                 {% endfor %}

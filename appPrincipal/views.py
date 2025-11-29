@@ -185,6 +185,10 @@ def crear_usuario(request):
     return render(request, 'admin_panel/crear_usuario.html', {
     'regiones_ciudades': regiones_ciudades,
     })
+
+
+def detalle_usuario(request):
+    return render(request, 'admin_panel/detalle_usuario.html')
 # fin
 
 
@@ -274,12 +278,13 @@ def editar_producto(request, producto_id):
     else:
         form = ProductoForm(instance=producto)
     return render(request, 'admin_panel/editar_producto.html', {'form': form})
+
+def detalle_producto(request):
+    return render(request, 'admin_panel/detalle_producto.html')
 # fin
 
 
 # devoluciones en administracion
-# --- SECCIÓN DEVOLUCIONES ---
-
 @admin_required
 def admin_devoluciones(request):
     devoluciones = Devolucion.objects.select_related('usuario').all().order_by('-fecha_solicitud')
@@ -362,8 +367,14 @@ def admin_cambiar_estado_venta(request, venta_id):
         else:
             messages.error(request, "Estado no válido.")
     return redirect('admin_ventas')
+
+def detalle_venta(request):
+    return render(request, 'admin_panel/detalle_venta.html')
+
+def modificar_venta(request):
+    return render(request, 'admin_panel/modificar_venta.html')
 #fin
-# Fin vistas para administracion
+
 
 
 # vistas relacionadas a home y menu
@@ -779,8 +790,6 @@ def ver_detalle_devolucion(request, devolucion_id):
     return render(request, 'detalle_devolucion.html', {
         'devolucion': devolucion
     })
-
-
 
 
 def cambiar_contraseña(request):

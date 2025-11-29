@@ -191,8 +191,8 @@
                     
                     <div class="col-auto">
                         <div class="product-img-container">
-                            {% if opinion.producto.imagen %}
-                                <img src="{{ opinion.producto.imagen.url }}" alt="{{ opinion.producto.nombre }}" class="product-img">
+                            {% if opinion.producto.imagen_principal %}
+                                <img src="{{ opinion.producto.imagen_principal.url }}" alt="{{ opinion.producto.nombre }}" class="product-img">
                             {% else %}
                                 <img src="{% static 'images/placeholder.png' %}" class="product-img">
                             {% endif %}
