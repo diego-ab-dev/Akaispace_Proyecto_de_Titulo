@@ -14,29 +14,49 @@
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
 </head>
 <body>
-    <div class="reclamo-container">
-        <h1>Responder Devolución</h1>
-        <form method="post">
-            {% csrf_token %}
-            <div class="reclamo-info">
-                <p><strong>Asunto:</strong> {{ devolucion.asunto }}</p>
-                <p><strong>Descripción:</strong> {{ devolucion.descripcion }}</p>
-            </div>
-            <textarea name="respuesta" placeholder="Escribe tu respuesta aquí..." required>{{ reclamo.respuesta|default_if_none:'' }}</textarea>
-            <button type="submit" class="btn-submit">Enviar Respuesta</button>
-        </form>
-        <a href="{% url 'admin_reclamos' %}" class="btn-back">Volver</a>
-    </div>  
-    
-    
-    <script>
-        document.querySelector('form').addEventListener('submit', function(event) {
-            const respuesta = document.querySelector('textarea[name="respuesta"]').value.trim();
-            if (!respuesta) {
-                alert('La respuesta no puede estar vacía.');
-                event.preventDefault();  
-            }
-        });
-    </script>
+<div style="position: relative; max-width: 500px; width: 100%;">
+        <h1 class="page-title">Responder Devolución</h1>
+        
+        <div class="response-card">
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="info-section">
+                    <div><strong>Nombre Cliente:</strong> {{ devolucion.usuario.nombre }}</div>
+                    <div><strong>Fecha:</strong> {{ devolucion.fecha_solicitud|date:"d/m/Y" }}</div>
+                    
+                    <div style="margin-top: 15px;"><strong>Motivo:</strong> 
+                        <span class="motivo-text">
+                            {{ devolucion.motivo }}
+                        </span>
+                    </div>
+                </div>
+
+                <hr style="opacity: 0.1; margin: 20px 0;">
+
+                <textarea name="respuesta" rows="5" placeholder="Escribe tu respuesta aquí" required></textarea>
+
+                <div class="mb-2" style="font-weight: 600; font-size: 0.95rem;">Selecciona una opción:</div>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input class="form-check-input" type="radio" name="accion" value="aceptar" required>
+                        Aceptar
+                    </label>
+                    <label class="radio-option">
+                        <input class="form-check-input" type="radio" name="accion" value="rechazar">
+                        Rechazar
+                    </label>
+                </div>
+
+                <div class="btn-row">
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                    <a href="{% url 'admin_devoluciones' %}" class="btn-cancelar">Cancelar</a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
 </body>
 </html>

@@ -67,18 +67,21 @@ urlpatterns = [
     path('admin-panel/usuarios/buscar/', buscar_usuarios, name='buscar_usuarios'),
     path('admin-panel/usuarios/eliminar/<int:usuario_id>/',eliminar_usuario, name='eliminar_usuario'),
     path('admin-panel/usuarios/crear/', crear_usuario, name='crear_usuario'),
-    path('admin-panel/usuarios/detalle/', detalle_usuario, name='detalle_usuario'),
+    path('admin-panel/usuarios/detalle/<int:usuario_id>/', detalle_usuario, name='detalle_usuario'),
     path('admin-panel/productos/', admin_productos, name='admin_productos'),
     path('admin-panel/productos/buscar/', buscar_productos, name='buscar_productos'),
     path('admin-panel/productos/agregar/', agregar_producto, name='agregar_producto'),
     path('admin-panel/productos/eliminar/<int:producto_id>/', eliminar_producto, name='eliminar_producto'),
     path('admin-panel/productos/editar/<int:producto_id>/', editar_producto, name='editar_producto'),
+    path('admin-panel/productos/detalle/<int:producto_id>/', detalle_producto, name='detalle_producto'),
     path('admin-panel/devoluciones/', admin_devoluciones, name='admin_devoluciones'),
     path('admin-panel/devoluciones/responder/<int:devolucion_id>/', responder_devolucion, name='responder_devolucion'),
     path('admin-panel/reclamos/', admin_reclamos, name='admin_reclamos'),
     path('admin-panel/reclamos/responder/<int:reclamo_id>/', responder_reclamo, name='responder_reclamo'),
     path('admin-panel/ventas/', admin_ventas, name='admin_ventas'),
     path('ventas/cambiar-estado/<int:venta_id>/', admin_cambiar_estado_venta, name='admin_cambiar_estado_venta'),
+    path('admin-panel/ventas/detalle/<int:venta_id>/', detalle_venta, name='detalle_venta'),
+    path('admin-panel/ventas/modificar/<int:venta_id>/', modificar_venta, name='modificar_venta'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
 
 # esto es para editar titulos en el panel de administracion

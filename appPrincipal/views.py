@@ -187,8 +187,10 @@ def crear_usuario(request):
     })
 
 
-def detalle_usuario(request):
-    return render(request, 'admin_panel/detalle_usuario.html')
+@admin_required
+def detalle_usuario(request, usuario_id):
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    return render(request, 'admin_panel/detalle_usuario.html', {'usuario': usuario})
 # fin
 
 
@@ -279,8 +281,11 @@ def editar_producto(request, producto_id):
         form = ProductoForm(instance=producto)
     return render(request, 'admin_panel/editar_producto.html', {'form': form})
 
-def detalle_producto(request):
-    return render(request, 'admin_panel/detalle_producto.html')
+
+@admin_required
+def detalle_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+    return render(request, 'admin_panel/detalle_producto.html', {'producto': producto})
 # fin
 
 
@@ -300,9 +305,6 @@ def responder_devolucion(request, devolucion_id):
         
         if accion == 'aceptar':
             devolucion.estado = 'Aprobada'
-            # Aquí podrías sumar lógica extra como devolver stock si aplica
-            # devolucion.producto.stock += 1
-            # devolucion.producto.save()
         elif accion == 'rechazar':
             devolucion.estado = 'Rechazada'
             
@@ -368,11 +370,45 @@ def admin_cambiar_estado_venta(request, venta_id):
             messages.error(request, "Estado no válido.")
     return redirect('admin_ventas')
 
-def detalle_venta(request):
-    return render(request, 'admin_panel/detalle_venta.html')
+@admin_required
+def detalle_venta(request, venta_id):
+    venta = get_object_or_404(Venta.objects.prefetch_related('producto_venta__producto'), id=venta_id)
+    return render(request, 'admin_panel/detalle_venta.html', {'venta': venta})
 
-def modificar_venta(request):
-    return render(request, 'admin_panel/modificar_venta.html')
+@admin_required
+def modificar_venta(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+    
+    envio = getattr(venta, 'datos_envio', None) 
+
+    if request.method == 'POST':
+        # 1. Actualizar Estado de Venta/Envío
+        nuevo_estado = request.POST.get('estado')
+        numero_seguimiento = request.POST.get('numero_seguimiento')
+        
+        if envio:
+            envio.estado = nuevo_estado
+            envio.numero_seguimiento = numero_seguimiento
+            envio.save()
+        else:
+            venta.estado = nuevo_estado
+
+        usuario = venta.usuario
+        usuario.telefono = request.POST.get('telefono')
+        usuario.direccion = request.POST.get('direccion')
+        usuario.region = request.POST.get('region')
+        usuario.ciudad = request.POST.get('ciudad')
+        usuario.save()
+        
+        venta.save()
+        return redirect('detalle_venta', venta_id=venta.id)
+
+    return render(request, 'admin_panel/modificar_venta.html', {
+        'venta': venta,
+        'envio': envio,
+        'regiones_ciudades_json': json.dumps(regiones_ciudades),
+        'regiones': regiones_ciudades.keys(),
+    })
 #fin
 
 
@@ -420,25 +456,19 @@ def producto_detalle(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     rango_cantidad = range(1, producto.stock + 1)
 
-    # Ordenamos las opiniones por fecha descendente (lo más nuevo primero)
     opiniones = producto.opiniones.all().order_by('-fecha_creacion')
 
-    # Promedio
     promedio_puntuacion = opiniones.aggregate(avg=Avg('puntuacion'))['avg'] or 0
     promedio_puntuacion = round(promedio_puntuacion, 1)
 
-    # Estrellas para el promedio general
     full_stars = int(promedio_puntuacion)
     half_star = (promedio_puntuacion - full_stars) >= 0.5
-    # Truco: range en python para el template
     full_stars_range = range(full_stars)
     empty_stars_range = range(5 - full_stars - (1 if half_star else 0))
 
-    # Conteo para las barras (Histograma)
     total_opiniones = opiniones.count()
     ratings_data = []
     
-    # Iteramos de 5 a 1 para que la barra de 5 estrellas salga primero
     for score in range(5, 0, -1):
         count = opiniones.filter(puntuacion=score).count()
         percent = (count / total_opiniones * 100) if total_opiniones > 0 else 0
@@ -451,12 +481,12 @@ def producto_detalle(request, producto_id):
     return render(request, "producto_detalle.html", {
         "producto": producto,
         "rango_cantidad": rango_cantidad,
-        "opiniones": opiniones, # Ahora ordenadas
+        "opiniones": opiniones, 
         "promedio_puntuacion": promedio_puntuacion,
-        "full_stars_range": full_stars_range, # Pasamos rangos, no listas de ints
+        "full_stars_range": full_stars_range, 
         "half_star": half_star,
         "empty_stars_range": empty_stars_range,
-        "ratings": ratings_data, # Datos listos para iterar
+        "ratings": ratings_data, 
         "total_opiniones": total_opiniones,
     })
 
@@ -649,23 +679,18 @@ def ver_detalle_compra(request, compra_id):
     })
 
 def enviar_opinion(request, producto_id):
-    # 1. Validación de Sesión (Estilo de tu proyecto)
     usuario_id = request.session.get('usuario_id')
     if not usuario_id:
-        return redirect('login') # Si no hay sesión, manda al login
+        return redirect('login') 
     
-    # 2. Obtener objetos (Usuario y Producto)
     usuario_actual = get_object_or_404(Usuario, id=usuario_id)
     producto = get_object_or_404(Producto, id=producto_id)
 
-    # 3. VERIFICACIÓN: ¿Ya existe la opinión?
     ya_opino = Opinion.objects.filter(usuario=usuario_actual, producto=producto).exists()
 
     if ya_opino:
-        # Si es True, mostramos el template de aviso
         return render(request, 'ya_opinaste.html', {'producto': producto})
 
-    # 4. Lógica normal del formulario
     if request.method == 'POST':
         form = OpinionForm(request.POST)
         if form.is_valid():
@@ -740,25 +765,21 @@ def crear_devolucion(request, compra_id, producto_id):
         return redirect('login')
 
     usuario = get_object_or_404(Usuario, id=usuario_id)
-    # Verificamos que la compra pertenezca al usuario
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
     producto = get_object_or_404(Producto, id=producto_id)
 
     if request.method == 'POST':
-        # El name de tu textarea en el HTML es "descripcion"
         motivo = request.POST.get('descripcion') 
 
         if motivo:
-            # Crear la devolución usando el modelo que agregamos antes
             Devolucion.objects.create(
                 usuario=usuario,
                 venta=compra,
                 producto=producto,
                 motivo=motivo,
-                estado='Pendiente' # Estado inicial
+                estado='Pendiente' 
             )
-            # Redirigir al historial o perfil con mensaje de éxito
-            return redirect('perfil') # O 'ver_compras'
+            return redirect('perfil')
         
     return render(request, 'crear_devolucion.html', {
         'compra': compra,
@@ -1058,7 +1079,6 @@ def eliminar_favoritos_seleccionados(request):
         item_ids = data.get('ids', [])
 
         if item_ids:
-            # Borramos solo los favoritos que pertenezcan a este usuario para seguridad
             Favorito.objects.filter(id__in=item_ids, usuario__id=usuario_id).delete()
             return JsonResponse({'success': True})
         

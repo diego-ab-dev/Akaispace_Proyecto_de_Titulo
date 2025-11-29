@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Usuario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #EEF1F4; /* Fondo Gris Claro */
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px; /* Ancho similar a la imagen */
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+
+        h2 {
+            text-align: center;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        /* Estilo de los datos */
+        .info-group {
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+            color: #333;
+        }
+
+        .info-label {
+            font-weight: 700; /* Negrita para las etiquetas */
+            color: #000;
+        }
+
+        .info-value {
+            color: #555;
+            margin-left: 5px;
+        }
+
+        /* Botones */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .btn-custom {
+            padding: 8px 30px;
+            border-radius: 20px; /* Bordes redondeados tipo píldora */
+            font-weight: 600;
+            border: none;
+            text-decoration: none;
+            color: white;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-custom:hover {
+            opacity: 0.9;
+            color: white;
+        }
+
+        .btn-editar {
+            background-color: #2F78C4; /* Azul similar a la imagen */
+        }
+
+        .btn-eliminar {
+            background-color: #F55F5F; /* Rojo/Coral similar a la imagen */
+        }
+
+        .btn-volver-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-volver {
+            background-color: #0E1B2D; /* Azul muy oscuro/negro */
+            padding: 8px 40px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container d-flex justify-content-center">
+        <div class="detail-card">
+            <h2>Usuario #{{ usuario.id }}</h2>
+
+            <div class="info-group">
+                <span class="info-label">Nombre:</span>
+                <span class="info-value">{{ usuario.nombre }}</span>
+            </div>
+            
+            <div class="info-group">
+                <span class="info-label">Correo:</span>
+                <span class="info-value">{{ usuario.email }}</span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">RUT:</span>
+                <span class="info-value">{{ usuario.rut }}</span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">Teléfono:</span>
+                <span class="info-value">{{ usuario.telefono }}</span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">Dirección:</span>
+                <span class="info-value">{{ usuario.direccion }}</span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">Región:</span>
+                <span class="info-value">{{ usuario.region }}</span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">Ciudad:</span>
+                <span class="info-value">{{ usuario.ciudad }}</span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">Administrador:</span>
+                <span class="info-value">{% if usuario.es_administrador %}Si{% else %}No{% endif %}</span>
+            </div>
+
+            <div class="action-buttons">
+                
+                <a href="{% url 'eliminar_usuario' usuario.id %}" 
+                   class="btn-custom btn-eliminar"
+                   onclick="return confirm('¿Estás seguro de eliminar este usuario?');">
+                   Eliminar
+                </a>
+            </div>
+
+            <div class="btn-volver-container">
+                <a href="{% url 'admin_usuarios' %}" class="btn-custom btn-volver">Volver</a>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

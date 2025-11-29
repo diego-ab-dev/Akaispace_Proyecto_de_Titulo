@@ -120,7 +120,8 @@
                     <td>{{ producto.genero }}</td>
                     <td>
                         <a href="{% url 'editar_producto' producto.id %}" class="btn-edit">Editar</a>|
-                        <a href="{% url 'eliminar_producto' producto.id %}" onclick="confirmarEliminacion(event, this)" style="color: red;">Eliminar</a>
+                        <a href="{% url 'eliminar_producto' producto.id %}" onclick="confirmarEliminacion(event, this)" style="color: red;">Eliminar</a> |
+                        <a href="{% url 'detalle_producto' producto.id %}" class="btn-edit">Ver Más</a>
                     </td>
                 </tr>
                 {% endfor %}

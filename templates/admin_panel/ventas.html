@@ -59,7 +59,6 @@
         </nav>
     </div>
     <!--Container Main start-->
-    <!--Container Main start-->
 <div class="height-100 bg-light p-4">
     <form method="get" class="d-flex align-items-center gap-3 mb-4">
         <input 
@@ -79,10 +78,10 @@
                     <th>ID</th>
                     <th>Usuario</th>
                     <th>Total</th>
-                    <th>Fecha</th>
                     <th>Producto/s</th>
+                    <th>Fecha</th>
                     <th>Estado</th>
-                    <th>Método de Envío y Detalles</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -91,40 +90,19 @@
                     <td>{{ venta.id }}</td>
                     <td>{{ venta.usuario.nombre }}</td>
                     <td>${{ venta.total|formato_chileno }}</td>
-                    <td>{{ venta.fecha|date:"d M Y" }}</td>
-                    <td>
+                     <td>
                         <ul class="list-unstyled mb-0">
                             {% for producto_venta in venta.producto_venta.all %}
                             <li>{{ producto_venta.producto.nombre }} ({{ producto_venta.cantidad }})</li>
                             {% endfor %}
                         </ul>
                     </td>
+                    <td>{{ venta.fecha|date:"d M Y" }}</td>
                     <td>
-                        <!-- Formulario para cambiar el estado -->
-                        <form method="post" action="{% url 'admin_cambiar_estado_venta' venta.id %}">
-                            {% csrf_token %}
-                            <select name="estado" class="form-select">
-                                <option value="Sin Enviar" {% if venta.estado == 'Sin Enviar' %}selected{% endif %}>
-                                    Sin Enviar
-                                </option>
-                                <option value="Enviado" {% if venta.estado == 'Enviado' %}selected{% endif %}>
-                                    Enviado
-                                </option>
-                            </select>
-                            <button type="submit" class="btn btn-primary btn-sm mt-2">Guardar</button>
-                        </form>
+                        {{ venta.estado }}
                     </td>
                     <td>
-                        <strong>Método de Envío:</strong> {{ venta.get_metodo_envio_display }}<br>
-                        {% if venta.metodo_envio == 'domicilio' %}
-                        <strong>RUT:</strong> {{ venta.usuario.rut }}<br>
-                        <strong>Teléfono:</strong> {{ venta.usuario.telefono }}<br>
-                        <strong>Dirección:</strong> {{ venta.usuario.direccion }}<br>
-                        <strong>Ciudad:</strong> {{ venta.usuario.ciudad }}<br>
-                        <strong>Región:</strong> {{ venta.usuario.region }}<br>
-                        {% else %}
-                        Valdivia, Av. Simpson 641 (Dirección de SD Games)
-                        {% endif %}
+                        <a href="{% url 'detalle_venta' venta.id %}" class="btn btn-sm btn-primary">Ver Detalles</a>
                     </td>
                 </tr>
                 {% endfor %}

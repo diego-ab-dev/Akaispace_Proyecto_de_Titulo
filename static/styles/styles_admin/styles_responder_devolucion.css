@@ -1,76 +1,137 @@
-/* General reset */
+/* --- ESTILOS IDÉNTICOS A LA IMAGEN --- */
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+background-color: #EEF1F4; /* Fondo Gris Claro */
+font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+min-height: 100vh;
+display: flex;
+align-items: center;
+justify-content: center;
+margin: 0;
+padding: 20px;
 }
 
-/* Contenedor principal */
-.reclamo-container {
-    background: #ffffff;
-    padding: 20px 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    width: 400px;
+.response-card {
+background-color: white;
+border-radius: 10px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+padding: 40px;
+width: 100%;
+max-width: 500px; /* Ancho controlado como en la imagen */
+border: 1px solid #e0e0e0;
+position: relative;
 }
 
-/* Título */
-.reclamo-container h1 {
-    font-size: 1.8rem;
-    margin-bottom: 20px;
-    color: #333333;
+/* Título fuera de la tarjeta */
+.page-title {
+text-align: center;
+font-weight: 700;
+font-size: 1.8rem;
+margin-bottom: 30px;
+color: #111;
+position: absolute;
+top: -60px;
+left: 0;
+width: 100%;
 }
 
-/* Información del reclamo */
-.reclamo-info p {
-    margin: 10px 0;
-    font-size: 1rem;
-    color: #555555;
+.info-section {
+margin-bottom: 25px;
+font-size: 1rem;
+color: #555;
+line-height: 1.5;
+}
+
+.info-section strong {
+color: #000;
+font-weight: 700;
+}
+
+.motivo-text {
+color: #666;
+margin-top: 5px;
+display: block;
 }
 
 /* Textarea */
 textarea {
-    width: 100%;
-    height: 100px;
-    margin: 20px 0;
-    padding: 10px;
-    border: 1px solid #dddddd;
-    border-radius: 5px;
-    font-size: 1rem;
-    resize: none;
+width: 100%;
+border: 1px solid #e0e0e0;
+border-radius: 4px;
+padding: 12px;
+font-size: 0.95rem;
+resize: none;
+margin-bottom: 20px;
+background-color: #fff;
+color: #333;
 }
 
-/* Botón enviar */
-.btn-submit {
-    background-color: #007BFF;
-    color: #ffffff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s;
+textarea::placeholder {
+color: #ccc;
 }
 
-.btn-submit:hover {
-    background-color: #0056b3;
+textarea:focus {
+outline: none;
+border-color: #ccc;
 }
 
-/* Enlace volver */
-.btn-back {
-    display: block;
-    margin-top: 15px;
-    font-size: 0.9rem;
-    color: #007BFF;
-    text-decoration: none;
-    transition: color 0.3s;
+/* Radio Buttons */
+.radio-group {
+display: flex;
+gap: 40px;
+margin-bottom: 30px;
+align-items: center;
 }
 
-.btn-back:hover {
-    color: #0056b3;
+.radio-option {
+display: flex;
+align-items: center;
+gap: 8px;
+cursor: pointer;
+font-weight: 600;
+color: #333;
 }
+
+.form-check-input {
+width: 1.2em;
+height: 1.2em;
+border-color: #333;
+cursor: pointer;
+}
+
+.form-check-input:checked {
+background-color: #333;
+border-color: #333;
+}
+
+/* Botones */
+.btn-row {
+display: flex;
+justify-content: center;
+gap: 15px;
+}
+
+.btn-guardar {
+background-color: #2F78C4; /* Azul similar a la imagen (#4E84A8 ajustado) */
+color: white;
+border: none;
+padding: 10px 40px;
+border-radius: 20px; /* Redondeado fuerte */
+font-weight: 700;
+font-size: 0.95rem;
+width: 40%;
+}
+.btn-guardar:hover { background-color: #2461a0; color: white; }
+
+.btn-cancelar {
+background-color: #0E1B2D; /* Azul muy oscuro/negro (#1C253B) */
+color: white;
+border: none;
+padding: 10px 40px;
+border-radius: 20px;
+font-weight: 700;
+font-size: 0.95rem;
+text-decoration: none;
+text-align: center;
+width: 40%;
+}
+.btn-cancelar:hover { background-color: #000; color: white; }

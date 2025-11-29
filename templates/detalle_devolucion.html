@@ -132,14 +132,14 @@
                 <div class="detail-card">
                     <span class="label-bold d-block">Respuesta del Administrador</span>
                     
-                    {% if devolucion.respuesta %}
+                    {% if devolucion.respuesta_admin %}
                         <p class="text-content mt-2">
-                            {{ devolucion.respuesta }}
+                            {{ devolucion.respuesta_admin }}
                         </p>
                         
                         <div class="mt-4">
                             <span class="label-bold">Fecha:</span>
-                            <span class="date-text">{{ devolucion.fecha_respuesta|default:devolucion.fecha|date:"d/m/Y H:i" }}</span>
+                            <span class="date-text">{{ devolucion.fecha_resolucion|default:devolucion.fecha_resolucion|date:"d/m/Y H:i" }}</span>
                         </div>
                     {% else %}
                         <div class="mt-4 text-muted fst-italic">
