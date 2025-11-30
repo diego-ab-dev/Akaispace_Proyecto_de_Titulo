@@ -82,14 +82,14 @@
                     <tr>
                         <td>{{ devolucion.id }}</td>
                         <td>{{ devolucion.usuario.nombre }}</td>
-                        <td>{{ devolucion.asunto }}</td>
-                        <td>{{ devolucion.descripcion }}</td>
+                        <td>{{ devolucion.producto.nombre }}</td>
+                        <td>{{ devolucion.motivo }}</td>
+                        <td>{{ devolucion.fecha_solicitud|date:"d M Y" }}</td>
                         <td>
                             <span class="badge {% if devolucion.estado == 'Resuelto' %}bg-success{% elif devolucion.estado == 'Pendiente' %}bg-warning{% else %}bg-danger{% endif %}">
                                 {{ devolucion.estado }}
                             </span>
                         </td>
-                        <td>{{ devolucion.fecha|date:"d M Y" }}</td>
                         <td>
                             <a href="{% url 'responder_devolucion' devolucion.id %}" class="btn btn-sm btn-primary">Responder</a>
                         </td>

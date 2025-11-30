@@ -87,6 +87,7 @@
         {% else %}
             <table>
                 <tr>
+                    <th>ID</th>
                     <th>Nombre</th>
                     <th>Email</th>
                     <th>Rut</th>
@@ -96,6 +97,7 @@
                 </tr>
                 {% for usuario in usuarios %}
                 <tr>
+                    <td>{{ usuario.id }}</td>
                     <td>{{ usuario.nombre }}</td>
                     <td>{{ usuario.email }}</td>
                     <td>{{ usuario.rut }}</td>

@@ -89,6 +89,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Imagen</th>
                     <th>Código de Barras</th>
                     <th>Nombre</th>
@@ -102,6 +103,7 @@
             <tbody>
                 {% for producto in productos %}
                 <tr>
+                    <td>{{producto.id}}</td>
                     <td>
                         {% if producto.imagen_principal %}
                             <img src="{{ producto.imagen_principal.url }}" alt="Imagen de {{ producto.nombre }}" class="product-img">

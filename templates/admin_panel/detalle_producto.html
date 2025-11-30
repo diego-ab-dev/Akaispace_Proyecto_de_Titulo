@@ -29,11 +29,6 @@
             </div>
 
             <div class="info-group">
-                <span class="info-label">RUT:</span>
-                <span class="info-value">{{ usuario.rut }}</span>
-            </div>
-
-            <div class="info-group">
                 <span class="info-label">Precio:</span>
                 <span class="info-value">${{ producto.precio|formato_chileno }}</span>
             </div>
@@ -64,7 +59,10 @@
                    onclick="return confirm('¿Estás seguro de eliminar este producto?');">
                    Eliminar
                 </a>
-                <a href="{% url 'editar_producto' producto.id %}" class="btn-edit">Editar</a>
+                <a href="{% url 'editar_producto' producto.id %}" 
+                   class="btn-custom btn-editar">
+                   Editar
+                </a>
             </div>
             
             <div class="btn-volver-container">
