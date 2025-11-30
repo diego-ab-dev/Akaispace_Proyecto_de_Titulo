@@ -23,9 +23,11 @@ regiones_ciudades = {
     'MAGALLANES': ['Punta Arenas', 'Puerto Natales'],
 }
 
+
+# formulario usuario
 class UsuarioCustomForm(forms.Form):
 
-
+    # validacion de rut de usuario
     def validar_rut(rut):
         rut = rut.upper().replace(".", "").replace("-", "")
         cuerpo = rut[:-1]
@@ -45,8 +47,6 @@ class UsuarioCustomForm(forms.Form):
             dv = '0'
 
         return str(dv) == verificador
-
-
 
     rut = forms.CharField(validators=[validar_rut]) 
         
@@ -91,13 +91,14 @@ class UsuarioCustomForm(forms.Form):
             raise forms.ValidationError(f'La ciudad {ciudad} no es válida para la región seleccionada.')
         return ciudad
 
+# form para recuperar contraseña
 class PasswordResetForm(forms.Form):
     email = forms.EmailField(label="Correo Electrónico", max_length=254, widget=forms.EmailInput(attrs={
         'class': 'form-control',
         'placeholder': 'Ingresa tu correo electrónico',
     }))
 
-
+# form para opiniones
 class OpinionForm(forms.ModelForm):
     class Meta:
         model = Opinion
@@ -107,11 +108,13 @@ class OpinionForm(forms.ModelForm):
 
 # administracion
 
+# form de usuario en admin
 class UsuarioForm(forms.ModelForm):
     class Meta:
         model = Usuario
         fields = ['nombre', 'email', 'rut', 'telefono', 'direccion', 'region', 'ciudad']
 
+# form de producto en admin
 class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto

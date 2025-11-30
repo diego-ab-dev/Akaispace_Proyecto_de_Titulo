@@ -7,7 +7,6 @@ body {
   min-height: 100vh;
 }
 
-/*color de textos*/
 .custom-text-color {
   color: rgb(255, 255, 255);
 }
@@ -250,7 +249,6 @@ nav .navbar{
   align-items: center;
   justify-content: space-between;
   margin: auto;
-  /* background: red; */
   padding: 0 50px;
 }
 .navbar .logo a{
@@ -287,7 +285,6 @@ nav .navbar .links li a{
   transform: rotate(180deg);
   }
 nav .navbar .links li .arrow{
-  /* background: red; */
   height: 100%;
   width: 22px;
   line-height: 70px;
@@ -502,10 +499,8 @@ nav .navbar .links li .sub-menu li{
     display: none;
   }
   .navbar .links li .sub-menu .more span{
-    /* background: red; */
     display: flex;
     align-items: center;
-    /* justify-content: space-between; */
   }
   .links li .sub-menu .more:hover .more-sub-menu{
     display: none;
@@ -979,8 +974,8 @@ a:hover {
 
 .section-products .row.g-3 {
   display: grid;
-  gap: 20px; /* Espaciado entre tarjetas */
-  grid-template-columns: repeat(4, 1fr); /* Cuatro columnas en pantallas grandes */
+  gap: 20px; 
+  grid-template-columns: repeat(4, 1fr); 
 }
 
 .btn-detalles {
@@ -1002,36 +997,30 @@ a:hover {
   color: #fff;
 }
 
-
-/* Contenedor principal para los productos */
 .section-products .row.g-3 {
   display: grid;
-  gap: 20px; /* Espaciado entre tarjetas */
-  grid-template-columns: repeat(4, 1fr); /* Cuatro columnas en pantallas grandes */
+  gap: 20px; 
+  grid-template-columns: repeat(4, 1fr); 
 }
 
-/* Ajuste para dispositivos medianos */
 @media (max-width: 768px) {
   .section-products .row.g-3 {
-    grid-template-columns: repeat(2, 1fr); /* Dos columnas en pantallas medianas */
+    grid-template-columns: repeat(2, 1fr); 
   }
 }
 
-/* Ajuste para dispositivos pequeños */
 @media (max-width: 576px) {
   .section-products .row.g-3 {
-    grid-template-columns: repeat(2, 1fr); /* Dos columnas en pantallas pequeñas */
-    gap: 15px; /* Reduce el espaciado para pantallas más pequeñas */
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 15px; 
   }
 }
 
-
-/* --- Estilos Paginación Forzada --- */
 
 .pagination-wrapper {
     margin-top: 40px;
-    margin-bottom: 60px; /* Espacio vital antes del footer */
-    z-index: 10; /* Asegura que esté por encima de otros elementos */
+    margin-bottom: 60px; 
+    z-index: 10; 
     position: relative;
 }
 
@@ -1041,10 +1030,10 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50% !important; /* Círculos perfectos */
-    margin: 0 8px; /* Separación entre botones */
+    border-radius: 50% !important; 
+    margin: 0 8px;
     border: 1px solid #dee2e6;
-    color: #1C253B; /* Tu azul oscuro */
+    color: #1C253B; 
     font-weight: bold;
     font-size: 1.1rem;
     background-color: white;
@@ -1052,24 +1041,21 @@ a:hover {
     transition: all 0.3s ease;
 }
 
-/* Estado Hover */
 .custom-page-link:hover {
     background-color: #EEF1F4;
-    color: #00D2D5; /* Tu color cyan al pasar el mouse */
+    color: #00D2D5; 
     transform: translateY(-3px);
     box-shadow: 0 5px 10px rgba(0,0,0,0.1);
     border-color: #00D2D5;
 }
 
-/* Estado Activo (Página actual) */
 .page-item.active .custom-page-link {
     background-color: #1C253B;
     border-color: #1C253B;
     color: #ffffff;
-    pointer-events: none; /* No clicable */
+    pointer-events: none; 
 }
 
-/* Estado Deshabilitado (Flechas sin función) */
 .page-item.disabled .custom-page-link {
     background-color: #f8f9fa;
     color: #adb5bd;
@@ -1077,13 +1063,10 @@ a:hover {
     cursor: default;
 }
 
-/* Eliminar estilos por defecto de Bootstrap que molestan */
 .page-item:first-child .page-link, 
 .page-item:last-child .page-link {
     border-radius: 50% !important;
 }
-
-
 
 @keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1 } }		
 
@@ -1178,7 +1161,6 @@ footer{
 }
 
 
-/*enlaces rapidos del footer*/
 .footerli {
   text-decoration: none;
 }

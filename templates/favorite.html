@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--Boostrap-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -13,11 +14,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link href="https://raw.githubusercontent.com/daneden/animate.css/master/animate.css" rel="stylesheet">
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
-    <link rel="stylesheet" href="{% static 'styles/styles_favorite.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <title>Lista de deseos - SD Games</title>
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
+    <!--LOGO-->
+    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+    <!--CSS-->
+    <link rel="stylesheet" href="{% static 'styles/styles_favorite.css' %}">
+    <title>Favoritos - SD Games</title>
 </head>
 
 <body>
@@ -153,7 +156,6 @@
                         </div>
                     </button>
                 </div>
-
             </div>
 
             <div class="d-flex login-desktop">
@@ -212,10 +214,12 @@
             </div>
         </div>
     </nav>
+<!--fin del nav-->
+
 
     <main class="py-5">
         <div class="container">
-            
+        
             <div class="d-flex justify-content-between align-items-center mb-4">
             <a href="/menu" class="text-dark text-decoration-none fw-bold">
                 <i class="fas fa-arrow-left me-2"></i> Volver Atrás
@@ -285,13 +289,11 @@
                 </nav>
             </div>
             {% endif %}
-
             </div>
-
         </div>
         </main>
     
-
+    <!--modal de confirmacion-->
      <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -309,7 +311,7 @@
             </div>
         </div>
         </div>
-
+        <!--mensaje de confirmacion-->
         <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -378,176 +380,165 @@
         </div>
     </footer>
 
-    <script>
-        let navbar = document.querySelector(".navbar");
-        let searchBox = document.querySelector(".search-box .bx-search");
-        searchBox.addEventListener("click", () => {
-            navbar.classList.toggle("showInput");
-            if (navbar.classList.contains("showInput")) {
-                searchBox.classList.replace("bx-search", "bx-x");
-            } else {
-                searchBox.classList.replace("bx-x", "bx-search");
-            }
-        });
-        let navLinks = document.querySelector(".nav-links");
-        let menuOpenBtn = document.querySelector(".navbar .bx-menu");
-        let menuCloseBtn = document.querySelector(".nav-links .bx-x");
-        menuOpenBtn.onclick = function () {
-            navLinks.style.left = "0";
+<script>
+    // Para navbar
+    let navbar = document.querySelector(".navbar");
+    let searchBox = document.querySelector(".search-box .bx-search");
+    searchBox.addEventListener("click", () => {
+        navbar.classList.toggle("showInput");
+        if (navbar.classList.contains("showInput")) {
+            searchBox.classList.replace("bx-search", "bx-x");
+        } else {
+            searchBox.classList.replace("bx-x", "bx-search");
         }
-        menuCloseBtn.onclick = function () {
-            navLinks.style.left = "-100%";
-        }
-        let htmlcssArrow = document.querySelector(".htmlcss-arrow");
-        htmlcssArrow.onclick = function () {
-            navLinks.classList.toggle("show1");
-        }
-        let moreArrow = document.querySelector(".more-arrow");
-        moreArrow.onclick = function () {
-            navLinks.classList.toggle("show2");
-        }
-        let jsArrow = document.querySelector(".js-arrow");
-        jsArrow.onclick = function () {
-            navLinks.classList.toggle("show3");
-        }
-
-        function getCSRFToken() {
-        let cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            let [key, value] = cookie.trim().split('=');
-            if (key === 'csrftoken') return value;
-        }
-        return null;
-    }
-
-    // parte de seleccionar para eliminar
-    // 1) Variables globales (usar var evita TDZ)
-    var confirmModal = null;
-    var toastNotification = null;
-
-    // 2) Helpers para inicializar si es necesario (lazy init)
-    function ensureBootstrapInstances() {
-        if (!confirmModal) {
-        const modalEl = document.getElementById('confirmDeleteModal');
-        if (modalEl) confirmModal = new bootstrap.Modal(modalEl);
-        }
-        if (!toastNotification) {
-        const toastEl = document.getElementById('liveToast');
-        if (toastEl) toastNotification = new bootstrap.Toast(toastEl);
-        }
-    }
-
-    // Esperar DOMContentLoaded (por si algo se carga antes)
-    document.addEventListener('DOMContentLoaded', function() {
-        ensureBootstrapInstances();
     });
+    let navLinks = document.querySelector(".nav-links");
+    let menuOpenBtn = document.querySelector(".navbar .bx-menu");
+    let menuCloseBtn = document.querySelector(".nav-links .bx-x");
+    menuOpenBtn.onclick = function () {
+        navLinks.style.left = "0";
+    }
+    menuCloseBtn.onclick = function () {
+        navLinks.style.left = "-100%";
+    }
+    let htmlcssArrow = document.querySelector(".htmlcss-arrow");
+    htmlcssArrow.onclick = function () {
+        navLinks.classList.toggle("show1");
+    }
+    let moreArrow = document.querySelector(".more-arrow");
+    moreArrow.onclick = function () {
+        navLinks.classList.toggle("show2");
+    }
+    let jsArrow = document.querySelector(".js-arrow");
+    jsArrow.onclick = function () {
+        navLinks.classList.toggle("show3");
+    }
 
-    // Obtener CSRF (tu función actual)
     function getCSRFToken() {
-        let cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
+    let cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
         let [key, value] = cookie.trim().split('=');
         if (key === 'csrftoken') return value;
-        }
-        return null;
+    }
+    return null;
+}
+
+// parte de seleccionar para eliminar
+var confirmModal = null;
+var toastNotification = null;
+
+function ensureBootstrapInstances() {
+    if (!confirmModal) {
+    const modalEl = document.getElementById('confirmDeleteModal');
+    if (modalEl) confirmModal = new bootstrap.Modal(modalEl);
+    }
+    if (!toastNotification) {
+    const toastEl = document.getElementById('liveToast');
+    if (toastEl) toastNotification = new bootstrap.Toast(toastEl);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    ensureBootstrapInstances();
+});
+
+function getCSRFToken() {
+    let cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+    let [key, value] = cookie.trim().split('=');
+    if (key === 'csrftoken') return value;
+    }
+    return null;
+}
+
+function mostrarToast(mensaje, claseFondo) {
+    ensureBootstrapInstances();
+    if (!toastNotification) {
+    console.warn('Toast no disponible');
+    return;
     }
 
-    // Mostrar toast (ahora hace ensure)
-    function mostrarToast(mensaje, claseFondo) {
-        ensureBootstrapInstances();
-        if (!toastNotification) {
-        console.warn('Toast no disponible');
-        return;
-        }
+    const toastEl = document.getElementById('liveToast');
+    const toastBody = document.getElementById('toastMessage');
 
-        const toastEl = document.getElementById('liveToast');
-        const toastBody = document.getElementById('toastMessage');
+    toastEl.classList.remove("bg-success", "bg-danger", "bg-warning");
+    toastEl.classList.add(claseFondo);
 
-        toastEl.classList.remove("bg-success", "bg-danger", "bg-warning");
-        toastEl.classList.add(claseFondo);
+    toastBody.textContent = mensaje;
+    toastNotification.show();
+}
 
-        toastBody.textContent = mensaje;
-        toastNotification.show();
+// boton de eliminar
+function eliminarSeleccionados() {
+    ensureBootstrapInstances();
+
+    const checkboxes = document.querySelectorAll('.check-item:checked');
+
+    if (checkboxes.length === 0) {
+    mostrarToast("Selecciona al menos un producto.", "bg-warning");
+    return;
     }
 
-    // Acción para el botón "Eliminar seleccionados"
-    function eliminarSeleccionados() {
-        // inicializar instancias si hace falta
-        ensureBootstrapInstances();
+    if (!confirmModal) {
+    if (!confirm("¿Eliminar los productos seleccionados?")) return;
+    ejecutarEliminacion(checkboxes);
+    return;
+    }
 
-        const checkboxes = document.querySelectorAll('.check-item:checked');
+    confirmModal.show();
 
-        if (checkboxes.length === 0) {
-        mostrarToast("Selecciona al menos un producto.", "bg-warning");
-        return;
-        }
-
-        if (!confirmModal) {
-        // fallback: si no hay modal, preguntar con confirm()
-        if (!confirm("¿Eliminar los productos seleccionados?")) return;
-        // si confirma, ejecutar eliminación sin modal
+    const btn = document.getElementById('confirmDeleteBtn');
+    if (btn) {
+    btn.onclick = function() {
         ejecutarEliminacion(checkboxes);
-        return;
-        }
-
-        // abrir modal y enlazar botón de confirmación
-        confirmModal.show();
-
-        // remover handler previo (por seguridad) y añadir uno nuevo
-        const btn = document.getElementById('confirmDeleteBtn');
-        if (btn) {
-        btn.onclick = function() {
-            ejecutarEliminacion(checkboxes);
-            confirmModal.hide();
-        };
-        }
+        confirmModal.hide();
+    };
     }
+}
 
-    // Ejecuta llamada fetch para borrar
-    function ejecutarEliminacion(checkboxes) {
-        const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+// ejecutar
+function ejecutarEliminacion(checkboxes) {
+    const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
 
-        fetch("{% url 'eliminar_favoritos_seleccionados' %}", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken(),
-        },
-        body: JSON.stringify({ ids: idsToDelete })
-        })
-        .then(response => response.json())
-        .then(data => {
-        if (data.success) {
-            idsToDelete.forEach(id => {
-            const row = document.getElementById(`item-${id}`);
-            if (row) {
-                row.style.transition = "all 0.3s ease";
-                row.style.opacity = "0";
-                row.style.transform = "translateX(20px)";
-                setTimeout(() => row.remove(), 300);
-            }
-            });
-
-            mostrarToast("Productos eliminados correctamente.", "bg-success");
-
-            setTimeout(() => {
-            const remainingItems = document.querySelectorAll('.wishlist-item');
-            if (remainingItems.length === 0) {
-                location.reload();
-            }
-            }, 600);
-        } else {
-            mostrarToast("Error al eliminar.", "bg-danger");
+    fetch("{% url 'eliminar_favoritos_seleccionados' %}", {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken(),
+    },
+    body: JSON.stringify({ ids: idsToDelete })
+    })
+    .then(response => response.json())
+    .then(data => {
+    if (data.success) {
+        idsToDelete.forEach(id => {
+        const row = document.getElementById(`item-${id}`);
+        if (row) {
+            row.style.transition = "all 0.3s ease";
+            row.style.opacity = "0";
+            row.style.transform = "translateX(20px)";
+            setTimeout(() => row.remove(), 300);
         }
-        })
-        .catch(error => {
-        console.error('Error:', error);
-        mostrarToast("Error de conexión.", "bg-danger");
         });
+
+        mostrarToast("Productos eliminados correctamente.", "bg-success");
+
+        setTimeout(() => {
+        const remainingItems = document.querySelectorAll('.wishlist-item');
+        if (remainingItems.length === 0) {
+            location.reload();
+        }
+        }, 600);
+    } else {
+        mostrarToast("Error al eliminar.", "bg-danger");
     }
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    })
+    .catch(error => {
+    console.error('Error:', error);
+    mostrarToast("Error de conexión.", "bg-danger");
+    });
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -5,7 +5,6 @@ body{
     font-family: Arial, sans-serif;
 }
 
-/*color de textos*/
 .custom-text-color{
     color: rgb(255, 255, 255);
   }
@@ -242,7 +241,6 @@ nav .navbar{
   align-items: center;
   justify-content: space-between;
   margin: auto;
-  /* background: red; */
   padding: 0 50px;
 }
 .navbar .logo a{
@@ -279,7 +277,6 @@ nav .navbar .links li a{
   transform: rotate(180deg);
   }
 nav .navbar .links li .arrow{
-  /* background: red; */
   height: 100%;
   width: 22px;
   line-height: 70px;
@@ -494,10 +491,8 @@ nav .navbar .links li .sub-menu li{
     display: none;
   }
   .navbar .links li .sub-menu .more span{
-    /* background: red; */
     display: flex;
     align-items: center;
-    /* justify-content: space-between; */
   }
   .links li .sub-menu .more:hover .more-sub-menu{
     display: none;
@@ -703,8 +698,8 @@ a:hover {
 
 .section-products .row.g-3 {
   display: grid;
-  gap: 20px; /* Espaciado entre tarjetas */
-  grid-template-columns: repeat(4, 1fr); /* Cuatro columnas en pantallas grandes */
+  gap: 20px; 
+  grid-template-columns: repeat(4, 1fr); 
 }
 
 .btn-detalles {
@@ -727,25 +722,22 @@ a:hover {
 }
 
 
-/* Contenedor principal para los productos */
 .section-products .row.g-3 {
   display: grid;
-  gap: 20px; /* Espaciado entre tarjetas */
-  grid-template-columns: repeat(4, 1fr); /* Cuatro columnas en pantallas grandes */
+  gap: 20px; 
+  grid-template-columns: repeat(4, 1fr); 
 }
 
-/* Ajuste para dispositivos medianos */
 @media (max-width: 768px) {
   .section-products .row.g-3 {
-    grid-template-columns: repeat(2, 1fr); /* Dos columnas en pantallas medianas */
+    grid-template-columns: repeat(2, 1fr); 
   }
 }
 
-/* Ajuste para dispositivos pequeños */
 @media (max-width: 576px) {
   .section-products .row.g-3 {
-    grid-template-columns: repeat(2, 1fr); /* Dos columnas en pantallas pequeñas */
-    gap: 15px; /* Reduce el espaciado para pantallas más pequeñas */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
   }
 }
 
@@ -836,11 +828,11 @@ animation-play-state: paused;
 .main-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Garantiza que el contenedor ocupe todo el alto de la pantalla */
+  min-height: 100vh; 
 }
 
 .section-products {
-  flex: 1; /* Hace que el contenido principal ocupe el espacio disponible */
+  flex: 1; 
 }
 
 footer{

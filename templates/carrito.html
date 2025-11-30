@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
 {% load custom_filters %}
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <link href="https://raw.githubusercontent.com/daneden/animate.css/master/animate.css" rel="stylesheet">
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
+  <!--LOGO-->
   <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+  <!--CSS-->
   <link rel="stylesheet" href="{% static 'styles/styles_carrito.css' %}">
   <title>Carrito de Compras</title>
 </head>
@@ -111,7 +114,6 @@
               </div>
           </button>
           </div>
-  
         </div>
   
         <div class="d-flex login-desktop">
@@ -165,9 +167,10 @@
         </div>
       </div>
     </nav>
+<!--Fin del nav de la web-->
 
 
-
+    <!--Contenido-->
     <div id="carrito-container">
       <div class="card">
         <div id="mensaje-error" style="display:none;" 
@@ -182,11 +185,9 @@
                           <div class="col align-self-center text-right text-muted">
                               <span id="total-items-count-summary">{{ total_items }}</span> items
                           </div>
-
                       </div>
                   </div>
   
-                  <!-- Mostrar productos o mensaje si el carrito está vacío -->
                   <div class="row border-top border-bottom">
                       {% if productos %}
                           {% for item in productos %}
@@ -216,16 +217,15 @@
                       {% endif %}
                   </div>
   
-                  <!-- Botón de regreso -->
                   <div class="back-to-shop">
                       <a href="/menu">&leftarrow;</a><span class="text-muted">Regresar</span>
                   </div>
               </div>
   
+              <!--RESUMEN DEL CARRITO-->
               <div class="col-md-4 summary">
                 <div><h5><b>Resumen</b></h5></div>
                 <hr>
-
                 <div class="row">
                   <div class="col total-items-text">
                       <span id="total-items-count">{{ total_items }}</span> ítems
@@ -234,15 +234,12 @@
                       {{ total|formato_chileno }}
                   </div>
               </div>
-
-
                 {% if productos %}
                 <div class="row">
                     <div class="col">Envío</div>
                     <div class="col text-right">$5.990</div>
                 </div>
                 {% endif %}
-
 
                 <hr>
 
@@ -284,7 +281,7 @@
                 {% endif %}
             </div>
 
-            <!-- MODAL -->
+            <!--Modal para editar el envio-->
             <div id="modal-envio" class="modal-envio">
                 <div class="modal-content-envio">
                     <h5><b>Editar datos de envío</b></h5>
@@ -307,8 +304,8 @@
       </div>
   </div>
 
-
-    <script>
+<script>
+    // lista de regiones y ciudades para el modal
     const regionesCiudades = {
         'ARICA Y PARINACOTA': ['Arica', 'Putre'],
         'TARAPACA': ['Iquique', 'Alto Hospicio'],
@@ -327,7 +324,6 @@
         'AYSEN': ['Coyhaique', 'Puerto Aysén'],
         'MAGALLANES': ['Punta Arenas', 'Puerto Natales'],
     };
-
 
     function cargarRegiones() {
     let selectRegion = document.getElementById("input-region");
@@ -349,6 +345,7 @@
           });
       }
 
+    // formato de pesos chilenos para los valores numericos
     function formatoChileno(valor) {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -357,11 +354,12 @@
         }).format(valor);
     }
 
+    // esto es para un error que existia con presionar enter
     document.querySelectorAll('input[type="number"]').forEach(input => {
     input.addEventListener('keydown', function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
-            this.blur(); // opcional: forzar que salga del input
+            this.blur(); 
         }
         });
     });
@@ -376,7 +374,7 @@
     }, 3000);
     }
 
-
+    // actualizar la cantidad del carrito en tiempo real
     function actualizarCantidad(itemId) {
     const form = document.getElementById(`form-${itemId}`);
     const formData = new FormData(form);
@@ -389,27 +387,19 @@
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // número de items (solo el número)
-            // Contador del resumen
             const mainCount = document.getElementById('total-items-count');
             if (mainCount) mainCount.textContent = data.total_items;
 
-            // Contador de la parte superior derecha
             const summaryCount = document.getElementById('total-items-count-summary');
             if (summaryCount) summaryCount.textContent = data.total_items;
 
-
-
-            // subtotal
             const subtotalElem = document.getElementById('subtotal-resumen');
             if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
 
-            // total final (subtotal + envío)
             const envio = 5990;
             const totalFinalElem = document.getElementById('total-final');
             if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
 
-            // si el carrito quedó vacío puede que otras partes deban actualizarse (opcional)
         } else if (data.error) {
             mostrarError(data.error);
         }
@@ -417,6 +407,7 @@
     .catch(error => console.error('Error:', error));
 }
 
+// eliminar un item del carrito y que se actualice en tiempo real
 function eliminarItem(itemId, element) {
     const url = element.getAttribute('data-url');
 
@@ -427,25 +418,20 @@ function eliminarItem(itemId, element) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // quitar fila
             const row = document.getElementById(`item-${itemId}`);
             if (row) row.remove();
 
-            // actualizar contador numérico
             document.querySelectorAll('#total-items-count').forEach(el => el.textContent = data.total_items);
 
-            // actualizar subtotal si existe
             const subtotalElem = document.getElementById('subtotal-resumen');
             if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
 
             const envio = 5990;
 
             if (data.total_items === 0) {
-                // reemplazar el área del carrito por mensaje vacío
                 const container = document.querySelector('.cart');
                 if (container) container.innerHTML = '<div class="text-center p-4"><h5 class="text-muted">Tu carrito está vacío.</h5></div>';
 
-                // reemplazar la summary por mensaje (sin IDs)
                 const resumen = document.querySelector('.summary');
                 if (resumen) {
                     resumen.innerHTML = `
@@ -465,8 +451,7 @@ function eliminarItem(itemId, element) {
     .catch(error => console.error('Error:', error));
 }
 
-
-
+        // para navbar
         let navbar = document.querySelector(".navbar");
         let searchBox = document.querySelector(".search-box .bx-search");
         searchBox.addEventListener("click", ()=>{
@@ -499,6 +484,7 @@ function eliminarItem(itemId, element) {
         navLinks.classList.toggle("show3");
         }
 
+        // modal para editar la direccion de envio en carrito
         function abrirModal() {
             document.getElementById("modal-envio").style.display = "flex";
 
@@ -514,11 +500,12 @@ function eliminarItem(itemId, element) {
             document.getElementById("input-direccion").value = direccionActual;
         }
 
-
+        // cerrar modal
         function cerrarModal() {
             document.getElementById("modal-envio").style.display = "none";
         }
 
+        // guardar datos de envio cambiados
         function guardarEnvio() {
             const data = new FormData();
             data.append("region", document.getElementById("input-region").value);
@@ -540,8 +527,7 @@ function eliminarItem(itemId, element) {
                 }
             });
         }
-
-    </script>
+</script>
 
     <!--footer-->
     <footer class="text-center text-lg-start text-light">
@@ -599,5 +585,4 @@ function eliminarItem(itemId, element) {
       </div>
     </footer>
 </body>
-
 </html>

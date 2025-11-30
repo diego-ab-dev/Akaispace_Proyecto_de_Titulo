@@ -245,7 +245,6 @@ nav .navbar{
   align-items: center;
   justify-content: space-between;
   margin: auto;
-  /* background: red; */
   padding: 0 50px;
 }
 .navbar .logo a{
@@ -282,7 +281,6 @@ nav .navbar .links li a{
   transform: rotate(180deg);
   }
 nav .navbar .links li .arrow{
-  /* background: red; */
   height: 100%;
   width: 22px;
   line-height: 70px;
@@ -497,10 +495,8 @@ nav .navbar .links li .sub-menu li{
     display: none;
   }
   .navbar .links li .sub-menu .more span{
-    /* background: red; */
     display: flex;
     align-items: center;
-    /* justify-content: space-between; */
   }
   .links li .sub-menu .more:hover .more-sub-menu{
     display: none;
@@ -871,15 +867,8 @@ nav .navbar .links li .sub-menu li{
   transition-duration: .5s;
 }
 
-
-/* --- Estilos Detalle Producto Moderno --- */
-body {
-    background-color: #EEF1F4;
-}
-
-/* Imágenes */
 .main-image-container {
-    background-color: #f8f9fa; /* Fondo gris claro para la imagen */
+    background-color: #f8f9fa; 
     min-height: 400px;
     display: flex;
     align-items: center;
@@ -914,7 +903,6 @@ body {
     max-height: 100%;
 }
 
-/* Barras de Progreso (Estrellas) */
 .progress {
     background-color: #e9ecef;
     border-radius: 5px;
@@ -923,7 +911,6 @@ body {
     border-radius: 5px;
 }
 
-/* Ajustes de Texto */
 h2, h3, h5 {
-    color: #1C253B; /* Azul oscuro corporativo */
+    color: #1C253B; 
 }

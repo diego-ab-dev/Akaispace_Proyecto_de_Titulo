@@ -7,19 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <title>Selecciona el Método de Pago</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <!--LOGO-->
     <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+    <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_metodo.css' %}">
-    <style>
-        .hidden {
-        display: none;
-        }
-    </style>
+    <title>Selecciona el Método de Pago</title>
 </head>
 <body>
     <div class="main-container">
-        
         <div class="left-panel">
             <a href="{% url 'ver_carrito' %}" class="back-link">
                 <i class="bi bi-arrow-left"></i> Regresar
@@ -92,65 +89,65 @@
                 <span>${{ total|add:5990|formato_chileno }}</span>
             </div>
         </div>
-
     </div>
 
-    <script>
-        // Ejecutar al cargar para mostrar el formulario correcto si hay valor seleccionado
-        document.addEventListener('DOMContentLoaded', function() {
-            mostrarFormulario();
-        });
+<script>
+    // manejar el valor seleccionado
+    document.addEventListener('DOMContentLoaded', function() {
+        mostrarFormulario();
+    });
 
-        function mostrarFormulario() {
-            const metodo = document.getElementById("metodo_pago").value;
-            const formTarjeta = document.getElementById("form-tarjeta");
-            const formTransferencia = document.getElementById("form-transferencia");
+    function mostrarFormulario() {
+        const metodo = document.getElementById("metodo_pago").value;
+        const formTarjeta = document.getElementById("form-tarjeta");
+        const formTransferencia = document.getElementById("form-transferencia");
 
-            formTarjeta.classList.add("hidden");
-            formTransferencia.classList.add("hidden");
+        formTarjeta.classList.add("hidden");
+        formTransferencia.classList.add("hidden");
 
-            // Quitar required
-            Array.from(formTarjeta.querySelectorAll("input")).forEach(i => i.required = false);
+        Array.from(formTarjeta.querySelectorAll("input")).forEach(i => i.required = false);
 
-            if (metodo === "tarjeta") {
-                formTarjeta.classList.remove("hidden");
-                Array.from(formTarjeta.querySelectorAll("input")).forEach(i => i.required = true);
-            } else if (metodo === "transferencia") {
-                formTransferencia.classList.remove("hidden");
-            }
+        if (metodo === "tarjeta") {
+            formTarjeta.classList.remove("hidden");
+            Array.from(formTarjeta.querySelectorAll("input")).forEach(i => i.required = true);
+        } else if (metodo === "transferencia") {
+            formTransferencia.classList.remove("hidden");
         }
+    }
 
-        function formatearNumeroTarjeta() {
-            const input = document.getElementById("numero_tarjeta");
-            let valor = input.value.replace(/\D/g, "");
-            const grupos = valor.match(/.{1,4}/g) || [];
-            input.value = grupos.join(" ");
-            detectarTarjeta(valor);
-        }
+    // validar numero de la tarjeta
+    function formatearNumeroTarjeta() {
+        const input = document.getElementById("numero_tarjeta");
+        let valor = input.value.replace(/\D/g, "");
+        const grupos = valor.match(/.{1,4}/g) || [];
+        input.value = grupos.join(" ");
+        detectarTarjeta(valor);
+    }
 
-        function formatearFechaExpiracion() {
-            const input = document.getElementById("expiracion");
-            let valor = input.value.replace(/\D/g, "");
-            if (valor.length >= 2) {
-                input.value = valor.slice(0, 2) + "/" + valor.slice(2, 4);
-            } else {
-                input.value = valor;
-            }
+    // validar fecha
+    function formatearFechaExpiracion() {
+        const input = document.getElementById("expiracion");
+        let valor = input.value.replace(/\D/g, "");
+        if (valor.length >= 2) {
+            input.value = valor.slice(0, 2) + "/" + valor.slice(2, 4);
+        } else {
+            input.value = valor;
         }
+    }
 
-        function detectarTarjeta(numero) {
-            const logo = document.getElementById("logo_tarjeta");
-            // Lógica simple de detección
-            if (/^4/.test(numero)) {
-                logo.src = "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg";
-                logo.classList.remove("hidden");
-            } else if (/^5[1-5]/.test(numero)) {
-                logo.src = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg";
-                logo.classList.remove("hidden");
-            } else {
-                logo.classList.add("hidden");
-            }
+    // detectar tarjeta y mostrar foto
+    function detectarTarjeta(numero) {
+        const logo = document.getElementById("logo_tarjeta");
+        if (/^4/.test(numero)) {
+            logo.src = "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg";
+            logo.classList.remove("hidden");
+        } else if (/^5[1-5]/.test(numero)) {
+            logo.src = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg";
+            logo.classList.remove("hidden");
+        } else {
+            logo.classList.add("hidden");
         }
-    </script>
+    }
+</script>
 </body>
 </html>

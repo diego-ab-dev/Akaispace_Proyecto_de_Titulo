@@ -6,7 +6,7 @@ body {
   height: 100vh; 
 }
 
-/* Imagen de fondo */
+/* imagen */
 .card-img-left {
   width: 45%;
   background: scroll center url('https://images.pexels.com/photos/275033/pexels-photo-275033.jpeg?cs=srgb&dl=pexels-pixabay-275033.jpg&fm=jpg');
@@ -16,7 +16,6 @@ body {
   position: relative;
 }
 
-/* Texto encima de la imagen */
 .card-img-left .image-text {
   position: absolute;
   top: 50%;
@@ -30,7 +29,6 @@ body {
   z-index: 1;
 }
 
-/* Sombra en la imagen */
 .card-img-left:before {
   background-color: rgba(0, 0, 0, 0.6);
   content: '';
@@ -42,7 +40,6 @@ body {
   z-index: 0;
 }
 
-/* Estilo de botón */
 .btn-login {
   font-size: 0.9rem;
   letter-spacing: 0.05rem;

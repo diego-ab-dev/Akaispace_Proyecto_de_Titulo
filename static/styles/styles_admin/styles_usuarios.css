@@ -152,13 +152,11 @@ a{text-decoration: none}
             }
         }
 
-/* Contenedor principal */
 .height-100.bg-light {
     padding: 2rem;
     background-color: #f9f9f9;
 }
 
-/* Formulario de búsqueda */
 form {
     display: flex;
     align-items: center;
@@ -190,7 +188,6 @@ form button:hover {
     background-color: #346480;
 }
 
-/* Botón de agregar usuario */
 button[data-url] {
     background-color: var(--first-color);
     color: #fff;
@@ -207,7 +204,6 @@ button[data-url]:hover {
     transform: translateY(-2px);
 }
 
-/* Tabla de usuarios */
 table {
     width: 100%;
     border-collapse: collapse;

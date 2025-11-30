@@ -5,108 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ingreso de Reclamo</title>
+    <!--Boostrap-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <style>
-        /* --- ESTILOS VISUALES IDÉNTICOS A LA FOTO --- */
-        body {
-            background-color: #EEF1F4; /* Fondo gris/azul claro */
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: #1a202c;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .reclamo-card {
-            background-color: white;
-            width: 100%;
-            max-width: 650px; /* Ancho de la tarjeta */
-            padding: 50px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        h1 {
-            font-size: 2rem;
-            font-weight: 500; /* No muy grueso, elegante */
-            text-align: center;
-            margin-bottom: 35px;
-            color: #000;
-        }
-
-        /* --- INPUTS --- */
-        .form-label {
-            font-weight: 700; /* Negrita en etiquetas */
-            font-size: 1.1rem;
-            color: #000;
-            margin-bottom: 8px;
-        }
-
-        .form-control {
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            padding: 10px 15px;
-            font-size: 0.95rem;
-            color: #555;
-            background-color: #fff;
-        }
-
-        .form-control:focus {
-            box-shadow: none;
-            border-color: #a0a0a0;
-        }
-
-        .form-control::placeholder {
-            color: #b0b0b0;
-            font-weight: 300;
-        }
-
-        /* --- BOTONES --- */
-        .buttons-row {
-            display: flex;
-            gap: 20px; /* Espacio entre botones */
-            margin-top: 40px;
-        }
-
-        .btn-custom {
-            flex: 1; /* Para que ambos botones tengan el mismo ancho */
-            padding: 12px 0;
-            border-radius: 50px; /* Forma de píldora */
-            font-weight: 700;
-            font-size: 1rem;
-            border: none;
-            text-decoration: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.2s;
-            cursor: pointer;
-        }
-
-        .btn-custom:hover {
-            opacity: 0.9;
-            color: white;
-        }
-
-        /* Botón Enviar (Azul Acero) */
-        .btn-enviar {
-            background-color: #527e99;
-            color: white;
-        }
-
-        /* Botón Cancelar (Azul Oscuro/Negro) */
-        .btn-cancelar {
-            background-color: #1F2533;
-            color: white;
-        }
-    </style>
+    <!--CSS-->
+    <link rel="stylesheet" href="{% static 'styles/styles_reclamo.css' %}">
+    <!--LOGO-->
+    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
 </head>
 <body>
-
     <div class="reclamo-card">
         <h1>Ingreso de Reclamo</h1>
 
@@ -134,6 +40,5 @@
             </div>
         </form>
     </div>
-
 </body>
 </html>

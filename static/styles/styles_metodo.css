@@ -1,67 +1,57 @@
-/* General Styles */
 body {
     font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
-    overflow-x: hidden; /* Evita scroll horizontal innecesario */
+    overflow-x: hidden; 
 }
 
 .hidden { display: none; }
 
-/* CONTENEDOR PRINCIPAL: Ahora ocupa toda la pantalla */
 .main-container {
     display: flex;
-    width: 100%;        /* Ancho total */
-    min-height: 100vh;  /* Alto total de la ventana */
+    width: 100%;        
+    min-height: 100vh;  
     background: #fff;
-    margin: 0;          /* Sin márgenes externos */
-    border-radius: 0;   /* Sin bordes redondeados */
-    box-shadow: none;   /* Sin sombras */
+    margin: 0;          
+    border-radius: 0;   
+    box-shadow: none;   
 }
 
-/* PANEL IZQUIERDO (Gris) */
 .left-panel {
     background-color: #F4F6F8;
-    flex: 6; /* Ocupa el 60% de la pantalla */
-    padding: 4rem 8rem; /* Espaciado interno generoso */
-    
-    /* Centrar el contenido verticalmente */
+    flex: 6;
+    padding: 4rem 8rem; 
     display: flex;
     flex-direction: column;
     justify-content: center; 
 }
 
-/* PANEL DERECHO (Blanco) */
 .right-panel {
     background-color: #ffffff;
     border-left: 1px solid #e0e0e0;
-    flex: 4; /* Ocupa el 40% de la pantalla */
+    flex: 4;
     padding: 4rem 6rem;
-    
-    /* Centrar el contenido verticalmente */
     display: flex;
     flex-direction: column;
     justify-content: center; 
 }
 
-/* Estilos del Formulario */
 .form-select {
     width: 100%;
     padding: 12px;
-    border: 1px solid #ddd; /* Borde sutil */
+    border: 1px solid #ddd; 
     border-radius: 6px;
     background: #fff;
     font-size: 1rem;
 }
 
 .form-container {
-    background: transparent; /* Quitamos fondo extra si lo hubiera */
+    background: transparent;
     padding: 0;
     margin-top: 20px;
     border: none;
 }
 
-/* Inputs más limpios */
 .form-control {
     width: 100%;
     padding: 12px;
@@ -79,14 +69,13 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 40px; /* Separación del título */
+    margin-bottom: 40px; 
     font-size: 1.1rem;
-    position: absolute; /* Lo fijamos arriba a la izquierda */
+    position: absolute;
     top: 40px;
     left: 60px;
 }
 
-/* Resumen de Compra */
 .summary-row {
     display: flex;
     justify-content: space-between;
@@ -106,7 +95,6 @@ body {
     color: #000;
 }
 
-/* Botón Pagar */
 .btn-pagar-mockup {
     background-color: #4E84A8;
     color: white;
@@ -128,18 +116,17 @@ body {
     background-color: #3b6a8a;
 }
 
-/* Responsive para móviles */
 @media (max-width: 992px) {
     .main-container {
-        flex-direction: column; /* Apilar uno sobre otro */
+        flex-direction: column; 
     }
     .left-panel, .right-panel {
         padding: 40px 20px;
         width: 100%;
-        flex: none; /* Altura automática */
+        flex: none; 
     }
     .back-link {
-        position: relative; /* Volver al flujo normal en móvil */
+        position: relative; 
         top: auto;
         left: auto;
     }

@@ -21,8 +21,6 @@ from .forms import OpinionForm
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 
-# Create your views here.
-
 # Vistas para administracion
 regiones_ciudades = {
     'ARICA Y PARINACOTA': ['Arica', 'Putre'],
@@ -129,7 +127,6 @@ def buscar_usuarios(request):
     else:
         mensaje = ""
     return render(request, 'admin_panel/usuarios.html', {'usuarios': usuarios, 'mensaje': mensaje})
-
 
 @admin_required
 def crear_usuario(request):
@@ -382,7 +379,6 @@ def modificar_venta(request, venta_id):
     envio = getattr(venta, 'datos_envio', None) 
 
     if request.method == 'POST':
-        # 1. Actualizar Estado de Venta/Envío
         nuevo_estado = request.POST.get('estado')
         numero_seguimiento = request.POST.get('numero_seguimiento')
         
@@ -412,6 +408,7 @@ def modificar_venta(request, venta_id):
 #fin
 
 
+# vistas del cliente
 
 # vistas relacionadas a home y menu
 def home(request):
@@ -642,22 +639,12 @@ def perfil(request):
         'devoluciones_recientes': devoluciones_recientes,
     })
 
-def lista_opiniones(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
 
-    usuario = get_object_or_404(Usuario, id=usuario_id)
-    opiniones = Opinion.objects.filter(usuario=usuario).order_by('-fecha_creacion')
-
-    return render(request, 'lista_opiniones.html', {'opiniones': opiniones})
 
 def ver_compras(request):
     usuario_id = request.session.get('usuario_id')
     if not usuario_id:
         return redirect('login')
-    
-
     
     usuario = get_object_or_404(Usuario, id=usuario_id)
     compras = Venta.objects.filter(usuario=usuario).prefetch_related(
@@ -672,11 +659,12 @@ def ver_compras(request):
     return render(request, 'ver_compras.html', {'usuario': usuario, 'compras': compras})
 
 def ver_detalle_compra(request, compra_id):
-    # Obtenemos la compra específica
     compra = get_object_or_404(Venta, id=compra_id)
     return render(request, 'detalle_compra.html', {
         'compra': compra
     })
+
+
 
 def enviar_opinion(request, producto_id):
     usuario_id = request.session.get('usuario_id')
@@ -710,6 +698,18 @@ def enviar_opinion(request, producto_id):
         'producto': producto
     })
 
+def lista_opiniones(request):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    opiniones = Opinion.objects.filter(usuario=usuario).order_by('-fecha_creacion')
+
+    return render(request, 'lista_opiniones.html', {'opiniones': opiniones})
+
+
+
 def crear_reclamo(request, compra_id):
     usuario_id = request.session.get('usuario_id')
     if not usuario_id:
@@ -727,8 +727,6 @@ def crear_reclamo(request, compra_id):
         else:
             Reclamo.objects.create(usuario=usuario, asunto=asunto, descripcion=descripcion)
             return redirect('ver_compras')
-
-
     return render(request, 'crear_reclamo.html', {
         'compra': compra
     })
@@ -757,6 +755,7 @@ def ver_detalle_reclamo(request, reclamo_id):
     return render(request, 'detalle_reclamo.html', {
         'reclamo': reclamo
     })
+
 
 
 def crear_devolucion(request, compra_id, producto_id):
@@ -811,6 +810,7 @@ def ver_detalle_devolucion(request, devolucion_id):
     return render(request, 'detalle_devolucion.html', {
         'devolucion': devolucion
     })
+
 
 
 def cambiar_contraseña(request):
@@ -901,7 +901,7 @@ regiones_ciudades = {
 # fin de vistas sobre el perfil del usuario
 
 
-# vistas relacionadas con carrito:
+# vistas relacionadas con carrito
 def usuario_compro_producto(usuario, producto):
     return ItemCarritoProducto.objects.filter(
         carrito__venta__isnull=False,  
@@ -1035,8 +1035,7 @@ def guardar_datos_envio(request):
         })
 
     return JsonResponse({'success': False}, status=400)
-
-# fin de vistas relacionadas con carrito:
+# fin de vistas relacionadas con carrito
 
 
 # vistas de los favoritos

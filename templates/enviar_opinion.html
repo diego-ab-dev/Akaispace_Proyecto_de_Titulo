@@ -5,147 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tu Opinión - {{ producto.nombre }}</title>
+    <!--Boostrap-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* --- ESTILOS VISUALES IDÉNTICOS A LA FOTO --- */
-        body {
-            background-color: #EEF1F4;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: #000;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-        }
-
-        .opinion-card {
-            background-color: white;
-            width: 100%;
-            max-width: 550px; /* Ancho similar a la foto */
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 25px;
-            color: #000;
-        }
-
-        /* --- ESTRELLAS --- */
-        .rating-label {
-            display: block;
-            text-align: left;
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 5px;
-            color: #000;
-        }
-
-        .star-container {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-
-        .star-icon {
-            font-size: 2rem;
-            color: #ddd; /* Color gris por defecto */
-            transition: color 0.2s;
-        }
-
-        .star-icon.active {
-            color: #E3C938; /* Amarillo dorado exacto */
-        }
-
-        /* --- TEXTAREA --- */
-        .comment-label {
-            display: block;
-            text-align: left;
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            color: #000;
-        }
-
-        .custom-textarea {
-            width: 100%;
-            height: 150px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            padding: 12px;
-            resize: none; /* Evita que el usuario cambie el tamaño */
-            font-family: inherit;
-            font-size: 0.95rem;
-            color: #555;
-            outline: none;
-            margin-bottom: 30px;
-        }
-        
-        .custom-textarea:focus {
-            border-color: #a0a0a0;
-        }
-
-        .custom-textarea::placeholder {
-            color: #b0b0b0;
-            font-weight: 300;
-        }
-
-        /* --- BOTONES --- */
-        .actions-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-        }
-
-        .btn-custom {
-            flex: 1;
-            padding: 12px 0;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            border: none;
-            text-decoration: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.2s;
-        }
-        .btn-custom:hover { opacity: 0.9; color: white; }
-
-        /* Botón Enviar (Azul Acero) */
-        .btn-submit {
-            background-color: #527e99;
-            color: white;
-        }
-
-        /* Botón Cancelar (Azul Oscuro/Negro) */
-        .btn-cancel {
-            background-color: #1F2533;
-            color: white;
-        }
-        
-        /* Ocultar input real de Django */
-        .hidden-rating-input {
-            display: none;
-        }
-    </style>
+    <!--CSS-->
+    <link rel="stylesheet" href="{% static 'styles/styles_enviar_opinion.css' %}">
+    <!--LOGO-->
+    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
 </head>
 <body>
-
     <div class="opinion-card">
         <h1>Tu opinión de "{{ producto.nombre }}"</h1>
-
+        <!--Formulario-->
         <form method="post" id="opinionForm">
             {% csrf_token %}
-
             <label class="rating-label">Puntuación</label>
             <div class="star-container" id="starContainer">
                 <i class="fa-solid fa-star star-icon" data-value="1"></i>
@@ -168,35 +41,31 @@
         </form>
     </div>
 
-    <script>
-        // Lógica simple para pintar las estrellas
-        const stars = document.querySelectorAll('.star-icon');
-        const ratingInput = document.getElementById('ratingValue');
+<script>
+    const stars = document.querySelectorAll('.star-icon');
+    const ratingInput = document.getElementById('ratingValue');
 
-        // Función para pintar estrellas hasta cierto número
-        function highlightStars(value) {
-            stars.forEach(star => {
-                const starValue = parseInt(star.getAttribute('data-value'));
-                if (starValue <= value) {
-                    star.classList.add('active');
-                } else {
-                    star.classList.remove('active');
-                }
-            });
-        }
-
-        // Inicializar con el valor por defecto (5)
-        highlightStars(5);
-
-        // Añadir evento click a cada estrella
+    // funcion para pintar las estrellas
+    function highlightStars(value) {
         stars.forEach(star => {
-            star.addEventListener('click', () => {
-                const value = parseInt(star.getAttribute('data-value'));
-                ratingInput.value = value; // Actualiza el input oculto de Django
-                highlightStars(value); // Actualiza lo visual
-            });
+            const starValue = parseInt(star.getAttribute('data-value'));
+            if (starValue <= value) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
         });
-    </script>
+    }
 
+    highlightStars(5);
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const value = parseInt(star.getAttribute('data-value'));
+            ratingInput.value = value; 
+            highlightStars(value); 
+        });
+    });
+</script>
 </body>
 </html>

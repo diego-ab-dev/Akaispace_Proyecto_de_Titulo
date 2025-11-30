@@ -1,4 +1,3 @@
-/* General reset */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -9,7 +8,6 @@ body {
     height: 100vh;
 }
 
-/* Contenedor principal */
 .reclamo-container {
     background: #ffffff;
     padding: 20px 40px;
@@ -19,21 +17,18 @@ body {
     width: 400px;
 }
 
-/* Título */
 .reclamo-container h1 {
     font-size: 1.8rem;
     margin-bottom: 20px;
     color: #333333;
 }
 
-/* Información del reclamo */
 .reclamo-info p {
     margin: 10px 0;
     font-size: 1rem;
     color: #555555;
 }
 
-/* Textarea */
 textarea {
     width: 100%;
     height: 100px;
@@ -45,7 +40,6 @@ textarea {
     resize: none;
 }
 
-/* Botón enviar */
 .btn-submit {
     background-color: #007BFF;
     color: #ffffff;
@@ -61,7 +55,6 @@ textarea {
     background-color: #0056b3;
 }
 
-/* Enlace volver */
 .btn-back {
     display: block;
     margin-top: 15px;

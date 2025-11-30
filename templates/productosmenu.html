@@ -18,13 +18,15 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
   <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
+  <!--LOGO-->
   <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+  <!--CSS-->
   <link rel="stylesheet" href="{% static 'styles/styles_menu.css' %}">
   <title>SD Games - Menu</title>
 </head>
 
 <body>
-
+<!--NAVBAR-->
   <nav>
     <div class="navbar">
       <i class='bx bx-menu'></i>
@@ -141,7 +143,6 @@
             </div>
           </button>
         </div>
-
       </div>
 
       <div class="d-flex login-desktop">
@@ -200,9 +201,9 @@
       </div>
     </div>
   </nav>
+<!--Fin del navbar-->
 
-
-
+<!--carrusel principal-->
   <div id="myCarousel" class="carousel slide carousel-fade" data-ride="carousel">
     <div class="carousel-inner">
       <div class="carousel-item active">
@@ -303,7 +304,7 @@
 
       <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 
-
+      <!--seccion de productos-->
       <section class="section-products">
         <div class="container">
           <div class="row justify-content-center text-center">
@@ -361,6 +362,7 @@
         </div>
       </section>
 
+      <!--paginacion-->
       <div class="container mb-5"> <div class="pagination-wrapper d-flex justify-content-center">
               <ul class="pagination">
 
@@ -395,144 +397,144 @@
                           <span class="page-link custom-page-link">&raquo;</span>
                       {% endif %}
                   </li>
-
               </ul>
           </div>
       </div>
 
-      
+      <!--boton de ir arriba-->
       <div class="go-top-container">
         <div class="go-top-button">
           <img src="{% static 'images/navegar-flecha-hacia-arriba.png' %}" alt="">
         </div>
       </div>
 
-      <script>
-        window.onscroll = function () {
-          console.log(document.documentElement.scrollTop);
-          if (document.documentElement.scrollTop > 100) {
-            document.querySelector('.go-top-container').classList.add('show');
+<script>
+  // boton para subir
+  window.onscroll = function () {
+    console.log(document.documentElement.scrollTop);
+    if (document.documentElement.scrollTop > 100) {
+      document.querySelector('.go-top-container').classList.add('show');
 
-          }
-          else {
-            document.querySelector('.go-top-container').classList.remove('show');
-          }
-        }
+    }
+    else {
+      document.querySelector('.go-top-container').classList.remove('show');
+    }
+  }
 
-        document.querySelector('.go-top-container').addEventListener('click', () => {
-          window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-          });
-        });
+  document.querySelector('.go-top-container').addEventListener('click', () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
 
-        function isVisible(elm) {
-          var rect = elm.getBoundingClientRect();
-          var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-          return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
-        }
+  function isVisible(elm) {
+    var rect = elm.getBoundingClientRect();
+    var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+    return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+  }
 
-        window.addEventListener('DOMContentLoaded', (ev0) => {
-          window.addEventListener('scroll', (ev1) => {
-            document.querySelectorAll(".paused").forEach(elm => {
-              if (isVisible(elm))
-                elm.classList.remove("paused");
-            })
-          });
-        });
+  window.addEventListener('DOMContentLoaded', (ev0) => {
+    window.addEventListener('scroll', (ev1) => {
+      document.querySelectorAll(".paused").forEach(elm => {
+        if (isVisible(elm))
+          elm.classList.remove("paused");
+      })
+    });
+  });
 
+  // carrusels
+  var myCarousel = document.querySelector('#myCarousel');
+  var carousel = new bootstrap.Carousel(myCarousel, {
+    interval: 3000,
+    ride: 'carousel'
+  });
 
-        var myCarousel = document.querySelector('#myCarousel');
-        var carousel = new bootstrap.Carousel(myCarousel, {
-          interval: 3000,
-          ride: 'carousel'
-        });
+  // navbar
+  let navbar = document.querySelector(".navbar");
+  let searchBox = document.querySelector(".search-box .bx-search");
+  searchBox.addEventListener("click", () => {
+    navbar.classList.toggle("showInput");
+    if (navbar.classList.contains("showInput")) {
+      searchBox.classList.replace("bx-search", "bx-x");
+    } else {
+      searchBox.classList.replace("bx-x", "bx-search");
+    }
+  });
+  let navLinks = document.querySelector(".nav-links");
+  let menuOpenBtn = document.querySelector(".navbar .bx-menu");
+  let menuCloseBtn = document.querySelector(".nav-links .bx-x");
+  menuOpenBtn.onclick = function () {
+    navLinks.style.left = "0";
+  }
+  menuCloseBtn.onclick = function () {
+    navLinks.style.left = "-100%";
+  }
+  let htmlcssArrow = document.querySelector(".htmlcss-arrow");
+  htmlcssArrow.onclick = function () {
+    navLinks.classList.toggle("show1");
+  }
+  let moreArrow = document.querySelector(".more-arrow");
+  moreArrow.onclick = function () {
+    navLinks.classList.toggle("show2");
+  }
+  let jsArrow = document.querySelector(".js-arrow");
+  jsArrow.onclick = function () {
+    navLinks.classList.toggle("show3");
+  }
+</script>
 
-        let navbar = document.querySelector(".navbar");
-        let searchBox = document.querySelector(".search-box .bx-search");
-        searchBox.addEventListener("click", () => {
-          navbar.classList.toggle("showInput");
-          if (navbar.classList.contains("showInput")) {
-            searchBox.classList.replace("bx-search", "bx-x");
-          } else {
-            searchBox.classList.replace("bx-x", "bx-search");
-          }
-        });
-        let navLinks = document.querySelector(".nav-links");
-        let menuOpenBtn = document.querySelector(".navbar .bx-menu");
-        let menuCloseBtn = document.querySelector(".nav-links .bx-x");
-        menuOpenBtn.onclick = function () {
-          navLinks.style.left = "0";
-        }
-        menuCloseBtn.onclick = function () {
-          navLinks.style.left = "-100%";
-        }
-        let htmlcssArrow = document.querySelector(".htmlcss-arrow");
-        htmlcssArrow.onclick = function () {
-          navLinks.classList.toggle("show1");
-        }
-        let moreArrow = document.querySelector(".more-arrow");
-        moreArrow.onclick = function () {
-          navLinks.classList.toggle("show2");
-        }
-        let jsArrow = document.querySelector(".js-arrow");
-        jsArrow.onclick = function () {
-          navLinks.classList.toggle("show3");
-        }
-      </script>
-
-      <footer class="text-center text-lg-start text-light">
-        <section class="">
-          <div class="container text-center text-md-start mt-5">
-            <div class="row mt-3">
-              <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
-                  <a href="">SD Games</a>
-                </h6>
-                <p class="parrafo-footer">
-                  SD Games es la tienda de videojuegos líder en Valdivia, que ofrece una amplia
-                  selección de
-                  títulos para todas las plataformas y edades. Desde los últimos lanzamientos hasta clásicos
-                  retro,
-                  SD Games tiene algo para cada tipo de jugador. La tienda se enorgullece de su equipo
-                  experto, siempre
-                  dispuesto a
-                  recomendar juegos y a brindar un excelente servicio al cliente.
-                </p>
-              </div>
-              <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
-                  Enlaces Rápidos:
-                </h6>
-                <p>
-                  <a href="#home" class="footerli text-reset">Home</a>
-                </p>
-                <p>
-                  <a href="" class="footerli text-reset">Productos</a>
-                </p>
-                <p>
-                  <a href="" class="footerli text-reset">Sobre Nosotros</a>
-                </p>
-                <p>
-                  <a href="" class="footerli text-reset">Local</a>
-                </p>
-              </div>
-              <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
-                <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">Contacto:</h6>
-                <p>
-                  <i class="fas fa-envelope me-3"></i>
-                  sdgames@gmail.com
-                </p>
-                <p><i class="fas fa-phone me-3"></i> 9 2344 5674</p>
-              </div>
-            </div>
-          </div>
-        </section>
-        <div class="text-center p-4" style="background-color: #252e46;">
-          Copyright © 2025 - 2025 SdGames   Privacy Policy
+<!--footer-->
+<footer class="text-center text-lg-start text-light">
+  <section class="">
+    <div class="container text-center text-md-start mt-5">
+      <div class="row mt-3">
+        <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
+          <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
+            <a href="">SD Games</a>
+          </h6>
+          <p class="parrafo-footer">
+            SD Games es la tienda de videojuegos líder en Valdivia, que ofrece una amplia
+            selección de
+            títulos para todas las plataformas y edades. Desde los últimos lanzamientos hasta clásicos
+            retro,
+            SD Games tiene algo para cada tipo de jugador. La tienda se enorgullece de su equipo
+            experto, siempre
+            dispuesto a
+            recomendar juegos y a brindar un excelente servicio al cliente.
+          </p>
         </div>
-      </footer>
-
+        <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
+          <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
+            Enlaces Rápidos:
+          </h6>
+          <p>
+            <a href="#home" class="footerli text-reset">Home</a>
+          </p>
+          <p>
+            <a href="" class="footerli text-reset">Productos</a>
+          </p>
+          <p>
+            <a href="" class="footerli text-reset">Sobre Nosotros</a>
+          </p>
+          <p>
+            <a href="" class="footerli text-reset">Local</a>
+          </p>
+        </div>
+        <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
+          <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">Contacto:</h6>
+          <p>
+            <i class="fas fa-envelope me-3"></i>
+            sdgames@gmail.com
+          </p>
+          <p><i class="fas fa-phone me-3"></i> 9 2344 5674</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="text-center p-4" style="background-color: #252e46;">
+    Copyright © 2025 - 2025 SdGames   Privacy Policy
+  </div>
+</footer>
 </body>
-
 </html>

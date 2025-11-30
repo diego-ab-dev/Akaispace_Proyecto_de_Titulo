@@ -1,0 +1,242 @@
+body {
+    background-color: #EEF1F4;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1a202c;
+    overflow-x: hidden;
+}
+
+.main-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.left-column {
+    flex: 1;
+    padding: 40px 60px;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.btn-regresar {
+    color: #333;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    position: absolute; 
+    left: 0;
+}
+
+.page-title {
+    font-weight: 800;
+    font-size: 2rem;
+    margin: 0 auto; 
+}
+
+.info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.card-title {
+    font-weight: 800;
+    font-size: 1.4rem;
+    margin-bottom: 25px;
+    color: #000;
+}
+
+.product-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.product-item:last-child { border-bottom: none; margin-bottom: 0; }
+
+.product-name {
+    font-weight: 800;
+    font-size: 1.2rem;
+    width: 40%;
+}
+
+.product-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-opinar {
+    background-color: #D4AF37; 
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 30px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+.btn-opinar:hover { background-color: #b5952f; color: white; }
+
+.btn-devolucion {
+    background-color: #1F2533; 
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 30px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+.btn-devolucion:hover { background-color: #000; color: white; }
+
+.shipping-timeline {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 40px 0;
+    text-align: center;
+}
+
+.shipping-timeline::before {
+    content: '';
+    position: absolute;
+    top: 30px; 
+    left: 50px;
+    right: 50px;
+    height: 2px;
+    background-color: #333;
+    z-index: 0;
+}
+
+.step-item {
+    position: relative;
+    z-index: 1;
+    background-color: white; 
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.step-icon {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #333;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    background-color: white;
+    margin-bottom: 10px;
+}
+
+.step-label {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #000;
+}
+
+.step-date {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.address-details p {
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+    color: #333;
+}
+.address-details strong { font-weight: 800; }
+
+.right-sidebar {
+    width: 400px;
+    background-color: white;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #e0e0e0;
+}
+
+.sidebar-date {
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    color: #555;
+}
+.summary-row.total {
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+    font-weight: 800;
+    color: #000;
+    font-size: 1.1rem;
+}
+
+.payment-box {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-top: 20px;
+    background-color: #fff;
+}
+.payment-header { font-weight: 700; font-size: 0.9rem; margin-bottom: 5px; }
+.payment-info { display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.9rem;}
+.visa-icon { font-size: 2rem; color: #1a1f71; }
+
+.btn-descargar {
+    background-color: #000;
+    color: white;
+    width: 100%;
+    padding: 15px;
+    border-radius: 50px; 
+    text-align: center;
+    font-weight: 700;
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    transition: 0.2s;
+}
+.btn-descargar:hover { background-color: #333; color: white; }
+
+.btn-reclamo {
+    background-color: #FF0000;
+    color: white;
+    padding: 12px 20px;
+    font-weight: 700;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto; 
+    align-self: flex-end; 
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+.btn-reclamo:hover { background-color: #cc0000; color: white; }
+
+@media (max-width: 992px) {
+    .main-container { flex-direction: column; }
+    .right-sidebar { width: 100%; border-left: none; border-top: 1px solid #ddd; }
+    .shipping-timeline { overflow-x: auto; padding-bottom: 20px; }
+    .shipping-timeline::before { width: 100%; min-width: 500px; }
+    .left-column { padding: 20px; }
+    .btn-regresar { position: relative; margin-bottom: 10px;}
+    .page-header { flex-direction: column; align-items: flex-start; }
+}

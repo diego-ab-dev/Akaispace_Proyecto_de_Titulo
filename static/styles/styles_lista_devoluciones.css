@@ -1,0 +1,152 @@
+body {
+    background-color: #EEF1F4;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1a202c;
+    padding-bottom: 40px;
+}
+
+.main-container {
+    max-width: 1000px; 
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.page-header h2 {
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: #111;
+}
+
+.btn-regresar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    text-decoration: none;
+    color: #000;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.devolucion-card {
+    background-color: white;
+    border-radius: 16px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    padding: 20px 30px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s ease;
+}
+
+.devolucion-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+}
+
+.product-thumb {
+    width: 80px;
+    height: 80px;
+    background-color: #E2E8F0; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px; 
+    overflow: hidden;
+}
+
+.product-thumb i {
+    font-size: 2rem;
+    color: #A0AEC0; 
+}
+
+.product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.info-label {
+    font-weight: 800; 
+    color: #000;
+    font-size: 1rem;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.info-value {
+    color: #4A5568;
+    font-weight: 500;
+}
+
+.devolucion-id {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #000;
+    margin-bottom: 5px;
+}
+
+
+.btn-ver-mas {
+    background-color: #527e99; 
+    color: white;
+    border: none;
+    border-radius: 30px; 
+    padding: 10px 40px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.btn-ver-mas:hover {
+    background-color: #3e6279;
+    color: white;
+}
+
+.pagination-container {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.page-number {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #333;
+    text-decoration: none;
+}
+
+.page-number.active {
+    width: 45px;
+    height: 45px;
+    background-color: #527e99;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.arrow-nav {
+    font-size: 1.2rem;
+    color: #000;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .page-header { margin-top: 50px; }
+    .btn-regresar { top: 0; }
+    .devolucion-card .row > div { text-align: center; margin-bottom: 15px; }
+    .product-thumb { margin: 0 auto; }
+}

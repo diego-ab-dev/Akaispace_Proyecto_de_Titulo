@@ -1,13 +1,11 @@
-/* Estilos Compra Exitosa Moderno */
 body {
     background-color: #EEF1F4;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
 }
 
-/* Encabezado Verde */
 .success-header {
-    background-color: #e8f5e9; /* Verde muy suave */
+    background-color: #e8f5e9; 
     padding: 40px 20px;
     text-align: center;
     border-bottom: 1px solid #c8e6c9;
@@ -15,7 +13,6 @@ body {
     position: relative;
 }
 
-/* Icono de bolsa */
 .icon-wrapper {
     position: relative;
     display: inline-block;
@@ -24,14 +21,14 @@ body {
 
 .icon-wrapper i.fa-shopping-bag {
     font-size: 3.5rem;
-    color: #527e99; /* Azul acero */
+    color: #527e99; 
 }
 
 .check-badge {
     position: absolute;
     bottom: -5px;
     right: -5px;
-    background-color: #4caf50; /* Verde éxito */
+    background-color: #4caf50; 
     color: white;
     width: 24px;
     height: 24px;
@@ -43,12 +40,10 @@ body {
     border: 2px solid white;
 }
 
-/* Contenedor Principal */
 .content-container {
     max-width: 1000px;
 }
 
-/* Tarjetas de Información */
 .info-card {
     background-color: white;
     border-radius: 10px;
@@ -57,7 +52,6 @@ body {
     border: 1px solid #e0e0e0;
 }
 
-/* Filas de información (Flex para alinear extremos) */
 .info-row {
     display: flex;
     justify-content: space-between;
@@ -65,11 +59,10 @@ body {
     color: #333;
 }
 
-/* Grid para datos del usuario (Label - Valor) */
 .info-grid {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 10px 20px; /* Espacio vertical y horizontal */
+    gap: 10px 20px; 
     align-items: baseline;
 }
 
@@ -82,7 +75,6 @@ body {
     color: #555;
 }
 
-/* Tarjetas de Producto */
 .product-card {
     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
     border-color: #e2e8f0 !important;

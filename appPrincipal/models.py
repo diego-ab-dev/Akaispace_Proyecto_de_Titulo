@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.timezone import now
 
+# clase Usuario
 class Usuario(models.Model):
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
@@ -15,6 +16,7 @@ class Usuario(models.Model):
     def __str__(self):
         return self.nombre
 
+# clase Producto
 class Producto(models.Model):
     CATEGORIAS = [
         ('VIDEOJUEGOS', [
@@ -109,6 +111,7 @@ class Producto(models.Model):
             return 0
         return round(sum(opinion.puntuacion for opinion in opiniones) / len(opiniones), 1)
 
+# clase Carrito
 class Carrito(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='carritos')
 
@@ -120,12 +123,13 @@ class Carrito(models.Model):
             (item.producto.precio or 0) * max(item.cantidad, 0) for item in self.items.all()
         )
 
+# clase de ItemCarritoProducto
 class ItemCarritoProducto(models.Model):
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.PositiveIntegerField(default=1) 
 
-
+# clase Venta
 class Venta(models.Model):
     ESTADO_CHOICES = [
         ('Sin Enviar', 'Sin Enviar'),
@@ -161,7 +165,7 @@ class Venta(models.Model):
             else:
                 raise ValueError(f"Stock insuficiente para el producto {producto.nombre}")
 
-
+# clase ProductoVenta
 class ProductoVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='producto_venta')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
@@ -175,7 +179,7 @@ class ProductoVenta(models.Model):
     def __str__(self):
         return f"{self.producto.nombre} (Cantidad: {self.cantidad})"
 
-
+# clase Opinion
 class Opinion(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="opiniones")
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="opiniones")
@@ -195,7 +199,7 @@ class Opinion(models.Model):
     def __str__(self):
         return f"{self.usuario.nombre} - {self.producto.nombre} ({self.puntuacion} estrellas)"
 
-
+# clase Reclamo
 class Reclamo(models.Model):
     ESTADO_CHOICES = [
         ('Abierto', 'Abierto'),
@@ -220,7 +224,7 @@ class Reclamo(models.Model):
     def editar_reclamo(self):
         pass
 
-
+# clase Devolucion
 class Devolucion(models.Model):
     ESTADO_CHOICES = [
         ('Pendiente', 'Pendiente'),
@@ -240,7 +244,6 @@ class Devolucion(models.Model):
     def __str__(self):
         return f"Devolución {self.id} - {self.usuario.nombre}"
 
-    # Métodos del Diagrama de Clases
     def solicitar(self):
         pass
     
@@ -254,6 +257,7 @@ class Devolucion(models.Model):
         self.fecha_resolucion = now()
         self.save()
 
+# clase Envio
 class Envio(models.Model):
     ESTADO_CHOICES = [
         ('En Preparación', 'En Preparación'),
@@ -282,7 +286,7 @@ class Envio(models.Model):
         self.estado = nuevo_estado
         self.save()
 
-
+# clase Boleta
 class Boleta(models.Model):
     venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='boleta')
     fecha_emision = models.DateTimeField(auto_now_add=True)
@@ -297,7 +301,7 @@ class Boleta(models.Model):
     def enviar_correo(self):
         pass
 
-
+# clase Favorito
 class Favorito(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)

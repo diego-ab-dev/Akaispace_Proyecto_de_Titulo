@@ -1,8 +1,7 @@
-/* Fondo general igual a la imagen */
 body {
     height: 100vh;
     margin: 0;
-    background-color: #EEF1F4; /* Gris azulado claro */
+    background-color: #EEF1F4; 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
@@ -10,7 +9,6 @@ body {
     color: #333;
 }
 
-/* La tarjeta blanca centrada */
 .pass-card {
     background-color: #ffffff;
     padding: 40px;
@@ -20,7 +18,6 @@ body {
     max-width: 480px;
 }
 
-/* Título */
 .form-title {
     font-size: 1.8rem;
     font-weight: 600;
@@ -29,7 +26,6 @@ body {
     color: #000;
 }
 
-/* Etiquetas */
 .form-label {
     font-weight: 500;
     font-size: 1.05rem;
@@ -38,7 +34,6 @@ body {
     display: block;
 }
 
-/* Inputs */
 .form-control {
     width: 100%;
     padding: 10px 12px;
@@ -46,7 +41,7 @@ body {
     border-radius: 6px;
     font-size: 1rem;
     background-color: #fff;
-    box-sizing: border-box; /* Asegura que el padding no rompa el ancho */
+    box-sizing: border-box; 
 }
 
 .form-control:focus {
@@ -55,12 +50,10 @@ body {
     outline: none;
 }
 
-/* Espaciado de grupos */
 .mb-3 {
     margin-bottom: 15px;
 }
 
-/* Grupo de Botones (Lado a lado) */
 .button-group {
     display: flex;
     justify-content: center;
@@ -68,14 +61,13 @@ body {
     margin-top: 35px;
 }
 
-/* Botón Guardar (Azul grisáceo de la foto) */
 .btn-guardar {
     background-color: #5A84A5;
     color: white;
     border: none;
     padding: 10px 0;
     width: 140px;
-    border-radius: 20px; /* Redondeado */
+    border-radius: 20px;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
@@ -86,7 +78,6 @@ body {
     background-color: #4a6f8a;
 }
 
-/* Botón Cancelar (Azul oscuro/Negro de la foto) */
 .btn-cancelar {
     background-color: #1F2533;
     color: white;
@@ -96,7 +87,7 @@ body {
     justify-content: center;
     width: 140px;
     padding: 10px 0;
-    border-radius: 20px; /* Redondeado */
+    border-radius: 20px;
     font-weight: 600;
     font-size: 1rem;
     transition: background-color 0.2s;
@@ -107,7 +98,6 @@ body {
     color: white;
 }
 
-/* Ajuste para las alertas de Bootstrap dentro de la tarjeta */
 .alert {
     margin-bottom: 20px;
     font-size: 0.9rem;

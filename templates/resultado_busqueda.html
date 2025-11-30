@@ -16,8 +16,9 @@
     <link href="https://raw.githubusercontent.com/daneden/animate.css/master/animate.css" rel="stylesheet">
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
-
+    <!--LOGO-->
     <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+    <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_busqueda.css' %}">
     <title>Resultados para "{{ query }}"</title>
 </head>
@@ -173,6 +174,7 @@
         </div>
       </div>
     </nav>
+    <!--fin del nav-->
 
         <div class="main-container">
           <section class="section-products">
@@ -232,7 +234,7 @@
         </section>
       
 
-          <!--Boton para ir hacia arriba-->
+      <!--Boton para ir hacia arriba-->
       <div class="go-top-container">
         <div class="go-top-button">
           <img src="{% static 'images/navegar-flecha-hacia-arriba.png' %}" alt="">
@@ -240,74 +242,76 @@
       </div>
 
     
-    <script>
-          window.onscroll = function () {
-            console.log(document.documentElement.scrollTop);
-            if (document.documentElement.scrollTop > 100) {
-              document.querySelector('.go-top-container').classList.add('show');
+<script>
+    // boton de subir
+    window.onscroll = function () {
+      console.log(document.documentElement.scrollTop);
+      if (document.documentElement.scrollTop > 100) {
+        document.querySelector('.go-top-container').classList.add('show');
 
-            }
-            else {
-              document.querySelector('.go-top-container').classList.remove('show');
-            }
-          }
+      }
+      else {
+        document.querySelector('.go-top-container').classList.remove('show');
+      }
+    }
 
-          document.querySelector('.go-top-container').addEventListener('click', () => {
-            window.scrollTo({
-              top: 0,
-              behavior: 'smooth'
-            });
-          });
+    document.querySelector('.go-top-container').addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
 
-          function isVisible(elm) {
-            var rect = elm.getBoundingClientRect();
-            var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-            return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
-          }
+    function isVisible(elm) {
+      var rect = elm.getBoundingClientRect();
+      var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+      return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+    }
 
-          window.addEventListener('DOMContentLoaded', (ev0) => {
-            window.addEventListener('scroll', (ev1) => {
-              document.querySelectorAll(".paused").forEach(elm => {
-                if (isVisible(elm))
-                  elm.classList.remove("paused");
-              })
-            });
-          });
-          let navbar = document.querySelector(".navbar");
-          let searchBox = document.querySelector(".search-box .bx-search");
-          // let searchBoxCancel = document.querySelector(".search-box .bx-x");
-          searchBox.addEventListener("click", ()=>{
-              navbar.classList.toggle("showInput");
-              if(navbar.classList.contains("showInput")){
-              searchBox.classList.replace("bx-search" ,"bx-x");
-              }else {
-              searchBox.classList.replace("bx-x" ,"bx-search");
-              }
-          });
-          // sidebar open close js code
-          let navLinks = document.querySelector(".nav-links");
-          let menuOpenBtn = document.querySelector(".navbar .bx-menu");
-          let menuCloseBtn = document.querySelector(".nav-links .bx-x");
-          menuOpenBtn.onclick = function() {
-          navLinks.style.left = "0";
-          }
-          menuCloseBtn.onclick = function() {
-          navLinks.style.left = "-100%";
-          }
-          // sidebar submenu open close js code
-          let htmlcssArrow = document.querySelector(".htmlcss-arrow");
-          htmlcssArrow.onclick = function() {
-          navLinks.classList.toggle("show1");
-          }
-          let moreArrow = document.querySelector(".more-arrow");
-          moreArrow.onclick = function() {
-          navLinks.classList.toggle("show2");
-          }
-          let jsArrow = document.querySelector(".js-arrow");
-          jsArrow.onclick = function() {
-          navLinks.classList.toggle("show3");
-          }
-      </script>
+    // navbar
+    window.addEventListener('DOMContentLoaded', (ev0) => {
+      window.addEventListener('scroll', (ev1) => {
+        document.querySelectorAll(".paused").forEach(elm => {
+          if (isVisible(elm))
+            elm.classList.remove("paused");
+        })
+      });
+    });
+    let navbar = document.querySelector(".navbar");
+    let searchBox = document.querySelector(".search-box .bx-search");
+
+    searchBox.addEventListener("click", ()=>{
+        navbar.classList.toggle("showInput");
+        if(navbar.classList.contains("showInput")){
+        searchBox.classList.replace("bx-search" ,"bx-x");
+        }else {
+        searchBox.classList.replace("bx-x" ,"bx-search");
+        }
+    });
+
+    let navLinks = document.querySelector(".nav-links");
+    let menuOpenBtn = document.querySelector(".navbar .bx-menu");
+    let menuCloseBtn = document.querySelector(".nav-links .bx-x");
+    menuOpenBtn.onclick = function() {
+    navLinks.style.left = "0";
+    }
+    menuCloseBtn.onclick = function() {
+    navLinks.style.left = "-100%";
+    }
+
+    let htmlcssArrow = document.querySelector(".htmlcss-arrow");
+    htmlcssArrow.onclick = function() {
+    navLinks.classList.toggle("show1");
+    }
+    let moreArrow = document.querySelector(".more-arrow");
+    moreArrow.onclick = function() {
+    navLinks.classList.toggle("show2");
+    }
+    let jsArrow = document.querySelector(".js-arrow");
+    jsArrow.onclick = function() {
+    navLinks.classList.toggle("show3");
+    }
+</script>
 
 
 <!--footer-->

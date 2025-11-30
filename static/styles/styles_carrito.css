@@ -7,7 +7,6 @@ body {
   min-height: 100vh;
 }
 
-/*color de textos*/
 .custom-text-color {
   color: rgb(255, 255, 255);
 }
@@ -251,7 +250,6 @@ nav .navbar{
   align-items: center;
   justify-content: space-between;
   margin: auto;
-  /* background: red; */
   padding: 0 50px;
 }
 .navbar .logo a{
@@ -288,7 +286,6 @@ nav .navbar .links li a{
   transform: rotate(180deg);
   }
 nav .navbar .links li .arrow{
-  /* background: red; */
   height: 100%;
   width: 22px;
   line-height: 70px;
@@ -503,10 +500,8 @@ nav .navbar .links li .sub-menu li{
     display: none;
   }
   .navbar .links li .sub-menu .more span{
-    /* background: red; */
     display: flex;
     align-items: center;
-    /* justify-content: space-between; */
   }
   .links li .sub-menu .more:hover .more-sub-menu{
     display: none;

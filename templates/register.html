@@ -9,9 +9,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
-    <title>Registro - SD Games</title>
+    <!--LOGO-->
     <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+    <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_register.css' %}">
+    <title>Registro - SD Games</title>
 </head>
 <body>
     <div class="container d-flex justify-content-center align-items-start min-vh-100 pt-5 mt-4">
@@ -108,7 +110,7 @@
     </div>
 
 <script>
-    // Mostrar notificación minimalista
+    // notifiacion
     function mostrarNotificacion(mensaje, tipo) {
         if (tipo === undefined) tipo = 'error';
         
@@ -132,12 +134,13 @@
         }, 4000);
     }
 
-    // Limpiar notificaciones anteriores
+    // limpiar notificaciones
     function limpiarNotificaciones() {
         const alertDiv = document.getElementById('notificacion-registro');
         if (alertDiv) alertDiv.innerHTML = '';
     }
 
+    // validacion de rut
     function validarRut(rutCompleto) {
         if (!rutCompleto) return false;
         
@@ -165,6 +168,7 @@
         return dv === dvEsperado;
     }
 
+    // validacion de celular
     function syncPhone(input) {
         let numeros = input.value.replace(/\D/g, '');
         
@@ -180,11 +184,11 @@
             hiddenInput.value = "";
         }
     }
-    
+
+    // formato para rut
     function darFormatoRut(rutInput) {
         let valor = rutInput.value.replace(/[^0-9kK]/g, '').toUpperCase();
         
-        // Limitar a máximo 9 dígitos (8 del cuerpo + 1 dígito verificador)
         if (valor.length > 9) {
             valor = valor.slice(0, 9);
         }
@@ -216,14 +220,13 @@
         const regionSelect = document.getElementById('region');
         const ciudadSelect = document.getElementById('ciudad');
 
-        // Manejo del envío del formulario
         form.addEventListener('submit', function (event) {
             event.preventDefault();
             limpiarNotificaciones();
             
             let isValid = true;
             
-            // Validar nombre
+            // validar nombre
             const nombre = document.getElementById('floatingInputUsername');
             const nombreRegex = /^[a-zA-Z\s]+$/;
             if (!nombreRegex.test(nombre.value.trim())) {
@@ -233,7 +236,7 @@
                 return;
             }
             
-            // Validar RUT
+            // validar RUT
             const rutInput = document.getElementById('floatingRut');
             if (!validarRut(rutInput.value)) {
                 isValid = false;
@@ -242,7 +245,7 @@
                 return;
             }
             
-            // Validar email
+            // validar email
             const email = document.getElementById('floatingInputEmail');
             if (!email.value.includes('@')) {
                 isValid = false;
@@ -251,7 +254,7 @@
                 return;
             }
 
-            // Validar teléfono
+            // validar teléfono
             const telefonoInput = document.getElementById('visiblePhone');
             const telefonoRegex = /^\d{8}$/;
             if (!telefonoRegex.test(telefonoInput.value.trim())) {
@@ -261,7 +264,7 @@
                 return;
             }
 
-            // Validar contraseñas
+            // validar contraseñas
             const contraseña = document.getElementById('floatingPassword');
             const confirmarContraseña = document.getElementById('floatingPasswordConfirm');
             if (contraseña.value !== confirmarContraseña.value) {
@@ -273,7 +276,7 @@
 
             if (!isValid) return;
 
-            // Enviar formulario
+            // enviar formulario
             const formData = new FormData(form);
 
             fetch(form.action, {
@@ -300,7 +303,7 @@
                 });
         });
 
-        // Cargar ciudades
+        // cargar ciudades
         function cargarCiudades(region) {
             fetch(`/obtener_ciudades/?region=${region}`)
                 .then(response => response.json())

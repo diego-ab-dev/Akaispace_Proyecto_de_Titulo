@@ -1,0 +1,78 @@
+body {
+    background-color: #EEF1F4;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #1a202c;
+    padding-bottom: 40px;
+}
+
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.page-header {
+    position: relative;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.btn-regresar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    text-decoration: none;
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+h1 {
+    font-weight: 600;
+    font-size: 2rem;
+    margin: 0;
+    color: #000;
+}
+
+.detail-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    height: 100%; 
+}
+
+.label-bold {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #000;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+
+.text-content {
+    font-size: 1rem;
+    color: #4a4a4a;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.date-text {
+    color: #1a202c;
+    font-size: 1.1rem;
+}
+
+.status-success {
+    color: #4CAF50; 
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .page-header { display: flex; flex-direction: column; gap: 15px; }
+    .btn-regresar { position: relative; transform: none; }
+    .col-md-6 { margin-bottom: 20px; }
+}

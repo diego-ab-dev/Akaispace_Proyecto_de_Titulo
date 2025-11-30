@@ -7,7 +7,6 @@ body {
   min-height: 100vh;
 }
 
-/*color de textos*/
 .custom-text-color {
   color: rgb(255, 255, 255);
 }
@@ -251,7 +250,6 @@ nav .navbar{
   align-items: center;
   justify-content: space-between;
   margin: auto;
-  /* background: red; */
   padding: 0 50px;
 }
 .navbar .logo a{
@@ -288,7 +286,6 @@ nav .navbar .links li a{
   transform: rotate(180deg);
   }
 nav .navbar .links li .arrow{
-  /* background: red; */
   height: 100%;
   width: 22px;
   line-height: 70px;
@@ -503,10 +500,8 @@ nav .navbar .links li .sub-menu li{
     display: none;
   }
   .navbar .links li .sub-menu .more span{
-    /* background: red; */
     display: flex;
     align-items: center;
-    /* justify-content: space-between; */
   }
   .links li .sub-menu .more:hover .more-sub-menu{
     display: none;
@@ -545,7 +540,6 @@ nav .navbar .links li .sub-menu li{
   position: relative;
 }
 
-/*opacidad de fondo*/
 #fondo:before {
   content: "";
   position: absolute;
@@ -556,7 +550,6 @@ nav .navbar .links li .sub-menu li{
   background-color: rgba(0, 0, 0, 0.6);
 }
 
-/*Parrafo encima del fondo*/
 #fondo p {
   position: relative;
   padding: 5px;
@@ -564,7 +557,6 @@ nav .navbar .links li .sub-menu li{
   font-size: x-large;
 }
 
-/*Titulo encima del fondo*/
 #fondo h1 {
   color: #ffffff;
   position: relative;
@@ -597,7 +589,6 @@ nav .navbar .links li .sub-menu li{
   padding-top: 150px;
 }
 
-/*cards*/
 .lead {
   color: #aaa;
 }
@@ -605,7 +596,6 @@ nav .navbar .links li .sub-menu li{
   margin: 10vh;
 }
 
-/*cards*/
 .lead {
   color: #aaa;
 }
@@ -631,7 +621,6 @@ nav .navbar .links li .sub-menu li{
 
   &.card-has-bg {
     transition: all 500ms cubic-bezier(0.19, 1, 0.22, 1);
-    /* CAMBIO 1: Usamos 'cover' para que la imagen llene la tarjeta sin estirarse ni cortarse excesivamente */
     background-size: cover; 
     background-repeat: no-repeat;
     background-position: center center;
@@ -649,18 +638,16 @@ nav .navbar .links li .sub-menu li{
     &:hover {
       transform: scale(0.98);
       box-shadow: 0 0 10px 0 rgba(44, 46, 51, 0.3);
-      /* Pequeño zoom al hacer hover (opcional, si prefieres estático borra esta línea) */
       transform: scale(1.02); 
       transition: all 500ms cubic-bezier(0.19, 1, 0.22, 1);
 
       .card-img-overlay {
         transition: all 800ms cubic-bezier(0.19, 1, 0.22, 1);
-        /* CAMBIO 2: Gradiente ajustado al color #1C253B (RGB: 28, 37, 59) */
         background: rgb(28, 37, 59); 
         background: linear-gradient(
           0deg,
-          rgba(28, 37, 59, 0.9) 0%,    /* Más oscuro abajo para el texto */
-          rgba(28, 37, 59, 0.5) 100%   /* Más transparente arriba para ver la imagen */
+          rgba(28, 37, 59, 0.9) 0%,    
+          rgba(28, 37, 59, 0.5) 100%   
         );
       }
     }
@@ -689,7 +676,6 @@ nav .navbar .links li .sub-menu li{
     transition: all 800ms cubic-bezier(0.19, 1, 0.22, 1);
   }
   
-  /* Estado normal (sin hover): Oscurecimiento suave para que se vea la imagen original */
   .card-img-overlay {
     transition: all 800ms cubic-bezier(0.19, 1, 0.22, 1);
     background: linear-gradient(

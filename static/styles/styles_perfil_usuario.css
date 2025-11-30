@@ -1,6 +1,5 @@
-/* Configuración General */
 body {
-    background-color: #EEF1F4; /* Color de fondo gris claro de la imagen */
+    background-color: #EEF1F4; 
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     color: #1a202c;
     margin: 0;
@@ -17,7 +16,6 @@ a {
     padding: 30px 20px;
 }
 
-/* --- Header del Perfil --- */
 .header-profile {
     display: flex;
     justify-content: space-between;
@@ -44,7 +42,7 @@ a {
 }
 
 .btn-logout {
-    background-color: #FF0000; /* Rojo intenso */
+    background-color: #FF0000;
     color: white;
     padding: 10px 20px;
     border-radius: 8px;
@@ -60,12 +58,11 @@ a {
     color: white;
 }
 
-/* --- Tarjetas (Cards) --- */
 .profile-card {
     background-color: #FFFFFF;
-    border-radius: 15px; /* Bordes redondeados como la foto */
+    border-radius: 15px;
     padding: 25px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Sombra muy suave */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
     display: flex;
     flex-direction: column;
     border: none;
@@ -83,7 +80,6 @@ a {
     margin-bottom: 20px;
 }
 
-/* --- Tipografía de Datos --- */
 .user-details p {
     margin-bottom: 12px;
     font-size: 1rem;
@@ -102,11 +98,8 @@ a {
     font-size: 1.1rem;
 }
 
-/* --- Botones Personalizados --- */
-
-/* Botón Azul Oscuro (Ver Más, Cambiar Contraseña) */
 .btn-dark-custom {
-    background-color: #1F2533; /* Color extraído de la imagen */
+    background-color: #1F2533; 
     color: white;
     width: 100%;
     display: block;
@@ -122,9 +115,8 @@ a {
     color: white;
 }
 
-/* Botón Azul Claro (Editar Perfil) */
 .btn-blue-custom {
-    background-color: #5A84A5; /* Azul acero de la imagen */
+    background-color: #5A84A5; 
     color: white;
     width: 100%;
     display: block;
@@ -140,7 +132,6 @@ a {
     color: white;
 }
 
-/* Ajustes Responsive */
 @media (max-width: 768px) {
     .header-profile {
         flex-direction: column;
@@ -148,7 +139,7 @@ a {
         text-align: center;
     }
     .page-title {
-        order: -1; /* Pone el título primero en móviles */
+        order: -1; 
     }
     .btn-back {
         align-self: flex-start;

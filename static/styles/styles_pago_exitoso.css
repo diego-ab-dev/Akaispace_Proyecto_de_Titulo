@@ -2,8 +2,6 @@ body{
     background-color: #EEF1F4;
 }
 
-
-/* Contenedor principal */
 .payment-success-container {
     display: flex;
     justify-content: center;
@@ -12,7 +10,6 @@ body{
     padding: 20px;
 }
 
-/* Card de éxito */
 .payment-success-card {
     background-color: #fff;
     border-radius: 10px;
@@ -23,14 +20,12 @@ body{
     font-family: 'Arial', sans-serif;
 }
 
-/* Encabezado principal */
 .payment-success-card h1 {
     color: #000000;
     font-size: 24px;
     margin-bottom: 20px;
 }
 
-/* Texto y listas */
 .payment-success-card p, 
 .payment-success-card ul {
     color: #333;
@@ -39,14 +34,12 @@ body{
     line-height: 1.5;
 }
 
-/* Títulos secundarios */
 .payment-success-card h3 {
     color: #555;
     font-size: 18px;
     margin-top: 20px;
 }
 
-/* Botón */
 .back-button {
     background-color: #4CAF50;
     color: #fff;
