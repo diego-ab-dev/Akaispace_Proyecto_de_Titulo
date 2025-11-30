@@ -1,0 +1,80 @@
+.edit-container {
+    background-color: #EEF1F4;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.edit-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    padding: 40px;
+    width: 100%;
+    max-width: 500px;
+    border: 1px solid #e0e0e0;
+}
+
+.form-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    color: #000;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+    color: #000;
+}
+
+.form-control, .form-select {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: none;
+    border-color: #4E84A8;
+}
+
+.btn-row {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.btn-guardar {
+    background-color: #4E84A8; 
+    color: white;
+    border: none;
+    padding: 10px 40px;
+    border-radius: 20px;
+    font-weight: 700;
+    width: 45%;
+}
+.btn-guardar:hover { background-color: #3b6a8a; color: white; }
+
+.btn-cancelar {
+    background-color: #1C253B;
+    color: white;
+    border: none;
+    padding: 10px 40px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    width: 45%;
+}
+.btn-cancelar:hover { background-color: #111; color: white; }

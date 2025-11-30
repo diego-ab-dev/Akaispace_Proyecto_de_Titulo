@@ -87,13 +87,13 @@ def get_dashboard_counts(request):
     usuarios = Usuario.objects.count()
     ventas = Venta.objects.count()
     reclamos = Reclamo.objects.count()
-    opiniones = Opinion.objects.count()
+    devoluciones = Devolucion.objects.count()
 
     return JsonResponse({
         "usuarios": usuarios,
         "ventas": ventas,
         "reclamos": reclamos,
-        "opiniones": opiniones,
+        "devoluciones": devoluciones,
     })
 # fin 
 

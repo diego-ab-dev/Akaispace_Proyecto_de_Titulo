@@ -9,9 +9,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"></script>
-    <title>Responder Reclamo</title>
+    <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_responder_reclamo.css' %}">
+    <!--LOGO-->
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
+    <title>Responder Reclamo</title>
 </head>
 <body>
     <div class="reclamo-container">
@@ -27,16 +29,15 @@
         </form>
         <a href="{% url 'admin_reclamos' %}" class="btn-back">Volver</a>
     </div>  
-    
-    
-    <script>
-        document.querySelector('form').addEventListener('submit', function(event) {
-            const respuesta = document.querySelector('textarea[name="respuesta"]').value.trim();
-            if (!respuesta) {
-                alert('La respuesta no puede estar vacía.');
-                event.preventDefault();  
-            }
-        });
-    </script>
+<script>
+    // validar que los campos no esten vacios
+    document.querySelector('form').addEventListener('submit', function(event) {
+        const respuesta = document.querySelector('textarea[name="respuesta"]').value.trim();
+        if (!respuesta) {
+            alert('La respuesta no puede estar vacía.');
+            event.preventDefault();  
+        }
+    });
+</script>
 </body>
 </html>

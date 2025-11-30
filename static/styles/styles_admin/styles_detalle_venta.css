@@ -1,0 +1,197 @@
+body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.page-container {
+    background-color: #EEF1F4;
+    padding: 40px;
+    min-height: 100vh;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #333;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: color 0.2s;
+}
+.btn-back:hover {
+    color: #4E84A8;
+}
+
+.venta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.venta-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #000;
+    margin: 0;
+}
+
+.btn-boleta {
+    background-color: #000;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s;
+}
+.btn-boleta:hover { 
+    background-color: #333; 
+    color: white;
+}
+
+.cards-container {
+    display: flex;
+    gap: 30px;
+    align-items: stretch; 
+    flex-wrap: wrap;
+}
+
+.info-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 30px;
+    flex: 1;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #000;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.data-row {
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #333;
+    display: flex;
+    justify-content: space-between; 
+}
+
+.data-label {
+    font-weight: 700;
+    color: #111;
+}
+
+.productos-list {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.producto-item {
+    font-weight: 600;
+    display: block;
+    color: #333;
+}
+
+.producto-cantidad {
+    font-weight: 400;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.actions-wrapper {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-action {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+.btn-action:hover { 
+    opacity: 0.9; 
+    color: white; 
+    transform: translateY(-2px);
+}
+
+.btn-modificar { background-color: #2F78C4; } 
+.btn-anular { background-color: #DC3545; }
+
+.modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.modal-header {
+    border-bottom: none;
+    padding-top: 30px;
+    padding-bottom: 0;
+    justify-content: center;
+}
+.modal-icon {
+    font-size: 3rem;
+    color: #DC3545;
+    background-color: #ffe5e7;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.modal-body {
+    text-align: center;
+    padding: 20px 40px;
+}
+.modal-footer {
+    border-top: none;
+    justify-content: center;
+    padding-bottom: 30px;
+    gap: 15px;
+}
+.btn-modal-cancel {
+    background-color: #eee;
+    color: #333;
+    font-weight: 600;
+    border-radius: 50px;
+    padding: 10px 25px;
+    border: none;
+}
+.btn-modal-confirm {
+    background-color: #DC3545;
+    color: white;
+    font-weight: 600;
+    border-radius: 50px;
+    padding: 10px 25px;
+    border: none;
+    text-decoration: none;
+}
+.btn-modal-confirm:hover {
+    background-color: #c82333;
+    color: white;
+}

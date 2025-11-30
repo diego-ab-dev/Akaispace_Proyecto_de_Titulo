@@ -1,0 +1,87 @@
+body {
+    background-color: #EEF1F4;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detail-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 40px;
+    width: 100%;
+    max-width: 600px;
+    border: 1px solid #e0e0e0;
+    position: relative;
+}
+
+h2 {
+    text-align: center;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+}
+
+.info-group {
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+    color: #333;
+}
+
+.info-label {
+    font-weight: 700;
+    color: #000;
+}
+
+.info-value {
+    color: #555;
+    margin-left: 5px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.btn-custom {
+    padding: 8px 30px;
+    border-radius: 20px; 
+    font-weight: 600;
+    border: none;
+    text-decoration: none;
+    color: white;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-custom:hover {
+    opacity: 0.9;
+    color: white;
+}
+
+.btn-editar {
+    background-color: #2F78C4;
+}
+
+.btn-eliminar {
+    background-color: #F55F5F; 
+}
+
+.btn-volver-container {
+    display: flex;
+    justify-content: center;
+}
+
+.btn-volver {
+    background-color: #0E1B2D; 
+    padding: 8px 40px;
+}
