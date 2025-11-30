@@ -100,8 +100,16 @@ def get_dashboard_counts(request):
 # Usuarios en administracion
 @admin_required
 def admin_usuarios(request):
-    usuarios = Usuario.objects.all()
-    return render(request, 'admin_panel/usuarios.html', {'usuarios': usuarios})
+    usuarios_list = Usuario.objects.all().order_by('-id')
+
+    paginator = Paginator(usuarios_list, 10) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin_panel/usuarios.html', {
+        'page_obj': page_obj,
+        'usuarios': page_obj.object_list,
+    })
 
 @admin_required
 def eliminar_usuario(request, usuario_id):
@@ -114,19 +122,31 @@ def buscar_usuarios(request):
     query = request.GET.get('q', '').strip()
     filtro = request.GET.get('filtro', 'nombre') 
     es_administrador = request.GET.get('es_administrador', '')
-    usuarios = Usuario.objects.all()
+
+    usuarios_list = Usuario.objects.all()
+
     if query:
         if filtro == "nombre":
-            usuarios = usuarios.filter(nombre__icontains=query)
+            usuarios_list = usuarios_list.filter(nombre__icontains=query)
         elif filtro == "rut":
-            usuarios = usuarios.filter(rut__icontains=query)
+            usuarios_list = usuarios_list.filter(rut__icontains=query)
+
     if es_administrador:
-        usuarios = usuarios.filter(es_administrador=(es_administrador == "True"))
-    if not usuarios.exists():
+        usuarios_list = usuarios_list.filter(es_administrador=(es_administrador == "True"))
+
+    paginator = Paginator(usuarios_list, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    mensaje = ""
+    if not usuarios_list.exists():
         mensaje = "No se encontraron resultados."
-    else:
-        mensaje = ""
-    return render(request, 'admin_panel/usuarios.html', {'usuarios': usuarios, 'mensaje': mensaje})
+
+    return render(request, 'admin_panel/usuarios.html', {
+        'page_obj': page_obj,
+        'usuarios': page_obj.object_list,
+        'mensaje': mensaje
+    })
 
 @admin_required
 def crear_usuario(request):
@@ -194,8 +214,16 @@ def detalle_usuario(request, usuario_id):
 # Productos en adminstracion
 @admin_required
 def admin_productos(request):
-    productos = Producto.objects.all()
-    return render(request, 'admin_panel/productos.html', {'productos': productos})
+    productos_list = Producto.objects.all().order_by('-id')
+
+    paginator = Paginator(productos_list, 10) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin_panel/productos.html', {
+        'productos': page_obj.object_list,
+        'page_obj': page_obj,
+    })
 
 @admin_required
 def agregar_producto(request):
@@ -221,41 +249,46 @@ def buscar_productos(request):
     genero = request.GET.get('genero', '')
     ordenar = request.GET.get('ordenar', 'recientes')
 
-    productos = Producto.objects.all()
+    productos_list = Producto.objects.all()
 
     if query:
-        productos = productos.filter(
+        productos_list = productos_list.filter(
             Q(nombre__icontains=query) | Q(codigo_de_barra__icontains=query)
         )
 
     if categoria:
-        productos = productos.filter(categoria=categoria)
+        productos_list = productos_list.filter(categoria=categoria)
 
     if genero:
-        productos = productos.filter(genero=genero)
+        productos_list = productos_list.filter(genero=genero)
 
     if ordenar == 'recientes':
-        productos = productos.order_by('-id')
+        productos_list = productos_list.order_by('-id')
     elif ordenar == 'antiguos':
-        productos = productos.order_by('id')
+        productos_list = productos_list.order_by('id')
     elif ordenar == 'menor_precio':
-        productos = productos.order_by('precio')
+        productos_list = productos_list.order_by('precio')
     elif ordenar == 'mayor_precio':
-        productos = productos.order_by('-precio')
+        productos_list = productos_list.order_by('-precio')
 
-    if not productos.exists():
+    mensaje = ""
+    if not productos_list.exists():
         mensaje = "No se encontraron resultados para tu búsqueda."
-    else:
-        mensaje = ""
 
     categorias = []
     for grupo in Producto.CATEGORIAS:
-        for categoria in grupo[1]:  
+        for categoria in grupo[1]:
             categorias.append(categoria)
+
     generos = Producto.GENEROS
 
+    paginator = Paginator(productos_list, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'admin_panel/productos.html', {
-        'productos': productos,
+        'productos': page_obj.object_list,
+        'page_obj': page_obj,
         'mensaje': mensaje,
         'query': query,
         'categoria': categoria,
@@ -264,6 +297,7 @@ def buscar_productos(request):
         'categorias': categorias,
         'generos': generos,
     })
+
 
 
 @admin_required
@@ -290,7 +324,15 @@ def detalle_producto(request, producto_id):
 @admin_required
 def admin_devoluciones(request):
     devoluciones = Devolucion.objects.select_related('usuario').all().order_by('-fecha_solicitud')
-    return render(request, 'admin_panel/devoluciones.html', {'devoluciones': devoluciones})
+
+    paginator = Paginator(devoluciones, 10) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin_panel/devoluciones.html', {
+        'devoluciones': page_obj,
+        'page_obj': page_obj,
+    })
 
 @admin_required
 def responder_devolucion(request, devolucion_id):
@@ -318,8 +360,35 @@ def responder_devolucion(request, devolucion_id):
 # reclamos en administracion
 @admin_required
 def admin_reclamos(request):
+    query = request.GET.get('q', '')
+    estado = request.GET.get('estado', '')
+    fecha_inicio = request.GET.get('fecha_inicio', '')
+    fecha_fin = request.GET.get('fecha_fin', '')
+
     reclamos = Reclamo.objects.select_related('usuario').all()
-    return render(request, 'admin_panel/reclamos.html', {'reclamos': reclamos})
+
+    if query:
+        reclamos = reclamos.filter(
+            Q(usuario__nombre__icontains=query) |
+            Q(asunto__icontains=query) |
+            Q(id__icontains=query)
+        )
+
+    if estado:
+        reclamos = reclamos.filter(estado=estado)
+
+    if fecha_inicio and fecha_fin:
+        reclamos = reclamos.filter(fecha__range=[fecha_inicio, fecha_fin])
+
+    paginator = Paginator(reclamos, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin_panel/reclamos.html', {
+        'reclamos': page_obj,    
+        'page_obj': page_obj,     
+        'estado_seleccionado': estado,
+    })
 
 @admin_required
 def responder_reclamo(request, reclamo_id):
@@ -341,19 +410,26 @@ def admin_ventas(request):
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
     
-    ventas = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').all()
+    ventas_list = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').all()
 
     if query:
-        ventas = ventas.filter(
+        ventas_list = ventas_list.filter(
             Q(usuario__nombre__icontains=query) | Q(id__icontains=query)
         )
     
     if fecha_inicio and fecha_fin:
-        ventas = ventas.filter(
+        ventas_list = ventas_list.filter(
             fecha__range=[parse_date(fecha_inicio), parse_date(fecha_fin)]
         )
 
-    return render(request, 'admin_panel/ventas.html', {'ventas': ventas})
+    paginator = Paginator(ventas_list, 10)  
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admin_panel/ventas.html', {
+        'ventas': page_obj.object_list,
+        'page_obj': page_obj
+    })
 
 @admin_required
 def admin_cambiar_estado_venta(request, venta_id):

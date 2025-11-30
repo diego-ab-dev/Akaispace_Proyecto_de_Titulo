@@ -1017,56 +1017,90 @@ a:hover {
 }
 
 
+
+
 .pagination-wrapper {
-    margin-top: 40px;
-    margin-bottom: 60px; 
-    z-index: 10; 
-    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 40px 0 60px;
+    gap: 20px;
 }
 
-.custom-page-link {
+.page-item {
     width: 45px;
     height: 45px;
     display: flex;
-    align-items: center;
     justify-content: center;
-    border-radius: 50% !important; 
-    margin: 0 8px;
-    border: 1px solid #dee2e6;
-    color: #1C253B; 
-    font-weight: bold;
-    font-size: 1.1rem;
-    background-color: white;
+    align-items: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #000;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: 0.2s;
+    border: 1px solid #ddd;
+    cursor: pointer;
 }
 
-.custom-page-link:hover {
-    background-color: #EEF1F4;
-    color: #00D2D5; 
-    transform: translateY(-3px);
-    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    border-color: #00D2D5;
+.page-item:hover:not(.active) {
+    background-color: #e2e2e2;
 }
 
-.page-item.active .custom-page-link {
-    background-color: #1C253B;
-    border-color: #1C253B;
-    color: #ffffff;
-    pointer-events: none; 
+.page-item.active {
+    background-color: #527e99;
+    color: #fff;
+    border: none;
+    pointer-events: none;
 }
 
-.page-item.disabled .custom-page-link {
-    background-color: #f8f9fa;
-    color: #adb5bd;
-    border-color: #dee2e6;
+.page-nav i {
+    font-size: 1.5rem;
+    color: #000;
+}
+
+.page-nav {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.page-nav:hover:not(.disabled-nav) {
+    background-color: #e2e2e2;
+}
+
+.disabled-nav {
     cursor: default;
+    opacity: 0.4;
 }
 
-.page-item:first-child .page-link, 
-.page-item:last-child .page-link {
-    border-radius: 50% !important;
+.page-dots {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #444;
 }
+
+@media (max-width: 768px) {
+    .pagination-wrapper {
+        gap: 10px;
+    }
+
+    .page-item, .page-nav {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+    }
+}
+
+
+
+
 
 @keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1 } }		
 

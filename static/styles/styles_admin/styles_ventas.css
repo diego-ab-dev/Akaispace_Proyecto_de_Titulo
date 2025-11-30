@@ -128,72 +128,119 @@ a{text-decoration: none}
 }
 
 @media screen and (min-width: 768px){
-    body{
-        margin: calc(var(--header-height) + 1rem) 0 0 0;
-        padding-left: calc(var(--nav-width) + 2rem)}
-        
-        .header{
-            height: calc(var(--header-height) + 1rem);
-            padding: 0 2rem 0 calc(var(--nav-width) + 2rem)
-        }
-            
-            .header_img{
-                width: 40px;height: 40px
-            }
-            
-            .header_img img{
-                width: 45px
-            }
+body{
+margin: calc(var(--header-height) + 1rem) 0 0 0;
+padding-left: calc(var(--nav-width) + 2rem)}
 
-            .l-navbar{
-                left: 0;
-                padding: 1rem 1rem 0 0
-            }
-            
-            .show{
-                width: calc(var(--nav-width) + 156px)
-            }
-            
-            .body-pd{
-                padding-left: calc(var(--nav-width) + 188px)
-            }
-        }
+.header{
+    height: calc(var(--header-height) + 1rem);
+    padding: 0 2rem 0 calc(var(--nav-width) + 2rem)
+}
+    
+    .header_img{
+        width: 40px;height: 40px
+    }
+    
+    .header_img img{
+        width: 45px
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            background-color: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        table th,
-        table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        table th {
-            background-color: var(--first-color);
-            color: #fff;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        table tr:hover {
-            background-color: #f5f5f5;
-        }
-        
-        table td a {
-            color: var(--first-color);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-        
-        table td a:hover {
-            color: #346480;
-        }
+    .l-navbar{
+        left: 0;
+        padding: 1rem 1rem 0 0
+    }
+    
+    .show{
+        width: calc(var(--nav-width) + 156px)
+    }
+    
+    .body-pd{
+        padding-left: calc(var(--nav-width) + 188px)
+    }
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+table th,
+table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+table th {
+    background-color: var(--first-color);
+    color: #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+table tr:hover {
+    background-color: #f5f5f5;
+}
+
+table td a {
+    color: var(--first-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+table td a:hover {
+    color: #346480;
+}
+
+
+
+.pagination-wrapper {
+    margin-top: 40px;
+    margin-bottom: 60px; 
+    z-index: 10; 
+    position: relative;
+}
+
+.custom-page-link {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important; 
+    margin: 0 8px;
+    border: 1px solid #dee2e6;
+    color: #1C253B; 
+    font-weight: bold;
+    font-size: 1.1rem;
+    background-color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.custom-page-link:hover {
+    background-color: #EEF1F4;
+    color: #00D2D5;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    border-color: #00D2D5;
+}
+
+.page-item.active .custom-page-link {
+    background-color: #1C253B;
+    border-color: #1C253B;
+    color: #ffffff;
+}
+
+.page-item.disabled .custom-page-link {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+    border-color: #dee2e6;
+    cursor: default;
+}

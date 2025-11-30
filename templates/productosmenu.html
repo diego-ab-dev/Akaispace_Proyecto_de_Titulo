@@ -362,44 +362,43 @@
         </div>
       </section>
 
-      <!--paginacion-->
-      <div class="container mb-5"> <div class="pagination-wrapper d-flex justify-content-center">
-              <ul class="pagination">
+      <!-- Paginacion -->
+      <div class="pagination-wrapper">
+          {% if page_obj.has_previous %}
+              <a href="?page={{ page_obj.previous_page_number }}" class="page-nav">
+                  <i class="fa-solid fa-chevron-left"></i>
+              </a>
+          {% else %}
+              <span class="page-nav disabled-nav">
+                  <i class="fa-solid fa-chevron-left"></i>
+              </span>
+          {% endif %}
 
-                  <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-                      {% if page_obj.has_previous %}
-                          <a class="page-link custom-page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
-                              <span aria-hidden="true">&laquo;</span>
-                          </a>
-                      {% else %}
-                          <span class="page-link custom-page-link">&laquo;</span>
-                      {% endif %}
-                  </li>
+          {% for num in page_obj.paginator.page_range %}
+              
+              {% if num == page_obj.number %}
+                  <span class="page-item active">{{ num }}</span>
 
-                  {% for num in page_obj.paginator.page_range %}
-                      {% if page_obj.number == num %}
-                          <li class="page-item active">
-                              <span class="page-link custom-page-link">{{ num }}</span>
-                          </li>
-                      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                          <li class="page-item">
-                              <a class="page-link custom-page-link" href="?page={{ num }}">{{ num }}</a>
-                          </li>
-                      {% endif %}
-                  {% endfor %}
+              {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                  <a href="?page={{ num }}" class="page-item">{{ num }}</a>
 
-                  <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-                      {% if page_obj.has_next %}
-                          <a class="page-link custom-page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
-                              <span aria-hidden="true">&raquo;</span>
-                          </a>
-                      {% else %}
-                          <span class="page-link custom-page-link">&raquo;</span>
-                      {% endif %}
-                  </li>
-              </ul>
-          </div>
+              {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                  <span class="page-dots">...</span>
+              {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}" class="page-nav">
+                  <i class="fa-solid fa-chevron-right"></i>
+              </a>
+          {% else %}
+              <span class="page-nav disabled-nav">
+                  <i class="fa-solid fa-chevron-right"></i>
+              </span>
+          {% endif %}
       </div>
+
 
       <!--boton de ir arriba-->
       <div class="go-top-container">
