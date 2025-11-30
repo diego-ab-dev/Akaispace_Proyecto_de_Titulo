@@ -104,7 +104,7 @@
                     </td>
                     <td>{{ venta.fecha|date:"d M Y" }}</td>
                     <td>
-                        {{ venta.estado }}
+                        {{ venta.datos_envio.estado }}
                     </td>
                     <td>
                         <a href="{% url 'detalle_venta' venta.id %}" class="btn btn-sm btn-primary">Ver Detalles</a>

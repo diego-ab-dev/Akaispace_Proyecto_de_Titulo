@@ -73,20 +73,20 @@
 
         <div class="right-panel">
             <h4 class="mb-4 fw-bold">Resumen de Compra</h4>
-            
+
             <div class="summary-row">
-                <span>Total Productos</span>
-                <span>${{ total|formato_chileno }}</span> 
+                <span>Subtotal</span>
+                <span>${{ subtotal|formato_chileno }}</span>
             </div>
-            
+
             <div class="summary-row">
                 <span>Envío</span>
-                <span>$5.990</span>
+                <span>${{ costo_envio|formato_chileno }}</span>
             </div>
 
             <div class="summary-total">
                 <span>Total</span>
-                <span>${{ total|add:5990|formato_chileno }}</span>
+                <span>${{ total|formato_chileno }}</span>
             </div>
         </div>
     </div>

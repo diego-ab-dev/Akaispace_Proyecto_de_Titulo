@@ -60,7 +60,7 @@
                             <td class="text-center fw-bold">{{ compra.id }}</td>
                             <td class="fw-bold">${{ compra.total|formato_chileno }}</td>
                             <td>{{ compra.fecha|date:"d/m/Y" }}</td>
-                            <td class="fw-bold text-dark">{{ compra.estado }}</td>
+                            <td class="fw-bold text-dark">{{ compra.datos_envio.estado }}</td>
                             <td>
                                 <ul class="product-list">
                                     {% for item in compra.producto_venta.all %}

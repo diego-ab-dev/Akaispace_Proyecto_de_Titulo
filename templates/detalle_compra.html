@@ -24,7 +24,7 @@
             </a>
             <h1 class="page-title">Detalle Compra #{{ compra.id }}</h1>
         </div>
-        <!--Productos Comprados-->
+
         <div class="info-card">
             <h2 class="card-title">Productos Comprados</h2>
             
@@ -44,7 +44,6 @@
             {% endfor %}
         </div>
 
-        <!--Estado envio-->
         <div class="info-card">
             <h2 class="card-title">Estado de Envío</h2>
             <div class="shipping-timeline">
@@ -77,9 +76,9 @@
 
             <div class="address-details mt-4">
                 <p><strong>Dirección:</strong> {{ compra.direccion_envio }}</p>
-                <p><strong>Región:</strong> {{ compra.region }}</p>
-                <p><strong>Ciudad:</strong> {{ compra.ciudad }}</p>
-                <p><strong>Número de Seguimiento:</strong> {{ compra.tracking_number|default:"Pendiente" }}</p>
+                <p><strong>Región:</strong> {{ compra.usuario.region }}</p>
+                <p><strong>Ciudad:</strong> {{ compra.usuario.ciudad }}</p>
+                <p><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
             </div>
         </div>
 
@@ -97,7 +96,7 @@
         </div>
         <div class="summary-row">
             <span>Envío</span>
-            <span>${{ compra.costo_envio|formato_chileno }}</span>
+            <span>${{ compra.envio|formato_chileno }}</span>
         </div>
         <div class="summary-row total">
             <span>Total</span>
@@ -111,7 +110,7 @@
             </div>
         </div>
 
-        <a href="#" class="btn-descargar">
+        <a href="#" class="btn-descargar" style="text-decoration: none;">
             Descargar Boleta <i class="fa-solid fa-download"></i>
         </a>
 

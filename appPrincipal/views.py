@@ -1165,23 +1165,6 @@ def eliminar_favoritos_seleccionados(request):
 
 
 # vistas relacionadas con pago y envio
-def seleccionar_envio(request, usuario_id):
-    usuario = get_object_or_404(Usuario, id=usuario_id)
-    carrito = usuario.carritos.last() 
-
-    if not carrito or not carrito.items.exists():
-        return redirect('carrito_vacio') 
-
-    if request.method == 'POST':
-        metodo_envio = request.POST.get('metodo_envio', 'tienda')
-        direccion_envio = usuario.direccion if metodo_envio == 'domicilio' else None
-        request.session['metodo_envio'] = metodo_envio
-        request.session['direccion_envio'] = direccion_envio
-
-        return redirect('seleccionar_pago', usuario_id=usuario_id)
-
-    return render(request, 'seleccionar_envio.html', {'usuario': usuario, 'carrito': carrito})
-
 def seleccionar_pago(request, usuario_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     carrito = usuario.carritos.last()
@@ -1191,26 +1174,26 @@ def seleccionar_pago(request, usuario_id):
 
     subtotal = sum(item.cantidad * item.producto.precio for item in carrito.items.all())
 
-    metodo_envio = request.session.get('metodo_envio', 'tienda')
-    costo_envio = 0
-    if metodo_envio == 'domicilio':
-        costo_envio = 5000
-
+    costo_envio = 5990
     total = subtotal + costo_envio
+
+    request.session['metodo_envio'] = "domicilio"
+    request.session['direccion_envio'] = usuario.direccion
+    request.session['costo_envio'] = costo_envio 
 
     if request.method == 'POST':
         metodo_pago = request.POST.get('metodo_pago')
+        request.session['metodo_pago'] = metodo_pago
 
         if metodo_pago in ["tarjeta", "transferencia"]:
             return redirect('compra_exitosa', usuario_id=usuario_id)
-        
-        return redirect('seleccionar_pago', usuario_id=usuario_id)
 
     return render(request, 'seleccionar_pago.html', {
         'usuario': usuario,
         'total': total,
+        'subtotal': subtotal,
+        'costo_envio': costo_envio
     })
-
 
 def compra_exitosa(request, usuario_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -1241,10 +1224,17 @@ def compra_exitosa(request, usuario_id):
     venta.calcular_total()
     carrito.items.all().delete()
 
+    Envio.objects.create(
+        venta=venta,
+        estado='En Preparación',
+        transportista="Starken"
+    )
+
     return render(request, 'compra_exitosa.html', {
         'venta': venta,
         'metodo_pago': metodo_pago,
     })
+
 
 
 def ver_boleta(request, venta_id):

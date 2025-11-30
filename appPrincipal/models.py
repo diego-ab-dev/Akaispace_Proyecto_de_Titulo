@@ -153,7 +153,7 @@ class Venta(models.Model):
         self.subtotal = sum(
             producto_venta.total_producto for producto_venta in self.producto_venta.all()
         )
-        self.envio = 5000 if self.metodo_envio == 'domicilio' else 0
+        self.envio = 5990 if self.metodo_envio == 'domicilio' else 0
         self.total = self.subtotal + self.envio
         self.save()
 

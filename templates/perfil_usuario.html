@@ -41,7 +41,7 @@
                                 <p><strong>Total:</strong> ${{ ultimo_pedido.total|formato_chileno }}</p>
                                 <p><strong>Cantidad:</strong> {{ ultimo_pedido.producto_venta.count }} productos</p>
                                 <p><strong>Fecha:</strong> {{ ultimo_pedido.fecha|date:"d/m/Y H:i" }}</p>
-                                <p><strong>Estado:</strong> <span class="text-muted">{{ ultimo_pedido.estado }}</span></p>
+                                <p><strong>Estado:</strong> <span class="text-muted">{{ ultimo_pedido.datos_envio.estado }}</span></p>
                             </div>
                             {% endwith %}
                         {% else %}
@@ -91,7 +91,7 @@
                     <div class="card-content">
                         {% for devolucion in devoluciones_recientes|slice:":1" %}
                             <p><strong>Producto:</strong> {{ devolucion.producto.nombre }}</p>
-                            <p class="text-muted small">Devolución: {{ devolucion.motivo|truncatechars:60 }}</p>
+                            <p class="text-muted small">Motivo: {{ devolucion.motivo|truncatechars:60 }}</p>
                             <p class="text-muted small">Fecha: {{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</p>
                         {% empty %}
                             <p class="text-muted small">No hay devoluciones recientes.</p>
