@@ -223,6 +223,7 @@
                                         <h4 class="precioprod product-price fw-bold fs-4">${{ producto.precio|formato_chileno }}</h4>
                                     </div>
                                     <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Detalles</a>
+                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn-carrito">Agregar al Carrito</a>
                                 </div>
                             </div>
                           {% empty %}

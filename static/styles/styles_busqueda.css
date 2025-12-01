@@ -706,14 +706,15 @@ a:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px auto; 
-  width: fit-content; 
+  margin: 10px auto; 
+  width: 100%;       
   padding: 10px 20px;
   background-color: #1C253B; 
   color: #fff;
   text-decoration: none;
   border-radius: 2px;
   transition: background-color 0.3s;
+  box-sizing: border-box;
 }
 
 .btn-detalles:hover {
@@ -721,6 +722,25 @@ a:hover {
   color: #fff;
 }
 
+.btn-carrito {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px auto; 
+  width: 100%; 
+  padding: 10px 20px;
+  background-color: #4E84A8; 
+  color: #fff;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: background-color 0.3s;
+  box-sizing: border-box;
+}
+
+.btn-carrito:hover {
+  background-color: #4a6f8a; 
+  color: #fff;
+}
 
 .section-products .row.g-3 {
   display: grid;

@@ -701,18 +701,39 @@ nav .navbar .links li .sub-menu li{
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 20px auto; 
-  width: fit-content; 
+  margin: 10px auto; 
+  width: 100%;       
   padding: 10px 20px;
   background-color: #1C253B; 
   color: #fff;
   text-decoration: none;
   border-radius: 2px;
   transition: background-color 0.3s;
+  box-sizing: border-box;
 }
 
 .btn-detalles:hover {
   background-color: #344266; 
+  color: #fff;
+}
+
+.btn-carrito {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px auto; 
+  width: 100%; 
+  padding: 10px 20px;
+  background-color: #4E84A8; 
+  color: #fff;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: background-color 0.3s;
+  box-sizing: border-box;
+}
+
+.btn-carrito:hover {
+  background-color: #4a6f8a; 
   color: #fff;
 }
 
@@ -757,8 +778,8 @@ nav .navbar .links li .sub-menu li{
 }
 
 .btn:hover{
-  background-color: #93c4e5;
-  color: #000000;
+  background-color: #4a6f8a;
+  color: #ffffff;
 }
 
 @media (max-width: 768px) {
