@@ -73,33 +73,41 @@ input:focus {
 
 .form-actions {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 15px;
+    gap: 15px;
 }
 
-button {
-    background-color: #3498db;
-    color: white;
-    padding: 10px 15px;
+.btn-primary {
+    background-color: #5b85a6; /* Color azul acero de la imagen */
     border: none;
-    border-radius: 4px;
-    font-size: 14px;
-    cursor: pointer;
+    border-radius: 25px; /* Bordes muy redondos */
+    padding: 12px 0;
+    font-weight: 600;
+    font-size: 16px;
+    width: 40%; /* Ocupa la mitad del espacio disponible */
     transition: background-color 0.3s;
 }
 
-button:hover {
-    background-color: #2980b9;
+.btn-primary:hover {
+    background-color: #4a6d8a;
 }
 
 .cancel-button {
-    display: inline-block;
-    margin-left: 10px;
-    color: #7f8c8d;
+    background-color: #1a2530; /* Color oscuro de la imagen */
+    color: white;
+    border: none;
+    border-radius: 25px; /* Bordes muy redondos */
+    padding: 12px 0;
+    font-weight: 600;
+    font-size: 16px;
+    width: 40%; /* Ocupa la otra mitad */
+    text-align: center;
     text-decoration: none;
-    font-size: 14px;
-    transition: color 0.3s;
+    display: inline-block;
+    transition: background-color 0.3s;
 }
 
 .cancel-button:hover {
-    color: #34495e;
+    background-color: #000000;
+    color: white;
 }
