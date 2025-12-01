@@ -20,6 +20,7 @@ from django.contrib import messages
 from .forms import OpinionForm
 from django.core.paginator import Paginator
 from django.utils.timezone import now
+from django.utils import timezone
 
 # Vistas para administracion
 regiones_ciudades = {
@@ -84,13 +85,13 @@ def admin_dashboard(request):
 
 @admin_required
 def get_dashboard_counts(request):
-    usuarios = Usuario.objects.count()
+    envios_pendientes = Envio.objects.filter(estado="En Preparación").count()
     ventas = Venta.objects.count()
     reclamos = Reclamo.objects.count()
     devoluciones = Devolucion.objects.count()
 
     return JsonResponse({
-        "usuarios": usuarios,
+        "envios_pendientes": envios_pendientes,
         "ventas": ventas,
         "reclamos": reclamos,
         "devoluciones": devoluciones,
@@ -100,7 +101,7 @@ def get_dashboard_counts(request):
 # Usuarios en administracion
 @admin_required
 def admin_usuarios(request):
-    usuarios_list = Usuario.objects.all().order_by('-id')
+    usuarios_list = Usuario.objects.filter(is_deleted=False).order_by('-id')
 
     paginator = Paginator(usuarios_list, 10) 
     page_number = request.GET.get('page')
@@ -114,8 +115,11 @@ def admin_usuarios(request):
 @admin_required
 def eliminar_usuario(request, usuario_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
-    usuario.delete()
+    usuario.is_deleted = True
+    usuario.deleted_at = timezone.now()
+    usuario.save()
     return redirect('admin_usuarios')
+
 
 @admin_required
 def buscar_usuarios(request):
@@ -123,7 +127,7 @@ def buscar_usuarios(request):
     filtro = request.GET.get('filtro', 'nombre') 
     es_administrador = request.GET.get('es_administrador', '')
 
-    usuarios_list = Usuario.objects.all()
+    usuarios_list = Usuario.objects.filter(is_deleted=False)
 
     if query:
         if filtro == "nombre":
@@ -157,7 +161,6 @@ def crear_usuario(request):
 
     if request.method == 'POST':
         try:
-            # Capturar datos
             data = request.POST
             nombre = data.get('nombre')
             email = data.get('email', '').strip().lower()
@@ -220,9 +223,9 @@ def detalle_usuario(request, usuario_id):
 # Productos en adminstracion
 @admin_required
 def admin_productos(request):
-    productos_list = Producto.objects.all().order_by('-id')
+    productos_list = Producto.objects.filter(is_deleted=False).order_by('-id')
 
-    paginator = Paginator(productos_list, 10) 
+    paginator = Paginator(productos_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -245,7 +248,8 @@ def agregar_producto(request):
 @admin_required
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-    producto.delete()
+    producto.is_deleted = True
+    producto.save()
     return redirect('admin_productos')
 
 @admin_required
@@ -255,7 +259,7 @@ def buscar_productos(request):
     genero = request.GET.get('genero', '')
     ordenar = request.GET.get('ordenar', 'recientes')
 
-    productos_list = Producto.objects.all()
+    productos_list = Producto.objects.filter(is_deleted=False)
 
     if query:
         productos_list = productos_list.filter(

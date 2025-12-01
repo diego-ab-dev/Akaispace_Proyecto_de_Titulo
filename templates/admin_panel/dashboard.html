@@ -92,7 +92,7 @@
                                 <div class="single_counter p-y-2 m-t-1">
                                     <a href="{% url 'admin_ventas' %}" class="card-link">
                                         <i class="fa fa-truck m-b-1"></i>
-                                        <h2 class="statistic-counter" id="usuarios-count">0</h2>
+                                        <h2 class="statistic-counter" id="envios-count">0</h2>
                                         <p>Envíos Pendientes</p>
                                     </a>
                                 </div>
@@ -207,7 +207,7 @@
             const response = await fetch("{% url 'get_dashboard_counts' %}");
             const data = await response.json();
 
-            document.getElementById('usuarios-count').innerText = data.usuarios;
+            document.getElementById('envios-count').innerText = data.envios_pendientes;
             document.getElementById('ventas-count').innerText = data.ventas;
             document.getElementById('reclamos-count').innerText = data.reclamos;
             document.getElementById('devoluciones-count').innerText = data.devoluciones;

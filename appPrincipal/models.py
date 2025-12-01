@@ -12,7 +12,17 @@ class Usuario(models.Model):
     region = models.CharField(max_length=100, default='Región no especificada')  
     ciudad = models.CharField(max_length=100, default='Ciudad no especificada')
     es_administrador = models.BooleanField(default=False)
-    
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.deleted_at = now()
+        self.save()
+
+    def hard_delete(self):
+        super(Usuario, self).delete()
+
     def __str__(self):
         return self.nombre
 
@@ -89,7 +99,16 @@ class Producto(models.Model):
     imagen_6 = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name="Imagen Opcional 6")
     categoria = models.CharField(max_length=40, choices=CATEGORIAS, verbose_name="Categoría") 
     genero = models.CharField(max_length=20, choices=GENEROS, verbose_name="Género", default='OTRO')
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.deleted_at = now()
+        self.save()
+
+    def hard_delete(self):
+        super(Producto, self).delete()
 
     def imagenes(self):
         return [img for img in [

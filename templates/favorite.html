@@ -254,9 +254,11 @@
                     </div>
 
                     <div class="item-actions me-5">
-                        <a href="{% url 'producto_detalle' item.producto.id %}" class="btn btn-dark rounded-pill px-4 d-flex align-items-center gap-2">
-                            Ver Producto <i class="far fa-eye"></i>
-                        </a>
+                        {% if item.producto.stock > 0 %}
+                            <a href="{% url 'producto_detalle' item.producto.id %}" class="btn btn-dark rounded-pill px-4 d-flex align-items-center gap-2">
+                                Ver Producto <i class="far fa-eye"></i>
+                            </a>
+                        {% endif %}
                     </div>
 
                     <div class="item-check position-absolute top-0 end-0 mt-3 me-3">
