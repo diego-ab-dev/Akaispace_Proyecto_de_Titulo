@@ -4,47 +4,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--Boostrap-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"></script>
-    <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_crear_usuario.css' %}">
-    <!--LOGO-->
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
     <title>Crear Nuevo Usuario</title>
 </head>
 <body>
     <div class="form-container">
-        <h2>Crear Nuevo Usuario</h2>
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-        <form method="post">
+        <h2 class="text-center">Crear Nuevo Usuario</h2>
+        
+        <div id="notificacion-registro"></div>
+
+        <form method="post" id="formCrearUsuario" autocomplete="off">
             {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="rut">Rut:</label>
+                <input type="text" name="rut" id="rut" placeholder="12.345.678-9" oninput="darFormatoRut(this)" required>
+            </div>
+
             <div class="form-group">
                 <label for="nombre">Nombre:</label>
                 <input type="text" name="nombre" id="nombre" required>
             </div>
+            
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" name="email" id="email" required>
+                <input type="email" name="email" id="email" placeholder="nombre@ejemplo.com" required>
             </div>
+            
             <div class="form-group">
                 <label for="telefono">Teléfono:</label>
-                <input type="text" name="telefono" id="telefono" required>
+                <div class="input-group">
+                    <span class="input-group-text">+56 9</span>
+                    <input type="text" class="form-control" id="telefono_visible" maxlength="8" oninput="syncPhone(this)" required>
+                </div>
+                <input type="hidden" name="telefono" id="telefono">
             </div>
+            
             <div class="form-group">
                 <label for="direccion">Dirección:</label>
                 <input type="text" name="direccion" id="direccion" required>
             </div>
-            <div class="form-group">
-                <label for="rut">Rut:</label>
-                <input type="text" name="rut" id="rut" required>
-            </div>
-            <div class="form-floating mb-3">
+            
+            <div class="form-floating mb-3 mt-3">
                 <select class="form-select" id="region" name="region" required>
                     <option value="" disabled selected>Seleccione una región</option>
                     {% for region in regiones_ciudades.keys %}
@@ -60,62 +67,234 @@
                 </select>
                 <label for="ciudad">Ciudad</label>
             </div>
+            
             <div class="form-group">
                 <label for="password">Contraseña:</label>
-                <input type="password" name="contraseña" id="password" required>
-                <span onclick="togglePassword()" class="toggle-password"></span>
+                <div class="input-group">
+                    <input type="password" name="contraseña" id="password" class="form-control" required>
+                </div>
             </div>
-            <div class="form-group">
+            
+            <div class="form-group mt-2">
                 <label for="confirm_password">Confirmar Contraseña:</label>
-                <input type="password" name="confirmar_contraseña" id="confirm_password" required>
+                <input type="password" name="confirmar_contraseña" id="confirm_password" class="form-control" required>
             </div>
-            <div class="form-group checkbox-group">
-                <label for="es_administrador">¿Es Administrador?</label>
+            
+            <div class="form-group checkbox-group mt-3">
+                <label for="es_administrador" class="text-danger fw-bold">¿Otorgar permisos de Administrador?</label>
                 <input type="checkbox" name="es_administrador" id="es_administrador">
             </div>
-            <div class="form-actions">
-                <button type="submit">Guardar</button>
-                <a href="{% url 'admin_usuarios' %}" class="cancel-button">Cancelar</a>
+            
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="{% url 'admin_usuarios' %}" class="btn btn-secondary cancel-button">Cancelar</a>
             </div>
         </form>
     </div>
+    <div class="modal fade" id="modalConfirmacionAdmin" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">⚠️ Confirmación de Seguridad</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="btnXModal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <p class="fs-5 mb-3">¿Estás seguro de que deseas hacer <strong>Administrador</strong> a este usuario?</p>
+                    <div class="alert alert-warning">
+                        <small>Un administrador tiene control total sobre el sistema, incluyendo la capacidad de eliminar datos y gestionar otros usuarios.</small>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal" id="btnCancelarAdmin">Cancelar</button>
+                    <button type="button" class="btn btn-danger px-4" id="btnConfirmarAdmin">Sí, Otorgar Permisos</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <script>
-    // cargar las ciudades y regiones
-const regionSelect = document.getElementById('region');
-const ciudadSelect = document.getElementById('ciudad');
 
-function cargarCiudades(region) {
-    fetch(`/obtener_ciudades/?region=${region}`)
-        .then(response => response.json())
-        .then(data => {
-            ciudadSelect.innerHTML = '<option value="" disabled selected>Seleccione una ciudad</option>';
-            if (data.ciudades && data.ciudades.length > 0) {
-                ciudadSelect.disabled = false;
-                data.ciudades.forEach(function (ciudad) {
-                    const option = document.createElement('option');
-                    option.value = ciudad;
-                    option.textContent = ciudad;
-                    ciudadSelect.appendChild(option);
-                });
-            } else {
-                ciudadSelect.disabled = true;
-            }
-        })
-        .catch(error => console.log('Error al cargar ciudades:', error));
-}
-
-regionSelect.addEventListener('change', function () {
-    cargarCiudades(this.value);
-});
-    function togglePassword() {
-        const passwordField = document.getElementById('password');
-        const confirmPasswordField = document.getElementById('confirm_password');
-        const type = passwordField.type === 'password' ? 'text' : 'password';
-        passwordField.type = type;
-        confirmPasswordField.type = type;
+    function mostrarNotificacion(mensaje, tipo) {
+        if (tipo === undefined) tipo = 'error';
+        let alertDiv = document.getElementById('notificacion-registro');
+        if (!alertDiv) {
+            alertDiv = document.createElement('div');
+            alertDiv.id = 'notificacion-registro';
+            document.body.insertAdjacentElement('afterbegin', alertDiv);
+        }
+        const claseColor = tipo === 'success' ? 'alert-success' : 'alert-danger';
+        const alertHTML = '<div class="alert ' + claseColor + ' alert-dismissible fade show position-fixed" role="alert" style="top: 20px; right: 20px; width: auto; max-width: 350px; z-index: 9999;">' +
+                          mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+        alertDiv.innerHTML = alertHTML;
+        setTimeout(function() {
+            const alert = alertDiv.querySelector('.alert');
+            if (alert) alert.remove();
+        }, 4000);
     }
+
+    function limpiarNotificaciones() {
+        const alertDiv = document.getElementById('notificacion-registro');
+        if (alertDiv) alertDiv.innerHTML = '';
+    }
+
+    function validarRut(rutCompleto) {
+        if (!rutCompleto) return false;
+        let valor = rutCompleto.replace(/\./g, '').replace(/-/g, '');
+        if (valor.length < 8) return false;
+        let cuerpo = valor.slice(0, -1);
+        let dv = valor.slice(-1).toUpperCase();
+        if (!/^\d+$/.test(cuerpo)) return false;
+        let suma = 0;
+        let multiplo = 2;
+        for (let i = 1; i <= cuerpo.length; i++) {
+            let index = multiplo * valor.charAt(cuerpo.length - i);
+            suma = suma + index;
+            if (multiplo < 7) { multiplo = multiplo + 1; } else { multiplo = 2; }
+        }
+        let dvEsperado = 11 - (suma % 11);
+        dvEsperado = (dvEsperado == 11) ? '0' : (dvEsperado == 10) ? 'K' : dvEsperado.toString();
+        return dv === dvEsperado;
+    }
+
+    function darFormatoRut(rutInput) {
+        let valor = rutInput.value.replace(/[^0-9kK]/g, '').toUpperCase();
+        if (valor.length > 9) valor = valor.slice(0, 9);
+        if (valor.length === 0) { rutInput.value = ""; return; }
+        let cuerpo = valor.slice(0, -1);
+        let dv = valor.slice(-1);
+        rutInput.value = cuerpo + (cuerpo.length > 0 ? "-" + dv : dv);
+        if (cuerpo.length > 3) {
+            let cuerpoFormateado = "";
+            for (let i = cuerpo.length - 1, j = 1; i >= 0; i--, j++) {
+                cuerpoFormateado = cuerpo.charAt(i) + cuerpoFormateado;
+                if (j % 3 === 0 && i !== 0) cuerpoFormateado = "." + cuerpoFormateado;
+            }
+            rutInput.value = cuerpoFormateado + "-" + dv;
+        }
+    }
+
+    function syncPhone(input) {
+        let numeros = input.value.replace(/\D/g, '');
+        if (numeros.length > 8) numeros = numeros.slice(0, 8);
+        input.value = numeros;
+        const hiddenInput = document.getElementById('telefono');
+        if (numeros.length > 0) { hiddenInput.value = "+56 9 " + numeros; } else { hiddenInput.value = ""; }
+    }
+
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('formCrearUsuario');
+        const regionSelect = document.getElementById('region');
+        const ciudadSelect = document.getElementById('ciudad');
+        
+        // --- LÓGICA MODAL ADMIN ---
+        const checkAdmin = document.getElementById('es_administrador');
+        const modalAdmin = new bootstrap.Modal(document.getElementById('modalConfirmacionAdmin'));
+        const btnConfirmar = document.getElementById('btnConfirmarAdmin');
+        const btnCancelar = document.getElementById('btnCancelarAdmin');
+        const btnX = document.getElementById('btnXModal');
+
+        // Al hacer click en el checkbox
+        checkAdmin.addEventListener('click', function(e) {
+            if (this.checked) {
+                e.preventDefault(); // Evita que se marque inmediatamente
+                modalAdmin.show();  // Muestra el modal
+            }
+        });
+
+        // Al confirmar en el modal
+        btnConfirmar.addEventListener('click', function() {
+            checkAdmin.checked = true; // Marca el checkbox manualmente
+            modalAdmin.hide();
+        });
+
+        // Al cancelar (Botón gris o la X)
+        function cancelarAdmin() {
+            checkAdmin.checked = false; // Asegura que quede desmarcado
+        }
+        btnCancelar.addEventListener('click', cancelarAdmin);
+        btnX.addEventListener('click', cancelarAdmin);
+
+        // --- LÓGICA CIUDADES ---
+        function cargarCiudades(region) {
+            fetch(`/obtener_ciudades/?region=${region}`)
+                .then(response => response.json())
+                .then(data => {
+                    ciudadSelect.innerHTML = '<option value="" disabled selected>Seleccione una ciudad</option>';
+                    if (data.ciudades && data.ciudades.length > 0) {
+                        ciudadSelect.disabled = false;
+                        data.ciudades.forEach(function (ciudad) {
+                            const option = document.createElement('option');
+                            option.value = ciudad;
+                            option.textContent = ciudad;
+                            ciudadSelect.appendChild(option);
+                        });
+                    } else { ciudadSelect.disabled = true; }
+                })
+                .catch(error => console.log('Error al cargar ciudades:', error));
+        }
+        
+        regionSelect.addEventListener('change', function () { cargarCiudades(this.value); });
+
+        // --- ENVÍO FORMULARIO ---
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            limpiarNotificaciones();
+            
+            let isValid = true;
+            
+            const nombre = document.getElementById('nombre');
+            const nombreRegex = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/;
+            if (!nombreRegex.test(nombre.value.trim())) {
+                isValid = false; mostrarNotificacion("El nombre solo debe contener letras."); nombre.focus(); return;
+            }
+            
+            const rutInput = document.getElementById('rut');
+            if (!validarRut(rutInput.value)) {
+                isValid = false; mostrarNotificacion("El RUT ingresado no es válido."); rutInput.focus(); return;
+            }
+            
+            const email = document.getElementById('email');
+            if (!email.value.includes('@')) {
+                isValid = false; mostrarNotificacion("El correo debe contener un '@'."); email.focus(); return;
+            }
+
+            const telefonoInput = document.getElementById('telefono_visible');
+            if (!/^\d{8}$/.test(telefonoInput.value.trim())) {
+                isValid = false; mostrarNotificacion("El teléfono debe tener 8 números."); telefonoInput.focus(); return;
+            }
+
+            const pass = document.getElementById('password');
+            const confirmPass = document.getElementById('confirm_password');
+            if (pass.value !== confirmPass.value) {
+                isValid = false; mostrarNotificacion("Las contraseñas no coinciden."); confirmPass.focus(); return;
+            }
+
+            if (!isValid) return;
+
+            const formData = new FormData(form);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return response.json();
+                } else { throw new Error("Respuesta no es JSON"); }
+            })
+            .then(data => {
+                if (data.success) {
+                    mostrarNotificacion(data.message, 'success');
+                    setTimeout(() => { window.location.href = "{% url 'admin_usuarios' %}"; }, 2000);
+                } else { mostrarNotificacion(data.message); }
+            })
+            .catch(error => { console.error(error); mostrarNotificacion("Error de conexión."); });
+        });
+    });
 </script>
-    
 </body>
 </html>

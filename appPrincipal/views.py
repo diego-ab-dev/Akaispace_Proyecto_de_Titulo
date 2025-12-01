@@ -150,58 +150,72 @@ def buscar_usuarios(request):
 
 @admin_required
 def crear_usuario(request):
+    # GET: Mostrar el formulario
+    if request.method == 'GET':
+        return render(request, 'admin_panel/crear_usuario.html', {
+            'regiones_ciudades': regiones_ciudades,
+        })
+
+    # POST: Procesar datos vía AJAX
     if request.method == 'POST':
-        nombre = request.POST.get('nombre')
-        email = request.POST.get('email').strip().lower()
-        contraseña = request.POST.get('contraseña')
-        confirmar_contraseña = request.POST.get('confirmar_contraseña')
-        telefono = request.POST.get('telefono')
-        direccion = request.POST.get('direccion')
-        rut = request.POST.get('rut')
-        region = request.POST.get('region')
-        ciudad = request.POST.get('ciudad')
-        es_administrador = request.POST.get('es_administrador') == 'on'
-
-        if contraseña != confirmar_contraseña:
-            return render(request, 'admin_panel/crear_usuario.html', {
-                'error': 'Las contraseñas no coinciden.',
-                'regiones_ciudades_json': json.dumps(regiones_ciudades),
-            })
-
-        ciudades_validas = regiones_ciudades.get(region, [])
-        if ciudad not in ciudades_validas:
-            return render(request, 'admin_panel/crear_usuario.html', {
-                'error': f'La ciudad "{ciudad}" no es válida para la región "{region}".',
-                'regiones_ciudades_json': json.dumps(regiones_ciudades),
-            })
-
         try:
+            # Capturar datos
+            data = request.POST
+            nombre = data.get('nombre')
+            email = data.get('email', '').strip().lower()
+            contraseña = data.get('contraseña')
+            confirmar_contraseña = data.get('confirmar_contraseña')
+            # Nota: el teléfono real viene en el input hidden 'telefono_final' o lo procesamos aquí
+            # En tu register usas un hidden. Aquí usaremos el que envía el form.
+            telefono = data.get('telefono') 
+            direccion = data.get('direccion')
+            rut = data.get('rut')
+            region = data.get('region')
+            ciudad = data.get('ciudad')
+            # Checkbox envía 'on' si está marcado
+            es_administrador = data.get('es_administrador') == 'on'
+
+            # Validaciones de servidor (Backend)
+            if contraseña != confirmar_contraseña:
+                return JsonResponse({'success': False, 'message': 'Las contraseñas no coinciden.'})
+
+            ciudades_validas = regiones_ciudades.get(region, [])
+            if ciudad not in ciudades_validas:
+                return JsonResponse({'success': False, 'message': 'La ciudad no es válida para la región seleccionada.'})
+
+            # Validar existencia previa manual para mensaje personalizado
+            if Usuario.objects.filter(email=email).exists():
+                 return JsonResponse({'success': False, 'message': 'El correo electrónico ya está registrado.'})
+            
+            if Usuario.objects.filter(rut=rut).exists():
+                 return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
+
+            # Crear usuario
             Usuario.objects.create(
                 nombre=nombre,
                 email=email,
                 contraseña=make_password(contraseña),
                 es_administrador=es_administrador,
-                telefono=telefono,
+                telefono=telefono, # El JS se encarga de formatearlo
                 direccion=direccion,
                 rut=rut,
                 region=region,
                 ciudad=ciudad
             )
-            return redirect('admin_usuarios')
+            
+            return JsonResponse({'success': True, 'message': 'Usuario creado exitosamente.'})
+
         except IntegrityError as e:
-            error = 'Ocurrió un error al crear el usuario.'
+            # Respaldo por si falla la validación manual
+            error_msg = 'Error de base de datos.'
             if 'email' in str(e):
-                error = 'El email ya está registrado.'
+                error_msg = 'El email ya existe.'
             elif 'rut' in str(e):
-                error = 'El RUT ya está registrado.'
-            return render(request, 'admin_panel/crear_usuario.html', {
-                'error': error,
-                'regiones_ciudades_json': json.dumps(regiones_ciudades),
-            })
-        
-    return render(request, 'admin_panel/crear_usuario.html', {
-    'regiones_ciudades': regiones_ciudades,
-    })
+                error_msg = 'El RUT ya existe.'
+            return JsonResponse({'success': False, 'message': error_msg})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error del servidor: {str(e)}'})
 
 
 @admin_required
