@@ -150,13 +150,11 @@ def buscar_usuarios(request):
 
 @admin_required
 def crear_usuario(request):
-    # GET: Mostrar el formulario
     if request.method == 'GET':
         return render(request, 'admin_panel/crear_usuario.html', {
             'regiones_ciudades': regiones_ciudades,
         })
 
-    # POST: Procesar datos vía AJAX
     if request.method == 'POST':
         try:
             # Capturar datos
@@ -165,17 +163,14 @@ def crear_usuario(request):
             email = data.get('email', '').strip().lower()
             contraseña = data.get('contraseña')
             confirmar_contraseña = data.get('confirmar_contraseña')
-            # Nota: el teléfono real viene en el input hidden 'telefono_final' o lo procesamos aquí
-            # En tu register usas un hidden. Aquí usaremos el que envía el form.
             telefono = data.get('telefono') 
             direccion = data.get('direccion')
             rut = data.get('rut')
             region = data.get('region')
             ciudad = data.get('ciudad')
-            # Checkbox envía 'on' si está marcado
+
             es_administrador = data.get('es_administrador') == 'on'
 
-            # Validaciones de servidor (Backend)
             if contraseña != confirmar_contraseña:
                 return JsonResponse({'success': False, 'message': 'Las contraseñas no coinciden.'})
 
@@ -183,20 +178,18 @@ def crear_usuario(request):
             if ciudad not in ciudades_validas:
                 return JsonResponse({'success': False, 'message': 'La ciudad no es válida para la región seleccionada.'})
 
-            # Validar existencia previa manual para mensaje personalizado
             if Usuario.objects.filter(email=email).exists():
                  return JsonResponse({'success': False, 'message': 'El correo electrónico ya está registrado.'})
             
             if Usuario.objects.filter(rut=rut).exists():
                  return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
 
-            # Crear usuario
             Usuario.objects.create(
                 nombre=nombre,
                 email=email,
                 contraseña=make_password(contraseña),
                 es_administrador=es_administrador,
-                telefono=telefono, # El JS se encarga de formatearlo
+                telefono=telefono, 
                 direccion=direccion,
                 rut=rut,
                 region=region,
@@ -206,7 +199,6 @@ def crear_usuario(request):
             return JsonResponse({'success': True, 'message': 'Usuario creado exitosamente.'})
 
         except IntegrityError as e:
-            # Respaldo por si falla la validación manual
             error_msg = 'Error de base de datos.'
             if 'email' in str(e):
                 error_msg = 'El email ya existe.'
@@ -907,13 +899,6 @@ def ver_detalle_devolucion(request, devolucion_id):
     })
 
 
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth.hashers import check_password, make_password
-from .models import Usuario
-import json
-
 def cambiar_contraseña(request):
     if request.method == 'POST':
         contraseña_actual = request.POST.get('contraseña_actual')
@@ -925,15 +910,12 @@ def cambiar_contraseña(request):
             try:
                 usuario = Usuario.objects.get(id=usuario_id)
                 
-                # 1. Validar contraseña actual
                 if not check_password(contraseña_actual, usuario.contraseña):
                     messages.error(request, "La contraseña actual no es correcta.")
                 
-                # 2. Validar coincidencia
                 elif nueva_contraseña != confirmar_contraseña:
                     messages.error(request, "Las contraseñas nuevas no coinciden. Inténtelo nuevamente.")
                 
-                # 3. Éxito
                 else:
                     usuario.contraseña = make_password(nueva_contraseña)
                     usuario.save()
@@ -945,7 +927,6 @@ def cambiar_contraseña(request):
         else:
             messages.error(request, "Debes iniciar sesión para cambiar tu contraseña.")
 
-    # Preparamos los mensajes para enviarlos a JavaScript
     storage = get_messages(request)
     mensajes_para_js = [{'tipo': message.tags, 'texto': message.message} for message in storage]
 

@@ -43,59 +43,58 @@
             </div>
         </form>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script type="application/json" id="django-messages">
-        {{ mensajes_json|safe }}
-    </script>
+<script type="application/json" id="django-messages">
+    {{ mensajes_json|safe }}
+</script>
 
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const mensajesElement = document.getElementById('django-messages');
-            if (mensajesElement && mensajesElement.textContent.trim()) {
-                try {
-                    const djangoMessages = JSON.parse(mensajesElement.textContent);
-                    djangoMessages.forEach(message => {
-                        const tipo = message.tipo === 'error' ? 'danger' : message.tipo;
-                        mostrarMensaje(tipo, message.texto);
-                    });
-                } catch (e) {
-                    console.error("Error parseando mensajes", e);
-                }
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const mensajesElement = document.getElementById('django-messages');
+        if (mensajesElement && mensajesElement.textContent.trim()) {
+            try {
+                const djangoMessages = JSON.parse(mensajesElement.textContent);
+                djangoMessages.forEach(message => {
+                    const tipo = message.tipo === 'error' ? 'danger' : message.tipo;
+                    mostrarMensaje(tipo, message.texto);
+                });
+            } catch (e) {
+                console.error("Error parseando mensajes", e);
             }
-        });
-
-        document.getElementById('cambiar-contraseña-form').addEventListener('submit', function (e) {
-            const contraseñaActual = document.getElementById('contraseña_actual').value;
-            const nuevaContraseña = document.getElementById('nueva_contraseña').value;
-            const confirmarContraseña = document.getElementById('confirmar_contraseña').value;
-
-            document.getElementById('message-container').innerHTML = '';
-
-            if (!contraseñaActual) {
-                e.preventDefault();
-                mostrarMensaje('danger', 'Debe ingresar su contraseña actual.');
-            } else if (nuevaContraseña !== confirmarContraseña) {
-                e.preventDefault();
-                mostrarMensaje('warning', 'Las contraseñas no coinciden.');
-            }
-        });
-
-        // mostrar mensajes
-        function mostrarMensaje(tipo, texto) {
-            const contenedor = document.getElementById('message-container');
-
-            const mensaje = document.createElement('div');
-            mensaje.className = `alert alert-${tipo} alert-dismissible fade show`;
-            mensaje.innerHTML = `${texto} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
-
-            contenedor.appendChild(mensaje);
-
-            setTimeout(() => {
-                if(mensaje) mensaje.remove();
-            }, 5000);
         }
-    </script>
+    });
+
+    document.getElementById('cambiar-contraseña-form').addEventListener('submit', function (e) {
+        const contraseñaActual = document.getElementById('contraseña_actual').value;
+        const nuevaContraseña = document.getElementById('nueva_contraseña').value;
+        const confirmarContraseña = document.getElementById('confirmar_contraseña').value;
+
+        document.getElementById('message-container').innerHTML = '';
+
+        if (!contraseñaActual) {
+            e.preventDefault();
+            mostrarMensaje('danger', 'Debe ingresar su contraseña actual.');
+        } else if (nuevaContraseña !== confirmarContraseña) {
+            e.preventDefault();
+            mostrarMensaje('warning', 'Las contraseñas no coinciden.');
+        }
+    });
+
+    // mostrar mensajes
+    function mostrarMensaje(tipo, texto) {
+        const contenedor = document.getElementById('message-container');
+
+        const mensaje = document.createElement('div');
+        mensaje.className = `alert alert-${tipo} alert-dismissible fade show`;
+        mensaje.innerHTML = `${texto} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+
+        contenedor.appendChild(mensaje);
+
+        setTimeout(() => {
+            if(mensaje) mensaje.remove();
+        }, 5000);
+    }
+</script>
 </body>
 </html>

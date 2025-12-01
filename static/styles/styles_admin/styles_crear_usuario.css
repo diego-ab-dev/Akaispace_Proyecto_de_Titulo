@@ -78,13 +78,13 @@ input:focus {
 }
 
 .btn-primary {
-    background-color: #5b85a6; /* Color azul acero de la imagen */
+    background-color: #5b85a6; 
     border: none;
-    border-radius: 25px; /* Bordes muy redondos */
+    border-radius: 25px; 
     padding: 12px 0;
     font-weight: 600;
     font-size: 16px;
-    width: 40%; /* Ocupa la mitad del espacio disponible */
+    width: 40%; 
     transition: background-color 0.3s;
 }
 
@@ -93,14 +93,14 @@ input:focus {
 }
 
 .cancel-button {
-    background-color: #1a2530; /* Color oscuro de la imagen */
+    background-color: #1a2530; 
     color: white;
     border: none;
-    border-radius: 25px; /* Bordes muy redondos */
+    border-radius: 25px;
     padding: 12px 0;
     font-weight: 600;
     font-size: 16px;
-    width: 40%; /* Ocupa la otra mitad */
+    width: 40%; 
     text-align: center;
     text-decoration: none;
     display: inline-block;
