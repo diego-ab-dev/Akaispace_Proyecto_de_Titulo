@@ -115,9 +115,9 @@
         </div>
         </div>
 
-        <a href="#" class="btn-descargar" style="text-decoration: none;">
-            Descargar Boleta <i class="fa-solid fa-download"></i>
-        </a>
+        <a href="{% url 'ver_boleta' compra.id %}" target="_blank" class="btn-descargar">
+                Descargar Boleta <i class="fa-solid fa-download"></i>
+                </a>
 
         <a href="{% url 'crear_reclamo' compra.id %}" class="btn-reclamo">
             Agregar Reclamo <i class="fa-solid fa-circle-exclamation"></i>

@@ -1252,6 +1252,9 @@ def compra_exitosa(request, usuario_id):
         estado='En Preparación',
         transportista="Starken"
     )
+    Boleta.objects.create(
+        venta=venta
+    )
 
     total_cantidad = sum(item.cantidad for item in venta.producto_venta.all())
 
@@ -1262,7 +1265,11 @@ def compra_exitosa(request, usuario_id):
     })
 
 
+
+
 def ver_boleta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
+    Boleta.objects.get_or_create(venta=venta)
+
     return render(request, 'boleta.html', {'venta': venta})
 # fin de vistas relacionadas con pago y envio

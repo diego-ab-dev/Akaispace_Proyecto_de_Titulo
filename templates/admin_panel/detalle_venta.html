@@ -25,7 +25,7 @@
         <div class="venta-header">
             <h1 class="venta-title">Venta #{{ venta.id }}</h1>
             
-            <a href="#" class="btn-boleta">
+            <a href="{% url 'ver_boleta' venta.id %}" target="_blank" class="btn-boleta">
                 Descargar Boleta <i class='bx bx-download'></i>
             </a>
         </div>

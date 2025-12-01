@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Usuario, Producto, Venta, Reclamo, Opinion
+from .models import Usuario, Producto, Venta, Reclamo, Opinion, Boleta
 
 # Edite admin.py para que se reflejen los datos de las tablas en el panel de administracion que ofrece django
 # Las tablas "ItemCarritoProducto" y "Carrito" no aparecen en el panel de admin ya que no tiene mucho sentido que las pueda ver

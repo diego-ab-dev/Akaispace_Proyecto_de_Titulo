@@ -19,7 +19,7 @@
                 <p>R.U.T.: 76.999.888-K</p>
                 <p>Boleta Electrónica Nº {{ venta.id }}</p>
                 <p>Valdivia, Av. Simpson 641</p>
-                <p>Fecha: {% now "d/m/Y H:i" %}</p> </div>
+                <p>Fecha Emisión: {{ venta.fecha|date:"d/m/Y H:i" }}</p> </div>
         </div>
 
         <div class="info-cliente">
