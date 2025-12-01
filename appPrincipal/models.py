@@ -144,6 +144,7 @@ class Venta(models.Model):
     envio = models.PositiveIntegerField(default=0)
     subtotal = models.PositiveIntegerField(default=0)
     total = models.PositiveIntegerField(default=0)
+    metodo_pago = models.CharField(max_length=30, null=True, blank=True) 
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Sin Enviar')
     fecha = models.DateTimeField(auto_now_add=True)
     metodo_envio = models.CharField(max_length=10, choices=ENVIO_CHOICES, default='')

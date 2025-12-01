@@ -24,7 +24,7 @@
 
             <h2 class="mb-4 fw-bold text-dark">Selecciona Método de Pago</h2>
 
-            <form method="post" action="{% url 'compra_exitosa' usuario.id %}">
+            <form method="post" action="{% url 'seleccionar_pago' usuario.id %}">
                 {% csrf_token %}
                 
                 <div class="mb-4">
@@ -73,6 +73,11 @@
 
         <div class="right-panel">
             <h4 class="mb-4 fw-bold">Resumen de Compra</h4>
+
+            <div class="summary-row">
+                <span>Productos</span>
+                <span>{{ total_items }}</span>
+            </div>
 
             <div class="summary-row">
                 <span>Subtotal</span>

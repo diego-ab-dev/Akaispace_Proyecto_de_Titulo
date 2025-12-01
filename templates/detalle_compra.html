@@ -91,6 +91,11 @@
         </div>
 
         <div class="summary-row">
+            <span>Cantidad total</span>
+            <span>{{ total_cantidad }}</span>
+        </div>
+
+        <div class="summary-row">
             <span>Subtotal</span>
             <span>${{ compra.subtotal|formato_chileno }}</span>
         </div>
@@ -106,8 +111,8 @@
         <div class="payment-box">
             <div class="payment-header">Método de Pago</div>
             <div class="payment-info">
-                <span>Visa Débito</span> <i class="fa-brands fa-cc-visa visa-icon"></i>
-            </div>
+            <span>{{ compra.metodo_pago|title }}</span>
+        </div>
         </div>
 
         <a href="#" class="btn-descargar" style="text-decoration: none;">

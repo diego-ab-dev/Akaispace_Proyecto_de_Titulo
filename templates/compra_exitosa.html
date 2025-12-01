@@ -36,6 +36,10 @@
                             <span class="text-end">{{ venta.fecha|date:"d/m/Y" }}</span>
                         </div>
                         <div class="info-row">
+                            <span>Cantidad total</span>
+                            <span class="text-end">{{ total_cantidad }}</span>
+                        </div>
+                        <div class="info-row">
                             <span>Subtotal</span>
                             <span class="text-end">${{ venta.subtotal|formato_chileno }}</span>
                         </div>

@@ -736,9 +736,14 @@ def ver_compras(request):
 
 def ver_detalle_compra(request, compra_id):
     compra = get_object_or_404(Venta, id=compra_id)
+
+    total_cantidad = sum(item.cantidad for item in compra.producto_venta.all())
+
     return render(request, 'detalle_compra.html', {
-        'compra': compra
+        'compra': compra,
+        'total_cantidad': total_cantidad,  
     })
+
 
 
 
@@ -1181,6 +1186,8 @@ def seleccionar_pago(request, usuario_id):
     request.session['direccion_envio'] = usuario.direccion
     request.session['costo_envio'] = costo_envio 
 
+    total_items = sum(item.cantidad for item in carrito.items.all())
+
     if request.method == 'POST':
         metodo_pago = request.POST.get('metodo_pago')
         request.session['metodo_pago'] = metodo_pago
@@ -1192,7 +1199,8 @@ def seleccionar_pago(request, usuario_id):
         'usuario': usuario,
         'total': total,
         'subtotal': subtotal,
-        'costo_envio': costo_envio
+        'costo_envio': costo_envio,
+        'total_items': total_items  
     })
 
 def compra_exitosa(request, usuario_id):
@@ -1203,14 +1211,15 @@ def compra_exitosa(request, usuario_id):
         return redirect('ver_carrito')
 
     metodo_envio = request.session.get('metodo_envio', 'tienda')
-    direccion_envio = request.session.get('direccion_envio')  
+    direccion_envio = request.session.get('direccion_envio')
     metodo_pago = request.session.get('metodo_pago', 'tarjeta')
 
     venta = Venta.objects.create(
         carrito=carrito,
         usuario=usuario,
         metodo_envio=metodo_envio,
-        direccion_envio=direccion_envio, 
+        direccion_envio=direccion_envio,
+        metodo_pago=metodo_pago,
     )
 
     for item in carrito.items.all():
@@ -1230,11 +1239,13 @@ def compra_exitosa(request, usuario_id):
         transportista="Starken"
     )
 
+    total_cantidad = sum(item.cantidad for item in venta.producto_venta.all())
+
     return render(request, 'compra_exitosa.html', {
         'venta': venta,
         'metodo_pago': metodo_pago,
+        'total_cantidad': total_cantidad,
     })
-
 
 
 def ver_boleta(request, venta_id):
