@@ -620,20 +620,11 @@ nav .navbar .links li .sub-menu li{
   background-size: cover;
 }
 
-/* Estilos corregidos para los botones del carrusel */
-/* Botones del carrusel AJUSTADOS */
-/* Botones del carrusel - Posición Fija Manual */
 .carousel-control-prev,
 .carousel-control-next {
     position: absolute;
-    
-    /* CAMBIO CLAVE: Usamos PIXELES en lugar de % */
-    /* 150px (tu margen superior) + 100px (aprox mitad de la imagen) */
     top: 250px; 
-    
-    /* Ya no necesitamos translateY porque estamos posicionando desde arriba */
     transform: none; 
-    
     width: 40px;
     height: 40px;
     padding: 0;
@@ -650,7 +641,7 @@ nav .navbar .links li .sub-menu li{
 }
 
 .carousel-control-prev {
-    left: 50px; /* Los separé un poco más del borde para que se vean mejor */
+    left: 50px;
 }
 
 .carousel-control-next {
@@ -670,11 +661,10 @@ nav .navbar .links li .sub-menu li{
     height: 20px;
 }
 
-/* Ajuste para móviles (para que no queden mal ubicados si la pantalla cambia) */
 @media (max-width: 768px) {
     .carousel-control-prev,
     .carousel-control-next {
-        top: 200px; /* Un poco más arriba en celulares */
+        top: 200px; 
         width: 30px;
         height: 30px;
     }
