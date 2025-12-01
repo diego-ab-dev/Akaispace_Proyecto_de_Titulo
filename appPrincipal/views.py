@@ -908,8 +908,13 @@ def ver_detalle_devolucion(request, devolucion_id):
 
 
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.hashers import check_password, make_password
+from .models import Usuario
+import json
+
 def cambiar_contraseña(request):
-    errores = []
     if request.method == 'POST':
         contraseña_actual = request.POST.get('contraseña_actual')
         nueva_contraseña = request.POST.get('nueva_contraseña')
@@ -919,25 +924,33 @@ def cambiar_contraseña(request):
         if usuario_id:
             try:
                 usuario = Usuario.objects.get(id=usuario_id)
+                
+                # 1. Validar contraseña actual
                 if not check_password(contraseña_actual, usuario.contraseña):
-                    errores.append("La contraseña actual no es correcta.")
+                    messages.error(request, "La contraseña actual no es correcta.")
+                
+                # 2. Validar coincidencia
                 elif nueva_contraseña != confirmar_contraseña:
-                    errores.append("Las contraseñas no coinciden. Inténtelo nuevamente.")
+                    messages.error(request, "Las contraseñas nuevas no coinciden. Inténtelo nuevamente.")
+                
+                # 3. Éxito
                 else:
                     usuario.contraseña = make_password(nueva_contraseña)
                     usuario.save()
+                    messages.success(request, "Contraseña actualizada correctamente.")
                     return redirect('perfil')
+            
             except Usuario.DoesNotExist:
-                errores.append("Usuario no encontrado. Inténtelo más tarde.")
+                messages.error(request, "Usuario no encontrado. Inténtelo más tarde.")
         else:
-            errores.append("Debes iniciar sesión para cambiar tu contraseña.")
+            messages.error(request, "Debes iniciar sesión para cambiar tu contraseña.")
 
+    # Preparamos los mensajes para enviarlos a JavaScript
     storage = get_messages(request)
-    mensajes = [{'tipo': message.tags, 'texto': message.message} for message in storage]
+    mensajes_para_js = [{'tipo': message.tags, 'texto': message.message} for message in storage]
 
     contexto = {
-        'mensajes_json': json.dumps(mensajes),
-        'errores': errores,
+        'mensajes_json': json.dumps(mensajes_para_js),
     }
 
     return render(request, 'cambiar_contrausu.html', contexto)
