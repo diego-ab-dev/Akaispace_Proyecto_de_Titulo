@@ -375,7 +375,7 @@ def admin_reclamos(request):
     fecha_inicio = request.GET.get('fecha_inicio', '')
     fecha_fin = request.GET.get('fecha_fin', '')
 
-    reclamos = Reclamo.objects.select_related('usuario').all()
+    reclamos = Reclamo.objects.select_related('usuario').order_by('-fecha')
 
     if query:
         reclamos = reclamos.filter(
@@ -420,7 +420,7 @@ def admin_ventas(request):
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
     
-    ventas_list = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').all()
+    ventas_list = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').all().order_by('-id')
 
     if query:
         ventas_list = ventas_list.filter(
@@ -817,7 +817,7 @@ def crear_reclamo(request, compra_id):
             return render(request, 'crear_reclamo.html', {'compra': compra, 'error': "Todos los campos son obligatorios."})
         else:
             Reclamo.objects.create(usuario=usuario, asunto=asunto, descripcion=descripcion)
-            return redirect('ver_compras')
+            return redirect('perfil')
     return render(request, 'crear_reclamo.html', {
         'compra': compra
     })

@@ -65,7 +65,7 @@
                 
                 <div class="data-row mt-3">
                     <span class="data-label">Método de Pago:</span> 
-                    <span>Débito</span> 
+                    <span>{{ venta.metodo_pago|title }}</span> 
                 </div>
                 <div class="data-row"><span class="data-label">Fecha:</span> <span>{{ venta.fecha|date:"d/m/Y - H:i" }}</span></div>
 

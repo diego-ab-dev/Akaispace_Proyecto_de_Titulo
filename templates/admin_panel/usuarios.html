@@ -18,7 +18,7 @@
     <title>Usuarios</title>
 </head>
 <body id="body-pd">
-    <h1>Gestión de Usuarios</h1>
+    <h1>Usuarios</h1>
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
         <div><h4>{{ usuario.nombre }}</h4></div>
@@ -111,11 +111,10 @@
                 {% endfor %}
             </table>
         {% endif %}
-        <!-- Paginación -->
+        <!-- Paginacion -->
         <div class="pagination-wrapper d-flex justify-content-center">
             <ul class="pagination">
 
-                <!-- Flecha anterior -->
                 <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
                     {% if page_obj.has_previous %}
                         <a class="page-link custom-page-link" 
@@ -127,7 +126,6 @@
                     {% endif %}
                 </li>
 
-                <!-- Números -->
                 {% for num in page_obj.paginator.page_range %}
                     {% if page_obj.number == num %}
                         <li class="page-item active">
@@ -140,7 +138,6 @@
                     {% endif %}
                 {% endfor %}
 
-                <!-- Flecha siguiente -->
                 <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
                     {% if page_obj.has_next %}
                         <a class="page-link custom-page-link" 
