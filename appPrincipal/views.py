@@ -772,6 +772,29 @@ def ver_detalle_compra(request, compra_id):
         'total_cantidad': total_cantidad,  
     })
 
+def marcar_recibido(request, compra_id):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+
+    compra = get_object_or_404(Venta, id=compra_id)
+
+    if compra.usuario.id != usuario_id:
+        return redirect('perfil')
+
+    envio = compra.datos_envio
+
+    if envio.estado != "Enviado" and envio.estado != "En Tránsito":
+        messages.error(request, "Aún no puedes marcar como recibido.")
+        return redirect('ver_detalle', compra_id=compra_id)
+
+    envio.estado = "Entregado"
+    envio.fecha_entrega = now()
+    envio.save()
+
+    messages.success(request, "Pedido marcado como recibido.")
+    return redirect('ver_detalle', compra_id=compra_id)
+
 
 
 

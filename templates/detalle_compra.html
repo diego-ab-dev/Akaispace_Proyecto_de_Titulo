@@ -32,6 +32,7 @@
             <div class="product-item">
                 <span class="product-name">{{ item.producto.nombre }}</span>
                 <div class="product-actions">
+                {% if compra.datos_envio.estado == "Entregado" %}
                     <a href="{% url 'enviar_opinion' item.producto.id %}" class="btn-opinar" style="text-decoration: none;">
                         Opinar
                     </a>
@@ -39,6 +40,7 @@
                     <a href="{% url 'crear_devolucion' compra.id item.producto.id %}" class="btn-devolucion" style="text-decoration: none;">
                         Pedir Devolución
                     </a>
+                {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -118,6 +120,13 @@
         <a href="{% url 'ver_boleta' compra.id %}" target="_blank" class="btn-descargar" style="text-decoration: none;">
                 Descargar Boleta <i class="fa-solid fa-download"></i>
                 </a>
+
+        {% if compra.datos_envio.estado == "Enviado" or compra.datos_envio.estado == "En Tránsito" %}
+            <a href="{% url 'marcar_recibido' compra.id %}" class="btn btn-success mt-3" style="width: 100%;">
+                Marcar como recibido
+            </a>
+        {% endif %}
+
 
         <a href="{% url 'crear_reclamo' compra.id %}" class="btn-reclamo">
             Agregar Reclamo <i class="fa-solid fa-circle-exclamation"></i>

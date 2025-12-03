@@ -24,15 +24,10 @@
     <title>Panel de Administración</title>
 </head>
 <body id="body-pd" style="background-color:#EEF1F4;">
-    <h1>Bienvenido al Panel de Administración de SD Games</h1>
-    <nav>
-        <a href="{% url 'admin_usuarios' %}">Usuarios</a> |
-        <a href="{% url 'admin_productos' %}">Productos</a> |
-        <a href="{% url 'admin_ventas' %}">Ventas</a> |
-        <a href="{% url 'admin_reclamos' %}">Reclamos</a> |
-        <a href="{% url 'admin_devoluciones' %}">Devoluciones</a> |
-        <a href="{% url 'productos_menu' %}">Menu SD Games</a>
-    </nav>
+    <div class="p-4 mb-4 rounded shadow-sm" style="background:#4e84a8; color:white;">
+        <h2 class="mb-0">Dashboard administrativo</h2>
+        <p class="m-0 opacity-75">Resumen general del estado de SD Games</p>
+    </div>
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
         <div><h4>{{ usuario.nombre }}</h4></div>
