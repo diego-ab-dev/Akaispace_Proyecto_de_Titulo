@@ -17,7 +17,7 @@
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
     <title>Devoluciones</title>
 </head>
-<body id="body-pd">
+<body id="body-pd" style="background-color:#EEF1F4;">
     <h1>Solicitudes de Devolución</h1>
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
@@ -63,7 +63,7 @@
     <!--Fin Navbar-->
 
     <!--tabla-->
-    <div class="height-100 bg-light p-4">
+    <div class="height-100 p-4">
         <div class="table-responsive">
             <table>
                 <thead>
@@ -91,7 +91,7 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{% url 'responder_devolucion' devolucion.id %}" class="btn btn-sm btn-primary">Responder</a>
+                            <a href="{% url 'responder_devolucion' devolucion.id %}" class="btn-responder btn btn-sm">Responder</a>
                         </td>
                     </tr>
                     {% endfor %}

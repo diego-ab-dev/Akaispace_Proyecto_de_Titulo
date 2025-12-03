@@ -18,7 +18,7 @@
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
     <title>Ventas</title>
 </head>
-<body id="body-pd">
+<body id="body-pd" style="background-color:#EEF1F4;">
     <h1>Ventas</h1>
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
@@ -64,7 +64,7 @@
 <!--fin Navbar-->
 
 
-<div class="height-100 bg-light p-4">
+<div class="height-100 p-4">
     <form method="get" class="d-flex align-items-center gap-3 mb-4">
         <input 
             type="text" 
@@ -107,7 +107,7 @@
                         {{ venta.datos_envio.estado }}
                     </td>
                     <td>
-                        <a href="{% url 'detalle_venta' venta.id %}" class="btn btn-sm btn-primary">Ver Detalles</a>
+                        <a href="{% url 'detalle_venta' venta.id %}" class="btn-responder btn">Ver Detalles</a>
                     </td>
                 </tr>
                 {% endfor %}

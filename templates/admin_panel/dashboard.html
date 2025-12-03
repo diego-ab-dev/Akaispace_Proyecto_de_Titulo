@@ -15,20 +15,22 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.1/jquery.waypoints.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Counter-Up/1.0.0/jquery.counterup.min.js"></script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
+    <!--Para Grafico-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_dashboard.css' %}">
     <!--LOGO-->
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
     <title>Panel de Administración</title>
 </head>
-<body id="body-pd">
+<body id="body-pd" style="background-color:#EEF1F4;">
     <h1>Bienvenido al Panel de Administración de SD Games</h1>
     <nav>
         <a href="{% url 'admin_usuarios' %}">Usuarios</a> |
         <a href="{% url 'admin_productos' %}">Productos</a> |
-        <a href="{% url 'admin_devoluciones' %}">Devoluciones</a> |
-        <a href="{% url 'admin_reclamos' %}">Reclamos</a> |
         <a href="{% url 'admin_ventas' %}">Ventas</a> |
+        <a href="{% url 'admin_reclamos' %}">Reclamos</a> |
+        <a href="{% url 'admin_devoluciones' %}">Devoluciones</a> |
         <a href="{% url 'productos_menu' %}">Menu SD Games</a>
     </nav>
     <header class="header" id="header">
@@ -119,87 +121,104 @@
 
 
         <!--Seccion de ultimas ventas, reclamos y bajo stock-->
-        <section id="dashboard-cards">
-            <div class="container my-4">
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="card-title mb-0">Últimas Ventas</h5>
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    {% for venta in ventas_info %}
-                                    <li class="list-group-item">
-                                        <strong>{{ venta.usuario }}</strong>: 
-                                        {{ venta.productos|join:", " }} <br>
-                                        <small class="text-muted">{{ venta.fecha|date:"d/m/Y H:i" }}</small>
-                                    </li>
-                                    {% empty %}
-                                    <p class="text-center">No hay nuevas ventas por el momento.</p>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div class="card-footer text-center">
-                                <a href="{% url 'admin_ventas' %}" class="btn btn-outline-primary btn-sm">Ver más</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-4">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-header bg-danger text-white">
-                                <h5 class="card-title mb-0">Últimos Reclamos</h5>
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    {% for reclamo in reclamos_info %}
-                                    <li class="list-group-item">
-                                        <strong>{{ reclamo.usuario }}</strong>: 
-                                        {{ reclamo.asunto }} <br>
-                                        <small class="text-muted">{{ reclamo.fecha|date:"d/m/Y H:i" }}</small>
-                                    </li>
-                                    {% empty %}
-                                    <p class="text-center">No hay reclamos por el momento.</p>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div class="card-footer text-center">
-                                <a href="{% url 'admin_reclamos' %}" class="btn btn-outline-danger btn-sm">Ver más</a>
-                            </div>
+        <section class="container-fluid">
+        
+        <div class="row mb-4">
+            
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-center mb-4">Total de Ventas por Mes</h5>
+                        <div style="position: relative; height: 400px; width: 100%;">
+                            <canvas id="graficoVentas"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6 mb-4">
+            <div class="col-lg-4">
                 <div class="card shadow-sm h-100">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="card-title mb-0">Productos con Bajo Stock</h5>
+                    <div class="card-header text-white" style="background-color: #4E84A8;">
+                        <h5 class="card-title mb-0">Últimas Ventas</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
-                            {% for producto in productos_info %}
+                            {% for venta in ventas_info %}
                             <li class="list-group-item">
-                                <strong>{{ producto.nombre }}</strong>: 
-                                {% if producto.stock == 0 %}
-                                    <span class="text-danger">Agotado</span>
-                                {% else %}
-                                    <span class="text-warning">Stock: {{ producto.stock }}</span>
-                                {% endif %}
+                                <strong>{{ venta.usuario }}</strong> - 
+                                <small>{{ venta.productos|join:", " }}</small><br>
+                                <small class="text-muted">{{ venta.fecha|date:"d/m/Y H:i" }}</small>
                             </li>
                             {% empty %}
-                            <p class="text-center">No hay productos con bajo stock por el momento.</p>
+                            <li class="list-group-item text-center">No hay nuevas ventas.</li>
                             {% endfor %}
                         </ul>
                     </div>
-                    <div class="card-footer text-center">
-                        <a href="{% url 'admin_productos' %}" class="btn btn-outline-warning btn-sm">Ver más</a>
+                    <div class="card-footer text-center bg-white">
+                        <a href="{% url 'admin_ventas' %}" class="btn btn-primary btn-sm" style="background-color: #4E84A8; border:none;">Ver Más</a>
                     </div>
                 </div>
-            </div>            
-        </section>
+            </div>
+        </div>
 
+        <div class="row mb-5">
+            
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header text-white" style="background-color: #C9AA45;">
+                        <h5 class="card-title mb-0">Bajo Stock</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            {% for producto in productos_info %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ producto.nombre }}</strong>
+                                    <br>
+                                    {% if producto.stock == 0 %}
+                                        <span class="text-danger small">Agotado</span>
+                                    {% else %}
+                                        <span class="text-warning small">Quedan: {{ producto.stock }}</span>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-center">Stock saludable.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center bg-white">
+                        <a href="{% url 'admin_productos' %}" class="btn btn-warning btn-sm text-white" style="background-color: #C9AA45; border:none;">Ver Más</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header text-white" style="background-color: #D36767;">
+                        <h5 class="card-title mb-0">Últimos Reclamos</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            {% for reclamo in reclamos_info %}
+                            <li class="list-group-item">
+                                <strong>{{ reclamo.usuario }}</strong> - {{ reclamo.asunto }}<br>
+                                <small class="text-muted">{{ reclamo.fecha|date:"d/m/Y H:i" }}</small>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-center">Sin reclamos pendientes.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="card-footer text-center bg-white">
+                        <a href="{% url 'admin_reclamos' %}" class="btn btn-danger btn-sm" style="background-color: #D36767; border:none;">Ver Más</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+{{ datos_grafico|json_script:"datos_ventas_json" }}
 <script>
     // contadores para el resumen de sd games
     async function updateCounts() {
@@ -248,6 +267,57 @@
     }
     }
     linkColor.forEach(l=> l.addEventListener('click', colorLink))
+    });
+
+    // grafico
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('graficoVentas').getContext('2d');
+        
+        const datosVentas = JSON.parse(document.getElementById('datos_ventas_json').textContent);
+
+        new Chart(ctx, {
+            type: 'bar', 
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                datasets: [{
+                    label: 'Ventas ($)',
+                    data: datosVentas, 
+                    backgroundColor: '#4E84A8', 
+                    borderRadius: 4, 
+                    barPercentage: 0.7 
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$ ' + context.raw.toLocaleString('es-CL');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            borderDash: [2, 4], 
+                            color: '#e0e0e0'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
     });
 </script>
 </body>

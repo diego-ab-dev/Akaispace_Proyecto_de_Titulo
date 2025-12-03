@@ -17,7 +17,7 @@
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
     <title>Usuarios</title>
 </head>
-<body id="body-pd">
+<body id="body-pd" style="background-color:#EEF1F4;">
     <h1>Usuarios</h1>
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
@@ -62,7 +62,7 @@
     </div>
     <!--fin navbar-->
 
-    <div class="height-100 bg-light">
+    <div class="height-100">
         <form method="get" action="{% url 'buscar_usuarios' %}">
             <input type="text" name="q" placeholder="Buscar usuarios..." />
             <select name="filtro">
@@ -77,10 +77,10 @@
             <button type="submit">Buscar</button>
         </form>
         
-        
-        <button data-url="{% url 'crear_usuario' %}" onclick="window.location.href=this.dataset.url" style="margin-bottom: 15px;">
-            Agregar nuevo usuario
-        </button>               
+        <button type="button" class="button" data-url="{% url 'crear_usuario' %}" onclick="window.location.href=this.dataset.url">
+        <span class="button__text">Agregar Usuario</span>
+        <span class="button__icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor" height="24" fill="none" class="svg"><line y2="19" y1="5" x2="12" x1="12"></line><line y2="12" y1="12" x2="19" x1="5"></line></svg></span>
+        </button>             
     
         {% if mensaje %}
             <p style="color: red; font-weight: bold;">{{ mensaje }}</p>

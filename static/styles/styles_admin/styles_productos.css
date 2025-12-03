@@ -177,9 +177,79 @@ a{text-decoration: none}
     border-radius: 5px;
 }
 
-.btn-search, .btn-add {
+
+
+.button {
+  position: relative;
+  width: 230px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border: 1px solid #34974d;
+  background-color: #3aa856;
+}
+
+.button, .button__icon, .button__text {
+  transition: all 0.3s;
+}
+
+.button .button__text {
+  transform: translateX(30px);
+  color: #fff;
+  font-weight: 600;
+}
+
+.button .button__icon {
+  position: absolute;
+  transform: translateX(185px);
+  height: 100%;
+  width: 39px;
+  background-color: #34974d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button .svg {
+  width: 30px;
+  stroke: #fff;
+}
+
+.button:hover {
+  background: #34974d;
+}
+
+.button:hover .button__text {
+  color: transparent;
+}
+
+.button:hover .button__icon {
+  width: 190px;
+  transform: translateX(0);
+}
+
+.button:active .button__icon {
+  background-color: #2e8644;
+}
+
+.button:active {
+  border: 1px solid #2e8644;
+}
+
+
+.btn-add {
     padding: 10px 15px;
-    background-color: var(--first-color);
+    background-color: #43A420;
+    color: var(--white-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-search {
+    padding: 10px 15px;
+    background-color: #1C253B;
     color: var(--white-color);
     border: none;
     border-radius: 5px;
@@ -294,6 +364,7 @@ body.modal-open {
 }
 
 
+
 .pagination-wrapper {
     margin-top: 40px;
     margin-bottom: 60px; 
@@ -310,7 +381,7 @@ body.modal-open {
     border-radius: 50% !important; 
     margin: 0 8px;
     border: 1px solid #dee2e6;
-    color: #1C253B; 
+    color: #4e84a8; 
     font-weight: bold;
     font-size: 1.1rem;
     background-color: white;
@@ -319,16 +390,15 @@ body.modal-open {
 }
 
 .custom-page-link:hover {
-    background-color: #EEF1F4;
-    color: #00D2D5;
+    background-color: #fafafa;
+    color: #1C253B;
     transform: translateY(-3px);
     box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    border-color: #00D2D5;
+    border-color: #1C253B;
 }
 
 .page-item.active .custom-page-link {
-    background-color: #1C253B;
-    border-color: #1C253B;
+    background-color: #4e84a8;
     color: #ffffff;
 }
 

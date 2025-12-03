@@ -4,7 +4,7 @@ from appPrincipal import forms
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q, Sum
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
@@ -14,13 +14,14 @@ from django.utils.crypto import get_random_string
 from django.contrib.messages import get_messages
 from .forms import UsuarioForm, ProductoForm
 from appPrincipal.decorators import admin_required
-from django.db.models import Q
 from django.utils.dateparse import parse_date
 from django.contrib import messages
 from .forms import OpinionForm
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from django.utils import timezone
+from datetime import datetime
+import calendar
 
 # Vistas para administracion
 regiones_ciudades = {
@@ -75,10 +76,27 @@ def admin_dashboard(request):
         for producto in productos_bajo_stock
     ]
 
+    anio_actual = datetime.now().year
+    datos_grafico = []
+
+    for mes in range(1, 13):
+        ultimo_dia = calendar.monthrange(anio_actual, mes)[1]
+        
+        fecha_inicio = f"{anio_actual}-{mes:02d}-01"
+        fecha_fin = f"{anio_actual}-{mes:02d}-{ultimo_dia}"
+
+        total_mes = Venta.objects.filter(
+            fecha__range=[fecha_inicio + " 00:00:00", fecha_fin + " 23:59:59"]
+        ).aggregate(Sum('total'))['total__sum'] or 0
+        
+        datos_grafico.append(total_mes)
+
+
     context = {
         "ventas_info": ventas_info,
         "reclamos_info": reclamos_info,
         "productos_info": productos_info,
+        "datos_grafico": datos_grafico,
     }
     return render(request, 'admin_panel/dashboard.html', context)
 
@@ -1261,8 +1279,6 @@ def compra_exitosa(request, usuario_id):
         'metodo_pago': metodo_pago,
         'total_cantidad': total_cantidad,
     })
-
-
 
 
 def ver_boleta(request, venta_id):

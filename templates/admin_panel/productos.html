@@ -18,7 +18,7 @@
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
     <title>Productos</title>
 </head>
-<body id="body-pd">
+<body id="body-pd" style="background-color:#EEF1F4;">
     <h1>Productos</h1>
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
@@ -64,7 +64,7 @@
     <!--fin navbar-->
 
     <!--tabla-->
-    <div class="height-100 bg-light">
+    <div class="height-100">
         <div class="product-actions">
             <form method="get" action="{% url 'buscar_productos' %}" class="search-form">
                 <input type="text" name="q" value="{{ query }}" placeholder="Buscar productos..." class="search-input" />            
@@ -78,7 +78,10 @@
         
                 <button type="submit" class="btn-search">Buscar</button>
             </form>
-            <a href="{% url 'agregar_producto' %}" class="btn-add">Agregar Producto</a>
+            <button type="button" class="button" data-url="{% url 'agregar_producto' %}" onclick="window.location.href=this.dataset.url">
+            <span class="button__text">Agregar Producto</span>
+            <span class="button__icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor" height="24" fill="none" class="svg"><line y2="19" y1="5" x2="12" x1="12"></line><line y2="12" y1="12" x2="19" x1="5"></line></svg></span>
+            </button> 
         </div>
         
         {% if mensaje %}

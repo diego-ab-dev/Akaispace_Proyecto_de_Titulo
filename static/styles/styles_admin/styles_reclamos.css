@@ -198,6 +198,18 @@ body{
         color: #346480;
     }
 
+    .btn-responder {
+        background-color: #4e84a8;
+        color: #ffffff;
+        border-radius: 20px;
+    }
+
+    .btn-responder:hover {
+        background-color: #4a6f8a;
+        color: #ffffff;
+        border-radius: 20px;
+    }
+
 .pagination-wrapper {
     margin-top: 40px;
     margin-bottom: 60px; 
@@ -214,7 +226,7 @@ body{
     border-radius: 50% !important; 
     margin: 0 8px;
     border: 1px solid #dee2e6;
-    color: #1C253B; 
+    color: #4e84a8; 
     font-weight: bold;
     font-size: 1.1rem;
     background-color: white;
@@ -223,16 +235,15 @@ body{
 }
 
 .custom-page-link:hover {
-    background-color: #EEF1F4;
-    color: #00D2D5;
+    background-color: #fafafa;
+    color: #1C253B;
     transform: translateY(-3px);
     box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    border-color: #00D2D5;
+    border-color: #1C253B;
 }
 
 .page-item.active .custom-page-link {
-    background-color: #1C253B;
-    border-color: #1C253B;
+    background-color: #4e84a8;
     color: #ffffff;
 }
 
@@ -242,4 +253,5 @@ body{
     border-color: #dee2e6;
     cursor: default;
 }
+
 
