@@ -1,6 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
 body {
     background-color: #EEF1F4; 
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: "Poppins", sans-serif;
     color: #1a202c;
     margin: 0;
     padding-bottom: 40px;

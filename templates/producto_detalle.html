@@ -120,33 +120,36 @@
           </div>
     
           <div class="d-flex login-desktop">
-            {% if usuario %}
-              <div class="menu">
-                <div class="item">
-                  <a href="/perfil" class="link">
-                    <span> Mi Perfil </span>
-                    <svg viewBox="0 0 360 360" xml:space="preserve">
-                      <g id="SVGRepo_iconCarrier">
-                        <path
-                          id="XMLID_225_"
-                          d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"
-                        ></path>
-                      </g>
-                    </svg>
-                  </a>
-                  <div class="submenu">
-                    <div class="submenu-item">
-                      <a href="/logout" class="submenu-link">Cerrar Sesión</a>
+              {% if usuario %}
+                <div class="menu d-flex align-items-center gap-2">
+                  <div class="item">
+                    <a href="#" class="link">
+                      <span> Hola, {{ usuario.nombre|default:usuario.email }} </span>
+                      <svg viewBox="0 0 360 360" xml:space="preserve">
+                        <g id="SVGRepo_iconCarrier">
+                          <path
+                            id="XMLID_225_"
+                            d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"
+                          ></path>
+                        </g>
+                      </svg>
+                    </a>
+                    <div class="submenu">
+                      <div class="submenu-item perfil-item">
+                        <a href="/perfil" class="submenu-link">Mi Perfil</a>
+                      </div>
+                      <div class="submenu-item">
+                        <a href="/logout" class="submenu-link">Cerrar Sesión</a>
+                      </div>
+                      {% if usuario.es_administrador %}
+                      <div class="submenu-item item2" style="background-color: #4e84a8;">
+                        <a href="/admin-panel" class="submenu-link">Panel de Administración</a>
+                      </div>
+                      {% endif %}
                     </div>
-                    {% if usuario.es_administrador %}
-                    <div class="submenu-item item2" style="background-color: #4e84a8;">
-                      <a href="/admin-panel" class="submenu-link">Panel de Administración</a>
-                    </div>
-                    {% endif %}
                   </div>
                 </div>
-              </div>
-            {% else %}
+              {% else %}
               <button onclick="window.location.href='/login'">
                 Iniciar Sesión
                 <div class="arrow-wrapper">

@@ -1,8 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+
 body {
   background-color: #EEF1F4;
   height: 100%;
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "Poppins", sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
 }
@@ -138,7 +140,7 @@ button:hover .arrow:before {
 }
 
 .menu .item .submenu {
-  background-color: #804040;
+  background-color: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -148,7 +150,7 @@ button:hover .arrow:before {
   left: 0;
   width: 100%;
   overflow: hidden;
-  border: 1px solid #cccccc;
+  border: 1px solid #000000;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-12px);
@@ -222,6 +224,13 @@ button:hover .arrow:before {
 .submenu .submenu-link:hover {
   color: #ffffff;
 }
+
+
+.perfil-item .submenu-link::before {
+  background-color: #4E84A8 !important;
+}
+
+
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
 *{
