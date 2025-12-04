@@ -86,7 +86,7 @@ class Producto(models.Model):
         ('ACCESORIOS', 'Accesorios'),
         ('OTRO', 'Otro'),
     ]
-    codigo_de_barra = models.CharField(max_length=20, unique=True, verbose_name="Código de Barra") 
+    codigo_de_barra = models.CharField(max_length=20, verbose_name="Código de Barra")
     nombre = models.CharField(max_length=100)
     precio = models.PositiveIntegerField(default=0)  
     stock = models.PositiveIntegerField(default=0)  

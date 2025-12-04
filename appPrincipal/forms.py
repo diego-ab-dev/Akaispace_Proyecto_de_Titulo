@@ -126,8 +126,24 @@ class ProductoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # esto es para desabilitar el codigo de barras al editar
+        # desabilita el editar el codigo de barra
         if self.instance and self.instance.pk:
             self.fields['codigo_de_barra'].disabled = True
+
+    # valida codigo de barra
+    def clean_codigo_de_barra(self):
+        codigo = self.cleaned_data.get('codigo_de_barra')
+
+        if self.instance and self.instance.pk:
+            return codigo
+        
+        productos = Producto.objects.filter(codigo_de_barra=codigo)
+
+        if productos.filter(is_deleted=False).exists():
+            raise forms.ValidationError(
+                "Ya existe un producto activo con este código de barras."
+            )
+
+        return codigo
+
 

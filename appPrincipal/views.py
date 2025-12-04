@@ -199,11 +199,11 @@ def crear_usuario(request):
             if ciudad not in ciudades_validas:
                 return JsonResponse({'success': False, 'message': 'La ciudad no es válida para la región seleccionada.'})
 
-            if Usuario.objects.filter(email=email).exists():
-                 return JsonResponse({'success': False, 'message': 'El correo electrónico ya está registrado.'})
-            
-            if Usuario.objects.filter(rut=rut).exists():
-                 return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
+            if Usuario.objects.filter(email=email, is_deleted=False).exists():
+                return JsonResponse({'success': False, 'message': 'El correo electrónico ya está registrado.'})
+
+            if Usuario.objects.filter(rut=rut, is_deleted=False).exists():
+                return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
 
             Usuario.objects.create(
                 nombre=nombre,
@@ -491,17 +491,14 @@ def modificar_venta(request, venta_id):
 
         estados_con_tracking = ["Enviado", "En Tránsito", "En Reparto"]
 
-        # Validación 1: si requiere tracking y no se ingresó
         if estado_post in estados_con_tracking and not tracking_post:
             error = "Debe ingresar un número de seguimiento para este estado."
 
-        # Validación 2: formato del tracking
         import re
         if not error and tracking_post:
             if not re.match(r'^[A-Za-z0-9]{5,20}$', tracking_post):
                 error = "Número de seguimiento inválido. Solo letras y números (5–20 caracteres)."
 
-        # SI HAY ERROR → NO GUARDAR
         if error:
             return render(request, 'admin_panel/modificar_venta.html', {
                 'venta': venta,
@@ -511,7 +508,6 @@ def modificar_venta(request, venta_id):
                 'tracking_post': tracking_post,
             })
 
-        # GUARDAR
         if envio:
             envio.numero_seguimiento = tracking_post
             envio.guardar_estado(estado_post)
@@ -682,12 +678,38 @@ def register(request):
         form.fields['ciudad'].choices = [(ciudad, ciudad) for ciudad in ciudades]
 
         if form.is_valid():
+            email = form.cleaned_data['email'].strip().lower()
+            rut = form.cleaned_data['rut']
+
+            usuario_email = Usuario.objects.filter(email=email).first()
+            if usuario_email:
+                if usuario_email.is_deleted:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Este correo ya fue utilizado previamente (usuario eliminado). No puede volver a registrarse con el mismo correo.'
+                    })
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El correo ya está registrado.'
+                })
+
+            usuario_rut = Usuario.objects.filter(rut=rut).first()
+            if usuario_rut:
+                if usuario_rut.is_deleted:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Este RUT pertenece a un usuario eliminado. No puede volver a usarse.'
+                    })
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El RUT ya está registrado.'
+                })
             try:
                 registro = Usuario(
-                    rut=form.cleaned_data['rut'],
+                    rut=rut,
                     nombre=form.cleaned_data['nombre'],
                     telefono=form.cleaned_data['telefono'],
-                    email=form.cleaned_data['email'],
+                    email=email,
                     contraseña=make_password(form.cleaned_data['contraseña']),
                     direccion=form.cleaned_data['direccion'],
                     ciudad=form.cleaned_data['ciudad'],
@@ -695,6 +717,10 @@ def register(request):
                 )
                 registro.save()
                 return JsonResponse({'success': True, 'message': 'Usuario registrado exitosamente.'})
+
+            except IntegrityError as e:
+                return JsonResponse({'success': False, 'message': 'Error inesperado.'})
+
             except IntegrityError as e:
                 if 'email' in str(e):
                     return JsonResponse({'success': False, 'message': 'El correo ya está registrado.'})
