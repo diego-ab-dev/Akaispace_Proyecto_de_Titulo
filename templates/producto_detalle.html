@@ -198,10 +198,16 @@
                         <h2 class="fw-bold mb-1">{{ producto.nombre }}</h2>
                         <p class="text-muted mb-2">{{ producto.categoria }}</p>
                     </div>
+                    
                     <form method="POST" action="{% url 'agregar_favorito' producto.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger rounded-circle p-2">
-                            <i class="far fa-heart"></i>
+                        
+                        <button type="submit" style="border: none; background: transparent; padding: 0;">
+                            {% if es_favorito %}
+                                <i class="fas fa-heart text-danger fs-2"></i>
+                            {% else %}
+                                <i class="far fa-heart text-danger fs-2"></i>
+                            {% endif %}
                         </button>
                     </form>
                 </div>

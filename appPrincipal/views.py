@@ -543,9 +543,14 @@ def productos_menu(request):
     
     if query:
         productos = Producto.objects.filter(nombre__icontains=query, stock__gt=0)
+        favoritos_ids = []
+        usuario_id = request.session.get('usuario_id')
+        if usuario_id:
+            favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
         return render(request, 'resultado_busqueda.html', {
             'productos': productos,
-            'query': query
+            'query': query,
+            'favoritos_ids': favoritos_ids,
         })
 
     productos = Producto.objects.filter(stock__gt=0).order_by('-id')
@@ -553,6 +558,11 @@ def productos_menu(request):
     paginator = Paginator(productos, 16) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    favoritos_ids = []
+    usuario_id = request.session.get('usuario_id')
+    if usuario_id:
+        favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
 
     cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
     fc25 = Producto.objects.filter(nombre="Fc 25").first()
@@ -564,6 +574,7 @@ def productos_menu(request):
         'cod6': cod6,
         'fc25': fc25,
         'silent': silent,
+        'favoritos_ids': favoritos_ids,
     })
 
 def producto_detalle(request, producto_id):
@@ -592,6 +603,12 @@ def producto_detalle(request, producto_id):
             "percent": round(percent, 1)
         })
 
+    es_favorito = False
+    usuario_id = request.session.get('usuario_id')
+    if usuario_id:
+        usuario = get_object_or_404(Usuario, id=usuario_id)
+        es_favorito = Favorito.objects.filter(usuario=usuario, producto=producto).exists()
+
     return render(request, "producto_detalle.html", {
         "producto": producto,
         "rango_cantidad": rango_cantidad,
@@ -602,6 +619,7 @@ def producto_detalle(request, producto_id):
         "empty_stars_range": empty_stars_range,
         "ratings": ratings_data, 
         "total_opiniones": total_opiniones,
+        "es_favorito": es_favorito,
     })
 
     
@@ -629,11 +647,17 @@ def productos_por_categoria(request, categoria):
         productos = productos.order_by('precio')
     elif orden_precio == 'desc':
         productos = productos.order_by('-precio')
+
+    favoritos_ids = []
+    usuario_id = request.session.get('usuario_id')
+    if usuario_id:
+        favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)    
     
     context = {
         'categoria': dict(Producto.CATEGORIAS).get(categoria, categoria),
         'productos': productos,
         'generos': Producto.GENEROS,
+        'favoritos_ids': favoritos_ids,
     }
     return render(request, 'productos_por_categoria.html', context)
 # fin de vistas relacionadas a home y menu
@@ -1228,15 +1252,23 @@ def lista_favoritos(request):
 
 def agregar_favorito(request, producto_id):
     usuario_id = request.session.get('usuario_id')
-
     if not usuario_id:
         return redirect('login') 
 
     usuario = get_object_or_404(Usuario, id=usuario_id)
     producto = get_object_or_404(Producto, id=producto_id)
-    favorito, created = Favorito.objects.get_or_create(usuario=usuario, producto=producto)
+    
+    favorito = Favorito.objects.filter(usuario=usuario, producto=producto).first()
 
-    return redirect('lista_favorito')
+    if favorito:
+        favorito.delete()
+    else:
+        Favorito.objects.create(usuario=usuario, producto=producto)
+    next_url = request.META.get('HTTP_REFERER')
+    if next_url:
+        return redirect(next_url)
+        
+    return redirect('producto_detalle', producto_id=producto_id)
 
 @require_http_methods(["DELETE"])
 def eliminar_favorito(request, item_id):
