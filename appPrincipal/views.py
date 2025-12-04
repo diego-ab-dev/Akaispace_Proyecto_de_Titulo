@@ -920,7 +920,11 @@ def lista_opiniones(request):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     opiniones = Opinion.objects.filter(usuario=usuario).order_by('-fecha_creacion')
 
-    return render(request, 'lista_opiniones.html', {'opiniones': opiniones})
+    paginator = Paginator(opiniones, 5) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'lista_opiniones.html', {'opiniones': opiniones, 'page_obj': page_obj})
 
 
 
@@ -953,8 +957,13 @@ def lista_reclamos(request):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     todos_reclamos = Reclamo.objects.filter(usuario=usuario).order_by('-id')
 
+    paginator = Paginator(todos_reclamos, 5) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'lista_reclamos.html', {
         'todos_reclamos': todos_reclamos,
+        'page_obj': page_obj,
     })
 
 def ver_detalle_reclamo(request, reclamo_id):
@@ -1008,8 +1017,14 @@ def listar_devoluciones(request):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     todos_devoluciones = Devolucion.objects.filter(usuario=usuario).order_by('-id')
 
+    paginator = Paginator(todos_devoluciones, 5) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+
     return render(request, 'lista_devoluciones.html', {
         'todos_devoluciones': todos_devoluciones,
+        'page_obj': page_obj,
     })
 
 def ver_detalle_devolucion(request, devolucion_id):

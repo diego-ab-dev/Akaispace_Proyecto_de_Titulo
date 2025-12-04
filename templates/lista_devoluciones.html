@@ -24,7 +24,7 @@
         </div>
 
         <div class="devoluciones-list">
-            {% for devolucion in todos_devoluciones %}
+            {% for devolucion in page_obj %}
             <div class="devolucion-card">
                 <div class="row align-items-center">
                     
@@ -73,14 +73,41 @@
 
         </div>
 
-        <!--Paginacion-->
-        <div class="pagination-container">
-            <a href="#" class="arrow-nav"><i class="fa-solid fa-chevron-left"></i></a>
-            <span class="page-number active">1</span>
-            <a href="#" class="page-number">2</a>
-            <a href="#" class="page-number">3</a>
-            <span class="fw-bold">...</span>
-            <a href="#" class="arrow-nav"><i class="fa-solid fa-chevron-right"></i></a>
+        <!-- Paginacion -->
+        <div class="pagination-wrapper">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-nav">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            {% else %}
+                <span class="page-nav disabled-nav">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                
+                {% if num == page_obj.number %}
+                    <span class="page-item active">{{ num }}</span>
+
+                {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                    <a href="?page={{ num }}" class="page-item">{{ num }}</a>
+
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <span class="page-dots">...</span>
+                {% endif %}
+
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-nav">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            {% else %}
+                <span class="page-nav disabled-nav">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </span>
+            {% endif %}
         </div>
 
     </div>
