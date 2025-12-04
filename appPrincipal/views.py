@@ -522,6 +522,23 @@ def modificar_venta(request, venta_id):
         'envio': envio,
         'error': error,
     })
+
+
+@admin_required
+def anular_venta(request, venta_id):
+    venta = get_object_or_404(Venta, id=venta_id)
+    envio = venta.datos_envio
+
+    envio.estado = "Anulada"
+    envio.save()
+
+    for item in venta.producto_venta.all():
+        producto = item.producto
+        producto.stock += item.cantidad
+        producto.save()
+
+    messages.success(request, "La venta fue anulada exitosamente.")
+    return redirect('detalle_venta', venta_id=venta_id)
 #fin
 
 

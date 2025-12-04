@@ -285,6 +285,7 @@ class Envio(models.Model):
         ('En Tránsito', 'En Tránsito'),
         ("En Reparto", "En Reparto"),
         ('Entregado', 'Entregado'),
+        ("Anulada", "Anulada"),
     ]
     
     venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='datos_envio')

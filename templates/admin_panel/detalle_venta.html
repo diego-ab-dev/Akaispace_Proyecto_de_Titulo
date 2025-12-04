@@ -108,7 +108,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
-                    <a href="#" class="btn-modal-confirm">Sí, Anular Venta</a>
+                    <a href="{% url 'anular_venta' venta.id %}" class="btn-modal-confirm">
+                        Sí, Anular Venta
+                    </a>
                 </div>
             </div>
         </div>

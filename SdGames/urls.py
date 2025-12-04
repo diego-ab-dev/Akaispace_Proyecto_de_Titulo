@@ -18,7 +18,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
-from appPrincipal.views import home,ver_boleta,ver_detalle_compra, ver_detalle_reclamo, login, register, productos_menu, producto_detalle, carrito, logout, productos_por_categoria, perfil, editar_perfil, obtener_ciudades, cambiar_contraseña,  agregar_al_carrito, eliminar_del_carrito, actualizar_cantidad_carrito, ver_carrito, lista_favoritos, agregar_favorito, eliminar_favorito, password_reset_request, ver_compras, lista_opiniones, crear_reclamo, lista_reclamos, seleccionar_pago, compra_exitosa, admin_dashboard, admin_productos, admin_usuarios, editar_producto, agregar_producto, buscar_productos, buscar_usuarios, eliminar_producto, eliminar_usuario, admin_devoluciones, admin_reclamos, responder_reclamo, admin_ventas, crear_usuario, get_dashboard_counts, admin_cambiar_estado_venta, enviar_opinion, guardar_datos_envio, eliminar_favoritos_seleccionados, responder_devolucion, crear_devolucion, listar_devoluciones, ver_detalle_devolucion, detalle_producto, detalle_usuario, detalle_venta, modificar_venta, marcar_recibido
+from appPrincipal.views import home,ver_boleta,ver_detalle_compra, ver_detalle_reclamo, login, register, productos_menu, producto_detalle, carrito, logout, productos_por_categoria, perfil, editar_perfil, obtener_ciudades, cambiar_contraseña,  agregar_al_carrito, eliminar_del_carrito, actualizar_cantidad_carrito, ver_carrito, lista_favoritos, agregar_favorito, eliminar_favorito, password_reset_request, ver_compras, lista_opiniones, crear_reclamo, lista_reclamos, seleccionar_pago, compra_exitosa, admin_dashboard, admin_productos, admin_usuarios, editar_producto, agregar_producto, buscar_productos, buscar_usuarios, eliminar_producto, eliminar_usuario, admin_devoluciones, admin_reclamos, responder_reclamo, admin_ventas, crear_usuario, get_dashboard_counts, admin_cambiar_estado_venta, enviar_opinion, guardar_datos_envio, eliminar_favoritos_seleccionados, responder_devolucion, crear_devolucion, listar_devoluciones, ver_detalle_devolucion, detalle_producto, detalle_usuario, detalle_venta, modificar_venta, marcar_recibido, anular_venta
 
 urlpatterns = [
     # URLS CLIENTE
@@ -98,6 +98,8 @@ urlpatterns = [
     path('ventas/cambiar-estado/<int:venta_id>/', admin_cambiar_estado_venta, name='admin_cambiar_estado_venta'),
     path('admin-panel/ventas/detalle/<int:venta_id>/', detalle_venta, name='detalle_venta'),
     path('admin-panel/ventas/modificar/<int:venta_id>/', modificar_venta, name='modificar_venta'),
+    path('ventas/anular/<int:venta_id>/', anular_venta, name='anular_venta'),
+
     # reclamo
     path('admin-panel/reclamos/', admin_reclamos, name='admin_reclamos'),
     path('admin-panel/reclamos/responder/<int:reclamo_id>/', responder_reclamo, name='responder_reclamo'),
