@@ -123,3 +123,11 @@ class ProductoForm(forms.ModelForm):
             'imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4', 'imagen_5', 'imagen_6',
             'categoria', 'genero'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # esto es para desabilitar el codigo de barras al editar
+        if self.instance and self.instance.pk:
+            self.fields['codigo_de_barra'].disabled = True
+
