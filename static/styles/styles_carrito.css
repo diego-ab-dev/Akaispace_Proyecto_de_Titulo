@@ -457,10 +457,36 @@ nav .navbar .links {
 
 #carrito-container {
   display: flex;
-  justify-content: center; 
-  align-items: center;     
-  height: 100vh;           
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; 
+  height: auto;      
+  padding-top: 100px; 
+  padding-bottom: 50px; 
   background-attachment: fixed;
+}
+
+.products-scroll-container {
+    max-height: 450px;
+    overflow-y: auto;  
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #4E84A8 #f1f1f1;
+}
+
+.products-scroll-container::-webkit-scrollbar {
+    width: 8px;
+}
+.products-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.products-scroll-container::-webkit-scrollbar-thumb {
+    background: #4E84A8;
+    border-radius: 4px;
+}
+.products-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #2c6ea8;
 }
 
 .title {
@@ -555,6 +581,7 @@ input:focus::-webkit-input-placeholder { color: transparent; }
   line-height: 24px;
   border-radius: 50%;
   transition: 0.2s;
+  margin-right: 20px; 
 }
 
 .btn-eliminar-item:hover {
