@@ -818,16 +818,31 @@ def ver_compras(request):
         return redirect('login')
     
     usuario = get_object_or_404(Usuario, id=usuario_id)
-    compras = Venta.objects.filter(usuario=usuario).prefetch_related(
-        'producto_venta__producto'
-    ).order_by('-fecha')
+    orden = request.GET.get('orden', 'reciente')
 
-    for compra in compras:
+    if orden == 'antiguo':
+        orden_query = 'fecha'
+    else:
+        orden_query = '-fecha'
+
+    compras_list = Venta.objects.filter(usuario=usuario).prefetch_related(
+        'producto_venta__producto'
+    ).order_by(orden_query)
+
+    paginator = Paginator(compras_list, 10) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    for compra in page_obj:
         for producto_venta in compra.producto_venta.all():
             producto = producto_venta.producto
             producto_venta.opinion_enviada = producto.opiniones.filter(usuario=usuario).exists()
 
-    return render(request, 'ver_compras.html', {'usuario': usuario, 'compras': compras})
+    return render(request, 'ver_compras.html', {
+        'usuario': usuario,
+        'page_obj': page_obj,
+        'orden': orden, 
+    })
 
 def ver_detalle_compra(request, compra_id):
     compra = get_object_or_404(Venta, id=compra_id)
