@@ -481,22 +481,42 @@ def modificar_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
     envio = getattr(venta, 'datos_envio', None)
 
+    error = None
+    estado_post = None
+    tracking_post = None
+
     if request.method == 'POST':
-        nuevo_estado = request.POST.get('estado')
-        numero_seguimiento = request.POST.get('numero_seguimiento')
+        estado_post = request.POST.get('estado')
+        tracking_post = request.POST.get('numero_seguimiento', '').strip()
 
+        estados_con_tracking = ["Enviado", "En Tránsito", "En Reparto"]
+
+        # Validación 1: si requiere tracking y no se ingresó
+        if estado_post in estados_con_tracking and not tracking_post:
+            error = "Debe ingresar un número de seguimiento para este estado."
+
+        # Validación 2: formato del tracking
+        import re
+        if not error and tracking_post:
+            if not re.match(r'^[A-Za-z0-9]{5,20}$', tracking_post):
+                error = "Número de seguimiento inválido. Solo letras y números (5–20 caracteres)."
+
+        # SI HAY ERROR → NO GUARDAR
+        if error:
+            return render(request, 'admin_panel/modificar_venta.html', {
+                'venta': venta,
+                'envio': envio,
+                'error': error,
+                'estado_post': estado_post,
+                'tracking_post': tracking_post,
+            })
+
+        # GUARDAR
         if envio:
-            envio.numero_seguimiento = numero_seguimiento
-            envio.guardar_estado(nuevo_estado)  
+            envio.numero_seguimiento = tracking_post
+            envio.guardar_estado(estado_post)
         else:
-            venta.estado = nuevo_estado
-
-        usuario = venta.usuario
-        usuario.telefono = request.POST.get('telefono')
-        usuario.direccion = request.POST.get('direccion')
-        usuario.region = request.POST.get('region')
-        usuario.ciudad = request.POST.get('ciudad')
-        usuario.save()
+            venta.estado = estado_post
 
         venta.save()
         return redirect('detalle_venta', venta_id=venta.id)
@@ -504,10 +524,8 @@ def modificar_venta(request, venta_id):
     return render(request, 'admin_panel/modificar_venta.html', {
         'venta': venta,
         'envio': envio,
-        'regiones_ciudades_json': json.dumps(regiones_ciudades),
-        'regiones': regiones_ciudades.keys(),
+        'error': error,
     })
-
 #fin
 
 

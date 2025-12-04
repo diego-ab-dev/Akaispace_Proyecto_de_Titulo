@@ -21,50 +21,32 @@
     </div>
 
     <div class="edit-card" style="margin-top: 60px;">
+        {% if error %}
+        <div class="alert alert-danger" style="font-weight:600; font-size:0.95rem;">
+            {{ error }}
+        </div>
+        {% endif %}
         <form method="POST">
             {% csrf_token %}
 
             <div class="form-group">
                 <label class="form-label">Estado</label>
                 <select name="estado" class="form-select">
-                    <option value="En Preparación" {% if envio.estado == 'En Preparación' %}selected{% endif %}>En Preparación</option>
-                    <option value="Enviado" {% if envio.estado == 'Enviado' %}selected{% endif %}>Enviado</option>
-                    <option value="En Tránsito" {% if envio.estado == 'En Tránsito' %}selected{% endif %}>En Tránsito</option>
-                    <option value="En Reparto" {% if envio.estado == 'En Reparto' %}selected{% endif %}>En Reparto</option>
-                    <option value="Entregado" {% if envio.estado == 'Entregado' %}selected{% endif %}>Entregado</option>
+                    {% with actual=estado_post|default:envio.estado %}
+                        <option value="En Preparación" {% if actual == 'En Preparación' %}selected{% endif %}>En Preparación</option>
+                        <option value="Enviado" {% if actual == 'Enviado' %}selected{% endif %}>Enviado</option>
+                        <option value="En Tránsito" {% if actual == 'En Tránsito' %}selected{% endif %}>En Tránsito</option>
+                        <option value="En Reparto" {% if actual == 'En Reparto' %}selected{% endif %}>En Reparto</option>
+                        <option value="Entregado" {% if actual == 'Entregado' %}selected{% endif %}>Entregado</option>
+                    {% endwith %}
                 </select>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Número de Seguimiento</label>
-                <input type="text" name="numero_seguimiento" class="form-control" 
-                       value="{{ envio.numero_seguimiento|default:'' }}" placeholder="Ej: 001200442">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Teléfono</label>
-                <input type="text" name="telefono" class="form-control" value="{{ venta.usuario.telefono }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Dirección</label>
-                <input type="text" name="direccion" class="form-control" value="{{ venta.usuario.direccion }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Región</label>
-                <select name="region" id="region" class="form-select">
-                    {% for region in regiones %}
-                        <option value="{{ region }}" {% if venta.usuario.region == region %}selected{% endif %}>{{ region }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Ciudad</label>
-                <select name="ciudad" id="ciudad" class="form-select">
-                    <option value="{{ venta.usuario.ciudad }}">{{ venta.usuario.ciudad }}</option>
-                    </select>
+                <input type="text" name="numero_seguimiento" class="form-control"
+                    value="{{ tracking_post|default:envio.numero_seguimiento|default_if_none:'' }}"
+                    placeholder="Ej: 001200442">
             </div>
 
             <div class="btn-row">
@@ -74,25 +56,5 @@
         </form>
     </div>
 </div>
-
-<script>
-    // cargar regiones y ciudad
-    const regionesCiudades = JSON.parse('{{ regiones_ciudades_json|escapejs }}');
-    const regionSelect = document.getElementById('region');
-    const ciudadSelect = document.getElementById('ciudad');
-
-    regionSelect.addEventListener('change', function() {
-        const region = this.value;
-        const ciudades = regionesCiudades[region] || [];
-        
-        ciudadSelect.innerHTML = '';
-        ciudades.forEach(ciudad => {
-            const option = document.createElement('option');
-            option.value = ciudad;
-            option.textContent = ciudad;
-            ciudadSelect.appendChild(option);
-        });
-    });
-</script>
 </body>
 </html>
