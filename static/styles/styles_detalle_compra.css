@@ -101,38 +101,57 @@ body {
 .btn-devolucion:hover { background-color: #000; color: white; }
 
 .shipping-timeline {
-    display: flex;
-    justify-content: space-between;
     position: relative;
     margin: 40px 0;
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+}
+
+.shipping-timeline .progress-line,
+.shipping-timeline::before {
+    left: 60px;       
+    right: 60px;      
+}
+
+.shipping-timeline .progress-line {
+    position: absolute;
+    top: 45px;
+    left: 60px;
+    right: 60px;
+    height: 3px;
+    background-color: #D4AF37;
+    transform-origin: left center;   
+    transform: scaleX(0);            
+    z-index: 1;
+    transition: transform 0.4s ease-in-out;
 }
 
 .shipping-timeline::before {
     content: '';
     position: absolute;
-    top: 30px; 
-    left: 50px;
-    right: 50px;
-    height: 2px;
-    background-color: #333;
+    top: 45px;
+    left: 60px;           
+    right: 60px;          
+    height: 3px;
+    background-color: #d0d0d0;
     z-index: 0;
 }
 
+
 .step-item {
     position: relative;
-    z-index: 1;
-    background-color: white; 
-    padding: 0 10px;
+    z-index: 2;
+    width: 120px; 
+    background: transparent; 
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-
 .step-icon {
     width: 60px;
     height: 60px;
-    border: 2px solid #333;
+    border: 3px solid #d0d0d0;
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -140,7 +159,32 @@ body {
     font-size: 1.5rem;
     background-color: white;
     margin-bottom: 10px;
+    z-index: 3;
 }
+
+
+.step-item.active .step-icon {
+    background-color: #D4AF37;
+    border-color: #D4AF37;
+    color: white;
+}
+
+.step-item.active .step-label {
+    color: #D4AF37;
+}
+
+
+.step-item.completed .step-icon {
+    background-color: #E5C97A; 
+    border-color: #E5C97A;
+    color: white;
+}
+
+.step-item.completed .step-label {
+    color: #E5C97A;
+}
+
+
 
 .step-label {
     font-weight: 800;
@@ -250,3 +294,4 @@ body {
     .btn-regresar { position: relative; margin-bottom: 10px;}
     .page-header { flex-direction: column; align-items: flex-start; }
 }
+

@@ -479,17 +479,15 @@ def detalle_venta(request, venta_id):
 @admin_required
 def modificar_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
-    
-    envio = getattr(venta, 'datos_envio', None) 
+    envio = getattr(venta, 'datos_envio', None)
 
     if request.method == 'POST':
         nuevo_estado = request.POST.get('estado')
         numero_seguimiento = request.POST.get('numero_seguimiento')
-        
+
         if envio:
-            envio.estado = nuevo_estado
             envio.numero_seguimiento = numero_seguimiento
-            envio.save()
+            envio.guardar_estado(nuevo_estado)  
         else:
             venta.estado = nuevo_estado
 
@@ -499,7 +497,7 @@ def modificar_venta(request, venta_id):
         usuario.region = request.POST.get('region')
         usuario.ciudad = request.POST.get('ciudad')
         usuario.save()
-        
+
         venta.save()
         return redirect('detalle_venta', venta_id=venta.id)
 
@@ -509,6 +507,7 @@ def modificar_venta(request, venta_id):
         'regiones_ciudades_json': json.dumps(regiones_ciudades),
         'regiones': regiones_ciudades.keys(),
     })
+
 #fin
 
 
@@ -784,7 +783,7 @@ def marcar_recibido(request, compra_id):
 
     envio = compra.datos_envio
 
-    if envio.estado != "Enviado" and envio.estado != "En Tránsito":
+    if envio.estado not in ["Enviado", "En Tránsito", "En Reparto"]:
         messages.error(request, "Aún no puedes marcar como recibido.")
         return redirect('ver_detalle', compra_id=compra_id)
 

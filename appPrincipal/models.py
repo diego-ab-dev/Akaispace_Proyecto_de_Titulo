@@ -283,18 +283,40 @@ class Envio(models.Model):
         ('En Preparación', 'En Preparación'),
         ('Enviado', 'Enviado'),
         ('En Tránsito', 'En Tránsito'),
+        ("En Reparto", "En Reparto"),
         ('Entregado', 'Entregado'),
     ]
     
     venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='datos_envio')
     numero_seguimiento = models.CharField(max_length=50, blank=True, null=True)
+    fecha_preparacion = models.DateTimeField(null=True, blank=True)
     fecha_envio = models.DateTimeField(null=True, blank=True)
+    fecha_transito = models.DateTimeField(null=True, blank=True)
+    fecha_reparto = models.DateTimeField(null=True, blank=True)
     fecha_entrega = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='En Preparación')
     transportista = models.CharField(max_length=50, default='Starken')
 
     def __str__(self):
         return f"Envío #{self.id} para Venta {self.venta.id}"
+    
+    def guardar_estado(self, nuevo_estado):
+        from django.utils.timezone import now
+        
+        self.estado = nuevo_estado
+        
+        if nuevo_estado == "En Preparación":
+            self.fecha_preparacion = now()
+        elif nuevo_estado == "Enviado":
+            self.fecha_envio = now()
+        elif nuevo_estado == "En Tránsito":
+            self.fecha_transito = now()
+        elif nuevo_estado == "En Reparto":
+            self.fecha_reparto = now()
+        elif nuevo_estado == "Entregado":
+            self.fecha_entrega = now()
+
+        self.save()
 
     def registrar_envio(self, tracking):
         self.numero_seguimiento = tracking
