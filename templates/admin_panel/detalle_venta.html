@@ -81,12 +81,19 @@
                 
                 <div class="productos-list">
                     {% for item in venta.producto_venta.all %}
-                    <div class="mb-2 border-bottom pb-2">
-                        <span class="producto-item">{{ item.producto.nombre }}</span>
-                        <span class="producto-cantidad">Cantidad: {{ item.cantidad }}</span>
+                    <div class="producto-linea mb-2 border-bottom pb-2">
+
+                        <img src="{{ item.producto.imagen_principal.url }}" class="producto-miniatura" alt="Imagen producto">
+
+                        <div class="producto-info">
+                            <span class="producto-item">{{ item.producto.nombre }}</span>
+                            <span class="producto-cantidad">Cantidad: {{ item.cantidad }}</span>
+                        </div>
+
                     </div>
                     {% endfor %}
                 </div>
+
 
                 <div class="data-row mt-4">
                     <span class="data-label">Estado:</span> 
