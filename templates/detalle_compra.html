@@ -16,6 +16,11 @@
 </head>
 <body>
 
+<div id="notif-box" class="notif {{ request.GET.type }}">
+    <span id="notif-msg">{{ request.GET.notif }}</span>
+</div>
+
+
 <div class="main-container">
     <div class="left-column">
         <div class="page-header">
@@ -186,6 +191,19 @@ document.addEventListener("DOMContentLoaded", function () {
             step.classList.add("completed");
         }
     });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const notif = "{{ request.GET.notif|default:'' }}";
+
+    if (notif.trim() !== "") {
+        const box = document.getElementById("notif-box");
+        box.classList.add("show");
+
+        setTimeout(() => {
+            box.classList.remove("show");
+        }, 3500);
+    }
 });
 
 </script>

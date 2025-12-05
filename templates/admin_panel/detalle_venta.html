@@ -16,6 +16,14 @@
 </head>
 <body>
 
+    {% if request.GET.msg == "anulada" %}
+    <div id="toast" class="custom-toast success">La venta fue anulada exitosamente.</div>
+    {% endif %}
+
+    {% if request.GET.msg == "estado_invalido" %}
+    <div id="toast" class="custom-toast error">Estado de venta inválido.</div>
+    {% endif %}
+
     <div class="page-container">
         
         <a href="{% url 'admin_ventas' %}" class="btn-back">
@@ -116,5 +124,11 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+setTimeout(() => {
+    const toast = document.getElementById('toast');
+    if (toast) toast.remove();
+}, 4000);
+</script>
 </body>
 </html>

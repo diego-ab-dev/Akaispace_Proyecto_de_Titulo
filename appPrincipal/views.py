@@ -22,6 +22,8 @@ from django.utils.timezone import now
 from django.utils import timezone
 from datetime import datetime, date
 import calendar
+from django.urls import reverse
+from urllib.parse import urlencode
 
 # Vistas para administracion
 regiones_ciudades = {
@@ -560,8 +562,8 @@ def admin_cambiar_estado_venta(request, venta_id):
             venta.estado = nuevo_estado
             venta.save()
         else:
-            messages.error(request, "Estado no válido.")
-    return redirect('admin_ventas')
+            return redirect(f"{reverse('admin_ventas')}?msg=estado_invalido")
+
 
 @admin_required
 def detalle_venta(request, venta_id):
@@ -629,8 +631,7 @@ def anular_venta(request, venta_id):
         producto.stock += item.cantidad
         producto.save()
 
-    messages.success(request, "La venta fue anulada exitosamente.")
-    return redirect('detalle_venta', venta_id=venta_id)
+    return redirect(f"{reverse('detalle_venta', args=[venta_id])}?msg=anulada")
 #fin
 
 
@@ -974,17 +975,18 @@ def marcar_recibido(request, compra_id):
         return redirect('perfil')
 
     envio = compra.datos_envio
+    base_url = reverse('ver_detalle', kwargs={'compra_id': compra_id})
 
     if envio.estado not in ["Enviado", "En Tránsito", "En Reparto"]:
-        messages.error(request, "Aún no puedes marcar como recibido.")
-        return redirect('ver_detalle', compra_id=compra_id)
+        qs = urlencode({'notif': "Aún no puedes marcar como recibido.", 'type': 'error'})
+        return redirect(f"{base_url}?{qs}")
 
     envio.estado = "Entregado"
     envio.fecha_entrega = now()
     envio.save()
 
-    messages.success(request, "Pedido marcado como recibido.")
-    return redirect('ver_detalle', compra_id=compra_id)
+    qs = urlencode({'notif': "Pedido marcado como recibido.", 'type': 'success'})
+    return redirect(f"{base_url}?{qs}")
 
 
 
@@ -1157,35 +1159,28 @@ def cambiar_contraseña(request):
         confirmar_contraseña = request.POST.get('confirmar_contraseña')
         usuario_id = request.session.get('usuario_id')
 
-        if usuario_id:
-            try:
-                usuario = Usuario.objects.get(id=usuario_id)
-                
-                if not check_password(contraseña_actual, usuario.contraseña):
-                    messages.error(request, "La contraseña actual no es correcta.")
-                
-                elif nueva_contraseña != confirmar_contraseña:
-                    messages.error(request, "Las contraseñas nuevas no coinciden. Inténtelo nuevamente.")
-                
-                else:
-                    usuario.contraseña = make_password(nueva_contraseña)
-                    usuario.save()
-                    messages.success(request, "Contraseña actualizada correctamente.")
-                    return redirect('perfil')
-            
-            except Usuario.DoesNotExist:
-                messages.error(request, "Usuario no encontrado. Inténtelo más tarde.")
-        else:
-            messages.error(request, "Debes iniciar sesión para cambiar tu contraseña.")
+        if not usuario_id:
+            return redirect("/cambiar/?notif=Debes iniciar sesión para cambiar tu contraseña.&type=error")
 
-    storage = get_messages(request)
-    mensajes_para_js = [{'tipo': message.tags, 'texto': message.message} for message in storage]
+        try:
+            usuario = Usuario.objects.get(id=usuario_id)
 
-    contexto = {
-        'mensajes_json': json.dumps(mensajes_para_js),
-    }
+            if not check_password(contraseña_actual, usuario.contraseña):
+                return redirect("/cambiar/?notif=La contraseña actual no es correcta.&type=error")
 
-    return render(request, 'cambiar_contrausu.html', contexto)
+            if nueva_contraseña != confirmar_contraseña:
+                return redirect("/cambiar/?notif=Las contraseñas nuevas no coinciden.&type=error")
+
+            usuario.contraseña = make_password(nueva_contraseña)
+            usuario.save()
+
+            return redirect("/perfil/?notif=Contraseña actualizada correctamente.&type=success")
+
+        except Usuario.DoesNotExist:
+            return redirect("/cambiar/?notif=Usuario no encontrado.&type=error")
+
+    return render(request, 'cambiar_contrausu.html')
+
 
 @csrf_exempt
 def editar_perfil(request):

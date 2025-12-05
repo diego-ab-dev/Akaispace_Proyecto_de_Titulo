@@ -104,3 +104,35 @@ body {
     margin-bottom: 20px;
     font-size: 0.9rem;
 }
+
+#notif-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: white;
+    display: none;
+    opacity: 0;
+    z-index: 9999;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    transform: translateY(-15px);
+    transition: all .35s ease;
+}
+
+#notif-box.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Tipos */
+#notif-box.success {
+    background: #28a745;
+}
+
+#notif-box.error {
+    background: #dc3545;
+}
