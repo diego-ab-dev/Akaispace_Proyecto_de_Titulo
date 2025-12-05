@@ -64,6 +64,50 @@
 
     <!--tabla-->
     <div class="height-100 p-4">
+       <form method="GET" class="row g-3 mb-4">
+
+        <!-- Buscador -->
+        <div class="col-md-4">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por cliente, producto o ID"
+                value="{{ request.GET.q }}">
+        </div>
+
+        <!-- Estado -->
+        <div class="col-md-3">
+            <select name="estado" class="form-select">
+                <option value="">Estado (Todos)</option>
+                <option value="Pendiente" {% if request.GET.estado == "Pendiente" %}selected{% endif %}>Pendiente</option>
+                <option value="Aprobada" {% if request.GET.estado == "Aprobada" %}selected{% endif %}>Aprobada</option>
+                <option value="Rechazada" {% if request.GET.estado == "Rechazada" %}selected{% endif %}>Rechazada</option>
+            </select>
+        </div>
+
+        <!-- Fecha inicio -->
+        <div class="col-md-2">
+            <input type="date" name="fecha_inicio" class="form-control"
+                value="{{ request.GET.fecha_inicio }}" max="{{ hoy }}">
+        </div>
+
+        <!-- Fecha fin -->
+        <div class="col-md-2">
+            <input type="date" name="fecha_fin" class="form-control"
+                value="{{ request.GET.fecha_fin }}" max="{{ hoy }}">
+        </div>
+
+        <div class="col-md-1">
+            <button class="btn btn-buscar w-100" type="submit">Filtrar</button>
+        </div>
+    </form>
+
+    {% if errores %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class='bx bx-error-circle me-2'></i>
+        {% for e in errores %}
+            {{ e }}{% if not forloop.last %}<br>{% endif %}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div> 
+    {% endif %}
         <div class="table-responsive">
             <table>
                 <thead>
@@ -167,6 +211,15 @@
     }
     linkColor.forEach(l=> l.addEventListener('click', colorLink))
     });
+
+
+    setTimeout(function () {
+        let alert = document.querySelector('.alert');
+        if (alert) {
+            let bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 3000);
 </script>
 </body>
 </html>

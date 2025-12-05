@@ -7,10 +7,15 @@
     --body-font: 'Nunito', sans-serif;
     --normal-font-size: 1rem;
     --z-fixed: 100}*,::before,::after{box-sizing: border-box}
-    
+  
+
+body{position: relative;
+    margin: var(--header-height) 0 0 0;
+    padding: 0 1rem;font-family: var(--body-font);
+    font-size: var(--normal-font-size);
+    transition: .5s}
 
 
-    
 a{text-decoration: none}
 
 .header{width: 100%;
@@ -103,7 +108,9 @@ a{text-decoration: none}
     left: 0
 }
 
-
+.body-pd{
+    padding-left: calc(var(--nav-width) + 1rem)
+}
 
 .active{
     color: var(--white-color)
@@ -154,9 +161,9 @@ a{text-decoration: none}
             }
         }
 
-.height-100.bg-light {
+.height-100{
     padding: 2rem;
-    background-color: #f9f9f9;
+    background-color: #EEF1F4;
 }
 
 
@@ -165,7 +172,6 @@ form {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-bottom: 1.5rem;
 }
 
 form input[type="text"],
@@ -176,6 +182,18 @@ form select {
     font-size: 1rem;
     width: 200px;
 }
+
+.btn-buscar {
+    background-color: #1C253B;
+    border-radius: 10px;
+    color: #ffffff;
+}
+
+.btn-buscar:hover {
+    background-color: #2d3853;
+    color: #ffffff;
+}
+
 
 table {
     width: 100%;
@@ -216,6 +234,8 @@ table td a:hover {
     color: #346480;
 }
 
+
+
 .modal {
     display: none; 
     position: fixed;
@@ -249,6 +269,12 @@ table td a:hover {
 body.modal-open {
     padding-right: 0; 
     overflow: hidden;
+}
+
+
+.product-actions {
+    display: flex;
+    justify-content: space-between;
 }
 
 

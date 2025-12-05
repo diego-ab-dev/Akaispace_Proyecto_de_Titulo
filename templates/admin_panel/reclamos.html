@@ -65,6 +65,17 @@
 
     <!--tabla-->
     <div class="height-100 p-4">
+        {% if errores %}
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
+            <i class='bx bx-error-circle fs-4 me-2'></i>
+            <div>
+                {% for e in errores %}
+                    {{ e }}{% if not forloop.last %}<br>{% endif %}
+                {% endfor %}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
         <form method="get" class="d-flex flex-wrap gap-3 mb-4">
 
             <input 
@@ -96,7 +107,7 @@
                 value="{{ request.GET.fecha_fin }}"
             >
 
-            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <button type="submit" class="btn btn-buscar">Filtrar</button>
         </form>
 
         <div class="table-responsive">
@@ -204,6 +215,16 @@
     }
     linkColor.forEach(l=> l.addEventListener('click', colorLink))
     });
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const alert = document.querySelector('.alert');
+    if (alert) {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 3000);
+    }
+});
 </script>
 </body>
 </html>

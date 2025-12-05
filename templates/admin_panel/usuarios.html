@@ -63,24 +63,34 @@
     <!--fin navbar-->
 
     <div class="height-100">
-        <form method="get" action="{% url 'buscar_usuarios' %}">
-            <input type="text" name="q" placeholder="Buscar usuarios..." />
-            <select name="filtro">
-                <option value="nombre">Nombre</option>
-                <option value="rut">RUT</option>
+        <form method="get" action="{% url 'buscar_usuarios' %}" style="margin-bottom: 10px;"">
+            <input type="hidden" name="q" value="{{ request.GET.q }}">
+            <input type="hidden" name="filtro" value="{{ request.GET.filtro }}">
+
+            <select name="es_admin" onchange="this.form.submit()">
+                <option value="" {% if request.GET.es_admin == "" %}selected{% endif %}>Todos</option>
+                <option value="True" {% if request.GET.es_admin == "True" %}selected{% endif %}>Administradores</option>
+                <option value="False" {% if request.GET.es_admin == "False" %}selected{% endif %}>No Administradores</option>
             </select>
-            <select name="es_administrador">
-                <option value="">Todos</option>
-                <option value="True">Administradores</option>
-                <option value="False">No Administradores</option>
-            </select>
-            <button type="submit">Buscar</button>
         </form>
+        <div class="product-actions">
+            <form method="get" action="{% url 'buscar_usuarios' %}">
+                <input type="text" name="q" placeholder="Buscar usuarios..." value="{{ request.GET.q }}" />
+                <select name="filtro">
+                    <option value="nombre" {% if request.GET.filtro == 'nombre' %}selected{% endif %}>Nombre</option>
+                    <option value="rut" {% if request.GET.filtro == 'rut' %}selected{% endif %}>RUT</option>
+                </select>
+                <button type="submit" class="btn-buscar btn">Buscar</button>
+            </form>
+
+            <button type="button" class="button" data-url="{% url 'crear_usuario' %}" onclick="window.location.href=this.dataset.url">
+            <span class="button__text">Agregar Usuario</span>
+            <span class="button__icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor" height="24" fill="none" class="svg"><line y2="19" y1="5" x2="12" x1="12"></line><line y2="12" y1="12" x2="19" x1="5"></line></svg></span>
+            </button> 
+        </div>
+
         
-        <button type="button" class="button" data-url="{% url 'crear_usuario' %}" onclick="window.location.href=this.dataset.url">
-        <span class="button__text">Agregar Usuario</span>
-        <span class="button__icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" viewBox="0 0 24 24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor" height="24" fill="none" class="svg"><line y2="19" y1="5" x2="12" x1="12"></line><line y2="12" y1="12" x2="19" x1="5"></line></svg></span>
-        </button>             
+                    
     
         {% if mensaje %}
             <p style="color: red; font-weight: bold;">{{ mensaje }}</p>
@@ -117,8 +127,9 @@
 
                 <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
                     {% if page_obj.has_previous %}
-                        <a class="page-link custom-page-link" 
-                        href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                        <a class="page-link custom-page-link"
+                        href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&filtro={{ request.GET.filtro }}&es_admin={{ request.GET.es_admin }}"
+                        aria-label="Anterior">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     {% else %}
@@ -133,21 +144,26 @@
                         </li>
                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                         <li class="page-item">
-                            <a class="page-link custom-page-link" href="?page={{ num }}">{{ num }}</a>
+                            <a class="page-link custom-page-link"
+                            href="?page={{ num }}&q={{ request.GET.q }}&filtro={{ request.GET.filtro }}&es_admin={{ request.GET.es_admin }}">
+                                {{ num }}
+                            </a>
                         </li>
                     {% endif %}
                 {% endfor %}
 
                 <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
                     {% if page_obj.has_next %}
-                        <a class="page-link custom-page-link" 
-                        href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                        <a class="page-link custom-page-link"
+                        href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&filtro={{ request.GET.filtro }}&es_admin={{ request.GET.es_admin }}"
+                        aria-label="Siguiente">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     {% else %}
                         <span class="page-link custom-page-link">&raquo;</span>
                     {% endif %}
                 </li>
+
 
             </ul>
         </div>

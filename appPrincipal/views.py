@@ -20,7 +20,7 @@ from .forms import OpinionForm
 from django.core.paginator import Paginator
 from django.utils.timezone import now
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, date
 import calendar
 
 # Vistas para administracion
@@ -142,8 +142,8 @@ def eliminar_usuario(request, usuario_id):
 @admin_required
 def buscar_usuarios(request):
     query = request.GET.get('q', '').strip()
-    filtro = request.GET.get('filtro', 'nombre') 
-    es_administrador = request.GET.get('es_administrador', '')
+    filtro = request.GET.get('filtro', 'nombre')
+    es_admin = request.GET.get('es_admin', '')
 
     usuarios_list = Usuario.objects.filter(is_deleted=False)
 
@@ -153,22 +153,20 @@ def buscar_usuarios(request):
         elif filtro == "rut":
             usuarios_list = usuarios_list.filter(rut__icontains=query)
 
-    if es_administrador:
-        usuarios_list = usuarios_list.filter(es_administrador=(es_administrador == "True"))
+    if es_admin == "True":
+        usuarios_list = usuarios_list.filter(es_administrador=True)
+    elif es_admin == "False":
+        usuarios_list = usuarios_list.filter(es_administrador=False)
 
     paginator = Paginator(usuarios_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    mensaje = ""
-    if not usuarios_list.exists():
-        mensaje = "No se encontraron resultados."
-
     return render(request, 'admin_panel/usuarios.html', {
         'page_obj': page_obj,
         'usuarios': page_obj.object_list,
-        'mensaje': mensaje
     })
+
 
 @admin_required
 def crear_usuario(request):
@@ -241,38 +239,7 @@ def detalle_usuario(request, usuario_id):
 # Productos en adminstracion
 @admin_required
 def admin_productos(request):
-    productos_list = Producto.objects.filter(is_deleted=False).order_by('-id')
-
-    paginator = Paginator(productos_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    return render(request, 'admin_panel/productos.html', {
-        'productos': page_obj.object_list,
-        'page_obj': page_obj,
-    })
-
-@admin_required
-def agregar_producto(request):
-    if request.method == 'POST':
-        form = ProductoForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('admin_productos')
-    else:
-        form = ProductoForm()
-    return render(request, 'admin_panel/agregar_producto.html', {'form': form})
-
-@admin_required
-def eliminar_producto(request, producto_id):
-    producto = get_object_or_404(Producto, id=producto_id)
-    producto.is_deleted = True
-    producto.save()
-    return redirect('admin_productos')
-
-@admin_required
-def buscar_productos(request):
-    query = request.GET.get('q', '').strip()
+    query = request.GET.get('q', '')
     categoria = request.GET.get('categoria', '')
     genero = request.GET.get('genero', '')
     ordenar = request.GET.get('ordenar', 'recientes')
@@ -299,33 +266,50 @@ def buscar_productos(request):
     elif ordenar == 'mayor_precio':
         productos_list = productos_list.order_by('-precio')
 
-    mensaje = ""
-    if not productos_list.exists():
-        mensaje = "No se encontraron resultados para tu búsqueda."
-
     categorias = []
     for grupo in Producto.CATEGORIAS:
-        for categoria in grupo[1]:
-            categorias.append(categoria)
-
+        for cat in grupo[1]:
+            categorias.append(cat)
     generos = Producto.GENEROS
 
     paginator = Paginator(productos_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    mensaje = ""
+    if (query or categoria or genero) and page_obj.paginator.count == 0:
+        mensaje = "No se encontraron resultados para tu búsqueda."
+
     return render(request, 'admin_panel/productos.html', {
         'productos': page_obj.object_list,
         'page_obj': page_obj,
-        'mensaje': mensaje,
+        'actual_url': request.path, 
         'query': query,
         'categoria': categoria,
         'genero': genero,
         'ordenar': ordenar,
         'categorias': categorias,
         'generos': generos,
+        'mensaje': mensaje
     })
 
+@admin_required
+def agregar_producto(request):
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('admin_productos')
+    else:
+        form = ProductoForm()
+    return render(request, 'admin_panel/agregar_producto.html', {'form': form})
+
+@admin_required
+def eliminar_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+    producto.is_deleted = True
+    producto.save()
+    return redirect('admin_productos')
 
 
 @admin_required
@@ -351,16 +335,59 @@ def detalle_producto(request, producto_id):
 # devoluciones en administracion
 @admin_required
 def admin_devoluciones(request):
-    devoluciones = Devolucion.objects.select_related('usuario').all().order_by('-fecha_solicitud')
+    query = request.GET.get('q', '')
+    estado = request.GET.get('estado', '')
+    fecha_inicio = request.GET.get('fecha_inicio', '')
+    fecha_fin = request.GET.get('fecha_fin', '')
 
-    paginator = Paginator(devoluciones, 10) 
+    errores = []
+    hoy = date.today()
+
+    devoluciones = Devolucion.objects.select_related('usuario', 'producto').all().order_by('-fecha_solicitud')
+
+    if query:
+        devoluciones = devoluciones.filter(
+            Q(usuario__nombre__icontains=query) |
+            Q(producto__nombre__icontains=query) |
+            Q(id__icontains=query)
+        )
+
+    if estado:
+        devoluciones = devoluciones.filter(estado=estado)
+
+    fecha_inicio_obj = parse_date(fecha_inicio) if fecha_inicio else None
+    fecha_fin_obj = parse_date(fecha_fin) if fecha_fin else None
+
+    if fecha_inicio_obj and fecha_inicio_obj > hoy:
+        errores.append("La fecha de inicio no puede ser futura.")
+        fecha_inicio_obj = None
+
+    if fecha_fin_obj and fecha_fin_obj > hoy:
+        errores.append("La fecha fin no puede ser futura.")
+        fecha_fin_obj = None
+
+    if fecha_inicio_obj and fecha_fin_obj and fecha_inicio_obj > fecha_fin_obj:
+        errores.append("La fecha de inicio no puede ser mayor que la fecha fin.")
+        fecha_inicio_obj = None
+        fecha_fin_obj = None
+
+    if fecha_inicio_obj:
+        devoluciones = devoluciones.filter(fecha_solicitud__gte=fecha_inicio_obj)
+
+    if fecha_fin_obj:
+        devoluciones = devoluciones.filter(fecha_solicitud__lte=fecha_fin_obj)
+
+    paginator = Paginator(devoluciones, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'admin_panel/devoluciones.html', {
         'devoluciones': page_obj,
         'page_obj': page_obj,
+        'errores': errores,
+        'hoy': hoy,
     })
+
 
 @admin_required
 def responder_devolucion(request, devolucion_id):
@@ -393,8 +420,12 @@ def admin_reclamos(request):
     fecha_inicio = request.GET.get('fecha_inicio', '')
     fecha_fin = request.GET.get('fecha_fin', '')
 
+    errores = []
+    hoy = date.today()
+
     reclamos = Reclamo.objects.select_related('usuario').order_by('-fecha')
 
+    # Buscar texto
     if query:
         reclamos = reclamos.filter(
             Q(usuario__nombre__icontains=query) |
@@ -402,21 +433,48 @@ def admin_reclamos(request):
             Q(id__icontains=query)
         )
 
+    # Filtrar estado
     if estado:
         reclamos = reclamos.filter(estado=estado)
 
-    if fecha_inicio and fecha_fin:
-        reclamos = reclamos.filter(fecha__range=[fecha_inicio, fecha_fin])
+    # Validación de fechas
+    fecha_inicio_obj = parse_date(fecha_inicio) if fecha_inicio else None
+    fecha_fin_obj = parse_date(fecha_fin) if fecha_fin else None
 
+    # Fechas futuras
+    if fecha_inicio_obj and fecha_inicio_obj > hoy:
+        errores.append("La fecha de inicio no puede ser futura.")
+        fecha_inicio_obj = None
+
+    if fecha_fin_obj and fecha_fin_obj > hoy:
+        errores.append("La fecha fin no puede ser futura.")
+        fecha_fin_obj = None
+
+    # Rango inválido
+    if fecha_inicio_obj and fecha_fin_obj and fecha_inicio_obj > fecha_fin_obj:
+        errores.append("La fecha de inicio no puede ser mayor que la fecha fin.")
+        fecha_inicio_obj = None
+        fecha_fin_obj = None
+
+    # Aplicar filtros de fecha
+    if fecha_inicio_obj:
+        reclamos = reclamos.filter(fecha__gte=fecha_inicio_obj)
+
+    if fecha_fin_obj:
+        reclamos = reclamos.filter(fecha__lte=fecha_fin_obj)
+
+    # Paginación
     paginator = Paginator(reclamos, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'admin_panel/reclamos.html', {
-        'reclamos': page_obj,    
-        'page_obj': page_obj,     
+        'reclamos': page_obj,
+        'page_obj': page_obj,
         'estado_seleccionado': estado,
+        'errores': errores,
     })
+
 
 @admin_required
 def responder_reclamo(request, reclamo_id):
@@ -437,27 +495,61 @@ def admin_ventas(request):
     query = request.GET.get('q', '')
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
-    
-    ventas_list = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').all().order_by('-id')
+    ordenar = request.GET.get('ordenar')
+
+    ventas_list = Venta.objects.select_related(
+        'usuario'
+    ).prefetch_related(
+        'producto_venta__producto'
+    ).all()
 
     if query:
         ventas_list = ventas_list.filter(
             Q(usuario__nombre__icontains=query) | Q(id__icontains=query)
         )
-    
-    if fecha_inicio and fecha_fin:
-        ventas_list = ventas_list.filter(
-            fecha__range=[parse_date(fecha_inicio), parse_date(fecha_fin)]
-        )
 
-    paginator = Paginator(ventas_list, 10)  
+
+    hoy = date.today()
+    errores = []
+
+    fecha_inicio_obj = parse_date(fecha_inicio) if fecha_inicio else None
+    fecha_fin_obj = parse_date(fecha_fin) if fecha_fin else None
+
+    if fecha_inicio_obj and fecha_inicio_obj > hoy:
+        errores.append("La fecha de inicio no puede ser futura.")
+        fecha_inicio_obj = None
+
+    if fecha_fin_obj and fecha_fin_obj > hoy:
+        errores.append("La fecha de fin no puede ser futura.")
+        fecha_fin_obj = None
+
+    if fecha_inicio_obj and fecha_fin_obj and fecha_inicio_obj > fecha_fin_obj:
+        errores.append("La fecha de inicio no puede ser mayor que la fecha fin.")
+        fecha_inicio_obj = None
+        fecha_fin_obj = None
+
+    if fecha_inicio_obj:
+        ventas_list = ventas_list.filter(fecha__gte=fecha_inicio_obj)
+
+    if fecha_fin_obj:
+        ventas_list = ventas_list.filter(fecha__lte=fecha_fin_obj)
+
+    if ordenar == "antiguas":
+        ventas_list = ventas_list.order_by("fecha")
+    else:
+        ventas_list = ventas_list.order_by("-fecha")
+
+    paginator = Paginator(ventas_list, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'admin_panel/ventas.html', {
         'ventas': page_obj.object_list,
-        'page_obj': page_obj
+        'page_obj': page_obj,
+        'hoy': hoy,
+        'errores': errores,   
     })
+
 
 @admin_required
 def admin_cambiar_estado_venta(request, venta_id):

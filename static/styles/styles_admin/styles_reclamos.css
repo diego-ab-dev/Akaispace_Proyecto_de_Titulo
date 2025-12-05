@@ -254,4 +254,14 @@ body{
     cursor: default;
 }
 
+.btn-buscar {
+    background-color: #1C253B;
+    border-radius: 10px;
+    color: #ffffff;
+}
+
+.btn-buscar:hover {
+    background-color: #2d3853;
+    color: #ffffff;
+}
 

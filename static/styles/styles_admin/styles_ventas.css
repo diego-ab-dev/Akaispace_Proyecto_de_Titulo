@@ -263,3 +263,13 @@ table td a:hover {
 .estado-entregado { color: #198754; font-weight: bold; }     
 .estado-anulada { color: #dc3545; font-weight: bold; }  
 
+.btn-buscar {
+    background-color: #1C253B;
+    border-radius: 10px;
+    color: #ffffff;
+}
+
+.btn-buscar:hover {
+    background-color: #2d3853;
+    color: #ffffff;
+}
