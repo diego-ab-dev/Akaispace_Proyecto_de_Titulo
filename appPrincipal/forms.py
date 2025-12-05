@@ -146,4 +146,20 @@ class ProductoForm(forms.ModelForm):
 
         return codigo
 
+    # valida límite de stock
+    def clean_stock(self):
+        stock = self.cleaned_data.get('stock')
+
+        if stock is None:
+            return stock
+        
+        if stock < 0:
+            raise forms.ValidationError("El stock no puede ser negativo.")
+
+        if stock > 999:
+            raise forms.ValidationError("El stock máximo permitido es 999 unidades.")
+
+        return stock
+
+
 

@@ -21,6 +21,18 @@
     <div class="container">
         <h1>Editar Producto</h1>
         <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
             {% csrf_token %}
             <div class="mb-3">
                 <label for="id_codigo_de_barra" class="form-label">Código de Barra</label>
