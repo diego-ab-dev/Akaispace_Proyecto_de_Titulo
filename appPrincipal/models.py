@@ -226,6 +226,7 @@ class Reclamo(models.Model):
         ('Respondido', 'Respondido'),
     ]
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='reclamos')
+    venta = models.ForeignKey(Venta, on_delete=models.SET_NULL, null=True, blank=True, related_name='reclamos')
     estado = models.CharField(max_length=20,choices=ESTADO_CHOICES, default='Abierto')
     asunto = models.CharField(max_length=255, default='No especificado')
     fecha = models.DateTimeField(default=now)

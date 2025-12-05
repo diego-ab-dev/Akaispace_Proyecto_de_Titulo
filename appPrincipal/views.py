@@ -427,7 +427,6 @@ def admin_reclamos(request):
 
     reclamos = Reclamo.objects.select_related('usuario').order_by('-fecha')
 
-    # Buscar texto
     if query:
         reclamos = reclamos.filter(
             Q(usuario__nombre__icontains=query) |
@@ -435,15 +434,12 @@ def admin_reclamos(request):
             Q(id__icontains=query)
         )
 
-    # Filtrar estado
     if estado:
         reclamos = reclamos.filter(estado=estado)
 
-    # Validación de fechas
     fecha_inicio_obj = parse_date(fecha_inicio) if fecha_inicio else None
     fecha_fin_obj = parse_date(fecha_fin) if fecha_fin else None
 
-    # Fechas futuras
     if fecha_inicio_obj and fecha_inicio_obj > hoy:
         errores.append("La fecha de inicio no puede ser futura.")
         fecha_inicio_obj = None
@@ -452,20 +448,17 @@ def admin_reclamos(request):
         errores.append("La fecha fin no puede ser futura.")
         fecha_fin_obj = None
 
-    # Rango inválido
     if fecha_inicio_obj and fecha_fin_obj and fecha_inicio_obj > fecha_fin_obj:
         errores.append("La fecha de inicio no puede ser mayor que la fecha fin.")
         fecha_inicio_obj = None
         fecha_fin_obj = None
 
-    # Aplicar filtros de fecha
     if fecha_inicio_obj:
         reclamos = reclamos.filter(fecha__gte=fecha_inicio_obj)
 
     if fecha_fin_obj:
         reclamos = reclamos.filter(fecha__lte=fecha_fin_obj)
 
-    # Paginación
     paginator = Paginator(reclamos, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -1052,13 +1045,23 @@ def crear_reclamo(request, compra_id):
         descripcion = request.POST.get('descripcion', '').strip()
 
         if not asunto or not descripcion:
-            return render(request, 'crear_reclamo.html', {'compra': compra, 'error': "Todos los campos son obligatorios."})
+            return render(request, 'crear_reclamo.html', {
+                'compra': compra,
+                'error': "Todos los campos son obligatorios."
+            })
         else:
-            Reclamo.objects.create(usuario=usuario, asunto=asunto, descripcion=descripcion)
+            Reclamo.objects.create(
+                usuario=usuario,
+                venta=compra,
+                asunto=asunto,
+                descripcion=descripcion
+            )
             return redirect('perfil')
+
     return render(request, 'crear_reclamo.html', {
         'compra': compra
     })
+
 
 def lista_reclamos(request):
     usuario_id = request.session.get('usuario_id')

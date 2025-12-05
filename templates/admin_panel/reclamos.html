@@ -131,11 +131,21 @@
                         <td>{{ reclamo.asunto }}</td>
                         <td>{{ reclamo.descripcion }}</td>
                         <td>
-                            <span class="badge {% if reclamo.estado == 'Resuelto' %}bg-success{% elif reclamo.estado == 'Pendiente' %}bg-warning{% else %}bg-danger{% endif %}">
+                            <span class="badge
+                                {% if reclamo.estado == 'Abierto' %}
+                                    bg-warning text-dark
+                                {% elif reclamo.estado == 'Respondido' %}
+                                    bg-success
+                                {% elif reclamo.estado == 'Cancelado' %}
+                                    bg-danger
+                                {% else %}
+                                    bg-secondary
+                                {% endif %}
+                            ">
                                 {{ reclamo.estado }}
                             </span>
                         </td>
-                        <td>{{ reclamo.fecha|date:"d M Y" }}</td>
+                        <td>{{ reclamo.fecha}}</td>
                         <td>
                             <a href="{% url 'responder_reclamo' reclamo.id %}" class="btn-responder btn btn-sm">Responder</a>
                         </td>

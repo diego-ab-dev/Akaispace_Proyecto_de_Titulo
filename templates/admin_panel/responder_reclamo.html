@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load custom_filters %} 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,26 +17,49 @@
     <title>Responder Reclamo</title>
 </head>
 <body>
-    <div class="reclamo-container">
+    <div class="main-container">
         <h1>Responder Reclamo</h1>
-        <form method="post">
-            {% csrf_token %}
-            <div class="reclamo-info">
-                <p><strong>Asunto:</strong> {{ reclamo.asunto }}</p>
-                <p><strong>Descripción:</strong> {{ reclamo.descripcion }}</p>
-            </div>
-            <textarea name="respuesta" placeholder="Escribe tu respuesta aquí..." required>{{ reclamo.respuesta|default_if_none:'' }}</textarea>
-            <button type="submit" class="btn-submit">Enviar Respuesta</button>
-        </form>
-        <a href="{% url 'admin_reclamos' %}" class="btn-back">Volver</a>
-    </div>  
+        <div class="card-reclamo">
+            <p><strong>Nombre Cliente:</strong> {{ reclamo.usuario.nombre }} </p>
+            <p><strong>Fecha del Reclamo:</strong> {{ reclamo.fecha }}</p>
+            <p><strong>Asunto:</strong> {{ reclamo.asunto }}</p>
+            <p><strong>Descripción:</strong> {{reclamo.descripcion}} </p>
+
+            <br>
+
+            {% if reclamo.venta %}
+            <p><strong>Venta asociada:</strong> #{{ reclamo.venta.id }}</p>
+            <p><strong>Total:</strong> ${{ reclamo.venta.total| formato_chileno }}</p>
+            <p><strong>Fecha de la venta:</strong> {{ reclamo.venta.fecha }}</p>
+
+            <ul>
+                {% for item in reclamo.venta.producto_venta.all %}
+                    <li>{{ item.producto.nombre }} (x{{ item.cantidad }})</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p><strong>Venta asociada:</strong> No registrada</p>
+            {% endif %}
+            
+            <form method="post" class="respuesta-form">
+                {% csrf_token %}
+                <label for="respuesta" class="form-label">Respuesta</label>
+                <textarea id="respuesta" name="respuesta" placeholder="Escribe tu respuesta aquí..." required>{{ reclamo.respuesta|default_if_none:'' }}</textarea>
+                
+                <div class="buttons-container">
+                    <button type="submit" class="btn-enviar">Enviar</button>
+                    <a href="{% url 'admin_reclamos' %}" class="btn-cancelar">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div> 
 <script>
     // validar que los campos no esten vacios
-    document.querySelector('form').addEventListener('submit', function(event) {
+    document.querySelector('.respuesta-form').addEventListener('submit', function(event) {
         const respuesta = document.querySelector('textarea[name="respuesta"]').value.trim();
         if (!respuesta) {
             alert('La respuesta no puede estar vacía.');
-            event.preventDefault();  
+            event.preventDefault(); 
         }
     });
 </script>

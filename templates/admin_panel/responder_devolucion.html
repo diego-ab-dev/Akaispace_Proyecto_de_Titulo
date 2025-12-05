@@ -26,13 +26,26 @@
                 
                 <div class="info-section">
                     <div><strong>Nombre Cliente:</strong> {{ devolucion.usuario.nombre }}</div>
-                    <div><strong>Fecha:</strong> {{ devolucion.fecha_solicitud|date:"d/m/Y" }}</div>
+                    <div><strong>Fecha de Solicitud:</strong> {{ devolucion.fecha_solicitud}}</div>
                     
                     <div style="margin-top: 15px;"><strong>Motivo:</strong> 
                         <span class="motivo-text">
                             {{ devolucion.motivo }}
                         </span>
                     </div>
+                    
+                    <br>
+
+                    {% if devolucion.venta %}
+                    <p><strong>Venta asociada:</strong> #{{ devolucion.venta.id }}</p>
+                    <p><strong>Fecha de la venta:</strong> {{ devolucion.venta.fecha }}</p>
+
+                    {% for item in devolucion.venta.producto_venta.all %}
+                    <p><strong>Producto:</strong> {{ item.producto.nombre }} (x{{ item.cantidad }})</p>
+                    {% endfor %}
+                    {% else %}
+                    <p><strong>Venta asociada:</strong> No registrada</p>
+                    {% endif %}
                 </div>
 
                 <hr style="opacity: 0.1; margin: 20px 0;">
