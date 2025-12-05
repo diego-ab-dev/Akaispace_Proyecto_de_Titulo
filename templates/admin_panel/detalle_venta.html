@@ -53,15 +53,23 @@
                 <div class="data-row"><span class="data-label">Región:</span> {{ venta.usuario.region }}</div>
                 <div class="data-row"><span class="data-label">Ciudad:</span> {{ venta.usuario.ciudad }}</div>
 
+                {% if venta.datos_envio.estado != "Anulada" %}
                 <div class="actions-wrapper">
                     <a href="{% url 'modificar_venta' venta.id %}" class="btn-action btn-modificar">
                         Modificar <i class='bx bx-pencil'></i>
                     </a>
-                    
+                                    
                     <button type="button" class="btn-action btn-anular" data-bs-toggle="modal" data-bs-target="#anularModal">
                         Anular Venta <i class='bx bx-error-circle'></i>
                     </button>
                 </div>
+                {% else %}
+                <div class="actions-wrapper">
+                    <button class="btn-action" style="background-color:#6c757d; cursor:not-allowed;" disabled>
+                        Venta Anulada
+                    </button>
+                </div>
+                {% endif %}
             </div>
 
             <div class="info-card">
