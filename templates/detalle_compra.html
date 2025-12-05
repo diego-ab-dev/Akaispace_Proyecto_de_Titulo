@@ -53,67 +53,65 @@
 
         <div class="info-card">
             <h2 class="card-title">Estado de Envío</h2>
-            <div class="shipping-timeline">
-                <div class="progress-line" id="shippingProgress"></div>
-                {% with estado=compra.datos_envio.estado envio=compra.datos_envio %}
-                <div class="step-item {% if estado == 'En Preparación' %}active{% endif %}">
-                    <div class="step-icon"><i class="fa-solid fa-box-open"></i></div>
-                    <div class="step-label">En Preparación</div>
-                    <div class="step-date">
-                        {{ compra.fecha|date:"d/m/Y H:i" }}
-                    </div>
+
+            {% if compra.datos_envio.estado == "Anulada" %}
+                <div class="alert alert-danger mt-3" style="font-weight: 600; text-align: center;">
+                    Esta compra fue anulada. No se generará envío.
+                </div>
+            {% else %}
+                <div class="shipping-timeline">
+                    <div class="progress-line" id="shippingProgress"></div>
+
+                    {% with estado=compra.datos_envio.estado envio=compra.datos_envio %}
+                        <div class="step-item {% if estado == 'En Preparación' %}active{% endif %}">
+                            <div class="step-icon"><i class="fa-solid fa-box-open"></i></div>
+                            <div class="step-label">En Preparación</div>
+                            <div class="step-date">{{ compra.fecha|date:"d/m/Y H:i" }}</div>
+                        </div>
+
+                        <div class="step-item {% if estado == 'Enviado' %}active{% endif %}">
+                            <div class="step-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                            <div class="step-label">Enviado</div>
+                            <div class="step-date">
+                                {% if envio.fecha_envio %}{{ envio.fecha_envio|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="step-item {% if estado == 'En Tránsito' %}active{% endif %}">
+                            <div class="step-icon"><i class="fa-solid fa-plane"></i></div>
+                            <div class="step-label">En Tránsito</div>
+                            <div class="step-date">
+                                {% if envio.fecha_transito %}{{ envio.fecha_transito|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="step-item {% if estado == 'En Reparto' %}active{% endif %}">
+                            <div class="step-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                            <div class="step-label">En Reparto</div>
+                            <div class="step-date">
+                                {% if envio.fecha_reparto %}{{ envio.fecha_reparto|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="step-item {% if estado == 'Entregado' %}active{% endif %}">
+                            <div class="step-icon"><i class="fa-solid fa-check"></i></div>
+                            <div class="step-label">Entregado</div>
+                            <div class="step-date">
+                                {% if envio.fecha_entrega %}{{ envio.fecha_entrega|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+                            </div>
+                        </div>
+                    {% endwith %}
                 </div>
 
-                <div class="step-item {% if estado == 'Enviado' %}active{% endif %}">
-                    <div class="step-icon"><i class="fa-solid fa-clipboard-check"></i></div>
-                    <div class="step-label">Enviado</div>
-                    <div class="step-date">
-                        {% if envio.fecha_envio %}
-                            {{ envio.fecha_envio|date:"d/m/Y H:i" }}
-                        {% else %}-{% endif %}
-                    </div>
+                <div class="address-details mt-4">
+                    <p><strong>Dirección:</strong> {{ compra.direccion_envio }}</p>
+                    <p><strong>Región:</strong> {{ compra.usuario.region }}</p>
+                    <p><strong>Ciudad:</strong> {{ compra.usuario.ciudad }}</p>
+                    <p><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
                 </div>
-
-                <div class="step-item {% if estado == 'En Tránsito' %}active{% endif %}">
-                    <div class="step-icon"><i class="fa-solid fa-plane"></i></div>
-                    <div class="step-label">En Tránsito</div>
-                    <div class="step-date">
-                        {% if envio.fecha_transito %}
-                            {{ envio.fecha_transito|date:"d/m/Y H:i" }}
-                        {% else %}-{% endif %}
-                    </div>
-                </div>
-
-                <div class="step-item {% if estado == 'En Reparto' %}active{% endif %}">
-                    <div class="step-icon"><i class="fa-solid fa-truck-fast"></i></div>
-                    <div class="step-label">En Reparto</div>
-                    <div class="step-date">
-                        {% if envio.fecha_reparto %}
-                            {{ envio.fecha_reparto|date:"d/m/Y H:i" }}
-                        {% else %}-{% endif %}
-                    </div>
-                </div>
-
-                <div class="step-item {% if estado == 'Entregado' %}active{% endif %}">
-                    <div class="step-icon"><i class="fa-solid fa-check"></i></div>
-                    <div class="step-label">Entregado</div>
-                    <div class="step-date">
-                        {% if envio.fecha_entrega %}
-                            {{ envio.fecha_entrega|date:"d/m/Y H:i" }}
-                        {% else %}-{% endif %}
-                    </div>
-                </div>
-
-                {% endwith %}
-            </div>
-
-            <div class="address-details mt-4">
-                <p><strong>Dirección:</strong> {{ compra.direccion_envio }}</p>
-                <p><strong>Región:</strong> {{ compra.usuario.region }}</p>
-                <p><strong>Ciudad:</strong> {{ compra.usuario.ciudad }}</p>
-                <p><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
-            </div>
+            {% endif %}
         </div>
+
     </div>
 
     <!--detalles de la compra-->
