@@ -1,132 +1,233 @@
 body {
-background-color: #EEF1F4; 
-font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-min-height: 100vh;
-display: flex;
-align-items: center;
-justify-content: center;
-margin: 0;
-padding: 20px;
+    background-color: #EEF1F4; 
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px 20px 60px 20px; 
 }
 
 .response-card {
-background-color: white;
-border-radius: 10px;
-box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-padding: 40px;
-width: 100%;
-max-width: 500px; 
-border: 1px solid #e0e0e0;
-position: relative;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    padding: 40px;
+    width: 100%;
+    max-width: 600px; 
+    border: 1px solid #e0e0e0;
+    position: relative;
 }
 
 .page-title {
-text-align: center;
-font-weight: 700;
-font-size: 1.8rem;
-margin-bottom: 30px;
-color: #111;
-position: absolute;
-top: -60px;
-left: 0;
-width: 100%;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+    color: #111;
+    position: absolute;
+    top: -70px;
+    left: 0;
+    width: 100%;
 }
 
 .info-section {
-margin-bottom: 25px;
-font-size: 1rem;
-color: #555;
-line-height: 1.5;
+    font-size: 0.95rem;
+    color: #444;
 }
 
-.info-section strong {
-color: #000;
-font-weight: 700;
+.product-highlight-box {
+    background-color: #f0f7ff; 
+    border: 1px solid #cce4ff;
+    border-left: 5px solid #2F78C4; 
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.highlight-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #2F78C4;
+    font-weight: 700;
+    margin-bottom: 5px;
+    letter-spacing: 0.5px;
+}
+
+.highlight-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.highlight-qty {
+    font-size: 1rem;
+    color: #555;
+    margin-top: 2px;
 }
 
 .motivo-text {
-color: #666;
-margin-top: 5px;
-display: block;
+    color: #333;
+    font-style: italic;
+    background: #f9f9f9;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: block;
+    margin-top: 5px;
+    border-left: 3px solid #ddd;
 }
+
+.evidence-gallery {
+    display: flex;
+    gap: 10px;
+}
+
+.thumb-box {
+    width: 70px;
+    height: 70px;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    transition: transform 0.2s;
+}
+
+.thumb-box:hover {
+    transform: scale(1.05);
+    border-color: #2F78C4;
+}
+
+.thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sale-context {
+    font-size: 0.85rem;
+    color: #777;
+    background: #fafafa;
+    padding: 10px;
+    border-radius: 6px;
+}
+.sale-list {
+    margin: 5px 0 0 0;
+    padding-left: 20px;
+}
+.highlight-item {
+    font-weight: bold;
+    color: #2F78C4; 
+}
+
 
 textarea {
-width: 100%;
-border: 1px solid #e0e0e0;
-border-radius: 4px;
-padding: 12px;
-font-size: 0.95rem;
-resize: none;
-margin-bottom: 20px;
-background-color: #fff;
-color: #333;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 0.95rem;
+    resize: none;
+    margin-bottom: 20px;
+    background-color: #fff;
+    color: #333;
+    font-family: inherit;
 }
-
-textarea::placeholder {
-color: #ccc;
-}
-
 textarea:focus {
-outline: none;
-border-color: #ccc;
+    outline: none;
+    border-color: #2F78C4;
+    box-shadow: 0 0 0 3px rgba(47, 120, 196, 0.1);
 }
 
 .radio-group {
-display: flex;
-gap: 40px;
-margin-bottom: 30px;
-align-items: center;
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
 .radio-option {
-display: flex;
-align-items: center;
-gap: 8px;
-cursor: pointer;
-font-weight: 600;
-color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 10px 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    flex: 1;
+    justify-content: center;
+    transition: all 0.2s;
 }
 
-.form-check-input {
-width: 1.2em;
-height: 1.2em;
-border-color: #333;
-cursor: pointer;
+.accept-option:hover { background-color: #e8f5e9; border-color: #81c784; }
+.reject-option:hover { background-color: #ffebee; border-color: #e57373; }
+.form-check-input:checked + i {
+    transform: scale(1.2);
 }
 
-.form-check-input:checked {
-background-color: #333;
-border-color: #333;
-}
 
 .btn-row {
-display: flex;
-justify-content: center;
-gap: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
 }
 
 .btn-guardar {
-background-color: #2F78C4; 
-color: white;
-border: none;
-padding: 10px 40px;
-border-radius: 20px; 
-font-weight: 700;
-font-size: 0.95rem;
-width: 40%;
+    background-color: #4E84A8; 
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 30px; 
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 2;
+    transition: background 0.2s;
 }
-.btn-guardar:hover { background-color: #2461a0; color: white; }
+.btn-guardar:hover { background-color: #6b9cbd; }
 
 .btn-cancelar {
-background-color: #0E1B2D; 
-color: white;
-border: none;
-padding: 10px 40px;
-border-radius: 20px;
-font-weight: 700;
-font-size: 0.95rem;
-text-decoration: none;
-text-align: center;
-width: 40%;
+    background-color: transparent; 
+    color: #666;
+    border: 1px solid #ccc;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    text-align: center;
+    flex: 1;
+    transition: all 0.2s;
 }
-.btn-cancelar:hover { background-color: #000; color: white; }
+.btn-cancelar:hover { background-color: #f1f1f1; color: #333; }
+
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.85);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    max-width: 90%;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10001;
+}

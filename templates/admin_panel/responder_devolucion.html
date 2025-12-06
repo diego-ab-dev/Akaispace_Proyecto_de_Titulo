@@ -1,23 +1,19 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"></script>
-    <!--CSS-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_responder_devolucion.css' %}">
-    <!--LOGO-->
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
-    <title>Responder Devolución</title>
+    <title>Responder Devolución #{{ devolucion.id }}</title>
 </head>
 <body>
-<div style="position: relative; max-width: 500px; width: 100%;">
-        <h1 class="page-title">Responder Devolución</h1>
+
+    <div style="position: relative; max-width: 600px; width: 100%;">
+        <h1 class="page-title">Responder Devolución #{{ devolucion.id }}</h1>
         
         <div class="response-card">
             
@@ -25,52 +21,110 @@
                 {% csrf_token %}
                 
                 <div class="info-section">
-                    <div><strong>Nombre Cliente:</strong> {{ devolucion.usuario.nombre }}</div>
-                    <div><strong>Fecha de Solicitud:</strong> {{ devolucion.fecha_solicitud}}</div>
-                    
-                    <div style="margin-top: 15px;"><strong>Motivo:</strong> 
+                    <div class="d-flex justify-content-between mb-3">
+                        <div><strong>Cliente:</strong> {{ devolucion.usuario.nombre }}</div>
+                        <div class="text-muted">{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</div>
+                    </div>
+
+                    <div class="product-highlight-box">
+                        <div class="highlight-label"><i class="fas fa-box-open"></i> Producto a Devolver</div>
+                        <div class="highlight-name">{{ devolucion.producto.nombre }}</div>
+                        <div class="highlight-qty">
+                            Cantidad solicitada: <strong>{{ devolucion.cantidad }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <strong>Motivo del cliente:</strong> 
                         <span class="motivo-text">
-                            {{ devolucion.motivo }}
+                            "{{ devolucion.motivo }}"
                         </span>
                     </div>
-                    
-                    <br>
 
-                    {% if devolucion.venta %}
-                    <p><strong>Venta asociada:</strong> #{{ devolucion.venta.id }}</p>
-                    <p><strong>Fecha de la venta:</strong> {{ devolucion.venta.fecha }}</p>
-
-                    {% for item in devolucion.venta.producto_venta.all %}
-                    <p><strong>Producto:</strong> {{ item.producto.nombre }} (x{{ item.cantidad }})</p>
-                    {% endfor %}
-                    {% else %}
-                    <p><strong>Venta asociada:</strong> No registrada</p>
+                    {% if devolucion.imagen1 or devolucion.imagen2 or devolucion.imagen3 %}
+                        <div class="mt-4">
+                            <strong>Evidencia Adjunta:</strong>
+                            <div class="evidence-gallery mt-2">
+                                {% if devolucion.imagen1 %}
+                                    <div class="thumb-box">
+                                        <img src="{{ devolucion.imagen1.url }}" onclick="abrirModal(this.src)">
+                                    </div>
+                                {% endif %}
+                                {% if devolucion.imagen2 %}
+                                    <div class="thumb-box">
+                                        <img src="{{ devolucion.imagen2.url }}" onclick="abrirModal(this.src)">
+                                    </div>
+                                {% endif %}
+                                {% if devolucion.imagen3 %}
+                                    <div class="thumb-box">
+                                        <img src="{{ devolucion.imagen3.url }}" onclick="abrirModal(this.src)">
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
                     {% endif %}
+                    
+                    <hr style="opacity: 0.1; margin: 25px 0;">
+
+                    <div class="sale-context">
+                        <p class="mb-1"><strong>Contexto de la Venta (#{{ devolucion.venta.id }}):</strong></p>
+                        <ul class="sale-list">
+                            {% for item in devolucion.venta.producto_venta.all %}
+                                <li class="{% if item.producto.id == devolucion.producto.id %}highlight-item{% endif %}">
+                                    {{ item.producto.nombre }} (x{{ item.cantidad }})
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
 
                 <hr style="opacity: 0.1; margin: 20px 0;">
 
-                <textarea name="respuesta" rows="5" placeholder="Escribe tu respuesta aquí" required></textarea>
+                <label class="mb-2 fw-bold">Tu Respuesta:</label>
+                <textarea name="respuesta" rows="4" placeholder="Indica al cliente la resolución del caso..." required></textarea>
 
-                <div class="mb-2" style="font-weight: 600; font-size: 0.95rem;">Selecciona una opción:</div>
+                <div class="mb-2" style="font-weight: 600; font-size: 0.95rem;">Decisión Administrativa:</div>
                 <div class="radio-group">
-                    <label class="radio-option">
+                    <label class="radio-option accept-option">
                         <input class="form-check-input" type="radio" name="accion" value="aceptar" required>
-                        Aceptar
+                        <i class="fas fa-check-circle text-success"></i> Aprobar
                     </label>
-                    <label class="radio-option">
+                    <label class="radio-option reject-option">
                         <input class="form-check-input" type="radio" name="accion" value="rechazar">
-                        Rechazar
+                        <i class="fas fa-times-circle text-danger"></i> Rechazar
                     </label>
                 </div>
 
                 <div class="btn-row">
-                    <button type="submit" class="btn-guardar">Guardar</button>
+                    <button type="submit" class="btn-guardar">Confirmar Resolución</button>
                     <a href="{% url 'admin_devoluciones' %}" class="btn-cancelar">Cancelar</a>
                 </div>
 
             </form>
         </div>
     </div>
+
+    <div id="adminImageModal" class="image-modal">
+        <span class="close-btn" onclick="cerrarModal()">&times;</span>
+        <img class="modal-content" id="imgExpanded">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function abrirModal(src) {
+            const modal = document.getElementById("adminImageModal");
+            const modalImg = document.getElementById("imgExpanded");
+            modal.style.display = "flex";
+            modalImg.src = src;
+        }
+
+        function cerrarModal() {
+            document.getElementById("adminImageModal").style.display = "none";
+        }
+
+        document.getElementById("adminImageModal").addEventListener("click", function(e) {
+            if (e.target === this) cerrarModal();
+        });
+    </script>
 </body>
 </html>

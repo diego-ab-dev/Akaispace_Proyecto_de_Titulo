@@ -1122,28 +1122,37 @@ def crear_devolucion(request, compra_id, producto_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
     producto = get_object_or_404(Producto, id=producto_id)
+
     item = compra.producto_venta.get(producto=producto)
     cantidad_comprada = item.cantidad
 
     if request.method == 'POST':
-        motivo = request.POST.get('descripcion') 
+        motivo = request.POST.get('descripcion')
+        cantidad = request.POST.get('cantidad')
+
+        img1 = request.FILES.get('imagen1')
+        img2 = request.FILES.get('imagen2')
+        img3 = request.FILES.get('imagen3')
 
         if motivo:
-            Devolucion.objects.create(
+            devolucion = Devolucion.objects.create(
                 usuario=usuario,
                 venta=compra,
                 producto=producto,
+                cantidad=cantidad,
                 motivo=motivo,
-                estado='Pendiente' 
+                imagen1=img1,
+                imagen2=img2,
+                imagen3=img3,
+                estado='Pendiente'
             )
             return redirect('perfil')
-        
+
     return render(request, 'crear_devolucion.html', {
         'compra': compra,
         'producto': producto,
         'cantidad_comprada': cantidad_comprada
     })
-
 
 def listar_devoluciones(request):
     usuario_id = request.session.get('usuario_id')

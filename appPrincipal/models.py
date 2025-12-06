@@ -259,6 +259,10 @@ class Devolucion(models.Model):
     
     fecha_solicitud = models.DateTimeField(auto_now_add=True)
     motivo = models.TextField(verbose_name="Motivo de la devolución")
+    imagen1 = models.ImageField(upload_to='devoluciones/', blank=True, null=True)
+    imagen2 = models.ImageField(upload_to='devoluciones/', blank=True, null=True)
+    imagen3 = models.ImageField(upload_to='devoluciones/', blank=True, null=True)
+
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Pendiente')
     respuesta_admin = models.TextField(blank=True, null=True, verbose_name="Respuesta del administrador")
     fecha_resolucion = models.DateTimeField(null=True, blank=True)

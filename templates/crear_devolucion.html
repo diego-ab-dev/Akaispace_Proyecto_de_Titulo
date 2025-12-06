@@ -17,7 +17,7 @@
 
     <div class="container">
         <h1 class="page-title">Producto Seleccionado para Devolución - {{ producto.nombre }}</h1>
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="row justify-content-center">
@@ -57,6 +57,44 @@
                                       required></textarea>
                         </div>
 
+                        <div class="mb-4">
+                            <label class="form-label">Adjuntar fotos (opcional, máximo 3):</label>
+
+                            <div class="evidencia-container">
+                                
+                                <div>
+                                    <input type="file" name="imagen1" id="input_imagen1" accept="image/*" hidden>
+                                    <div class="evidencia-box" id="box_imagen1">
+                                        <div class="box-content">
+                                            <i class="fas fa-camera"></i>
+                                            <span>Foto 1</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <input type="file" name="imagen2" id="input_imagen2" accept="image/*" hidden>
+                                    <div class="evidencia-box" id="box_imagen2">
+                                        <div class="box-content">
+                                            <i class="fas fa-camera"></i>
+                                            <span>Foto 2</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <input type="file" name="imagen3" id="input_imagen3" accept="image/*" hidden>
+                                    <div class="evidencia-box" id="box_imagen3">
+                                        <div class="box-content">
+                                            <i class="fas fa-camera"></i>
+                                            <span>Foto 3</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
                         <a href="javascript:history.back()" class="btn-back">
                             <i class="fas fa-arrow-left"></i> Volver Atrás
                         </a>
@@ -86,5 +124,100 @@
             </div> 
         </form>
     </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    function configurarCargaImagen(inputId, boxId, labelText) {
+        const input = document.getElementById(inputId);
+        const box = document.getElementById(boxId);
+        
+        // Al hacer click en el box, activar el input oculto
+        box.addEventListener("click", () => {
+            if (!box.querySelector('.preview-img')) {
+                input.click();
+            }
+        });
+
+        // Eventos Drag & Drop
+        box.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            box.classList.add("dragover");
+        });
+
+        box.addEventListener("dragleave", () => {
+            box.classList.remove("dragover");
+        });
+
+        box.addEventListener("drop", (e) => {
+            e.preventDefault();
+            box.classList.remove("dragover");
+
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+
+            // Asignar archivo al input manualmente
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            input.files = dataTransfer.files;
+
+            procesarVistaPrevia(box, file, input, labelText);
+        });
+
+        // Evento cuando se selecciona archivo por el explorador
+        input.addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+            procesarVistaPrevia(box, file, input, labelText);
+        });
+    }
+
+    function procesarVistaPrevia(box, file, input, labelText) {
+        const imgURL = URL.createObjectURL(file);
+
+        // Barra de progreso simulada
+        box.innerHTML = `<div class="upload-progress"></div>`;
+        const progressBar = box.querySelector(".upload-progress");
+        
+        let width = 0;
+        const interval = setInterval(() => {
+            width += 20;
+            progressBar.style.width = width + "%";
+            
+            if (width >= 100) {
+                clearInterval(interval);
+                
+                // Mostrar imagen y botón eliminar
+                // NOTA: Aquí sobrescribimos el box, PERO el input está a salvo afuera
+                box.innerHTML = `
+                    <img src="${imgURL}" class="preview-img">
+                    <button type="button" class="remove-btn">&times;</button>
+                `;
+
+                // Lógica del botón eliminar
+                box.querySelector(".remove-btn").addEventListener("click", (e) => {
+                    e.stopPropagation(); // Evitar abrir el explorador de archivos
+                    input.value = ""; // Limpiar input real
+                    
+                    // Restaurar estado original del box
+                    box.innerHTML = `
+                        <div class="box-content">
+                            <i class="fas fa-camera"></i>
+                            <span>${labelText}</span>
+                        </div>
+                    `;
+                });
+            }
+        }, 100);
+    }
+
+    // Inicializar los 3 campos
+    configurarCargaImagen("input_imagen1", "box_imagen1", "Foto 1");
+    configurarCargaImagen("input_imagen2", "box_imagen2", "Foto 2");
+    configurarCargaImagen("input_imagen3", "box_imagen3", "Foto 3");
+
+});
+</script>
+
 </body>
 </html>

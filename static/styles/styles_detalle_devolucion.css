@@ -31,6 +31,11 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: color 0.2s;
+}
+
+.btn-regresar:hover {
+    color: #555;
 }
 
 h1 {
@@ -60,7 +65,7 @@ h1 {
     font-size: 1rem;
     color: #4a4a4a;
     line-height: 1.6;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .date-text {
@@ -73,8 +78,103 @@ h1 {
     font-weight: 600;
 }
 
+.divider {
+    border-top: 1px solid #eee;
+    margin: 25px 0;
+}
+
+.img-thumbnail-wrapper {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.img-thumbnail-wrapper:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.gallery-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.empty-response-box {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.image-modal {
+    display: none; 
+    position: fixed; 
+    z-index: 9999; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.85); 
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    animation: zoomIn 0.3s;
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@keyframes zoomIn {
+    from {transform:scale(0.8); opacity: 0;} 
+    to {transform:scale(1); opacity: 1;}
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;} 
+    to {opacity: 1;}
+}
+
 @media (max-width: 768px) {
     .page-header { display: flex; flex-direction: column; gap: 15px; }
     .btn-regresar { position: relative; transform: none; }
-    .col-md-6 { margin-bottom: 20px; }
+    .col-md-7 { margin-bottom: 20px; }
+    
+    .img-thumbnail-wrapper {
+        height: 100px; 
+    }
 }
