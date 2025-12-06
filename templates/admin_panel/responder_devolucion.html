@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load custom_filters %} 
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -29,8 +30,18 @@
                     <div class="product-highlight-box">
                         <div class="highlight-label"><i class="fas fa-box-open"></i> Producto a Devolver</div>
                         <div class="highlight-name">{{ devolucion.producto.nombre }}</div>
-                        <div class="highlight-qty">
-                            Cantidad solicitada: <strong>{{ devolucion.cantidad }}</strong>
+                        
+                        <div class="d-flex justify-content-between align-items-end mt-2">
+                            <div class="highlight-qty">
+                                Cantidad solicitada: <strong>{{ devolucion.cantidad }}</strong>
+                            </div>
+                            
+                            <div style="text-align: right;">
+                                <small class="text-muted d-block" style="font-size: 0.8rem;">Monto a Reembolsar</small>
+                                <span style="font-size: 1.4rem; font-weight: 800; color: #2F78C4;">
+                                    ${{ monto_a_reembolsar | formato_chileno }}
+                                </span>
+                            </div>
                         </div>
                     </div>
 

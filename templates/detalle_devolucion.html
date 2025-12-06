@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load custom_filters %}
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -23,25 +24,43 @@
         <div class="row">
             <div class="col-md-7">
                 <div class="detail-card">
-                    <div class="mb-2">
-                        <span class="label-bold">Estado:</span>
-                        <span class="{% if devolucion.estado == 'Respondido' %}status-success{% endif %}">
-                            {{ devolucion.estado }}
-                        </span>
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <span class="label-bold">Estado:</span>
+                            <span class="status-badge {% if devolucion.estado == 'Aprobada' %}status-success{% elif devolucion.estado == 'Rechazada' %}status-danger{% else %}status-warning{% endif %}">
+                                {{ devolucion.estado }}
+                            </span>
+                        </div>
+                        <div class="text-end">
+                            <span class="date-text text-muted" style="font-size: 0.9rem;">
+                                <i class="far fa-calendar-alt"></i> {{ devolucion.fecha_solicitud|date:"d/m/Y" }}
+                            </span>
+                        </div>
                     </div>
                     
-                    <div class="mb-4">
-                        <span class="label-bold">Fecha de la solicitud:</span>
-                        <span class="date-text">{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</span>
+                    <div class="product-info-box mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-8">
+                                <span class="label-tiny text-muted text-uppercase">Producto</span>
+                                <div class="product-title">{{ devolucion.producto.nombre }}</div>
+                                <div class="product-qty">Cantidad a devolver: <strong>{{ devolucion.cantidad }}</strong></div>
+                            </div>
+                            <div class="col-4 text-end border-start">
+                                <span class="label-tiny text-muted text-uppercase">Reembolso</span>
+                                <div class="refund-amount">${{ monto_reembolso | formato_chileno }}</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-4">
-                        <span class="label-bold">Nombre del Producto:</span>
-                        <span class="date-text">{{ devolucion.producto.nombre }}</span>
+                        <a href="{% url 'ver_detalle' devolucion.venta.id %}" class="btn-ver-compra">
+                            <i class="fas fa-receipt"></i> Ver detalle de la compra original (#{{ devolucion.venta.id }})
+                        </a>
                     </div>
 
                     <div class="mb-4">
-                        <span class="label-bold d-block">Descripción</span>
+                        <span class="label-bold d-block">Tu Motivo:</span>
                         <p class="text-content">
                             {{ devolucion.motivo }}
                         </p>
@@ -52,8 +71,10 @@
                     <div class="mt-4">
                         <span class="label-bold d-block mb-3">Imágenes Adjuntadas</span>
                         
-                        <div class="row g-2"> {% if devolucion.imagen1 %}
-                                <div class="col-4"> <div class="img-thumbnail-wrapper">
+                        <div class="row g-2"> 
+                            {% if devolucion.imagen1 %}
+                                <div class="col-4"> 
+                                    <div class="img-thumbnail-wrapper">
                                         <img src="{{ devolucion.imagen1.url }}" class="gallery-img" alt="Evidencia 1" onclick="abrirModal(this.src)">
                                     </div>
                                 </div>
@@ -77,8 +98,8 @@
                         </div>
 
                         {% if not devolucion.imagen1 and not devolucion.imagen2 and not devolucion.imagen3 %}
-                            <p class="text-muted fst-italic mt-2">
-                                No se adjuntaron imágenes para esta devolución.
+                            <p class="text-muted fst-italic mt-2" style="font-size: 0.9rem;">
+                                No adjuntaste imágenes.
                             </p>
                         {% endif %}
                     </div>
@@ -87,21 +108,24 @@
 
             <div class="col-md-5">
                 <div class="detail-card">
-                    <span class="label-bold d-block">Respuesta del Administrador</span>
+                    <span class="label-bold d-block"><i class="fas fa-user-shield"></i> Respuesta del Administrador</span>
                     
                     {% if devolucion.respuesta_admin %}
-                        <p class="text-content mt-2">
-                            {{ devolucion.respuesta_admin }}
-                        </p>
+                        <div class="admin-response-box mt-3">
+                            <p class="text-content">
+                                {{ devolucion.respuesta_admin }}
+                            </p>
+                        </div>
                         
-                        <div class="mt-4">
-                            <span class="label-bold">Fecha Respuesta:</span>
-                            <span class="date-text">{{ devolucion.fecha_resolucion|default:devolucion.fecha_resolucion|date:"d/m/Y H:i" }}</span>
+                        <div class="mt-3 text-end">
+                            <span class="date-text text-muted" style="font-size: 0.85rem;">
+                                Resuelto el: {{ devolucion.fecha_resolucion|default:devolucion.fecha_resolucion|date:"d/m/Y H:i" }}
+                            </span>
                         </div>
                     {% else %}
                         <div class="mt-4 text-muted fst-italic empty-response-box">
-                            <i class="far fa-clock mb-2"></i>
-                            <p>Aún no hay respuesta para esta devolución.</p>
+                            <i class="far fa-clock mb-2 fa-2x"></i>
+                            <p>Tu solicitud está siendo revisada.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -112,7 +136,6 @@
     <div id="imageModal" class="image-modal">
         <span class="close-btn" onclick="cerrarModal()">&times;</span>
         <img class="modal-content" id="imgExpanded">
-        <div id="caption"></div>
     </div>
 
     <script>

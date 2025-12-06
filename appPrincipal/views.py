@@ -395,12 +395,37 @@ def admin_devoluciones(request):
 def responder_devolucion(request, devolucion_id):
     devolucion = get_object_or_404(Devolucion, id=devolucion_id)
     
+    monto_a_reembolsar = 0
+    try:
+        item_venta = ProductoVenta.objects.get(
+            venta=devolucion.venta, 
+            producto=devolucion.producto
+        )
+        monto_a_reembolsar = item_venta.precio_unitario * devolucion.cantidad
+    except ProductoVenta.DoesNotExist:
+        monto_a_reembolsar = 0
+
+
     if request.method == 'POST':
         accion = request.POST.get('accion') 
         respuesta = request.POST.get('respuesta')
         
         if accion == 'aceptar':
-            devolucion.estado = 'Aprobada'
+            try:
+                item_venta = ProductoVenta.objects.get(
+                    venta=devolucion.venta, 
+                    producto=devolucion.producto
+                )
+                
+                producto = devolucion.producto
+                producto.stock += devolucion.cantidad
+                producto.save()
+                
+                devolucion.estado = 'Aprobada'
+
+            except ProductoVenta.DoesNotExist:
+                devolucion.estado = 'Aprobada'
+
         elif accion == 'rechazar':
             devolucion.estado = 'Rechazada'
             
@@ -410,7 +435,10 @@ def responder_devolucion(request, devolucion_id):
         
         return redirect('admin_devoluciones')
 
-    return render(request, 'admin_panel/responder_devolucion.html', {'devolucion': devolucion})
+    return render(request, 'admin_panel/responder_devolucion.html', {
+        'devolucion': devolucion,
+        'monto_a_reembolsar': monto_a_reembolsar 
+    })
 #fin
 
 
@@ -645,27 +673,34 @@ def productos_menu(request):
     query = request.GET.get('buscar')
     
     if query:
-        productos = Producto.objects.filter(nombre__icontains=query, stock__gt=0).order_by('id')
+        productos = Producto.objects.filter(
+            nombre__icontains=query,
+            stock__gt=0,
+            is_deleted=False
+        ).order_by('id')
+
         favoritos_ids = []
         usuario_id = request.session.get('usuario_id')
         if usuario_id:
             favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
 
-        paginator = Paginator(productos, 16) 
+        paginator = Paginator(productos, 16)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
         return render(request, 'resultado_busqueda.html', {
-            'productos': productos,
             'query': query,
             'favoritos_ids': favoritos_ids,
             'page_obj': page_obj,
-            'productos': page_obj.object_list,  
+            'productos': page_obj.object_list,
         })
 
-    productos = Producto.objects.filter(stock__gt=0).order_by('-id')
+    productos = Producto.objects.filter(
+        stock__gt=0,
+        is_deleted=False
+    ).order_by('-id')
 
-    paginator = Paginator(productos, 16) 
+    paginator = Paginator(productos, 16)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -674,18 +709,19 @@ def productos_menu(request):
     if usuario_id:
         favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
 
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
-    fc25 = Producto.objects.filter(nombre="Fc 25").first()
-    silent = Producto.objects.filter(nombre="Silent Hill 2").first()
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
+    fc25 = Producto.objects.filter(nombre="Fc 25", is_deleted=False).first()
+    silent = Producto.objects.filter(nombre="Silent Hill 2", is_deleted=False).first()
 
     return render(request, 'productosmenu.html', {
         'page_obj': page_obj,
-        'productos': page_obj.object_list,  
+        'productos': page_obj.object_list,
         'cod6': cod6,
         'fc25': fc25,
         'silent': silent,
         'favoritos_ids': favoritos_ids,
     })
+
 
 def producto_detalle(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
@@ -740,18 +776,23 @@ def vista_carrusel(request):
     silent = Producto.objects.filter(nombre="Silent Hill 2").first()    
     return render(request, 'productosmenu.html', {'productos': productos, 'cod6': cod6, 'fc25': fc25, 'silent':silent})
 
+
 def productos_por_categoria(request, categoria):
-    productos = Producto.objects.filter(categoria=categoria)
-    
+    productos = Producto.objects.filter(
+        categoria=categoria,
+        is_deleted=False,
+        stock__gt=0
+    )
+
     genero = request.GET.get('genero')
     if genero:
         productos = productos.filter(genero=genero)
-    
+
     precio_min = request.GET.get('precio_min')
     precio_max = request.GET.get('precio_max')
     if precio_min and precio_max:
         productos = productos.filter(precio__gte=precio_min, precio__lte=precio_max)
-    
+
     orden_precio = request.GET.get('orden_precio')
     if orden_precio == 'asc':
         productos = productos.order_by('precio')
@@ -761,19 +802,20 @@ def productos_por_categoria(request, categoria):
     favoritos_ids = []
     usuario_id = request.session.get('usuario_id')
     if usuario_id:
-        favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)  
+        favoritos_ids = Favorito.objects.filter(
+            usuario_id=usuario_id
+        ).values_list('producto_id', flat=True)
 
-    paginator = Paginator(productos, 16) 
+    paginator = Paginator(productos, 16)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)  
+    page_obj = paginator.get_page(page_number)
 
     context = {
         'categoria': dict(Producto.CATEGORIAS).get(categoria, categoria),
-        'productos': productos,
         'generos': Producto.GENEROS,
         'favoritos_ids': favoritos_ids,
         'page_obj': page_obj,
-        'productos': page_obj.object_list,  
+        'productos': page_obj.object_list, 
     }
     return render(request, 'productos_por_categoria.html', context)
 # fin de vistas relacionadas a home y menu
@@ -1178,11 +1220,21 @@ def ver_detalle_devolucion(request, devolucion_id):
         return redirect('login')
     
     usuario = get_object_or_404(Usuario, id=usuario_id)
-    
     devolucion = get_object_or_404(Devolucion, id=devolucion_id, usuario=usuario)
     
+    monto_reembolso = 0
+    try:
+        item_venta = ProductoVenta.objects.get(
+            venta=devolucion.venta, 
+            producto=devolucion.producto
+        )
+        monto_reembolso = item_venta.precio_unitario * devolucion.cantidad
+    except ProductoVenta.DoesNotExist:
+        monto_reembolso = 0
+
     return render(request, 'detalle_devolucion.html', {
-        'devolucion': devolucion
+        'devolucion': devolucion,
+        'monto_reembolso': monto_reembolso 
     })
 
 
@@ -1308,8 +1360,19 @@ def agregar_al_carrito(request, producto_id):
 
 def eliminar_del_carrito(request, item_id):
     if request.method == 'POST':
+        usuario_id = request.session.get('usuario_id')
+        if not usuario_id:
+            return JsonResponse({'success': False, 'error': 'Usuario no autenticado'})
+
+        usuario = get_object_or_404(Usuario, id=usuario_id)
+
         try:
-            item = get_object_or_404(ItemCarritoProducto, id=item_id)
+            item = get_object_or_404(
+                ItemCarritoProducto,
+                id=item_id,
+                carrito__usuario=usuario 
+            )
+
             carrito = item.carrito
             item.delete()
 
@@ -1321,10 +1384,12 @@ def eliminar_del_carrito(request, item_id):
                 'total_items': total_items,
                 'total': total,
             })
+
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Método no permitido'})
+
 
 def actualizar_cantidad_carrito(request):
     if request.method == 'POST':
@@ -1364,16 +1429,27 @@ def ver_carrito(request):
         return redirect('login')
 
     usuario = get_object_or_404(Usuario, id=usuario_id)
-    carrito, created = Carrito.objects.get_or_create(usuario=usuario)
 
-    total_items = sum(item.cantidad for item in carrito.items.all())
+    carrito, creado = Carrito.objects.get_or_create(usuario=usuario)
 
-    return render(request, 'carrito.html', {
-        'carrito': carrito,
-        'productos': carrito.items.all(),
-        'total': carrito.total_carrito(),
-        'total_items': total_items,  
+    items = carrito.items.all()
+
+    for item in items:
+        if item.producto.is_deleted:
+            item.delete()
+
+    items = carrito.items.all()
+
+    total = sum((item.producto.precio or 0) * item.cantidad for item in items)
+    total_items = sum(item.cantidad for item in items)
+
+    return render(request, "carrito.html", {
+        "productos": items,
+        "total": total,
+        "total_items": total_items,
+        "usuario": usuario,
     })
+
 
 def carrito(request):
     return render(request, 'carrito.html')
@@ -1415,8 +1491,17 @@ def lista_favoritos(request):
 
     usuario = get_object_or_404(Usuario, id=usuario_id)
 
-    wishlist_items = Favorito.objects.filter(usuario=usuario)
-    return render(request, 'favorite.html', {'wishlist_items': wishlist_items})
+    favoritos = Favorito.objects.filter(
+        usuario=usuario,
+        producto__is_deleted=False
+    )
+
+    Favorito.objects.filter(
+        usuario=usuario,
+        producto__is_deleted=True
+    ).delete()
+
+    return render(request, 'favorite.html', {'wishlist_items': favoritos})
 
 def agregar_favorito(request, producto_id):
     usuario_id = request.session.get('usuario_id')
@@ -1461,7 +1546,6 @@ def eliminar_favoritos_seleccionados(request):
         return JsonResponse({'success': False, 'error': 'No se seleccionaron items'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
-
 # fin de las vistas de los favoritos
 
 

@@ -178,3 +178,77 @@ h1 {
         height: 100px; 
     }
 }
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.status-success { color: #155724; background-color: #d4edda; }
+.status-danger { color: #721c24; background-color: #f8d7da; }
+.status-warning { color: #856404; background-color: #fff3cd; }
+
+
+/* Caja de Info Producto Destacada */
+.product-info-box {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.label-tiny {
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.product-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #333;
+    line-height: 1.2;
+}
+
+.product-qty {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.refund-amount {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #2F78C4;
+}
+
+/* Botón Ver Compra */
+.btn-ver-compra {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    background-color: white;
+    border: 1px dashed #2F78C4;
+    color: #2F78C4;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.btn-ver-compra:hover {
+    background-color: #f0f7ff;
+    border-style: solid;
+}
+
+/* Caja de Respuesta Admin */
+.admin-response-box {
+    background-color: #f0f8ff;
+    border-left: 4px solid #2F78C4;
+    padding: 15px;
+    border-radius: 0 4px 4px 0;
+}
