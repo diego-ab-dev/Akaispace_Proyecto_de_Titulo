@@ -243,6 +243,44 @@
               </div>
             </div>
         </section>
+
+
+        <!-- Paginacion -->
+      <div class="pagination-wrapper">
+          {% if page_obj.has_previous %}
+              <a href="?buscar={{ query }}&page={{ page_obj.previous_page_number }}" class="page-nav">
+                  <i class="fa-solid fa-chevron-left"></i>
+              </a>
+          {% else %}
+              <span class="page-nav disabled-nav">
+                  <i class="fa-solid fa-chevron-left"></i>
+              </span>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+              
+              {% if num == page_obj.number %}
+                  <span class="page-item active">{{ num }}</span>
+
+              {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                  <a href="?buscar={{ query }}&page={{ num }}" class="page-item">{{ num }}</a>
+
+              {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                  <span class="page-dots">...</span>
+              {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+              <a href="?buscar={{ query }}&page={{ page_obj.next_page_number }}" class="page-nav">
+                  <i class="fa-solid fa-chevron-right"></i>
+              </a>
+          {% else %}
+              <span class="page-nav disabled-nav">
+                  <i class="fa-solid fa-chevron-right"></i>
+              </span>
+          {% endif %}
+      </div>
       
 
       <!--Boton para ir hacia arriba-->

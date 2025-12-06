@@ -645,15 +645,22 @@ def productos_menu(request):
     query = request.GET.get('buscar')
     
     if query:
-        productos = Producto.objects.filter(nombre__icontains=query, stock__gt=0)
+        productos = Producto.objects.filter(nombre__icontains=query, stock__gt=0).order_by('id')
         favoritos_ids = []
         usuario_id = request.session.get('usuario_id')
         if usuario_id:
             favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
+
+        paginator = Paginator(productos, 16) 
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         return render(request, 'resultado_busqueda.html', {
             'productos': productos,
             'query': query,
             'favoritos_ids': favoritos_ids,
+            'page_obj': page_obj,
+            'productos': page_obj.object_list,  
         })
 
     productos = Producto.objects.filter(stock__gt=0).order_by('-id')
@@ -754,13 +761,19 @@ def productos_por_categoria(request, categoria):
     favoritos_ids = []
     usuario_id = request.session.get('usuario_id')
     if usuario_id:
-        favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)    
-    
+        favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)  
+
+    paginator = Paginator(productos, 16) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)  
+
     context = {
         'categoria': dict(Producto.CATEGORIAS).get(categoria, categoria),
         'productos': productos,
         'generos': Producto.GENEROS,
         'favoritos_ids': favoritos_ids,
+        'page_obj': page_obj,
+        'productos': page_obj.object_list,  
     }
     return render(request, 'productos_por_categoria.html', context)
 # fin de vistas relacionadas a home y menu
