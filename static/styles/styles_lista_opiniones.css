@@ -211,3 +211,15 @@ h1 {
     .opinion-card .row { text-align: left; }
     .info-col, .date-col, .comment-col { margin-bottom: 10px; }
 }
+
+
+.opinion-link {
+    text-decoration: none !important; 
+    color: inherit !important; 
+    display: block;
+}
+
+.opinion-link:hover .opinion-card {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}

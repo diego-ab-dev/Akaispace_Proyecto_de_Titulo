@@ -24,6 +24,7 @@
 
         <div class="opinions-list">
             {% for opinion in page_obj %}
+        <a href="{% url 'producto_detalle' opinion.producto.id %}" class="opinion-link">
             <div class="opinion-card">
                 <div class="row align-items-center">
                     
@@ -65,6 +66,7 @@
 
                 </div>
             </div>
+        </a>
             {% empty %}
             <div class="text-center py-5">
                 <p class="h5 text-muted">Aún no has ingresado opiniones.</p>
