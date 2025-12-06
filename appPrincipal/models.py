@@ -254,6 +254,7 @@ class Devolucion(models.Model):
     ]
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='devoluciones', null=True, blank=True)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, null=True, blank=True)
+    cantidad = models.PositiveIntegerField(default=1)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     
     fecha_solicitud = models.DateTimeField(auto_now_add=True)

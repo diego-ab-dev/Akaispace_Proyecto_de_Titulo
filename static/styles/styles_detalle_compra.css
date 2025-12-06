@@ -97,6 +97,7 @@ body {
     padding: 8px 30px;
     font-weight: 600;
     transition: 0.2s;
+    text-decoration: none;
 }
 .btn-devolucion:hover { background-color: #000; color: white; }
 
@@ -319,7 +320,6 @@ body {
     transform: translateY(0);
 }
 
-/* Tipos */
 #notif-box.success {
     background: #28a745;
 }
@@ -327,3 +327,48 @@ body {
 #notif-box.error {
     background: #dc3545;
 }
+
+.productos-scroll {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.productos-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.productos-scroll::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+.productos-scroll::-webkit-scrollbar-thumb {
+    background: #b5b5b5;
+    border-radius: 10px;
+}
+.productos-scroll::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+
+.product-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.mini-img {
+    width: 55px;
+    height: 55px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.product-quantity {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 3px;
+}
+
+
+

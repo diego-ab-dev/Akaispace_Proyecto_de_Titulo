@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load custom_filters %}
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -36,7 +37,13 @@
                             <div>
                                 <div class="product-name">{{ producto.nombre }}</div>
                                 <div class="product-meta">#{{ producto.id }}</div>
-                                <div class="product-meta">Cantidad: 1</div> 
+                                <div class="product-meta">Compraste: {{ cantidad_comprada }}</div>
+                                <label class="form-label">Cantidad a devolver:</label>
+                                <select name="cantidad" class="form-control" required>
+                                    {% for n in cantidad_comprada|range_filter %}
+                                        <option value="{{ n }}">{{ n }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
 

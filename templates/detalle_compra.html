@@ -32,23 +32,44 @@
 
         <div class="info-card">
             <h2 class="card-title">Productos Comprados</h2>
-            
-            {% for item in compra.producto_venta.all %}
-            <div class="product-item">
-                <span class="product-name">{{ item.producto.nombre }}</span>
-                <div class="product-actions">
-                {% if compra.datos_envio.estado == "Entregado" %}
-                    <a href="{% url 'enviar_opinion' item.producto.id %}" class="btn-opinar" style="text-decoration: none;">
-                        Opinar
-                    </a>
+
+            <div class="productos-scroll">
+                {% for item in compra.producto_venta.all %}
+                <div class="product-item">
                     
-                    <a href="{% url 'crear_devolucion' compra.id item.producto.id %}" class="btn-devolucion" style="text-decoration: none;">
-                        Pedir Devolución
-                    </a>
-                {% endif %}
+                    <div class="product-left">
+                        <img src="{{ item.producto.imagen_principal.url }}" class="mini-img">
+                        
+                        <div>
+                            <span class="product-name">{{ item.producto.nombre }}</span>
+                            <div class="product-quantity">
+                                Cantidad: <strong>{{ item.cantidad }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-actions">
+                        {% if compra.datos_envio.estado == "Entregado" %}
+                            <a href="{% url 'enviar_opinion' item.producto.id %}" class="btn-opinar" style="text-decoration: none;">
+                                Opinar
+                            </a>
+
+                            {% if devoluciones_existentes|get_item:item.producto.id %}
+                                <button class="btn-devolucion" disabled style="background:#777; cursor:not-allowed;">
+                                    Solicitud enviada
+                                </button>
+                            {% else %}
+                                <a href="{% url 'crear_devolucion' compra.id item.producto.id %}" 
+                                class="btn-devolucion">
+                                    Pedir Devolución
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
 
         <div class="info-card">

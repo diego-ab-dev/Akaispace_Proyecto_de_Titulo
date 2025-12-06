@@ -4,7 +4,7 @@ from appPrincipal import forms
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, Q, Sum, Exists, OuterRef
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
@@ -947,15 +947,21 @@ def ver_compras(request):
         'orden': orden, 
     })
 
+
 def ver_detalle_compra(request, compra_id):
     compra = get_object_or_404(Venta, id=compra_id)
 
     total_cantidad = sum(item.cantidad for item in compra.producto_venta.all())
 
+    devoluciones = Devolucion.objects.filter(venta=compra)
+    devoluciones_existentes = {d.producto.id: True for d in devoluciones}
+
     return render(request, 'detalle_compra.html', {
         'compra': compra,
-        'total_cantidad': total_cantidad,  
+        'total_cantidad': total_cantidad,
+        'devoluciones_existentes': devoluciones_existentes,   
     })
+
 
 def marcar_recibido(request, compra_id):
     usuario_id = request.session.get('usuario_id')
@@ -1103,6 +1109,8 @@ def crear_devolucion(request, compra_id, producto_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
     producto = get_object_or_404(Producto, id=producto_id)
+    item = compra.producto_venta.get(producto=producto)
+    cantidad_comprada = item.cantidad
 
     if request.method == 'POST':
         motivo = request.POST.get('descripcion') 
@@ -1119,7 +1127,8 @@ def crear_devolucion(request, compra_id, producto_id):
         
     return render(request, 'crear_devolucion.html', {
         'compra': compra,
-        'producto': producto
+        'producto': producto,
+        'cantidad_comprada': cantidad_comprada
     })
 
 
