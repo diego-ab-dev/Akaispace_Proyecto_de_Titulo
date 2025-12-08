@@ -21,6 +21,39 @@
     <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_busqueda.css' %}">
     <title>Resultados para "{{ query }}"</title>
+
+    <style>
+      #notif-box {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 15px 25px;
+          border-radius: 8px;
+          font-weight: bold;
+          color: white;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.4s ease;
+          z-index: 99999;
+          transform: translateY(-20px);
+      }
+
+      #notif-box.success {
+          background-color: #28a745;
+          box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+      }
+
+      #notif-box.error {
+          background-color: #dc3545; 
+          box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+      }
+
+      #notif-box.show {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+      }
+    </style>
 </head>
 <body>
     <!--Nav de la web-->
@@ -179,6 +212,12 @@
     </nav>
     <!--fin del nav-->
 
+
+    <div id="notif-box" class="notif {{ request.GET.type }}">
+        <span id="notif-msg">{{ request.GET.notif }}</span>
+    </div>
+
+
         <div class="main-container">
           <section class="section-products">
             <div class="container">
@@ -196,10 +235,9 @@
                                 <div id="product-4" class="single-product" style="background-color: white; border-radius: 20px; padding: 20px;">
                                     <div class="part-1">
                                         <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
-                                        <span class="new">Tendencia</span>
                                         <ul>
                                             <li>
-                                                <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" style="display: inline;">
+                                                <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar" style="display: inline;">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="cantidad" value="1">
                                                     <button type="submit" class="btn-icon"><i class="fas fa-shopping-cart"></i></button>
@@ -233,7 +271,11 @@
                                         <h4 class="precioprod product-price fw-bold fs-4">${{ producto.precio|formato_chileno }}</h4>
                                     </div>
                                     <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Detalles</a>
-                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn-carrito">Agregar al Carrito</a>
+                                    <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="cantidad" value="1">
+                                        <button type="submit" class="btn-carrito">Agregar al Carrito</button>
+                                    </form>
                                 </div>
                             </div>
                           {% empty %}
@@ -317,49 +359,99 @@
       return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
     }
 
-    // navbar
-    window.addEventListener('DOMContentLoaded', (ev0) => {
-      window.addEventListener('scroll', (ev1) => {
-        document.querySelectorAll(".paused").forEach(elm => {
-          if (isVisible(elm))
-            elm.classList.remove("paused");
-        })
-      });
-    });
-    let navbar = document.querySelector(".navbar");
-    let searchBox = document.querySelector(".search-box .bx-search");
-
-    searchBox.addEventListener("click", ()=>{
+let navbar = document.querySelector(".navbar");
+  let searchBox = document.querySelector(".search-box .bx-search");
+  
+  if (searchBox && navbar) {
+      searchBox.addEventListener("click", () => {
         navbar.classList.toggle("showInput");
-        if(navbar.classList.contains("showInput")){
-        searchBox.classList.replace("bx-search" ,"bx-x");
-        }else {
-        searchBox.classList.replace("bx-x" ,"bx-search");
+        if (navbar.classList.contains("showInput")) {
+          searchBox.classList.replace("bx-search", "bx-x");
+        } else {
+          searchBox.classList.replace("bx-x", "bx-search");
         }
+      });
+  }
+
+  let navLinks = document.querySelector(".nav-links");
+  let menuOpenBtn = document.querySelector(".navbar .bx-menu");
+  let menuCloseBtn = document.querySelector(".nav-links .bx-x");
+
+  if (menuOpenBtn && navLinks) {
+      menuOpenBtn.onclick = function () {
+        navLinks.style.left = "0";
+      }
+  }
+  
+  if (menuCloseBtn && navLinks) {
+      menuCloseBtn.onclick = function () {
+        navLinks.style.left = "-100%";
+      }
+  }
+
+  let htmlcssArrow = document.querySelector(".htmlcss-arrow");
+  if (htmlcssArrow && navLinks) {
+      htmlcssArrow.onclick = function () {
+        navLinks.classList.toggle("show1");
+      }
+  }
+
+  let moreArrow = document.querySelector(".more-arrow");
+  if (moreArrow && navLinks) {
+      moreArrow.onclick = function () {
+        navLinks.classList.toggle("show2");
+      }
+  }
+
+  let jsArrow = document.querySelector(".js-arrow");
+  if (jsArrow && navLinks) {
+      jsArrow.onclick = function () {
+        navLinks.classList.toggle("show3");
+      }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("Iniciando script de carrito...");
+    const forms = document.querySelectorAll('.form-agregar');
+    const notifBox = document.getElementById('notif-box');
+    const notifMsg = document.getElementById('notif-msg');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log("Click detectado, enviando por AJAX...");
+
+            const url = this.action;
+            const formData = new FormData(this);
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if(notifMsg) notifMsg.innerText = data.message;
+                    if(notifBox) {
+                        notifBox.classList.remove('error');
+                        notifBox.classList.add('success', 'show');
+                        setTimeout(() => {
+                            notifBox.classList.remove('show');
+                        }, 3000);
+                    }
+                } else {
+                    console.error('Error reportado por server:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error en fetch:', error);
+            });
+        });
     });
-
-    let navLinks = document.querySelector(".nav-links");
-    let menuOpenBtn = document.querySelector(".navbar .bx-menu");
-    let menuCloseBtn = document.querySelector(".nav-links .bx-x");
-    menuOpenBtn.onclick = function() {
-    navLinks.style.left = "0";
-    }
-    menuCloseBtn.onclick = function() {
-    navLinks.style.left = "-100%";
-    }
-
-    let htmlcssArrow = document.querySelector(".htmlcss-arrow");
-    htmlcssArrow.onclick = function() {
-    navLinks.classList.toggle("show1");
-    }
-    let moreArrow = document.querySelector(".more-arrow");
-    moreArrow.onclick = function() {
-    navLinks.classList.toggle("show2");
-    }
-    let jsArrow = document.querySelector(".js-arrow");
-    jsArrow.onclick = function() {
-    navLinks.classList.toggle("show3");
-    }
+  });
 </script>
 
 

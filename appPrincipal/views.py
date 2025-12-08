@@ -1334,11 +1334,10 @@ def agregar_al_carrito(request, producto_id):
     usuario_id = request.session.get('usuario_id')
     
     if not usuario_id:
-        return redirect('login') 
+        return redirect('login')
 
     usuario = get_object_or_404(Usuario, id=usuario_id)
     carrito, created = Carrito.objects.get_or_create(usuario=usuario)
-
     producto = get_object_or_404(Producto, id=producto_id)
 
     cantidad = int(request.POST.get('cantidad', 1))
@@ -1356,7 +1355,14 @@ def agregar_al_carrito(request, producto_id):
             item_carrito.cantidad += cantidad
             item_carrito.save()
 
-    return redirect('ver_carrito')
+    carrito_total_items = sum(i.cantidad for i in carrito.items.all())
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Producto agregado correctamente',
+        'total_items': carrito_total_items
+    })
+
 
 def eliminar_del_carrito(request, item_id):
     if request.method == 'POST':

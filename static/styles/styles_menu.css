@@ -230,15 +230,6 @@ button:hover .arrow:before {
   background-color: #4E84A8 !important;
 }
 
-
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
-*{
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
-}
 nav{
   position: fixed;
   top: 0;
@@ -837,8 +828,6 @@ nav .navbar .links li .sub-menu li{
   animation-name: slideInRight;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
-a,
 a:hover {
   text-decoration: none;
   color: inherit;
@@ -1258,4 +1247,32 @@ footer{
 
 .footerli {
   text-decoration: none;
+}
+
+
+#notif-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    z-index: 9999;
+}
+
+#notif-box.success {
+    background-color: #28a745;
+}
+
+#notif-box.error {
+    background-color: #dc3545;
+}
+
+#notif-box.show {
+    opacity: 1;
+    visibility: visible;
 }

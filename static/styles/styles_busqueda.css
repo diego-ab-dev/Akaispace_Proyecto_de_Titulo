@@ -222,14 +222,6 @@ body{
   background-color: #4E84A8 !important;
 }
 
-
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
-*{
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
-}
 nav{
   position: fixed;
   top: 0;
@@ -529,8 +521,6 @@ nav .navbar .links li .sub-menu li{
 }
 
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
-a,
 a:hover {
   text-decoration: none;
   color: inherit;
@@ -947,12 +937,12 @@ animation-play-state: paused;
 }
 
 footer{
-    background-color: #1C253B;
-    color: #ffffff;
-    height: auto;
-    padding-top: 20px;
-  }
-  /*enlaces rapidos del footer*/
-  .footerli {
-    text-decoration: none;
-  }
+  background-color: #1C253B;
+  color: #ffffff;
+  height: auto;
+  padding-top: 20px;
+}
+/*enlaces rapidos del footer*/
+.footerli {
+  text-decoration: none;
+}
