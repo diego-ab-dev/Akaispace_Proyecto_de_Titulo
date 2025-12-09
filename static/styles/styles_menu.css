@@ -1276,3 +1276,7 @@ footer{
     opacity: 1;
     visibility: visible;
 }
+#notif-box.favorite {
+    background-color: #e83e8c; 
+    box-shadow: 0 4px 15px rgba(232, 62, 140, 0.4);
+}

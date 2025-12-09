@@ -1512,22 +1512,31 @@ def lista_favoritos(request):
 def agregar_favorito(request, producto_id):
     usuario_id = request.session.get('usuario_id')
     if not usuario_id:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'not_logged_in'})
         return redirect('login') 
 
     usuario = get_object_or_404(Usuario, id=usuario_id)
     producto = get_object_or_404(Producto, id=producto_id)
     
     favorito = Favorito.objects.filter(usuario=usuario, producto=producto).first()
+    
+    agregado = False
 
     if favorito:
         favorito.delete()
+        mensaje = "Eliminado de favoritos"
+        agregado = False
     else:
         Favorito.objects.create(usuario=usuario, producto=producto)
-    next_url = request.META.get('HTTP_REFERER')
-    if next_url:
-        return redirect(next_url)
-        
-    return redirect('producto_detalle', producto_id=producto_id)
+        mensaje = "¡Agregado a favoritos!"
+        agregado = True
+
+    return JsonResponse({
+        'success': True,
+        'message': mensaje,
+        'agregado': agregado  
+    })
 
 @require_http_methods(["DELETE"])
 def eliminar_favorito(request, item_id):

@@ -53,6 +53,11 @@
           visibility: visible;
           transform: translateY(0);
       }
+
+      #notif-box.favorite {
+          background-color: #e83e8c; 
+          box-shadow: 0 4px 15px rgba(232, 62, 140, 0.4);
+      }
     </style>
 </head>
 <body>
@@ -244,16 +249,15 @@
                                                 </form>
                                             </li>
                                             <li>
-                                              <form method="POST" action="{% url 'agregar_favorito' producto.id %}" style="display: inline;">
+                                              <form method="POST" action="{% url 'agregar_favorito' producto.id %}" class="form-favorito" style="display: inline;">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="cantidad" value="1">
                                                 
                                                 <button type="submit" class="btn-icon">
-                                                    {% if producto.id in favoritos_ids %}
-                                                        <i class="fas fa-heart text-danger"></i>
-                                                    {% else %}
-                                                        <i class="far fa-heart text-danger"></i>
-                                                    {% endif %}
+                                                  {% if producto.id in favoritos_ids %}
+                                                      <i class="fas fa-heart" style="color: red;"></i>
+                                                  {% else %}
+                                                      <i class="far fa-heart"></i> {% endif %}
                                                 </button>
                                               </form>
                                             </li>
@@ -411,15 +415,14 @@ let navbar = document.querySelector(".navbar");
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    console.log("Iniciando script de carrito...");
-    const forms = document.querySelectorAll('.form-agregar');
     const notifBox = document.getElementById('notif-box');
     const notifMsg = document.getElementById('notif-msg');
 
+    const forms = document.querySelectorAll('.form-agregar');
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            console.log("Click detectado, enviando por AJAX...");
+            console.log("Agregando al carrito...");
 
             const url = this.action;
             const formData = new FormData(this);
@@ -427,30 +430,68 @@ let navbar = document.querySelector(".navbar");
             fetch(url, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     if(notifMsg) notifMsg.innerText = data.message;
                     if(notifBox) {
-                        notifBox.classList.remove('error');
-                        notifBox.classList.add('success', 'show');
-                        setTimeout(() => {
-                            notifBox.classList.remove('show');
-                        }, 3000);
+                        notifBox.className = 'notif show success'; 
+                        setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
                     }
                 } else {
-                    console.error('Error reportado por server:', data.error);
+                    console.error('Error:', data.error);
                 }
             })
-            .catch(error => {
-                console.error('Error en fetch:', error);
-            });
+            .catch(error => console.error('Error carrito:', error));
         });
     });
+
+    console.log("Cargando lógica de favoritos...");
+    const favForms = document.querySelectorAll('.form-favorito');
+
+    favForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            
+            const url = this.action;
+            const formData = new FormData(this);
+
+            const btnIcon = this.querySelector('button i'); 
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if(notifMsg) notifMsg.innerText = data.message;
+                    if(notifBox) {
+                        notifBox.className = 'notif show favorite';
+                        setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
+                    }
+
+                    if (data.agregado) {
+                        btnIcon.classList.remove('far'); 
+                        btnIcon.classList.add('fas');    
+                        btnIcon.style.color = 'red';
+                    } else {
+                        btnIcon.classList.remove('fas'); 
+                        btnIcon.classList.add('far');    
+                        btnIcon.style.color = '';       
+                    }
+
+                } else if (data.error === 'not_logged_in') {
+                    window.location.href = '/login';
+                }
+            })
+            .catch(error => console.error('Error favoritos:', error));
+        });
+    });
+
   });
 </script>
 
