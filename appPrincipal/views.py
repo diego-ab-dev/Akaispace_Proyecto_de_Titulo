@@ -1066,7 +1066,7 @@ def enviar_opinion(request, producto_id):
                 nueva_opinion.usuario = usuario_actual
                 nueva_opinion.producto = producto
                 nueva_opinion.save()
-                return redirect('perfil') 
+                return redirect('/perfil?notif=Opinión+ingresada+con+éxito&type=success')
             except Exception as e:
                 print(e)
     else:
@@ -1090,6 +1090,7 @@ def lista_opiniones(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'lista_opiniones.html', {'opiniones': opiniones, 'page_obj': page_obj})
+
 
 
 
@@ -1117,7 +1118,7 @@ def crear_reclamo(request, compra_id):
                 asunto=asunto,
                 descripcion=descripcion
             )
-            return redirect('perfil')
+            return redirect('/perfil?notif=Reclamo+enviado+con+éxito&type=success')
 
     return render(request, 'crear_reclamo.html', {
         'compra': compra
@@ -1188,7 +1189,7 @@ def crear_devolucion(request, compra_id, producto_id):
                 imagen3=img3,
                 estado='Pendiente'
             )
-            return redirect('perfil')
+            return redirect('/perfil?notif=Solicitud+de+devolución+enviada+con+éxito&type=success')
 
     return render(request, 'crear_devolucion.html', {
         'compra': compra,

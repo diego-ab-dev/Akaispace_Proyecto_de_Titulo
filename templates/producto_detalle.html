@@ -361,11 +361,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log("DOM Cargado - Iniciando Scripts");
 
-        // --- Variables compartidas ---
         const notifBox = document.getElementById('notif-box');
         const notifMsg = document.getElementById('notif-msg');
-
-        // --- Log de Cantidad ---
         const cantidadSelect = document.querySelector('#cantidad');
         if(cantidadSelect) {
             cantidadSelect.addEventListener('change', function() {
@@ -373,7 +370,6 @@
             });
         }
 
-        // --- Navbar Logic ---
         let navbar = document.querySelector(".navbar");
         let searchBox = document.querySelector(".search-box .bx-search");
         let navLinks = document.querySelector(".nav-links");
@@ -401,7 +397,6 @@
             }
         });
 
-        // --- AJAX: FAVORITOS ---
         const favForms = document.querySelectorAll('.form-favorito');
         favForms.forEach(form => {
             form.addEventListener('submit', function(e) {
@@ -442,14 +437,13 @@
             });
         });
 
-        // --- AJAX: CARRITO ---
         const cartForms = document.querySelectorAll('.form-agregar');
-        console.log("Formularios de carrito encontrados:", cartForms.length); // DEBUG
+        console.log("Formularios de carrito encontrados:", cartForms.length); 
 
         cartForms.forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault(); 
-                console.log("Enviando carrito..."); // DEBUG
+                console.log("Enviando carrito..."); 
 
                 const url = this.action;
                 const formData = new FormData(this);
@@ -461,7 +455,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Respuesta servidor:", data); // DEBUG
+                    console.log("Respuesta servidor:", data); 
                     if (data.success) {
                         if(notifMsg) notifMsg.innerText = data.message;
                         if(notifBox) {
