@@ -207,141 +207,144 @@
 <!--fin del nav-->
 
 
-    <!--Contenido-->
-    <div id="carrito-container">
-      <div class="card">
-        <div id="mensaje-error" style="display:none;" 
-     class="alert alert-danger text-center mt-3"></div>
-          <div class="row">
-              <div class="col-md-8 cart">
-                  <div class="title">
-                      <div class="row">
-                          <div class="col">
-                              <h4 style="white-space: nowrap;"><b>Carrito de Compras</b></h4>
-                          </div>
-                          <div class="col align-self-center text-right text-muted">
-                              <span id="total-items-count-summary">{{ total_items }}</span> items
-                          </div>
-                      </div>
-                  </div>
-  
-                  <div class="row border-top border-bottom products-scroll-container">
-                      {% if productos %}
-                          {% for item in productos %}
-                              <div id="item-{{ item.id }}" class="row main align-items-center">
-                                  <div class="col-2">
-                                      <img class="img-fluid" src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}">
-                                  </div>
-                                  <div class="col">
-                                      <div class="row text-muted">{{ item.producto.nombre }}</div>
-                                      <div class="row text-muted">{{ item.producto.categoria|default:"N/A" }}</div>
-                                  </div>
-                                  <div class="col">
-                                      <form class="d-inline" method="POST" action="{% url 'actualizar_cantidad_carrito' %}" id="form-{{ item.id }}">
-                                          {% csrf_token %}
-                                          <input type="hidden" name="item_id" value="{{ item.id }}">
-                                          <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="{{ item.producto.stock }}" onchange="actualizarCantidad('{{ item.id }}')">
-                                      </form>
-                                  </div>
-                                  <div class="col">$ {{ item.producto.precio|formato_chileno }}</div>
-                                  <a href="#" class="btn-eliminar-item" 
-                                    data-url="{% url 'eliminar_del_carrito' item.id %}" 
-                                    onclick="eliminarItem('{{ item.id }}', this)">✖</a>
-                              </div>
-                          {% endfor %}
-                      {% else %}
-                          <div class="text-center p-4">
-                              <h5 class="text-muted">Tu carrito está vacío.</h5>
-                          </div>
-                      {% endif %}
-                  </div>
-  
-                  <div class="back-to-shop">
-                      <a href="/menu">&leftarrow;</a><span class="text-muted">Regresar</span>
-                  </div>
-              </div>
-  
-              <!--RESUMEN DEL CARRITO-->
-              <div class="col-md-4 summary">
-                <div><h5><b>Resumen</b></h5></div>
-                <hr>
-                <div class="row">
-                  <div class="col total-items-text">
-                      <span id="total-items-count">{{ total_items }}</span> ítems
-                  </div>
-                  <div class="col text-right" id="subtotal-resumen">
-                      ${{ total|formato_chileno }}
-                  </div>
-              </div>
-                {% if productos %}
-                <div class="row">
-                    <div class="col">Envío</div>
-                    <div class="col text-right">$5.990</div>
-                </div>
-                {% endif %}
-
-                <hr>
-
-                {% if productos %}
-                <div class="row">
-                    <div class="col"><b>Total</b></div>
-                    <div class="col text-right">
-                        <b id="total-final">
-                            ${{ total|add:5990|formato_chileno }}
-                        </b>
+<!--Contenido-->
+<div id="carrito-container">
+    <div class="card">
+    <div id="mensaje-error" style="display:none;" 
+    class="alert alert-danger text-center mt-3"></div>
+        <div class="row">
+            <div class="col-md-8 cart">
+                <div class="title">
+                    <div class="row">
+                        <div class="col">
+                            <h4 style="white-space: nowrap;"><b>Carrito de Compras</b></h4>
+                        </div>
+                        <div class="col align-self-center text-right text-muted">
+                            <span id="total-items-count-summary">{{ total_items }}</span> items
+                        </div>
                     </div>
                 </div>
-                {% endif %}
 
-
-                {% if productos %}
-                <div class="envio-box mt-3 p-3">
-                    <div class="d-flex justify-content-between">
-                        <b>Entrega en</b>
-                        <i class="fas fa-edit edit-icon" onclick="abrirModal()"></i>
-                    </div>
-
-                    <p><b>Región:</b> <span id="envio-region">{{ usuario.region }}</span></p>
-                    <p><b>Ciudad:</b> <span id="envio-ciudad">{{ usuario.ciudad }}</span></p>
-                    <p><b>Dirección:</b> <span id="envio-direccion">{{ usuario.direccion }}</span></p>
+                <div class="row border-top border-bottom products-scroll-container">
+                    {% if productos %}
+                        {% for item in productos %}
+                            <div id="item-{{ item.id }}" class="row main align-items-center">
+                                <div class="col-2">
+                                    <img class="img-fluid" src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}">
+                                </div>
+                                <div class="col">
+                                    <div class="row text-muted">{{ item.producto.nombre }}</div>
+                                    <div class="row text-muted">{{ item.producto.categoria|default:"N/A" }}</div>
+                                </div>
+                                <div class="col">
+                                    <form class="d-inline" method="POST" action="{% url 'actualizar_cantidad_carrito' %}" id="form-{{ item.id }}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                        <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="{{ item.producto.stock }}" onchange="actualizarCantidad('{{ item.id }}')">
+                                    </form>
+                                </div>
+                                <div class="col">${{ item.producto.precio|formato_chileno }}</div>
+                                <a href="#" class="btn-eliminar-item" 
+                                data-url="{% url 'eliminar_del_carrito' item.id %}" 
+                                onclick="eliminarItem('{{ item.id }}', this)">✖</a>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <h5 class="text-muted">Tu carrito está vacío.</h5>
+                            <a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a>
+                        </div>
+                    {% endif %}
                 </div>
-                {% endif %}
 
-                {% if productos %}
+                <div class="back-to-shop">
+                    <a href="/menu">&leftarrow;</a><span class="text-muted">Regresar</span>
+                </div>
+            </div>
+
+            <!--RESUMEN DEL CARRITO-->
+            <div class="col-md-4 summary">
+            <div><h5><b>Resumen</b></h5></div>
+            <hr>
+            <div class="row">
+                <div class="col total-items-text">
+                    <span id="total-items-count">{{ total_items }}</span> ítems
+                </div>
+                <div class="col text-right" id="subtotal-resumen">
+                    ${{ total|formato_chileno }}
+                </div>
+            </div>
+            {% if productos %}
+            <div class="row">
+                <div class="col">Envío</div>
+                <div class="col text-right">$5.990</div>
+            </div>
+            {% endif %}
+
+            <hr>
+
+            {% if productos %}
+            <div class="row">
+                <div class="col"><b>Total</b></div>
+                <div class="col text-right">
+                    <b id="total-final">
+                        ${{ total|add:5990|formato_chileno }}
+                    </b>
+                </div>
+            </div>
+            {% endif %}
+
+
+            {% if productos %}
+            <div class="envio-box mt-3 p-3">
+                <div class="d-flex justify-content-between">
+                    <b>Entrega en</b>
+                    <i class="fas fa-edit edit-icon" onclick="abrirModal()"></i>
+                </div>
+
+                <p><b>Región:</b> <span id="envio-region">{{ usuario.region }}</span></p>
+                <p><b>Ciudad:</b> <span id="envio-ciudad">{{ usuario.ciudad }}</span></p>
+                <p><b>Dirección:</b> <span id="envio-direccion">{{ usuario.direccion }}</span></p>
+            </div>
+            {% endif %}
+
+            {% if productos %}
                 <form method="GET" action="{% url 'seleccionar_pago' usuario.id %}">
-                      <button type="submit">
-                          <span class="transition"></span>
-                          <span class="gradient"></span>
-                          <span class="label" style="white-space: nowrap;">Proceder a la compra</span>
-                      </button>
-                  </form>
-                {% else %}
-                <p class="text-muted mt-3">Tu carrito está vacío.</p>
-                {% endif %}
+                    <button type="submit">
+                        <span class="transition"></span>
+                        <span class="gradient"></span>
+                        <span class="label" style="white-space: nowrap;">Proceder a la compra</span>
+                    </button>
+                </form>
+            {% else %}
+            <p class="text-muted mt-3 text-center">Tu carrito está vacío.</p>
+            {% endif %}
+        </div>
+
+        <!--Modal para editar el envio-->
+        <div id="modal-envio" class="modal-envio">
+            <div class="modal-content-envio">
+                <h5><b>Editar datos de envío</b></h5>
+
+                <label>Región</label>
+                <select id="input-region" onchange="cargarCiudades()"></select>
+
+                <label>Ciudad</label>
+                <select id="input-ciudad"></select>
+
+
+                <label>Dirección</label>
+                <input type="text" id="input-direccion">
+
+                <br><br>
+
+                <button onclick="guardarEnvio()" class="btn-save" style="background-color: #4e84a8;">Guardar</button>
+                <button onclick="cerrarModal()" class="btn-cancel" style="background-color: #1c253b;">Cancelar</button>
             </div>
-
-            <!--Modal para editar el envio-->
-            <div id="modal-envio" class="modal-envio">
-                <div class="modal-content-envio">
-                    <h5><b>Editar datos de envío</b></h5>
-
-                    <label>Región</label>
-                    <select id="input-region" onchange="cargarCiudades()"></select>
-
-                    <label>Ciudad</label>
-                    <select id="input-ciudad"></select>
-
-
-                    <label>Dirección</label>
-                    <input type="text" id="input-direccion">
-
-                    <button onclick="guardarEnvio()" class="btn-save">Guardar</button>
-                    <button onclick="cerrarModal()" class="btn-cancel">Cancelar</button>
-                </div>
-            </div>
-          </div>
-      </div>
-  </div>
+        </div>
+        </div>
+    </div>
+</div>
 
 <script>
     // lista de regiones y ciudades para el modal
@@ -469,14 +472,14 @@ function eliminarItem(itemId, element) {
 
             if (data.total_items === 0) {
                 const container = document.querySelector('.cart');
-                if (container) container.innerHTML = '<div class="text-center p-4"><h5 class="text-muted">Tu carrito está vacío.</h5></div>';
+                if (container) container.innerHTML = '<div class="text-center py-5"> <h5 class="text-muted">Tu carrito está vacío.</h5> <a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a> </div>';
 
                 const resumen = document.querySelector('.summary');
                 if (resumen) {
                     resumen.innerHTML = `
                         <div><h5><b>Resumen</b></h5></div>
                         <hr>
-                        <p class="text-muted">No puedes proceder a la compra porque tu carrito está vacío.</p>
+                        <p class="text-muted text-center">Tu carrito está vacío.</p>
                     `;
                 }
             } else {

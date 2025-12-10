@@ -576,6 +576,17 @@ nav .navbar .links li:hover .js-sub-menu {
     background-color: #4E84A8 !important; 
 }
 
+.btn-explorar {
+  background-color: #1C253B;
+  color: #ffffff;
+}
+
+.btn-explorar:hover {
+  background-color: #344266;
+  color: #ffffff;
+}
+
+
 
 /*footer*/
 footer {

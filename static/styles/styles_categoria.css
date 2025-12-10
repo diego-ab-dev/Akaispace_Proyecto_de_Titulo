@@ -807,6 +807,12 @@ nav .navbar .links li .sub-menu li{
     align-items: center;
     margin: 40px 0 60px;
     gap: 20px;
+    background-color: #FAFAFA;
+    margin-left: 150px;
+    margin-right: 150px;
+    padding-bottom: 20px;
+    padding-top: 20px;
+    border-radius: 20px;
 }
 
 .page-item {
@@ -848,7 +854,6 @@ nav .navbar .links li .sub-menu li{
     justify-content: center;
     align-items: center;
     border-radius: 50%;
-    border: 1px solid #ddd;
     cursor: pointer;
     transition: 0.2s;
 }

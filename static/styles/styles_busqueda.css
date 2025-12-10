@@ -222,6 +222,9 @@ body{
   background-color: #4E84A8 !important;
 }
 
+
+
+
 nav{
   position: fixed;
   top: 0;
@@ -786,6 +789,12 @@ animation-play-state: paused;
     align-items: center;
     margin: 40px 0 60px;
     gap: 20px;
+    background-color: #FAFAFA;
+    margin-left: 150px;
+    margin-right: 150px;
+    padding-bottom: 20px;
+    padding-top: 20px;
+    border-radius: 20px;
 }
 
 .page-item {
@@ -827,7 +836,6 @@ animation-play-state: paused;
     justify-content: center;
     align-items: center;
     border-radius: 50%;
-    border: 1px solid #ddd;
     cursor: pointer;
     transition: 0.2s;
 }

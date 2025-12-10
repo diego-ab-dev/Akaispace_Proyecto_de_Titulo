@@ -75,149 +75,155 @@ button:hover .arrow:before {
   color: #0f0b00;
 }
 
-  .menu {
-    font-size: 16px;
-    line-height: 1.6;
-    color: #000000;
-    width: fit-content;
-    display: flex;
-    list-style: none;
-  }
-  
-  .menu a {
-    text-decoration: none;
-    color: inherit;
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-  }
-  
-  .link {
-    background-color: #ffffff;
-  }
-  
-  .menu .link {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 12px 36px;
-    border-radius: 16px;
-    overflow: hidden;
-    transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  
-  .menu .link::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #0a3cff;
-    z-index: -1;
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.48s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  
-  .menu .link svg {
-    width: 14px;
-    height: 14px;
-    fill: #000000;
-    transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  
-  .menu .item {
-    position: relative;
-  }
-  
-  .menu .item .submenu {
-    background-color: #804040;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: absolute;
-    top: 100%;
-    border-radius: 0 0 16px 16px;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    border: 1px solid #cccccc;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-12px);
-    transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
-    z-index: 1;
-    pointer-events: none;
-    list-style: none;
-  }
-  
-  .menu .item:hover .submenu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
-    border-top: transparent;
-    border-color: #2c2e33;
-  }
-  
-  .menu .item:hover .link {
-    color: #000000;
-    border-radius: 16px 16px 0 0;
-  }
-  
-  .menu .item:hover .link::after {
-    transform: scaleX(1);
-    transform-origin: right;
-  }
-  
-  .menu .item:hover .link svg {
-    fill: #000000;
-    transform: rotate(-180deg);
-  }
-  
-  .submenu .submenu-item {
-    width: 100%;
-    transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  
-  .submenu .submenu-link {
-    display: block;
-    padding: 12px 24px;
-    width: 100%;
-    position: relative;
-    text-align: center;
-    transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  
-  .submenu .submenu-item:last-child .submenu-link {
-    border-bottom: none;
-  }
-  
-  .submenu .submenu-link::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    transform: scaleX(0);
-    width: 100%;
-    height: 100%;
-    background-color: #831c1c;
-    z-index: -1;
-    transform-origin: left;
-    transition: transform 0.48s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  
-  .submenu .submenu-link:hover:before {
-    transform: scaleX(1);
-    transform-origin: right;
-  }
-  
-  .submenu .submenu-link:hover {
-    color: #ffffff;
-  }
+.menu {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #000000;
+  width: fit-content;
+  display: flex;
+  list-style: none;
+}
+
+.menu a {
+  text-decoration: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.link {
+  background-color: #ffffff;
+}
+
+.menu .link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 36px;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.menu .link::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0a3cff;
+  z-index: -1;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.menu .link svg {
+  width: 14px;
+  height: 14px;
+  fill: #000000;
+  transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.menu .item {
+  position: relative;
+}
+
+.menu .item .submenu {
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  top: 100%;
+  border-radius: 0 0 16px 16px;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #cccccc;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px);
+  transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 1;
+  pointer-events: none;
+  list-style: none;
+}
+
+.menu .item:hover .submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+  border-top: transparent;
+  border-color: #2c2e33;
+}
+
+.menu .item:hover .link {
+  color: #000000;
+  border-radius: 16px 16px 0 0;
+}
+
+.menu .item:hover .link::after {
+  transform: scaleX(1);
+  transform-origin: right;
+}
+
+.menu .item:hover .link svg {
+  fill: #000000;
+  transform: rotate(-180deg);
+}
+
+.submenu .submenu-item {
+  width: 100%;
+  transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.submenu .submenu-link {
+  display: block;
+  padding: 12px 24px;
+  width: 100%;
+  position: relative;
+  text-align: center;
+  transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.submenu .submenu-item:last-child .submenu-link {
+  border-bottom: none;
+}
+
+.submenu .submenu-link::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scaleX(0);
+  width: 100%;
+  height: 100%;
+  background-color: #831c1c;
+  z-index: -1;
+  transform-origin: left;
+  transition: transform 0.48s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.submenu .submenu-link:hover:before {
+  transform: scaleX(1);
+  transform-origin: right;
+}
+
+.submenu .submenu-link:hover {
+  color: #ffffff;
+}
+
+.perfil-item .submenu-link::before {
+background-color: #4E84A8 !important;
+}
+
+
 
 
 nav{
@@ -518,65 +524,65 @@ nav .navbar .links li .sub-menu li{
 } 
 }
 
-  .buttonlogreg {
-    --primary-color: #9c9592;
-    --secondary-color: #fff;
-    --hover-color: #6e6e6e;
-    --arrow-width: 10px;
-    --arrow-stroke: 2px;
-    box-sizing: border-box;
-    border: 0;
-    border-radius: 10px;
-    color: var(--secondary-color);
-    background: var(--primary-color);
-    display: flex;
-    padding: 10px;
-    transition: 0.2s background;
-    align-items: center;
-    gap: 0.6em;
-    font-weight: bold;
-  }
-  
-  .buttonlogreg .arrow-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .buttonlogreg .arrow {
-    margin-top: 1px;
-    width: var(--arrow-width);
-    background: var(--primary-color);
-    height: var(--arrow-stroke);
-    position: relative;
-    transition: 0.2s;
-  }
-  
-  .buttonlogreg .arrow::before {
-    content: "";
-    box-sizing: border-box;
-    position: absolute;
-    border: solid var(--secondary-color);
-    border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
-    display: inline-block;
-    top: -3px;
-    right: 3px;
-    transition: 0.2s;
-    padding: 3px;
-    transform: rotate(-45deg);
-  }
-  
-  .buttonlogreg:hover {
-    background-color: var(--hover-color);
-  }
-  
-  .buttonlogreg:hover .arrow {
-    background: var(--secondary-color);
-  }
-  
-  .buttonlogreg:hover .arrow:before {
-    right: 0;
-  }
+.buttonlogreg {
+  --primary-color: #9c9592;
+  --secondary-color: #fff;
+  --hover-color: #6e6e6e;
+  --arrow-width: 10px;
+  --arrow-stroke: 2px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 10px;
+  color: var(--secondary-color);
+  background: var(--primary-color);
+  display: flex;
+  padding: 10px;
+  transition: 0.2s background;
+  align-items: center;
+  gap: 0.6em;
+  font-weight: bold;
+}
+
+.buttonlogreg .arrow-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.buttonlogreg .arrow {
+  margin-top: 1px;
+  width: var(--arrow-width);
+  background: var(--primary-color);
+  height: var(--arrow-stroke);
+  position: relative;
+  transition: 0.2s;
+}
+
+.buttonlogreg .arrow::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  border: solid var(--secondary-color);
+  border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
+  display: inline-block;
+  top: -3px;
+  right: 3px;
+  transition: 0.2s;
+  padding: 3px;
+  transform: rotate(-45deg);
+}
+
+.buttonlogreg:hover {
+  background-color: var(--hover-color);
+}
+
+.buttonlogreg:hover .arrow {
+  background: var(--secondary-color);
+}
+
+.buttonlogreg:hover .arrow:before {
+  right: 0;
+}
   
 .contdet {
     max-width: 75%;
@@ -884,7 +890,7 @@ label,
     border-radius: 5px;
     padding: 5px;
     cursor: pointer;
-    background-color: white;
+    background-color: rgb(206, 32, 32);
     display: flex;
     align-items: center;
     justify-content: center;

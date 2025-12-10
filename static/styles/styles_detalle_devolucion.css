@@ -189,8 +189,6 @@ h1 {
 .status-danger { color: #721c24; background-color: #f8d7da; }
 .status-warning { color: #856404; background-color: #fff3cd; }
 
-
-/* Caja de Info Producto Destacada */
 .product-info-box {
     background-color: #f8f9fa;
     border: 1px solid #e9ecef;
@@ -224,7 +222,7 @@ h1 {
     color: #2F78C4;
 }
 
-/* Botón Ver Compra */
+
 .btn-ver-compra {
     display: block;
     width: 100%;
@@ -245,7 +243,6 @@ h1 {
     border-style: solid;
 }
 
-/* Caja de Respuesta Admin */
 .admin-response-box {
     background-color: #f0f8ff;
     border-left: 4px solid #2F78C4;

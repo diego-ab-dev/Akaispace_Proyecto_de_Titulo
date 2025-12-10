@@ -650,7 +650,7 @@ nav .navbar .links li .sub-menu li{
 
 .carousel-control-prev:hover,
 .carousel-control-next:hover {
-    background-color: #4e84a8;
+    background-color: #344266;
     opacity: 1;
     transform: scale(1.1); 
 }
@@ -1075,6 +1075,12 @@ a:hover {
     align-items: center;
     margin: 40px 0 60px;
     gap: 20px;
+    background-color: #FAFAFA;
+    margin-left: 150px;
+    margin-right: 150px;
+    padding-bottom: 20px;
+    padding-top: 20px;
+    border-radius: 20px;
 }
 
 .page-item {
@@ -1116,7 +1122,6 @@ a:hover {
     justify-content: center;
     align-items: center;
     border-radius: 50%;
-    border: 1px solid #ddd;
     cursor: pointer;
     transition: 0.2s;
 }

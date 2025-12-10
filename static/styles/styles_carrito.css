@@ -685,11 +685,15 @@ a:hover {
 .btn-save {
     width: 100%;
     padding: 10px;
-    background: #2c6ea8;
+    background: #4E84A8;
     border: none;
     color: white;
     margin-bottom: 5px;
     border-radius: 6px;
+}
+
+.btn-save:hover{
+  background-color: #4a6f8a;
 }
 
 .btn-cancel {
@@ -699,6 +703,7 @@ a:hover {
     border: none;
     color: white;
     border-radius: 6px;
+    background-color: #1C253B;
 }
 
 .edit-icon {
@@ -709,6 +714,16 @@ a:hover {
 
 .edit-icon:hover {
   transform: scale(1.1);
+}
+
+.btn-explorar {
+  background-color: #1C253B;
+  color: #ffffff;
+}
+
+.btn-explorar:hover {
+  background-color: #344266;
+  color: #ffffff;
 }
 
 

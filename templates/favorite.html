@@ -234,7 +234,7 @@
             </button>
             </div>
 
-            <div class="wishlist-container bg-white rounded border p-4 shadow-sm">
+            <div class="wishlist-container rounded border p-4 shadow-sm" style="background-color: #fafafa;">
             
             {% if wishlist_items %}
                 {% for item in wishlist_items %}
@@ -246,7 +246,7 @@
 
                     <div class="item-details flex-grow-1">
                         <h5 class="fw-bold mb-1">{{ item.producto.nombre }}</h5>
-                        <p class="text-muted mb-1 fs-5">$ {{ item.producto.precio|formato_chileno }}</p>
+                        <p class="text-muted mb-1 fs-5">${{ item.producto.precio|formato_chileno }}</p>
                         
                         <small class="text-muted">
                             Disponibilidad: 
@@ -273,7 +273,7 @@
             {% else %}
                 <div class="text-center py-5">
                     <h5 class="text-muted">Tu lista de favoritos está vacía.</h5>
-                    <a href="/menu" class="btn btn-outline-dark mt-3">Explorar Productos</a>
+                    <a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a>
                 </div>
             {% endif %}
 
