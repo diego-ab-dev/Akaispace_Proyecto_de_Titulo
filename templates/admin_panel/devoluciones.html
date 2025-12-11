@@ -142,7 +142,15 @@
 
                         </td>
                         <td>
-                            <a href="{% url 'responder_devolucion' devolucion.id %}" class="btn-responder btn btn-sm">Responder</a>
+                            {% if devolucion.estado == 'Pendiente' %}
+                                <a href="{% url 'responder_devolucion' devolucion.id %}" class="btn-responder btn btn-sm">
+                                    Responder
+                                </a>
+                            {% else %}
+                                <a href="{% url 'detalle_devolucion' devolucion.id %}" class="btn btn-secondary btn-sm" style="border-radius: 20px;">
+                                    <i class='bx'></i> Ver Detalle
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

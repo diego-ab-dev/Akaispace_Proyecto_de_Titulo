@@ -1,0 +1,133 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap");
+
+body {
+    background-color: #EEF1F4;
+    font-family: 'Nunito', sans-serif;
+    color: #1C253B;
+    padding-bottom: 40px;
+}
+
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #333;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: color 0.2s;
+}
+
+.detail-card {
+    background-color: #fafafa;
+    border-radius: 16px; 
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+    height: 100%; 
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.label-bold {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #1C253B;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.text-content {
+    font-size: 1rem;
+    color: #4a4a4a;
+    line-height: 1.7;
+    max-height: 350px; 
+    overflow-y: auto; 
+    word-wrap: break-word; 
+    padding: 15px;
+    border-radius: 12px;
+    background-color: #f8f9fa; 
+    border: 1px solid #e9ecef;
+}
+
+.text-content::-webkit-scrollbar {
+    width: 6px;
+}
+.text-content::-webkit-scrollbar-track {
+    background: transparent; 
+}
+.text-content::-webkit-scrollbar-thumb {
+    background: #cbd5e0; 
+    border-radius: 10px;
+}
+.text-content::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0; 
+}
+
+.response-bg {
+    background-color: #fafafa; 
+    border-color: #cfe2ff;
+    color: #2c3e50;
+}
+
+.user-info-box {
+    background-color: #fff;
+    border-left: 4px solid #1C253B;
+    padding: 10px 15px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #f8f9fa, #fff);
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    background-color: #1C253B;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.btn-ver-compra {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+    background-color: white;
+    border: 2px dashed #4e84a8;
+    color: #4e84a8;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-ver-compra:hover {
+    background-color: #f0f7ff;
+    border-style: solid;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 992px) {
+    .detail-card {
+        height: auto;
+    }
+}
+
+.text-asunto {
+    word-wrap: break-word;       
+    overflow-wrap: break-word;  
+    word-break: break-word;      
+    display: inline-block;       
+    max-width: 100%;            
+    vertical-align: top;
+}

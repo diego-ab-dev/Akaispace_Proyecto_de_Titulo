@@ -147,7 +147,15 @@
                         </td>
                         <td>{{ reclamo.fecha|date:"d/m/Y H:i"}}</td>
                         <td>
-                            <a href="{% url 'responder_reclamo' reclamo.id %}" class="btn-responder btn btn-sm">Responder</a>
+                            {% if reclamo.estado == 'Respondido' %}
+                                <a href="{% url 'detalle_reclamo' reclamo.id %}" class="btn btn-secondary btn-sm" style="border-radius: 20px;">
+                                    <i class='bx'></i> Ver Detalle
+                                </a>
+                            {% else %}
+                                <a href="{% url 'responder_reclamo' reclamo.id %}" class="btn-responder btn btn-sm">
+                                    <i class='bx'></i> Responder
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

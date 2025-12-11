@@ -439,6 +439,13 @@ def responder_devolucion(request, devolucion_id):
         'devolucion': devolucion,
         'monto_a_reembolsar': monto_a_reembolsar 
     })
+
+@admin_required
+def detalle_devolucion(request, devolucion_id):
+    devolucion = get_object_or_404(Devolucion, id=devolucion_id)
+    return render(request, 'admin_panel/detalle_devolucion.html', {
+        'devolucion': devolucion
+    })
 #fin
 
 
@@ -510,6 +517,16 @@ def responder_reclamo(request, reclamo_id):
         reclamo.save()
         return redirect('admin_reclamos')
     return render(request, 'admin_panel/responder_reclamo.html', {'reclamo': reclamo})
+
+
+@admin_required
+def detalle_reclamo(request, reclamo_id):
+    reclamo = get_object_or_404(Reclamo, id=reclamo_id)
+    
+    context = {
+        'reclamo': reclamo
+    }
+    return render(request, 'admin_panel/detalle_reclamo.html', context)
 # fin
 
 

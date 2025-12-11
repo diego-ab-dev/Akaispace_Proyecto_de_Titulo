@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+{% load static %}
+{% load custom_filters %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Detalle Devolución #{{ devolucion.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+    <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_detalle_devolucion.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
+</head>
+<body>
+    <div class="main-container">
+        
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 fw-bold text-dark">Solicitud de Devolución #{{ devolucion.id }}</h1>
+            <a href="{% url 'admin_devoluciones' %}" class="btn-back">
+                <i class='bx bx-arrow-back'></i> Volver al listado
+            </a>
+        </div>
+
+        <div class="row g-4">
+            
+            <div class="col-lg-6">
+                <div class="detail-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge 
+                                {% if devolucion.estado == 'Pendiente' %}bg-warning text-dark
+                                {% elif devolucion.estado == 'Aprobada' %}bg-success
+                                {% elif devolucion.estado == 'Rechazada' %}bg-danger
+                                {% else %}bg-secondary{% endif %} 
+                                px-3 py-2 rounded-pill">
+                                {{ devolucion.estado }}
+                            </span>
+                        </div>
+                        <span class="text-muted small">
+                            <i class="far fa-calendar-alt"></i> {{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}
+                        </span>
+                    </div>
+
+                    <div class="user-info-box mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-circle">
+                                <i class='bx bx-user'></i>
+                            </div>
+                            <div>
+                                <h6 class="m-0 fw-bold">{{ devolucion.usuario.nombre }}</h6>
+                                <small class="text-muted">{{ devolucion.usuario.email }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="label-bold">Producto a Devolver:</label>
+                        <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
+                            <img src="{{ devolucion.producto.imagen_principal.url }}" class="producto-miniatura" alt="Imagen producto">
+                            <div>
+                                <strong class="d-block">{{ devolucion.producto.nombre }}</strong>
+                                <small class="text-muted">ID Producto: {{ devolucion.producto.id }} | Cantidad: {{ devolucion.cantidad }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if devolucion.venta %}
+                    <div class="mb-4">
+                        <a href="{% url 'detalle_venta' devolucion.venta.id %}" class="btn-ver-compra" title="Ver detalle de venta #{{ devolucion.venta.id }}">
+                            <i class="fas fa-receipt me-2"></i> Venta asociada #{{ devolucion.venta.id }} - ${{ devolucion.venta.total|formato_chileno }}
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="label-bold">Motivo de la devolución:</label>
+                        <div class="text-content">
+                            {{ devolucion.motivo|linebreaksbr }}
+                        </div>
+                    </div>
+
+                    {% if devolucion.imagen1 or devolucion.imagen2 or devolucion.imagen3 %}
+                    <div class="mt-4 border-top pt-3">
+                        <label class="label-bold mb-3"><i class="far fa-images me-2"></i>Evidencia Adjunta:</label>
+                        <div class="evidence-gallery d-flex gap-2 flex-wrap">
+                            {% if devolucion.imagen1 %}
+                                <div class="thumb-box">
+                                    <img src="{{ devolucion.imagen1.url }}" onclick="abrirModal(this.src)" alt="Evidencia 1">
+                                </div>
+                            {% endif %}
+                            {% if devolucion.imagen2 %}
+                                <div class="thumb-box">
+                                    <img src="{{ devolucion.imagen2.url }}" onclick="abrirModal(this.src)" alt="Evidencia 2">
+                                </div>
+                            {% endif %}
+                            {% if devolucion.imagen3 %}
+                                <div class="thumb-box">
+                                    <img src="{{ devolucion.imagen3.url }}" onclick="abrirModal(this.src)" alt="Evidencia 3">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="detail-card h-100 d-flex flex-column">
+                    <div class="mb-3 border-bottom pb-2">
+                        <span class="label-bold d-flex align-items-center gap-2">
+                            <i class='bx bx-gavel fs-4'></i> Resolución Administración
+                        </span>
+                    </div>
+
+                    {% if devolucion.estado != 'Pendiente' %}
+                        <div class="alert {% if devolucion.estado == 'Aprobada' %}alert-success{% else %}alert-danger{% endif %} mb-3">
+                            <strong>Decisión: {{ devolucion.estado }}</strong>
+                        </div>
+
+                        <label class="label-bold">Comentarios de resolución:</label>
+                        <div class="text-content response-bg flex-grow-1">
+                            {{ devolucion.respuesta_admin|default:"Sin comentarios adicionales."|linebreaksbr }}
+                        </div>
+                        
+                        <div class="mt-3 d-flex justify-content-between align-items-end">
+                            <span class="text-muted small">
+                                <i class="fas text-success"></i> Resuelto el: {{ devolucion.fecha_resolucion|date:"d/m/Y H:i" }}
+                            </span>
+                        </div>
+                    {% else %}
+                        <div class="empty-response-box flex-grow-1 d-flex flex-column justify-content-center align-items-center text-muted">
+                            <i class='bx bx-time-five fs-1 mb-2'></i>
+                            <p>Esta solicitud está pendiente de revisión.</p>
+                            <a href="{% url 'responder_devolucion' devolucion.id %}" class="btn btn-primary btn-sm rounded-pill mt-3">
+                                Resolver Solicitud
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="adminImageModal" class="image-modal">
+        <span class="close-btn" onclick="cerrarModal()">&times;</span>
+        <img class="modal-content" id="imgExpanded">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function abrirModal(src) {
+            const modal = document.getElementById("adminImageModal");
+            const modalImg = document.getElementById("imgExpanded");
+            modal.style.display = "flex";
+            modalImg.src = src;
+        }
+
+        function cerrarModal() {
+            document.getElementById("adminImageModal").style.display = "none";
+        }
+
+        document.getElementById("adminImageModal").addEventListener("click", function(e) {
+            if (e.target === this) cerrarModal();
+        });
+    </script>
+</body>
+</html>
