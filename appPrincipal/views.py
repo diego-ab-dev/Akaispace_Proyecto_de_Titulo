@@ -615,6 +615,9 @@ def modificar_venta(request, venta_id):
             if not re.match(r'^[A-Za-z0-9]{5,20}$', tracking_post):
                 error = "Número de seguimiento inválido. Solo letras y números (5–20 caracteres)."
 
+            elif Envio.objects.filter(numero_seguimiento=tracking_post).exclude(id=envio.id if envio else None).exists():
+                error = f"Error: El número '{tracking_post}' ya fue asignado a otro pedido anteriormente."
+        
         if error:
             return render(request, 'admin_panel/modificar_venta.html', {
                 'venta': venta,
