@@ -33,7 +33,7 @@
                         
                         <div class="info-row">
                             <span>Fecha</span>
-                            <span class="text-end">{{ venta.fecha|date:"d/m/Y" }}</span>
+                            <span class="text-end">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
                         </div>
                         <div class="info-row">
                             <span>Cantidad total</span>
@@ -47,13 +47,13 @@
                             <span>Envío</span>
                             <span class="text-end">${{ venta.envio|formato_chileno }}</span>
                         </div>
-                        <div class="info-row fw-bold text-dark">
-                            <span>Total</span>
-                            <span class="text-end">${{ venta.total|formato_chileno }}</span>
-                        </div>
                         <div class="info-row">
                             <span>Método de Pago</span>
                             <span class="text-end">{{ metodo_pago|title|default:"Tarjeta" }}</span>
+                        </div>
+                        <div class="info-row fw-bold text-dark">
+                            <span>Total</span>
+                            <span class="text-end">${{ venta.total|formato_chileno }}</span>
                         </div>
                     </div>
                 </div>
@@ -89,11 +89,11 @@
             </div>
             <!--acciones-->
             <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
-                <a href="{% url 'ver_boleta' venta.id %}" target="_blank" class="btn btn-dark rounded-pill px-4 py-2 d-flex align-items-center gap-2">
+                <a href="{% url 'ver_boleta' venta.id %}" target="_blank" class="btn btn-boleta">
                     Descargar Boleta <i class="fas fa-download"></i>
                 </a>
                 
-                <a href="{% url 'ver_compras' %}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold" style="background-color: #527e99; border: none;">
+                <a href="{% url 'ver_compras' %}" class="btn btn-compras">
                     Ir a mis compras
                 </a>
             </div>
@@ -103,7 +103,7 @@
             
             <div class="products-list">
                 {% for producto_venta in venta.producto_venta.all %}
-                <div class="product-card d-flex align-items-center bg-white p-3 rounded border mb-3">
+                <div class="product-card d-flex align-items-center p-3 rounded mb-3" style="background-color: #fafafa;">
                     <div class="prod-img me-3 bg-light rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                         <img src="{{ producto_venta.producto.imagen_principal.url }}" alt="{{ producto_venta.producto.nombre }}" class="img-fluid" style="max-height: 60px;">
                     </div>
@@ -118,7 +118,7 @@
             </div>
 
             <div class="text-center mt-5 mb-5">
-                <a href="{% url 'home' %}" class="btn btn-dark px-4 py-2" style="background-color: #1F2533;">Regresar al Catálogo</a>
+                <a href="{% url 'home' %}" class="btn btn-regresar">Regresar al Catálogo</a>
             </div>
         </div>
     </div>

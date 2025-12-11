@@ -41,7 +41,7 @@ h1 {
 }
 
 .detail-card {
-    background-color: white;
+    background-color: #fafafa;
     border-radius: 12px;
     padding: 30px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.03);
@@ -61,6 +61,53 @@ h1 {
     color: #4a4a4a;
     line-height: 1.6;
     margin-bottom: 20px;
+    max-height: 300px; 
+    overflow-y: auto; 
+    word-wrap: break-word; 
+    word-break: break-word;
+    white-space: pre-line; 
+    padding-right: 10px; 
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.text-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.text-content::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+    border-radius: 4px;
+}
+
+.text-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+
+.text-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
+}
+
+.btn-ver-compra {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    background-color: white;
+    border: 1px dashed #2F78C4;
+    color: #4e84a8;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.btn-ver-compra:hover {
+    background-color: #f0f7ff;
+    border-style: solid;
 }
 
 .date-text {
@@ -68,13 +115,22 @@ h1 {
     font-size: 1.1rem;
 }
 
-.status-success {
-    color: #4CAF50; 
-    font-weight: 600;
-}
 
 @media (max-width: 768px) {
     .page-header { display: flex; flex-direction: column; gap: 15px; }
     .btn-regresar { position: relative; transform: none; }
     .col-md-6 { margin-bottom: 20px; }
+}
+
+
+.estado-texto {
+    font-weight: 700; 
+}
+
+.estado-abierto {
+    color: #ff9800; 
+}
+
+.estado-respondido {
+    color: #4CAF50; 
 }

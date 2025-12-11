@@ -48,7 +48,9 @@
 
                         <div>
                             <span class="info-label" style="display:inline;">Estado: </span>
-                            <span class="info-value">{{ devolucion.estado }}</span>
+                            <span class="info-value estado-texto estado-{{ devolucion.estado|slugify }}">
+                                {{ devolucion.estado }}
+                            </span>
                         </div>
                     </div>
 

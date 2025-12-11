@@ -9,44 +9,44 @@ body{
     min-height: 100vh;
   }
   
-  .bg-image {
-    background-image: url('https://berlitzoaxaca.com.mx/wp-content/uploads/2022/08/aprende-ingles-jugando-oax.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    position: relative;
-  }
+.bg-image {
+  background-image: url('https://berlitzoaxaca.com.mx/wp-content/uploads/2022/08/aprende-ingles-jugando-oax.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
 
-  .bg-image:before {
-    background-color: rgba(0,0,0,0.6);
-    content:'';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-  }
-  
-  .login-heading {
-    font-weight: 300;
-  }
-  
-  .btn-login {
-    font-size: 0.9rem;
-    letter-spacing: 0.05rem;
-    padding: 0.75rem 1rem;
-    background-color: #4E84A8; 
-    color: #ffff;
-  }
+.bg-image:before {
+  background-color: rgba(0,0,0,0.6);
+  content:'';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
 
-  .btn-login:hover {
-    background-color: #88b2ce;
-    color: #ffffff;
-  }
+.login-heading {
+  font-weight: 300;
+}
 
-  .form-floating {
-    margin-bottom: 2rem; 
-  }
+.btn-login {
+  font-size: 0.9rem;
+  letter-spacing: 0.05rem;
+  padding: 0.75rem 1rem;
+  background-color: #4E84A8; 
+  color: #ffff;
+}
+
+.btn-login:hover {
+  background-color: #4a6f8a;
+  color: #ffffff;
+}
+
+.form-floating {
+  margin-bottom: 2rem; 
+}
 
 .is-invalid {
     border-color: #dc3545; 
@@ -69,7 +69,7 @@ body{
 }
 
 .btn-volver:hover {
-  background-color: #3d4a69;
+  background-color: #344266;
   color: #ffffff;
 }
 

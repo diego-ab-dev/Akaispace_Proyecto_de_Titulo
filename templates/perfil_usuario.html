@@ -96,7 +96,7 @@
                     <div class="card-content">
                         {% for devolucion in devoluciones_recientes|slice:":1" %}
                             <p><strong>Producto:</strong> {{ devolucion.producto.nombre }}</p>
-                            <p class="text-muted small">Motivo: {{ devolucion.motivo|truncatechars:60 }}</p>
+                            <p class="text-muted small">Motivo: {{ devolucion.motivo|truncatechars:30 }}</p>
                             <p class="text-muted small">Fecha: {{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</p>
                         {% empty %}
                             <p class="text-muted small">No hay devoluciones recientes.</p>
@@ -115,7 +115,7 @@
                     <div class="card-content">
                         {% for opinion in opiniones|slice:":1" %}
                             <p><strong>Producto:</strong> {{ opinion.producto.nombre }}</p>
-                            <p class="text-muted small">Opinión: {{ opinion.comentario|truncatechars:60 }}</p>
+                            <p class="text-muted small">Opinión: {{ opinion.comentario|truncatechars:30 }}</p>
                             <p class="text-warning">
                                 <i class="fa-solid fa-star"></i> {{ opinion.puntuacion }} / 5
                             </p>
@@ -136,7 +136,7 @@
                     <div class="card-content">
                         {% for reclamo in reclamos_recientes|slice:":1" %}
                             <p><strong>Estado:</strong> {{ reclamo.estado }}</p>
-                            <p class="text-muted small">Descripción: {{ reclamo.descripcion|truncatechars:60 }}</p>
+                            <p class="text-muted small">Descripción: {{ reclamo.descripcion|truncatechars:30 }}</p>
                             <p class="text-muted small">Fecha: {{ reclamo.fecha|date:"d/m/Y H:i" }}</p>
                         {% empty %}
                             <p class="text-muted small">No tienes reclamos activos.</p>

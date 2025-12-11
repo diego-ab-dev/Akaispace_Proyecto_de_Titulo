@@ -233,11 +233,6 @@ nav button:hover .arrow:before {
   background-color: #4E84A8 !important;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 nav {
   position: fixed;
   top: 0;
@@ -648,7 +643,7 @@ a:hover {
 
 
 .envio-box {
-    background: white;
+    background: #fafafa;
     border-radius: 0.6rem;
     border: 1px solid #bbb;
 }

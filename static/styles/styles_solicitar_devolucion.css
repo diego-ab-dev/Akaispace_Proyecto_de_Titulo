@@ -8,6 +8,12 @@ body {
     color: #1a202c;
 }
 
+.page-header {
+    position: relative;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
 .page-title {
     font-size: 1.75rem;
     font-weight: 700;
@@ -16,11 +22,30 @@ body {
     color: #111;
 }
 
+.btn-back {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    text-decoration: none;
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+}
+
+.btn-back:hover {
+    color: #555;
+}
+
+
 .custom-card {
-    background-color: white;
+    background-color: #fafafa;
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    border: 1px solid #e0e0e0;
     padding: 30px;
 }
 
@@ -79,23 +104,8 @@ body {
     font-weight: 500;
 }
 
-/* Botón Volver */
-.btn-back {
-    color: #000;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 20px;
-    font-size: 1rem;
-}
-.btn-back:hover {
-    color: #333;
-}
-
 .btn-submit {
-    background-color: #527e99; 
+    background-color: #4e84a8; 
     color: white;
     width: 100%;
     padding: 12px;
@@ -111,7 +121,7 @@ body {
 }
 
 .btn-submit:hover {
-    background-color: #3f6680;
+    background-color: #4a6f8a;
     color: white;
 }
 
@@ -229,5 +239,5 @@ hr {
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    pointer-events: none; /* Para que el click pase al div padre */
+    pointer-events: none; 
 }

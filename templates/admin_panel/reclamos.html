@@ -128,8 +128,8 @@
                     <tr>
                         <td>{{ reclamo.id }}</td>
                         <td>{{ reclamo.usuario.nombre }}</td>
-                        <td>{{ reclamo.asunto }}</td>
-                        <td>{{ reclamo.descripcion }}</td>
+                        <td>{{ reclamo.asunto|truncatechars:30 }}</td>
+                        <td>{{ reclamo.descripcion|truncatechars:40 }}</td>
                         <td>
                             <span class="badge
                                 {% if reclamo.estado == 'Abierto' %}

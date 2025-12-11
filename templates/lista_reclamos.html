@@ -30,11 +30,13 @@
                     <div class="col-lg-3 info-col">
                         <div><span class="label-bold">ID {{ reclamo.id }}</span></div>
                         
-                        <div class="mt-2">
-                            <span class="label-bold">Estado:</span> 
-                            <span class="text-value">{{ reclamo.estado }}</span>
+                        <div>
+                            <span class="info-label" style="display:inline;">Estado: </span>
+                            <span class="info-value estado-texto estado-{{ reclamo.estado|slugify }}">
+                                {{ reclamo.estado }}
+                            </span>
                         </div>
-                        
+
                         <div>
                             <span class="label-bold">Fecha:</span> 
                             <span class="text-value">{{ reclamo.fecha|date:"d/m/Y H:i" }}</span>
@@ -49,13 +51,8 @@
                     <div class="col-lg-4 info-col">
                         <span class="label-bold">Descripción:</span> 
                         <span class="desc-text">
-                            {{ reclamo.descripcion }}
+                            {{ reclamo.descripcion|truncatechars:30 }}
                         </span>
-                        {% if reclamo.respuesta %}
-                            <small class="text-success fw-bold d-block mt-1">
-                                <i class="fa-solid fa-check"></i> Respondido
-                            </small>
-                        {% endif %}
                     </div>
 
                     <div class="col-lg-2 text-end btn-container-col">

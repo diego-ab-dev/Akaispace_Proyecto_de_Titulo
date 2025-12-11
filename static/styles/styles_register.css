@@ -52,7 +52,8 @@ body {
 }
 
 .btn-login:hover {
-  background-color: #93b6ce;
+  background-color: #4a6f8a;
+  color: #ffffff;
 }
 
 .btn-volver{
@@ -61,7 +62,7 @@ body {
 }
 
 .btn-volver:hover{
-  background-color: #58678f;
+  background-color: #344266;
   color: #ffffff;
 }
 

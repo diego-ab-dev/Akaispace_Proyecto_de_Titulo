@@ -43,7 +43,7 @@ body {
 }
 
 .info-card {
-    background: white;
+    background: #fafafa;
     border-radius: 20px;
     padding: 30px;
     margin-bottom: 30px;
@@ -90,7 +90,7 @@ body {
 .btn-opinar:hover { background-color: #b5952f; color: white; }
 
 .btn-devolucion {
-    background-color: #1F2533; 
+    background-color: #1c253b; 
     color: white;
     border: none;
     border-radius: 50px;
@@ -99,7 +99,11 @@ body {
     transition: 0.2s;
     text-decoration: none;
 }
-.btn-devolucion:hover { background-color: #000; color: white; }
+
+.btn-devolucion:hover { 
+    background-color: #344266; 
+    color: white; 
+}
 
 .shipping-timeline {
     position: relative;
@@ -207,7 +211,7 @@ body {
 
 .right-sidebar {
     width: 400px;
-    background-color: white;
+    background-color: #fafafa;
     padding: 40px 30px;
     display: flex;
     flex-direction: column;
@@ -261,7 +265,7 @@ body {
     transition: 0.2s;
 }
 .btn-descargar:hover { 
-    background-color: #333; 
+    background-color: #585858; 
     color: white; 
 }
 

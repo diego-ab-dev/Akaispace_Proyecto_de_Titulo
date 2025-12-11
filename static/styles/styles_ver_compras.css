@@ -45,17 +45,13 @@ ul { list-style: none; padding: 0; margin: 0; }
     font-weight: 500;
 }
 
-.header-left .btn-regresar:hover {
-    color: #527e99;
-}
-
 .header-right {
     display: flex;
     justify-content: flex-end;
 }
 
 .btn-filtrar {
-    background-color: #1a202c;
+    background-color: #1c253b;
     color: white;
     border: none;
     padding: 10px 25px;
@@ -65,11 +61,10 @@ ul { list-style: none; padding: 0; margin: 0; }
     align-items: center;
     gap: 12px;
 }
-.btn-filtrar:hover { background-color: #000; color: white; }
+.btn-filtrar:hover { background-color: #344266; color: white; }
 
 /*tabla*/
 .table-wrapper {
-    border: 1px solid #7e7e7e;
     background-color: white;
     box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     border-radius: 4px; 
@@ -83,7 +78,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 }
 
 .design-table thead tr {
-    background-color: #527e99; 
+    background-color: #4e84a8; 
     color: white;
     height: 60px;
 }
@@ -99,7 +94,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 
 .design-table tbody tr {
     background-color: #fff;
-    border-bottom: 2px solid #a0a0a0;
+    border-bottom: 1px solid #a0a0a0;
     height: 90px;
 }
 
@@ -114,7 +109,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 .fw-bold { font-weight: 700; }
 .text-dark { color: #000 !important; font-weight: 800; }
 
-/*Lista de productos*/
+
 .product-list li {
     font-size: 0.9rem;
     color: #333;
@@ -124,7 +119,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 
 /*boton*/
 .btn-action {
-    background-color: #527e99;
+    background-color: #4e84a8;
     color: white;
     display: block;
     width: 130px;
@@ -140,7 +135,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 }
 
 .btn-action:hover {
-    background-color: #3e6279;
+    background-color: #4a6f8a;
     color: white;
     transform: translateY(-1px);
 }
@@ -174,7 +169,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 }
 
 .page-item.active {
-    background-color: #527e99;
+    background-color: #4e84a8;
     color: #fff;
     border: none;
     pointer-events: none;
@@ -192,7 +187,6 @@ ul { list-style: none; padding: 0; margin: 0; }
     justify-content: center;
     align-items: center;
     border-radius: 50%;
-    border: 1px solid #ddd;
     cursor: pointer;
     transition: 0.2s;
 }

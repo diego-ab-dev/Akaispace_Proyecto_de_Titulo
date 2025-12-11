@@ -60,7 +60,7 @@
                     <div class="col-md comment-col">
                         <div class="comment-box">
                             <span class="comment-label">Comentario:</span>
-                            {{ opinion.comentario }}
+                            {{ opinion.comentario|truncatechars:30 }}
                         </div>
                     </div>
 

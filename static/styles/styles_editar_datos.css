@@ -11,7 +11,7 @@ body {
 }
 
 .edit-container {
-    background-color: #ffffff;
+    background-color: #fafafa;
     padding: 40px;
     border-radius: 12px; 
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -44,7 +44,7 @@ body {
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: #5A84A5; 
+    border-color: #4e84a8; 
     box-shadow: 0 0 0 3px rgba(90, 132, 165, 0.15);
     outline: none;
 }
@@ -61,7 +61,7 @@ body {
 }
 
 .btn-guardar {
-    background-color: #5A84A5; 
+    background-color: #4e84a8; 
     color: white;
     border: none;
     padding: 10px 0;
@@ -78,7 +78,7 @@ body {
 }
 
 .btn-cancelar {
-    background-color: #1F2533; 
+    background-color: #1c253b; 
     color: white;
     text-decoration: none;
     display: flex; 
@@ -93,6 +93,6 @@ body {
 }
 
 .btn-cancelar:hover {
-    background-color: #000;
+    background-color: #344266;
     color: white;
 }

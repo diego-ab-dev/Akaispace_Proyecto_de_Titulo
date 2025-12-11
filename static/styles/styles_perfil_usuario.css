@@ -60,7 +60,7 @@ a {
 }
 
 .profile-card {
-    background-color: #FFFFFF;
+    background-color: #fafafa;
     border-radius: 15px;
     padding: 25px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
@@ -100,7 +100,7 @@ a {
 }
 
 .btn-dark-custom {
-    background-color: #1F2533; 
+    background-color: #1c253b; 
     color: white;
     width: 100%;
     display: block;
@@ -108,12 +108,13 @@ a {
     padding: 12px 0;
     border-radius: 8px;
     font-weight: 600;
-    transition: opacity 0.2s;
+    transition: all 0.3s ease;
 }
 
 .btn-dark-custom:hover {
-    background-color: #000;
+    background-color: #344266;
     color: white;
+    transform: translateY(-2px);
 }
 
 .btn-blue-custom {
@@ -125,12 +126,13 @@ a {
     padding: 12px 0;
     border-radius: 8px;
     font-weight: 600;
-    transition: opacity 0.2s;
+    transition: all 0.3s ease;
 }
 
 .btn-blue-custom:hover {
     background-color: #4a6f8a;
     color: white;
+    transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {

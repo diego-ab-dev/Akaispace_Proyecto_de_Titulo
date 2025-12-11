@@ -28,7 +28,7 @@
                     <div class="d-flex justify-content-between align-items-start mb-4">
                         <div>
                             <span class="label-bold">Estado:</span>
-                            <span class="status-badge {% if devolucion.estado == 'Aprobada' %}status-success{% elif devolucion.estado == 'Rechazada' %}status-danger{% else %}status-warning{% endif %}">
+                            <span class="info-value estado-texto estado-{{ devolucion.estado|slugify }}">
                                 {{ devolucion.estado }}
                             </span>
                         </div>
@@ -112,7 +112,7 @@
                     
                     {% if devolucion.respuesta_admin %}
                         <div class="admin-response-box mt-3">
-                            <p class="text-content">
+                            <p class="text-content" style="background-color: #f0f8ff;">
                                 {{ devolucion.respuesta_admin }}
                             </p>
                         </div>

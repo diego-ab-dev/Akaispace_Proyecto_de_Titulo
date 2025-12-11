@@ -41,7 +41,7 @@ h1 {
 }
 
 .reclamo-card {
-    background-color: white;
+    background-color: #fafafa;
     border-radius: 15px; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.03);
     padding: 25px;
@@ -73,13 +73,12 @@ h1 {
     color: #555;
     font-size: 0.95rem;
     display: -webkit-box;
-    -webkit-line-clamp: 4; 
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
 .btn-ver-mas {
-    background-color: #527e99;
+    background-color: #4e84a8;
     color: white;
     border: none;
     border-radius: 50px;
@@ -92,7 +91,7 @@ h1 {
     white-space: nowrap;
 }
 .btn-ver-mas:hover {
-    background-color: #3e6279;
+    background-color: #4a6f8a;
     color: white;
 }
 
@@ -116,7 +115,6 @@ h1 {
     color: #000;
     text-decoration: none;
     transition: 0.2s;
-    border: 1px solid #ddd;
     cursor: pointer;
 }
 
@@ -125,7 +123,7 @@ h1 {
 }
 
 .page-item.active {
-    background-color: #527e99;
+    background-color: #4e84a8;
     color: #fff;
     border: none;
     pointer-events: none;
@@ -143,7 +141,6 @@ h1 {
     justify-content: center;
     align-items: center;
     border-radius: 50%;
-    border: 1px solid #ddd;
     cursor: pointer;
     transition: 0.2s;
     text-decoration: none;
@@ -181,4 +178,17 @@ h1 {
     .btn-regresar { position: relative; transform: none; }
     .reclamo-card .row > div { margin-bottom: 15px; }
     .btn-container-col { text-align: left !important; }
+}
+
+
+.estado-texto {
+    font-weight: 700; 
+}
+
+.estado-abierto {
+    color: #ff9800; 
+}
+
+.estado-respondido {
+    color: #4CAF50; 
 }

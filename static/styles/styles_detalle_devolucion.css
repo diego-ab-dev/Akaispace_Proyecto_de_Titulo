@@ -46,7 +46,7 @@ h1 {
 }
 
 .detail-card {
-    background-color: white;
+    background-color: #fafafa;
     border-radius: 12px;
     padding: 30px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.03);
@@ -65,7 +65,34 @@ h1 {
     font-size: 1rem;
     color: #4a4a4a;
     line-height: 1.6;
-    margin-bottom: 0;
+    margin-bottom: 20px;
+    max-height: 300px; 
+    overflow-y: auto; 
+    word-wrap: break-word; 
+    word-break: break-word;
+    white-space: pre-line; 
+    padding-right: 10px; 
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.text-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.text-content::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+    border-radius: 4px;
+}
+
+.text-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+
+.text-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
 }
 
 .date-text {
@@ -179,15 +206,21 @@ h1 {
     }
 }
 
-.status-badge {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
+.estado-texto {
+    font-weight: 700; 
 }
-.status-success { color: #155724; background-color: #d4edda; }
-.status-danger { color: #721c24; background-color: #f8d7da; }
-.status-warning { color: #856404; background-color: #fff3cd; }
+
+.estado-pendiente {
+    color: #ff9800; 
+}
+
+.estado-aprobada {
+    color: #4CAF50; 
+}
+
+.estado-rechazada {
+    color: #f44336; 
+}
 
 .product-info-box {
     background-color: #f8f9fa;
@@ -219,7 +252,7 @@ h1 {
 .refund-amount {
     font-size: 1.25rem;
     font-weight: 800;
-    color: #2F78C4;
+    color: #4e84a8;
 }
 
 
@@ -230,7 +263,7 @@ h1 {
     text-align: center;
     background-color: white;
     border: 1px dashed #2F78C4;
-    color: #2F78C4;
+    color: #4e84a8;
     border-radius: 6px;
     text-decoration: none;
     font-weight: 600;
@@ -245,7 +278,7 @@ h1 {
 
 .admin-response-box {
     background-color: #f0f8ff;
-    border-left: 4px solid #2F78C4;
+    border-left: 4px solid #4e84a8;
     padding: 15px;
     border-radius: 0 4px 4px 0;
 }

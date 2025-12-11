@@ -47,7 +47,7 @@ p {
 }
 
 .btn-volver {
-    background-color: #1F2533;
+    background-color: #1c253b;
     color: white;
     padding: 12px 30px;
     border-radius: 50px;
@@ -58,6 +58,6 @@ p {
 }
 
 .btn-volver:hover {
-    background-color: #000;
+    background-color: #344266;
     color: white;
 }
