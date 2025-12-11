@@ -1521,7 +1521,12 @@ def lista_favoritos(request):
         producto__is_deleted=True
     ).delete()
 
-    return render(request, 'favorite.html', {'wishlist_items': favoritos})
+    paginator = Paginator(favoritos, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'favorite.html', {'wishlist_items': favoritos, 'page_obj': page_obj,
+        'favoritos': page_obj.object_list,})
 
 def agregar_favorito(request, producto_id):
     usuario_id = request.session.get('usuario_id')
