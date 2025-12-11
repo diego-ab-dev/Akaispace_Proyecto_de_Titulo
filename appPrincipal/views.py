@@ -506,6 +506,7 @@ def responder_reclamo(request, reclamo_id):
         respuesta = request.POST.get('respuesta')
         reclamo.respuesta = respuesta
         reclamo.estado = 'Respondido'
+        reclamo.fecha_respuesta = timezone.now()
         reclamo.save()
         return redirect('admin_reclamos')
     return render(request, 'admin_panel/responder_reclamo.html', {'reclamo': reclamo})

@@ -232,6 +232,7 @@ class Reclamo(models.Model):
     fecha = models.DateTimeField(default=now)
     descripcion = models.TextField(default='', verbose_name="Descripción")
     respuesta = models.TextField(blank=True, null=True, verbose_name="Respuesta del administrador")
+    fecha_respuesta = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de respuesta")
 
     def __str__(self):
         return f"Reclamo {self.id} - {self.asunto}"
