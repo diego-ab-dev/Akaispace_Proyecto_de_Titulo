@@ -247,6 +247,16 @@ a{text-decoration: none}
     cursor: pointer;
 }
 
+.btn-more {
+    color: #1C253B;
+}
+
+.btn-more:hover {
+    color: #344266;
+}
+
+
+
 .btn-search {
     padding: 10px 15px;
     background-color: #1C253B;
@@ -380,7 +390,6 @@ body.modal-open {
     justify-content: center;
     border-radius: 50% !important; 
     margin: 0 8px;
-    border: 1px solid #dee2e6;
     color: #4e84a8; 
     font-weight: bold;
     font-size: 1.1rem;
@@ -394,7 +403,6 @@ body.modal-open {
     color: #1C253B;
     transform: translateY(-3px);
     box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    border-color: #1C253B;
 }
 
 .page-item.active .custom-page-link {
@@ -405,6 +413,5 @@ body.modal-open {
 .page-item.disabled .custom-page-link {
     background-color: #f8f9fa;
     color: #adb5bd;
-    border-color: #dee2e6;
     cursor: default;
 }

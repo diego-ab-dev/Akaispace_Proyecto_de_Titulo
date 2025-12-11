@@ -23,7 +23,10 @@
             <p><strong>Nombre Cliente:</strong> {{ reclamo.usuario.nombre }} </p>
             <p><strong>Fecha del Reclamo:</strong> {{ reclamo.fecha }}</p>
             <p><strong>Asunto:</strong> {{ reclamo.asunto }}</p>
-            <p><strong>Descripción:</strong> {{reclamo.descripcion}} </p>
+            <p><strong>Descripción:</strong></p>
+            <div class="descripcion-box">
+                {{reclamo.descripcion|linebreaksbr}}
+            </div>
 
             <br>
 

@@ -8,13 +8,12 @@
 }
 
 .edit-card {
-    background-color: white;
+    background-color: #fafafa;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     padding: 40px;
     width: 100%;
     max-width: 500px;
-    border: 1px solid #e0e0e0;
 }
 
 .form-title {
@@ -64,7 +63,7 @@
     font-weight: 700;
     width: 45%;
 }
-.btn-guardar:hover { background-color: #3b6a8a; color: white; }
+.btn-guardar:hover { background-color: #4a6f8a; color: white; }
 
 .btn-cancelar {
     background-color: #1C253B;
@@ -77,4 +76,4 @@
     text-align: center;
     width: 45%;
 }
-.btn-cancelar:hover { background-color: #111; color: white; }
+.btn-cancelar:hover { background-color: #344266; color: white; }

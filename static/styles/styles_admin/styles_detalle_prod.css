@@ -8,7 +8,7 @@ body {
 }
 
 .detail-card {
-    background-color: white;
+    background-color: #fafafa;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     padding: 40px;
@@ -26,7 +26,6 @@ h2 {
     font-size: 1.8rem;
 }
 
-/* Estilo de los datos */
 .info-group {
     margin-bottom: 10px;
     font-size: 1.05rem;
@@ -70,7 +69,7 @@ h2 {
 }
 
 .btn-editar {
-    background-color: #2F78C4; 
+    background-color: #4E84A8; 
 }
 
 .btn-eliminar {
@@ -83,7 +82,7 @@ h2 {
 }
 
 .btn-volver {
-    background-color: #0E1B2D;
+    background-color: #1c253b;
     padding: 8px 40px;
 }
 

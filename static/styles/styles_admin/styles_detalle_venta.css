@@ -1,5 +1,6 @@
 body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #EEF1F4;
 }
 
 .page-container {
@@ -18,9 +19,7 @@ body {
     margin-bottom: 20px;
     transition: color 0.2s;
 }
-.btn-back:hover {
-    color: #4E84A8;
-}
+
 
 .venta-header {
     display: flex;
@@ -49,7 +48,7 @@ body {
     transition: background 0.3s;
 }
 .btn-boleta:hover { 
-    background-color: #333; 
+    background-color: #585858; 
     color: white;
 }
 
@@ -61,7 +60,7 @@ body {
 }
 
 .info-card {
-    background-color: white;
+    background-color: #fafafa;
     border-radius: 12px;
     padding: 30px;
     flex: 1;
@@ -189,7 +188,7 @@ body {
     transform: translateY(-2px);
 }
 
-.btn-modificar { background-color: #2F78C4; } 
+.btn-modificar { background-color: #4E84A8; } 
 .btn-anular { background-color: #DC3545; }
 
 .modal-content {

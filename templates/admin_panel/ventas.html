@@ -149,7 +149,7 @@
                             {% endfor %}
                         </ul>
                     </td>
-                    <td>{{ venta.fecha|date:"d M Y" }}</td>
+                    <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
                     <td>
                         <span class="
                             {% if venta.datos_envio.estado == 'En Preparación' %}estado-preparacion

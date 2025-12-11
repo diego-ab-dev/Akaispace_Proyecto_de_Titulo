@@ -225,7 +225,6 @@ body{
     justify-content: center;
     border-radius: 50% !important; 
     margin: 0 8px;
-    border: 1px solid #dee2e6;
     color: #4e84a8; 
     font-weight: bold;
     font-size: 1.1rem;
@@ -239,7 +238,6 @@ body{
     color: #1C253B;
     transform: translateY(-3px);
     box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-    border-color: #1C253B;
 }
 
 .page-item.active .custom-page-link {
@@ -261,7 +259,7 @@ body{
 }
 
 .btn-buscar:hover {
-    background-color: #2d3853;
+    background-color: #344266;
     color: #ffffff;
 }
 

@@ -2,7 +2,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #ecf0f5; 
+    background-color: #EEF1F4; 
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -123,24 +123,24 @@ input:focus, select:focus {
 }
 
 .btn-primary {
-    background-color: #548CA8; 
+    background-color: #4e84a8; 
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: #548CA8; 
+    background-color: #4a6f8a; 
     color: white;
 }
 
 
 
 .cancel-button {
-    background-color: #1D2333; 
+    background-color: #1c253b; 
     color: white;
 }
 
 .cancel-button:hover {
-    background-color: #1D2333; 
+    background-color: #344266; 
     color: white;
 }
 

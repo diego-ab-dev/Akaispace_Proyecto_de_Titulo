@@ -124,11 +124,39 @@ class ProductoForm(forms.ModelForm):
             'categoria', 'genero'
         ]
 
+        widgets = {
+            'codigo_de_barra': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 780123456'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'precio': forms.NumberInput(attrs={'class': 'form-control'}),
+            'stock': forms.NumberInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'categoria': forms.Select(attrs={'class': 'form-select'}),
+            'genero': forms.Select(attrs={'class': 'form-select'}),
+            'imagen_principal': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen_2': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen_3': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen_4': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen_5': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen_6': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'imagen_principal': 'Imagen 1 - Principal',
+            'imagen_2': 'Imagen 2 - (Opcional)',
+            'imagen_3': 'Imagen 3 - (Opcional)',
+            'imagen_4': 'Imagen 4 - (Opcional)',
+            'imagen_5': 'Imagen 5 - (Opcional)',
+            'imagen_6': 'Imagen 6 - (Opcional)',
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # desabilita el editar el codigo de barra
         if self.instance and self.instance.pk:
             self.fields['codigo_de_barra'].disabled = True
+
+
+            for field_name in ['imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4', 'imagen_5', 'imagen_6']:
+                self.fields[field_name].widget.attrs.update({'class': 'form-control'})
 
     # valida codigo de barra
     def clean_codigo_de_barra(self):

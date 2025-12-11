@@ -145,7 +145,7 @@
                                 {{ reclamo.estado }}
                             </span>
                         </td>
-                        <td>{{ reclamo.fecha}}</td>
+                        <td>{{ reclamo.fecha|date:"d/m/Y H:i"}}</td>
                         <td>
                             <a href="{% url 'responder_reclamo' reclamo.id %}" class="btn-responder btn btn-sm">Responder</a>
                         </td>

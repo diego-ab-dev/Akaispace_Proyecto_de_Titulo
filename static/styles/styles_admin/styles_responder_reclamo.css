@@ -1,7 +1,7 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f0f3f5; 
+    background-color: #EEF1F4; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -20,7 +20,7 @@ body {
 }
 
 .card-reclamo {
-    background: #ffffff;
+    background: #fafafa;
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
@@ -99,4 +99,24 @@ textarea {
 
 .btn-cancelar:hover {
     background-color: #1e262e;
+}
+
+.descripcion-box {
+    max-height: 150px; 
+    overflow-y: auto; 
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f0f0f0; 
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
+    text-align: left;
+    color: #444;
+}
+
+.card-reclamo ul {
+    margin-top: 10px;
+    padding-left: 20px;
 }
