@@ -1,6 +1,6 @@
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif; 
     background-color: #EEF1F4; 
     display: flex;
     justify-content: center;
@@ -69,11 +69,11 @@ textarea {
 }
 
 .btn-enviar {
-    background-color: #5B92B2; 
+    background-color: #4e84a8; 
     color: #ffffff;
     padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 26px;
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.3s;
@@ -81,15 +81,15 @@ textarea {
 }
 
 .btn-enviar:hover {
-    background-color: #4c7d9a;
+    background-color: #4a6f8a;
 }
 
 .btn-cancelar {
-    background-color: #2F3C48; 
+    background-color: #1c253b; 
     color: #ffffff;
     padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 26px;
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.3s;
@@ -98,7 +98,7 @@ textarea {
 }
 
 .btn-cancelar:hover {
-    background-color: #1e262e;
+    background-color: #344266;
 }
 
 .descripcion-box {
@@ -110,7 +110,6 @@ textarea {
     border: 1px solid #e0e0e0;
     border-radius: 4px;
     font-size: 0.95rem;
-    white-space: pre-wrap; 
     word-wrap: break-word; 
     text-align: left;
     color: #444;
@@ -119,4 +118,13 @@ textarea {
 .card-reclamo ul {
     margin-top: 10px;
     padding-left: 20px;
+}
+
+.text-asunto {
+    word-wrap: break-word;       
+    overflow-wrap: break-word;   
+    word-break: break-word;     
+    display: inline-block;       
+    max-width: 100%;            
+    vertical-align: top;
 }

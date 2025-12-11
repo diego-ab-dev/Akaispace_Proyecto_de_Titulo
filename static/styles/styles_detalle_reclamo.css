@@ -113,6 +113,12 @@ h1 {
 .date-text {
     color: #1a202c;
     font-size: 1.1rem;
+    word-wrap: break-word;       
+    overflow-wrap: break-word;  
+    word-break: break-word;      
+    display: inline-block;       
+    max-width: 100%;            
+    vertical-align: top;
 }
 
 

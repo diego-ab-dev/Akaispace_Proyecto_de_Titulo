@@ -1106,11 +1106,20 @@ def crear_reclamo(request, compra_id):
         asunto = request.POST.get('asunto', '').strip()
         descripcion = request.POST.get('descripcion', '').strip()
 
+        MAX_LENGTH_ASUNTO = 50
+
         if not asunto or not descripcion:
             return render(request, 'crear_reclamo.html', {
                 'compra': compra,
                 'error': "Todos los campos son obligatorios."
             })
+        
+        if len(asunto) > MAX_LENGTH_ASUNTO:
+            return render(request, 'crear_reclamo.html', {
+                'compra': compra,
+                'error': f"El Asunto no puede exceder los {MAX_LENGTH_ASUNTO} caracteres."
+            })
+        
         else:
             Reclamo.objects.create(
                 usuario=usuario,

@@ -38,7 +38,7 @@
                             
                             <div style="text-align: right;">
                                 <small class="text-muted d-block" style="font-size: 0.8rem;">Monto a Reembolsar</small>
-                                <span style="font-size: 1.4rem; font-weight: 800; color: #2F78C4;">
+                                <span style="font-size: 1.4rem; font-weight: 800; color: #4e84a8;">
                                     ${{ monto_a_reembolsar | formato_chileno }}
                                 </span>
                             </div>
@@ -47,8 +47,9 @@
 
                     <div class="mt-3">
                         <strong>Motivo del cliente:</strong> 
+                        <br>
                         <span class="motivo-text">
-                            "{{ devolucion.motivo }}"
+                            {{ devolucion.motivo }}
                         </span>
                     </div>
 
