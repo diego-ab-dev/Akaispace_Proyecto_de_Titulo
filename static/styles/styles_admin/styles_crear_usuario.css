@@ -150,3 +150,34 @@ input:focus, select:focus {
     right: 20px;
     z-index: 10000;
 }
+
+.position-relative {
+    position: relative;
+}
+
+.pad-right {
+    padding-right: 2.5rem !important; 
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%); 
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 10;
+    display: none; 
+    padding: 0;
+    width: auto; 
+}
+
+.password-toggle-btn:hover {
+    color: #4e84a8; 
+}
+
+.password-toggle-btn:focus {
+    outline: none;
+}

@@ -135,3 +135,33 @@ body {
 #notif-box.error {
     background: #dc3545;
 }
+
+.position-relative {
+    position: relative;
+}
+
+.form-control.pe-5 {
+    padding-right: 2.5rem; 
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%); 
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 5;
+    display: none; 
+    padding: 0;
+}
+
+.password-toggle-btn:hover {
+    color: #4e84a8; 
+}
+
+.password-toggle-btn:focus {
+    outline: none;
+}

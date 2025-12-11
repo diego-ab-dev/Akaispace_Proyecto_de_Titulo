@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_crear_usuario.css' %}">
     <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
     <title>Crear Nuevo Usuario</title>
@@ -70,12 +71,22 @@
             
             <div class="form-group">
                 <label for="password">Contraseña</label>
-                <input type="password" name="contraseña" id="password" required>
+                <div class="position-relative">
+                    <input type="password" name="contraseña" id="password" class="pad-right" required>
+                    <button type="button" class="password-toggle-btn" id="togglePassword">
+                        <i class="fas fa-eye" id="iconPassword"></i>
+                    </button>
+                </div>
             </div>
-            
+
             <div class="form-group">
                 <label for="confirm_password">Confirmar Contraseña</label>
-                <input type="password" name="confirmar_contraseña" id="confirm_password" required>
+                <div class="position-relative">
+                    <input type="password" name="confirmar_contraseña" id="confirm_password" class="pad-right" required>
+                    <button type="button" class="password-toggle-btn" id="toggleConfirmPassword">
+                        <i class="fas fa-eye" id="iconConfirmPassword"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="form-group checkbox-group">
@@ -228,6 +239,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     regionSelect.addEventListener('change', function () { cargarCiudades(this.value); });
+
+
+    
+    function configurarOjo(inputId, toggleId, iconId) {
+        const input = document.getElementById(inputId);
+        const btn = document.getElementById(toggleId);
+        const icon = document.getElementById(iconId);
+
+        if (!input || !btn || !icon) return;
+
+        input.addEventListener('input', function() {
+            btn.style.display = input.value.length > 0 ? 'block' : 'none';
+        });
+
+        btn.addEventListener('click', function() {
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            
+            if (type === 'password') {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        });
+    }
+    configurarOjo('password', 'togglePassword', 'iconPassword');
+    configurarOjo('confirm_password', 'toggleConfirmPassword', 'iconConfirmPassword');
+
+
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();

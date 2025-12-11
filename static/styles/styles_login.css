@@ -81,3 +81,30 @@ body{
   z-index: 3; 
   display: none;
 }
+
+.password-toggle-btn {
+    position: absolute;
+    right: 1rem; 
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #6c757d; 
+    z-index: 4; 
+    display: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.password-toggle-btn:hover {
+    color: #4E84A8; 
+}
+
+.password-toggle-btn:focus {
+    outline: none; 
+}
+
+.form-floating input[type="password"],
+.form-floating input[type="text"] {
+    padding-right: 2.5rem;
+}

@@ -731,9 +731,13 @@ def producto_detalle(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     rango_cantidad = range(1, producto.stock + 1)
 
-    opiniones = producto.opiniones.all().order_by('-fecha_creacion')
+    opiniones_list = producto.opiniones.all().order_by('-fecha_creacion')
 
-    promedio_puntuacion = opiniones.aggregate(avg=Avg('puntuacion'))['avg'] or 0
+    paginator = Paginator(opiniones_list, 5) 
+    page_number = request.GET.get('page')
+    opiniones = paginator.get_page(page_number)
+
+    promedio_puntuacion = opiniones_list.aggregate(avg=Avg('puntuacion'))['avg'] or 0
     promedio_puntuacion = round(promedio_puntuacion, 1)
 
     full_stars = int(promedio_puntuacion)
@@ -741,11 +745,11 @@ def producto_detalle(request, producto_id):
     full_stars_range = range(full_stars)
     empty_stars_range = range(5 - full_stars - (1 if half_star else 0))
 
-    total_opiniones = opiniones.count()
+    total_opiniones = opiniones_list.count()
     ratings_data = []
     
     for score in range(5, 0, -1):
-        count = opiniones.filter(puntuacion=score).count()
+        count = opiniones_list.filter(puntuacion=score).count()
         percent = (count / total_opiniones * 100) if total_opiniones > 0 else 0
         ratings_data.append({
             "score": score,

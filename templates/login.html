@@ -38,16 +38,17 @@
                               {% endif %}
                             </div>
                             <div class="form-floating mb-3 position-relative">
-                              <input type="password" class="form-control {% if errors.contraseña %}is-invalid{% endif %}" 
-                                    id="floatingPassword" name="contraseña" placeholder="Password">
-                              <label for="floatingPassword">Contraseña</label>
-                              {% if errors.contraseña %}
-                                  <div class="invalid-feedback">{{ errors.contraseña }}</div>
-                              {% endif %}
-                              <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
-                                      id="togglePassword" style="z-index: 1;">
-                                      <i class="fas fa-eye" id="eyeIcon"></i>
-                              </button>
+                                <input type="password" class="form-control {% if errors.contraseña %}is-invalid{% endif %}" 
+                                      id="floatingPassword" name="contraseña" placeholder="Password">
+                                <label for="floatingPassword">Contraseña</label>
+                                
+                                {% if errors.contraseña %}
+                                    <div class="invalid-feedback">{{ errors.contraseña }}</div>
+                                {% endif %}
+
+                                <button type="button" class="password-toggle-btn" id="togglePassword">
+                                    <i class="fas fa-eye" id="eyeIcon"></i>
+                                </button>
                             </div>
                             <div class="d-grid">
                                 <button class="btn btn-lg btn-login text-uppercase fw-bold mb-2" type="submit">Iniciar Sesión</button>
