@@ -47,8 +47,11 @@
                 <div class="data-row"><span class="data-label">Correo:</span> {{ venta.usuario.email }}</div>
                 <div class="data-row"><span class="data-label">RUT:</span> {{ venta.usuario.rut }}</div>
                 <div class="data-row"><span class="data-label">Teléfono:</span> {{ venta.usuario.telefono }}</div>
-                <div class="data-row"><span class="data-label">Dirección:</span> 
-                    {{ venta.direccion_envio|default:venta.usuario.direccion }}
+                <div class="data-row">
+                    <span class="data-label">Dirección:</span> 
+                    <span class="address-value-admin" title="{{ venta.direccion_envio|default:venta.usuario.direccion }}">
+                        {{ venta.direccion_envio|default:venta.usuario.direccion }}
+                    </span>
                 </div>
                 <div class="data-row"><span class="data-label">Región:</span> {{ venta.usuario.region }}</div>
                 <div class="data-row"><span class="data-label">Ciudad:</span> {{ venta.usuario.ciudad }}</div>

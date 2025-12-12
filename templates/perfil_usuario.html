@@ -63,11 +63,30 @@
             <div class="col-lg-8 col-md-7">
                 <div class="profile-card h-100">
                     <div class="card-content user-details">
-                        <p><strong>Nombre:</strong> {{ usuario.nombre }}</p>
-                        <p><strong>Correo:</strong> {{ usuario.email }}</p>
+                        <div class="d-flex">
+                            <strong class="me-1">Nombre:</strong>
+                            <span class="profile-text-limit" title="{{ usuario.nombre }}">
+                                {{ usuario.nombre }}
+                            </span>
+                        </div>
+
+                        <div class="d-flex">
+                            <strong class="me-1">Correo:</strong>
+                            <span class="profile-text-limit" title="{{ usuario.email }}">
+                                {{ usuario.email }}
+                            </span>
+                        </div>
+
                         <p><strong>Rut:</strong> {{ usuario.rut }}</p>
                         <p><strong>Teléfono:</strong> {{ usuario.telefono }}</p>
-                        <p><strong>Dirección:</strong> {{ usuario.direccion }}</p>
+
+                        <div class="d-flex">
+                            <strong class="me-1">Dirección:</strong>
+                            <span class="profile-text-limit" title="{{ usuario.direccion }}">
+                                {{ usuario.direccion }}
+                            </span>
+                        </div>
+
                         <p><strong>Región:</strong> {{ usuario.region }}</p>
                         <p><strong>Ciudad:</strong> {{ usuario.ciudad }}</p>
                     </div>

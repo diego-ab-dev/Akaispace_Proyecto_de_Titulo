@@ -154,7 +154,9 @@
                 <div class="menu d-flex align-items-center gap-2">
                     <div class="item">
                         <a href="#" class="link">
-                            <span> Hola, {{ usuario.nombre|default:usuario.email }} </span>
+                            <span class="user-name-limit" title="{{ usuario.nombre|default:usuario.email }}"> 
+                                Hola, {{ usuario.nombre|default:usuario.email }} 
+                            </span>
                             <svg viewBox="0 0 360 360" xml:space="preserve">
                                 <g id="SVGRepo_iconCarrier">
                                     <path id="XMLID_225_" d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"></path>
@@ -336,7 +338,10 @@
 
 
                 <label>Dirección</label>
-                <input type="text" id="input-direccion">
+                <input type="text" id="input-direccion" maxlength="100">
+                <div class="text-end mb-3">
+                    <small id="address-counter" class="text-muted" style="font-size: 0.75rem;">0/100</small>
+                </div>
 
                 <br><br>
 
@@ -528,20 +533,42 @@ function eliminarItem(itemId, element) {
         navLinks.classList.toggle("show3");
         }
 
-        // modal para editar la direccion de envio en carrito
         function abrirModal() {
-            document.getElementById("modal-envio").style.display = "flex";
-
-            cargarRegiones();
+            const modal = document.getElementById("modal-envio");
+            modal.style.display = "flex";
 
             let regionActual = document.getElementById("envio-region").innerText;
             let ciudadActual = document.getElementById("envio-ciudad").innerText;
             let direccionActual = document.getElementById("envio-direccion").innerText;
 
-            document.getElementById("input-region").value = regionActual;
-            cargarCiudades();
-            document.getElementById("input-ciudad").value = ciudadActual;
-            document.getElementById("input-direccion").value = direccionActual;
+            const regionSelect = document.getElementById("input-region");
+            const ciudadSelect = document.getElementById("input-ciudad");
+            const direccionInput = document.getElementById("input-direccion");
+            const counter = document.getElementById("address-counter");
+
+            cargarRegiones(); 
+            regionSelect.value = regionActual;
+            cargarCiudades(); 
+            ciudadSelect.value = ciudadActual;
+
+            direccionInput.value = direccionActual;
+            
+            const actualizarContador = () => {
+                const len = direccionInput.value.length;
+                const max = direccionInput.getAttribute('maxlength') || 100;
+                counter.textContent = `${len}/${max}`;
+                
+                if(len >= max) {
+                    counter.classList.add('text-danger');
+                    counter.classList.remove('text-muted');
+                } else {
+                    counter.classList.remove('text-danger');
+                    counter.classList.add('text-muted');
+                }
+            };
+
+            actualizarContador();
+            direccionInput.oninput = actualizarContador;
         }
 
         // cerrar modal

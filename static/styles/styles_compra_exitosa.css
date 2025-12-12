@@ -60,7 +60,7 @@ body {
 
 .info-grid {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr; 
     gap: 10px 20px; 
     align-items: baseline;
 }
@@ -72,6 +72,9 @@ body {
 
 .value {
     color: #555;
+    word-break: break-word; 
+    overflow-wrap: break-word; 
+    text-align: right; 
 }
 
 .product-card {
@@ -125,4 +128,13 @@ body {
     word-break: break-word;
     overflow-wrap: break-word;
     cursor: help; 
+}
+
+.address-value {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;    
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

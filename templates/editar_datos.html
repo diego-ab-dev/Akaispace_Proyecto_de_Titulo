@@ -32,7 +32,12 @@
 
             <div class="mb-3">
                 <label for="direccion" class="form-label">Dirección</label>
-                <input type="text" id="direccion" name="direccion" class="form-control" value="{{ usuario.direccion }}">
+                <input type="text" id="direccion" name="direccion" class="form-control" 
+                    value="{{ usuario.direccion }}" maxlength="100">
+                
+                <div class="text-end">
+                    <small id="address-counter" class="text-muted" style="font-size: 0.75rem;">0/100</small>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -114,11 +119,36 @@
 			}
 		}
 
+        function configurarContador(inputId, counterId, maxLength) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(counterId);
+
+            if (!input || !counter) return;
+
+            const updateCounter = () => {
+                const currentLength = input.value.length;
+                counter.textContent = `${currentLength}/${maxLength}`;
+
+                if (currentLength >= maxLength) {
+                    counter.classList.add('text-danger');
+                    counter.classList.remove('text-muted');
+                } else {
+                    counter.classList.remove('text-danger');
+                    counter.classList.add('text-muted');
+                }
+            };
+
+            input.addEventListener('input', updateCounter);       
+            updateCounter();
+        }
+
         // cargar datos
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('form-editar-perfil');
             const regionSelect = document.getElementById('region');
             const ciudadSelect = document.getElementById('ciudad');
+
+            configurarContador('direccion', 'address-counter', 100);
 
             function cargarCiudades(region) {
                 fetch(`/obtener_ciudades/?region=${region}`)

@@ -83,12 +83,26 @@ body {
     font-size: 0.95rem;
     color: #333;
     display: flex;
-    justify-content: space-between; 
+    justify-content: space-between;
+    align-items: baseline;    
 }
 
 .data-label {
     font-weight: 700;
     color: #111;
+}
+
+.address-value-admin {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;        
+    line-clamp: 3;                  
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;       
+    word-break: break-word;         
+    flex: 1;                     
+    text-align: right;              
+    cursor: help;               
 }
 
 .productos-list {

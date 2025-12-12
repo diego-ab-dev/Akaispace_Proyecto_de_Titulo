@@ -140,7 +140,7 @@
                 {% for venta in ventas %}
                 <tr>
                     <td>{{ venta.id }}</td>
-                    <td>{{ venta.usuario.nombre }}</td>
+                    <td>{{ venta.usuario.nombre|truncatechars:30 }}</td>
                     <td>${{ venta.total|formato_chileno }}</td>
                      <td>
                         <ul class="list-unstyled mb-0">

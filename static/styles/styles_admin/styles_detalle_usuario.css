@@ -27,19 +27,26 @@ h2 {
 }
 
 .info-group {
-    margin-bottom: 10px;
+    display: flex;             
+    margin-bottom: 15px;     
     font-size: 1.05rem;
     color: #333;
+    align-items: baseline;         
+    padding-bottom: 8px;
 }
 
 .info-label {
     font-weight: 700;
     color: #000;
+    min-width: 140px;         
+    flex-shrink: 0;            
 }
 
 .info-value {
     color: #555;
-    margin-left: 5px;
+    margin-left: 10px;
+    flex-grow: 1;             
+    word-break: break-word;    
 }
 
 .action-buttons {
@@ -115,4 +122,25 @@ h2 {
 body.modal-open {
     padding-right: 0; 
     overflow: hidden;
+}
+
+.address-value-limit {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;     
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 500px) {
+    .info-group {
+        flex-direction: column;
+    }
+    .info-label {
+        margin-bottom: 5px;
+    }
+    .info-value {
+        margin-left: 0;
+    }
 }

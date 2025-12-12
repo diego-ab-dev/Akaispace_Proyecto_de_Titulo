@@ -121,7 +121,7 @@
                     {% for devolucion in devoluciones %}
                     <tr>
                         <td>{{ devolucion.id }}</td>
-                        <td>{{ devolucion.usuario.nombre }}</td>
+                        <td>{{ devolucion.usuario.nombre|truncatechars:20 }}</td>
                         <td>
                             <span class="admin-devolucion-name" title="{{ devolucion.producto.nombre }}">
                                 {{ devolucion.producto.nombre }}

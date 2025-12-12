@@ -76,7 +76,7 @@
                             <span class="value text-end">{{ venta.usuario.telefono }}</span>
                             
                             <span class="label">Dirección</span>
-                            <span class="value text-end">{{ venta.direccion_envio|default:venta.usuario.direccion }}</span>
+                            <span class="value text-end address-value">{{ venta.direccion_envio|default:venta.usuario.direccion }}</span>                            
                             
                             <span class="label">Región</span>
                             <span class="value text-end">{{ venta.usuario.region }}</span>

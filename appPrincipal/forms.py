@@ -51,16 +51,41 @@ class UsuarioCustomForm(forms.Form):
     rut = forms.CharField(validators=[validar_rut]) 
         
     nombre = forms.CharField(
+        max_length=50, 
         validators=[
             validators.MinLengthValidator(5),
-            validators.MaxLengthValidator(20)
-        ]
+            validators.MaxLengthValidator(50)
+        ],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'id': 'floatingInputUsername',
+            'maxlength': '50', 
+            'placeholder': 'myusername'
+        })
     )
     telefono = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'number'}))
-    nombre.widget.attrs['class'] = 'form-control'
-    email = forms.CharField()
+
+    email = forms.EmailField(
+        max_length=254, 
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control', 
+            'id': 'floatingInputEmail',
+            'maxlength': '254', 
+            'placeholder': 'name@example.com'
+        })
+    )
+
     contraseña = forms.CharField()
-    direccion = forms.CharField()
+
+    direccion = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'id': 'floatingInputAdress', 
+            'maxlength': '100', 
+            'placeholder': 'Picarte 344'
+        })
+    )
 
     regiones = [
         ('ARICA Y PARINACOTA', 'Región de Arica y Parinacota'),
@@ -113,6 +138,28 @@ class UsuarioForm(forms.ModelForm):
     class Meta:
         model = Usuario
         fields = ['nombre', 'email', 'rut', 'telefono', 'direccion', 'region', 'ciudad']
+        
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '50'}),
+            'direccion': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '100'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'rut': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'maxlength': '254'}),
+            'region': forms.Select(attrs={'class': 'form-select'}),
+            'ciudad': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if len(nombre) > 50:
+            raise forms.ValidationError("El nombre no puede exceder los 50 caracteres.")
+        return nombre
+
+    def clean_direccion(self):
+        direccion = self.cleaned_data.get('direccion')
+        if len(direccion) > 100:
+            raise forms.ValidationError("La dirección no puede exceder los 100 caracteres.")
+        return direccion
 
 # form de producto en admin
 class ProductoForm(forms.ModelForm):

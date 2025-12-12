@@ -40,12 +40,15 @@
     
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="floatingInputUsername" name="nombre"
-                                       placeholder="myusername" required>
+                                    placeholder="myusername" maxlength="50" required>
                                 <label for="floatingInputUsername">Nombre</label>
+                                <div class="text-end">
+                                    <small id="name-counter" class="text-muted" style="font-size: 0.75rem;">0/50</small>
+                                </div>
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="email" class="form-control" id="floatingInputEmail" name="email"
-                                       placeholder="name@example.com">
+                                    placeholder="name@example.com" maxlength="254" required>
                                 <label for="floatingInputEmail">Correo Electrónico</label>
                             </div>
     
@@ -79,8 +82,11 @@
     
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="floatingInputAdress" name="direccion"
-                                       placeholder="Picarte 344">
+                                    placeholder="Picarte 344" maxlength="100">
                                 <label for="floatingInputAdress">Dirección</label>
+                                <div class="text-end">
+                                    <small id="address-counter" class="text-muted" style="font-size: 0.75rem;">0/100</small>
+                                </div>
                             </div>
     
                             <div class="form-floating mb-3 position-relative">
@@ -372,6 +378,34 @@
 
     configurarOjo('floatingPassword', 'togglePassword', 'eyeIcon');
     configurarOjo('floatingPasswordConfirm', 'toggleConfirmPassword', 'eyeIconConfirm');
+
+    function configurarContador(inputId, counterId, maxLength) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+
+        if (!input || !counter) return;
+
+        const updateCounter = () => {
+            const currentLength = input.value.length;
+            counter.textContent = `${currentLength}/${maxLength}`;
+
+            if (currentLength >= maxLength) {
+                counter.classList.add('text-danger');
+                counter.classList.remove('text-muted');
+            } else {
+                counter.classList.remove('text-danger');
+                counter.classList.add('text-muted');
+            }
+        };
+
+        input.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        configurarContador('floatingInputUsername', 'name-counter', 50);
+        configurarContador('floatingInputAdress', 'address-counter', 100);
+});
 </script>
 </body>
 </html>

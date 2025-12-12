@@ -127,7 +127,7 @@
                     {% for reclamo in reclamos %}
                     <tr>
                         <td>{{ reclamo.id }}</td>
-                        <td>{{ reclamo.usuario.nombre }}</td>
+                        <td>{{ reclamo.usuario.nombre|truncatechars:20 }}</td>
                         <td>{{ reclamo.asunto|truncatechars:15 }}</td>
                         <td>{{ reclamo.descripcion|truncatechars:40 }}</td>
                         <td>

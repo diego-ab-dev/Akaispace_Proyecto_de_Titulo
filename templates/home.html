@@ -54,7 +54,9 @@
           <div class="menu d-flex align-items-center gap-2">
             <div class="item">
               <a href="#" class="link">
-                <span> Hola, {{ usuario.nombre|default:usuario.email }} </span>
+                <span class="user-name-limit" title="{{ usuario.nombre|default:usuario.email }}"> 
+                    Hola, {{ usuario.nombre|default:usuario.email }} 
+                </span>
                 <svg viewBox="0 0 360 360" xml:space="preserve">
                   <g id="SVGRepo_iconCarrier">
                     <path

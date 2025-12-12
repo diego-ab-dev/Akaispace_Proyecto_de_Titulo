@@ -108,7 +108,7 @@
                 {% for usuario in usuarios %}
                 <tr>
                     <td>{{ usuario.id }}</td>
-                    <td>{{ usuario.nombre }}</td>
+                    <td>{{ usuario.nombre|truncatechars:30 }}</td>
                     <td>{{ usuario.email }}</td>
                     <td>{{ usuario.rut }}</td>
                     <td>{{ usuario.telefono }}</td>

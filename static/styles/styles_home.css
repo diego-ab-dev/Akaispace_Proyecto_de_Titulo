@@ -230,6 +230,23 @@ button:hover .arrow:before {
   background-color: #4E84A8 !important;
 }
 
+
+.menu .link span.user-name-limit {
+    display: inline-block;         
+    max-width: 150px;            
+    white-space: nowrap;       
+    overflow: hidden;               
+    text-overflow: ellipsis;        
+    vertical-align: middle;        
+}
+
+@media (max-width: 1200px) {
+    .menu .link span.user-name-limit {
+        max-width: 100px;        
+    }
+}
+
+
 nav{
   position: fixed;
   top: 0;

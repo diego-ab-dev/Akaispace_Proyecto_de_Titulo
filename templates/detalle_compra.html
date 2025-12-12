@@ -125,7 +125,12 @@
                 </div>
 
                 <div class="address-details mt-4">
-                    <p><strong>Dirección:</strong> {{ compra.direccion_envio }}</p>
+                    <div class="d-flex mb-1">
+                        <strong class="me-1">Dirección:</strong>
+                        <span class="address-text-limit" title="{{ compra.direccion_envio }}">
+                            {{ compra.direccion_envio }}
+                        </span>
+                    </div>
                     <p><strong>Región:</strong> {{ compra.usuario.region }}</p>
                     <p><strong>Ciudad:</strong> {{ compra.usuario.ciudad }}</p>
                     <p><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
