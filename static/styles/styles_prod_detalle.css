@@ -999,3 +999,58 @@ h2, h3, h5 {
 #notif-box.error { background-color: #dc3545; box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4); }
 #notif-box.favorite { background-color: #e83e8c; box-shadow: 0 4px 15px rgba(232, 62, 140, 0.4); }
 #notif-box.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+
+/* Contenedor principal de la descripción */
+.description-wrapper {
+    position: relative;
+}
+
+/* El contenido con altura limitada por defecto */
+.description-content {
+    max-height: 100px; /* Altura inicial (ajústala a tu gusto, ej: 150px) */
+    overflow: hidden;
+    position: relative;
+    transition: max-height 0.5s ease-in-out;
+}
+
+/* Clase que se agrega con JS para mostrar todo */
+.description-content.expanded {
+    max-height: 2000px; /* Un valor alto seguro para permitir que se abra todo */
+}
+
+/* El degradado (fade out) */
+.description-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px; /* Altura del desvanecimiento */
+    background: linear-gradient(to bottom, rgba(250, 250, 250, 0), #fafafa 90%);
+    transition: opacity 0.3s ease;
+    pointer-events: none; /* Para que no interfiera con clicks */
+}
+
+/* Botón minimalista */
+.btn-ver-mas {
+    background: transparent;
+    border: none;
+    color: #4E84A8; /* Tu color azul corporativo */
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 10px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s;
+    margin-top: 5px;
+}
+
+.btn-ver-mas:hover {
+    color: #1C253B;
+    background: transparent; /* Sobreescribimos el hover general de botones */
+}
+
+.btn-ver-mas:hover .arrow {
+    background: transparent; /* Fix para tu CSS global de botones */
+}
