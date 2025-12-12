@@ -128,24 +128,108 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
         const nombreInput = document.querySelector('input[name="nombre"]');
         const charCount = document.getElementById('char-count');
-        const maxLength = 60; 
+        const maxLength = 60;
+        const errorContainer = document.getElementById('error-message-container');
 
         if(nombreInput && charCount) {
-            charCount.textContent = `${nombreInput.value.length}/${maxLength}`;
-
-            nombreInput.addEventListener('input', function() {
-                const currentLength = this.value.length;
-                charCount.textContent = `${currentLength}/${maxLength}`;
-                
-                if(currentLength >= maxLength) {
+            const updateCounter = () => {
+                const len = nombreInput.value.length;
+                charCount.textContent = `${len}/${maxLength}`;
+                if(len >= maxLength) {
                     charCount.classList.add('text-danger');
                     charCount.classList.remove('text-muted');
                 } else {
                     charCount.classList.remove('text-danger');
                     charCount.classList.add('text-muted');
                 }
+            };
+            nombreInput.addEventListener('input', updateCounter);
+            updateCounter();
+        }
+
+        if(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); 
+
+                document.querySelectorAll('.text-danger.small').forEach(el => el.textContent = '');
+                if(errorContainer) {
+                    errorContainer.style.display = 'none';
+                    errorContainer.textContent = '';
+                }
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Guardando...";
+
+                const formData = new FormData(form);
+
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        return response.json();
+                    } else {
+                        if (response.redirected) {
+                            window.location.href = response.url;
+                            return;
+                        }
+                        throw new Error("Respuesta no válida del servidor");
+                    }
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        if(errorContainer) {
+                            errorContainer.className = 'alert alert-success'; 
+                            errorContainer.innerHTML = '<i class="fas fa-check-circle me-2"></i> Producto actualizado correctamente. Redirigiendo...';
+                            errorContainer.style.display = 'block';
+                            window.scrollTo(0, 0);
+                        }
+                        
+                        setTimeout(() => {
+                            window.location.href = "{% url 'admin_productos' %}";
+                        }, 1500);
+
+                    } else if (data && data.errors) {
+                        Object.keys(data.errors).forEach(key => {
+                            const input = form.querySelector(`[name="${key}"]`);
+                            if (input) {
+                                let errorDiv = input.parentElement.querySelector('.text-danger.small');
+                                if (!errorDiv) {
+                                    errorDiv = input.parentElement.parentElement.querySelector('.text-danger.small');
+                                }
+                                if (errorDiv) {
+                                    errorDiv.textContent = data.errors[key][0];
+                                }
+                            }
+                        });
+
+                        if(errorContainer) {
+                            errorContainer.className = 'alert alert-danger'; 
+                            errorContainer.textContent = "Por favor corrige los errores indicados abajo.";
+                            errorContainer.style.display = 'block';
+                            window.scrollTo(0, 0);
+                        }
+
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if(submitBtn.disabled) {
+                         window.location.reload();
+                    }
+                });
             });
         }
     });

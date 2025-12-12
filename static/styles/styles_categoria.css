@@ -886,6 +886,7 @@ nav .navbar .links li .sub-menu li{
     border-radius: 50%;
     cursor: pointer;
     transition: 0.2s;
+    text-decoration: none;
 }
 
 .page-nav:hover:not(.disabled-nav) {

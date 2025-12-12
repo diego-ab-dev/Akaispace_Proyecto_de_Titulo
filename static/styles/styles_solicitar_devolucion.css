@@ -9,32 +9,26 @@ body {
 }
 
 .page-header {
-    position: relative;
-    text-align: center;
     margin-bottom: 40px;
 }
 
 .page-title {
     font-size: 1.75rem;
     font-weight: 700;
-    text-align: center;
-    margin-bottom: 40px;
     color: #111;
+    word-wrap: break-word;
 }
 
 .btn-back {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
     text-decoration: none;
     color: #000;
     font-size: 1.1rem;
     font-weight: 500;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     transition: color 0.2s;
+    white-space: nowrap;
 }
 
 .btn-back:hover {

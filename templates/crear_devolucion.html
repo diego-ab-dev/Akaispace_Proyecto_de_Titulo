@@ -17,11 +17,20 @@
 <body>
 
     <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">Producto Seleccionado para Devolución - {{ producto.nombre }}</h1>
-            <a href="javascript:history.back()" class="btn-back">
-                <i class="fa-solid fa-arrow-left"></i> Volver Atrás
-            </a>
+        <div class="row align-items-center mb-5">
+            
+            <div class="col-md-3 text-start">
+                <a href="javascript:history.back()" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> Volver Atrás
+                </a>
+            </div>
+
+            <div class="col-md-6 text-center">
+                <h1 class="page-title m-0">Producto Seleccionado para Devolución - {{ producto.nombre }}</h1>
+            </div>
+
+            <div class="col-md-3"></div>
+            
         </div>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}

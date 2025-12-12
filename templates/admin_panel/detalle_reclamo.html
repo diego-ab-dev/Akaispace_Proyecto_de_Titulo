@@ -21,11 +21,20 @@
 <body>
 <div class="main-container">
         
-        <div class="page-header d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 fw-bold text-dark">Detalle Reclamo #{{ reclamo.id }}</h1>
-            <a href="{% url 'admin_reclamos' %}" class="btn-back">
-                <i class='bx bx-arrow-back'></i> Volver Atrás
-            </a>
+        <div class="page-header row align-items-center mb-4">
+            
+            <div class="col-3 text-start">
+                <a href="{% url 'admin_reclamos' %}" class="btn-back mb-0">
+                    <i class='bx bx-arrow-back'></i> Volver Atrás
+                </a>
+            </div>
+
+            <div class="col-6 text-center">
+                <h1 class="h3 fw-bold text-dark m-0">Detalle Reclamo #{{ reclamo.id }}</h1>
+            </div>
+
+            <div class="col-3"></div>
+            
         </div>
 
         <div class="row g-4"> <div class="col-lg-6">

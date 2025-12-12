@@ -299,11 +299,20 @@ def admin_productos(request):
 def agregar_producto(request):
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES)
+        
         if form.is_valid():
             form.save()
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            
             return redirect('admin_productos')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
     else:
         form = ProductoForm()
+    
     return render(request, 'admin_panel/agregar_producto.html', {'form': form})
 
 @admin_required
@@ -317,14 +326,23 @@ def eliminar_producto(request, producto_id):
 @admin_required
 def editar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
+    
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES, instance=producto)
+        
         if form.is_valid():
             form.save()
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            
             return redirect('admin_productos')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)            
     else:
-        form = ProductoForm(instance=producto)
-    return render(request, 'admin_panel/editar_producto.html', {'form': form})
+        form = ProductoForm(instance=producto) 
+    return render(request, 'admin_panel/editar_producto.html', {'form': form, 'producto': producto})
 
 
 @admin_required
