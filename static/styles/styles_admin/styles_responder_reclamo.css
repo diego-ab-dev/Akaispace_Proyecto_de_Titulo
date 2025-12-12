@@ -128,3 +128,42 @@ textarea {
     max-width: 100%;            
     vertical-align: top;
 }
+
+.lista-productos-reclamo {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+.lista-productos-reclamo li {
+    margin-bottom: 5px;
+}
+
+.prod-row {
+    display: flex;
+    align-items: center; 
+}
+
+.reclamo-prod-name {
+    display: inline-block;
+    max-width: 280px;               
+    white-space: nowrap;            
+    overflow: hidden;               
+    text-overflow: ellipsis;       
+    vertical-align: middle;
+    cursor: help;                   
+    color: #333;
+}
+
+.prod-qty {
+    margin-left: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #555;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .reclamo-prod-name {
+        max-width: 180px; 
+    }
+}

@@ -58,6 +58,15 @@ body {
     font-size: 1.2rem;
     font-weight: 700;
     color: #1a202c;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2em;
+    word-break: break-word;
+    cursor: help;
 }
 
 .highlight-qty {
@@ -235,4 +244,20 @@ textarea:focus {
     font-weight: bold;
     cursor: pointer;
     z-index: 10001;
+}
+
+.context-prod-name {
+    display: inline-block;
+    max-width: 350px;              
+    white-space: nowrap;         
+    overflow: hidden;
+    text-overflow: ellipsis;       
+    vertical-align: middle;
+    cursor: help;
+}
+
+@media (max-width: 576px) {
+    .context-prod-name {
+        max-width: 200px;
+    }
 }

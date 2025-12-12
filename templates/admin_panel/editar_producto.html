@@ -34,6 +34,10 @@
                 <div class="mb-3">
                     <label class="form-label">Nombre</label>
                     {{ form.nombre }}
+                    
+                    <div class="d-flex justify-content-end">
+                        <span id="char-count" class="text-muted small" style="font-size: 0.8rem;">0/60</span>
+                    </div>
                     <div class="text-danger small">{{ form.nombre.errors }}</div>
                 </div>
             
@@ -56,7 +60,7 @@
                 </div>
                 
                 <div class="images-section mt-4 mb-4">
-                    <h6 class="mb-3" style="color: #4f81a1; font-weight: bold;">Gestión de Imágenes</h6>
+                    <h6 class="mb-3" style="color: #4f81a1; font-weight: bold;">Imágenes</h6>
                     
                     {% for field in form %}
                         {% if 'imagen' in field.name %}
@@ -65,7 +69,7 @@
                                 <label class="form-label fw-bold mb-0">{{ field.label }}</label>
                                 
                                 {% if field.value %}
-                                    <button type="button" class="badge bg-secondary text-white border-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#modal-{{ field.name }}">
+                                    <button type="button" class="badge text-white border-0 text-decoration-none" style="background-color: #4e84a8;" data-bs-toggle="modal" data-bs-target="#modal-{{ field.name }}">
                                         Ver imagen actual
                                     </button>
 
@@ -80,13 +84,13 @@
                                                     <img src="{{ field.value.url }}" class="img-fluid rounded" style="max-height: 500px;" alt="Vista previa">
                                                 </div>
                                                 <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                                    <button type="button" class="btn" style="background-color: #1c253b; color: #FFFFFF;" data-bs-dismiss="modal">Cerrar</button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     {% else %}
-                                    <span class="badge bg-light text-muted border">Sin imagen</span>
+                                    <span class="badge border" style="background-color: #4a6f8a; color: #FFFFFF;">Sin imagen</span>
                                 {% endif %}
                             </div>
 
@@ -121,5 +125,30 @@
             </form>
         </div>
     </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const nombreInput = document.querySelector('input[name="nombre"]');
+        const charCount = document.getElementById('char-count');
+        const maxLength = 60; 
+
+        if(nombreInput && charCount) {
+            charCount.textContent = `${nombreInput.value.length}/${maxLength}`;
+
+            nombreInput.addEventListener('input', function() {
+                const currentLength = this.value.length;
+                charCount.textContent = `${currentLength}/${maxLength}`;
+                
+                if(currentLength >= maxLength) {
+                    charCount.classList.add('text-danger');
+                    charCount.classList.remove('text-muted');
+                } else {
+                    charCount.classList.remove('text-danger');
+                    charCount.classList.add('text-muted');
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

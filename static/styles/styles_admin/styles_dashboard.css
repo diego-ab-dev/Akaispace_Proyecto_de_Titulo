@@ -257,3 +257,18 @@ a{
     color: #666;
 }
 
+.dashboard-text-limit {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;          
+    line-clamp: 1;                 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;      
+    word-break: break-word;
+    cursor: help;                
+}
+
+.card-body small.dashboard-text-limit {
+    margin-bottom: 2px;
+    color: #555;
+}

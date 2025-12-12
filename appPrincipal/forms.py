@@ -126,7 +126,7 @@ class ProductoForm(forms.ModelForm):
 
         widgets = {
             'codigo_de_barra': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 780123456'}),
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '60', 'placeholder': 'Nombre del producto'}),
             'precio': forms.NumberInput(attrs={'class': 'form-control'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
@@ -157,6 +157,12 @@ class ProductoForm(forms.ModelForm):
 
             for field_name in ['imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4', 'imagen_5', 'imagen_6']:
                 self.fields[field_name].widget.attrs.update({'class': 'form-control'})
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if len(nombre) > 60:
+            raise forms.ValidationError("El nombre es demasiado largo (máximo 60 caracteres).")
+        return nombre
 
     # valida codigo de barra
     def clean_codigo_de_barra(self):

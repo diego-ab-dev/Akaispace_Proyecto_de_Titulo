@@ -27,19 +27,27 @@ h2 {
 }
 
 .info-group {
-    margin-bottom: 10px;
+    display: flex;              
+    margin-bottom: 15px;        
     font-size: 1.05rem;
     color: #333;
+    align-items: baseline;      
+    border-bottom: 1px solid #f0f0f0; 
+    padding-bottom: 8px;
 }
 
 .info-label {
-    font-weight: 700; 
-    color: #000;
+    font-weight: 700;
+    color: #1C253B;
+    min-width: 140px;          
+    flex-shrink: 0;             
 }
 
 .info-value {
     color: #555;
-    margin-left: 5px;
+    margin-left: 10px;
+    flex-grow: 1;               
+    word-break: break-word;     
 }
 
 .action-buttons {
@@ -138,4 +146,35 @@ body.modal-open {
 .carousel-control-prev-icon,
 .carousel-control-next-icon {
     filter: invert(1); 
+}
+
+.admin-detail-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;     
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.description-box {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 6px;
+    max-height: 200px;          
+    overflow-y: auto;          
+    font-size: 0.95rem;
+    border: 1px solid #eee;
+}
+
+@media (max-width: 500px) {
+    .info-group {
+        flex-direction: column;
+    }
+    .info-label {
+        margin-bottom: 5px;
+    }
+    .info-value {
+        margin-left: 0;
+    }
 }

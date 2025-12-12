@@ -95,7 +95,7 @@ ul { list-style: none; padding: 0; margin: 0; }
 .design-table tbody tr {
     background-color: #fff;
     border-bottom: 1px solid #a0a0a0;
-    height: 90px;
+    min-height: 90px;
 }
 
 .design-table tbody tr:last-child { border-bottom: none; }
@@ -115,6 +115,18 @@ ul { list-style: none; padding: 0; margin: 0; }
     color: #333;
     font-weight: 500;
     margin-bottom: 4px;
+}
+
+
+.history-item-title {
+    display: inline-block;
+    max-width: 200px;        
+    white-space: nowrap;            
+    overflow: hidden;
+    text-overflow: ellipsis;       
+    vertical-align: middle;
+    cursor: help;
+    font-weight: 600;
 }
 
 /*boton*/
@@ -222,4 +234,7 @@ ul { list-style: none; padding: 0; margin: 0; }
     .top-header-grid { grid-template-columns: 1fr; text-align: center; gap: 15px; }
     .header-right { justify-content: center; }
     .design-table { display: block; overflow-x: auto; white-space: nowrap; }
+    .history-item-title {
+        max-width: 150px; 
+    }
 }

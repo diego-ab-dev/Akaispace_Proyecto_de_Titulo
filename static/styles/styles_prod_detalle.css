@@ -855,6 +855,15 @@ label,
   font-weight: 600;
 }
 
+.text-description {
+    word-wrap: break-word;       
+    overflow-wrap: break-word;   
+    word-break: break-word;     
+    display: inline-block;       
+    max-width: 100%;            
+    vertical-align: top;
+}
+
 .CartBtn:hover .IconContainer {
   transform: translateX(58px);
   border-radius: 40px;

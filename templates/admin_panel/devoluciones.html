@@ -122,7 +122,11 @@
                     <tr>
                         <td>{{ devolucion.id }}</td>
                         <td>{{ devolucion.usuario.nombre }}</td>
-                        <td>{{ devolucion.producto.nombre }}</td>
+                        <td>
+                            <span class="admin-devolucion-name" title="{{ devolucion.producto.nombre }}">
+                                {{ devolucion.producto.nombre }}
+                            </span>
+                        </td>
                         <td>{{ devolucion.motivo|truncatechars:30 }}</td>
                         <td>{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</td>
                         <td>

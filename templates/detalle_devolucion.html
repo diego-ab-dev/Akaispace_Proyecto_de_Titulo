@@ -43,7 +43,9 @@
                         <div class="row align-items-center">
                             <div class="col-8">
                                 <span class="label-tiny text-muted text-uppercase">Producto</span>
-                                <div class="product-title">{{ devolucion.producto.nombre }}</div>
+                                <div class="product-title" title="{{ devolucion.producto.nombre }}">
+                                    {{ devolucion.producto.nombre }}
+                                </div>
                                 <div class="product-qty">Cantidad a devolver: <strong>{{ devolucion.cantidad }}</strong></div>
                             </div>
                             <div class="col-4 text-end border-start">

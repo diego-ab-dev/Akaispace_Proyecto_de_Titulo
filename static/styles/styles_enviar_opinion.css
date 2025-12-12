@@ -26,6 +26,16 @@ h1 {
     font-weight: 600;
     margin-bottom: 25px;
     color: #000;
+    line-height: 1.3em;           
+    display: -webkit-box;
+    -webkit-line-clamp: 3;          
+    line-clamp: 3;                 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;    
+    padding: 0 10px;               
+    word-break: break-word;       
+    cursor: help;                
 }
 
 
@@ -121,4 +131,10 @@ h1 {
 
 .hidden-rating-input {
     display: none;
+}
+
+@media (max-width: 576px) {
+    h1 {
+        font-size: 1.5rem;
+    }
 }

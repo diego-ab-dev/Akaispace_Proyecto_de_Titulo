@@ -141,7 +141,9 @@
                             {% for venta in ventas_info %}
                             <li class="list-group-item">
                                 <strong>{{ venta.usuario }}</strong> - 
-                                <small>{{ venta.productos|join:", " }}</small><br>
+                                <small class="d-block dashboard-text-limit text-muted" title="{{ venta.productos|join:', ' }}">
+                                    {{ venta.productos|join:", " }}
+                                </small>
                                 <small class="text-muted">{{ venta.fecha|date:"d/m/Y H:i" }}</small>
                             </li>
                             {% empty %}
@@ -168,7 +170,9 @@
                             {% for producto in productos_info %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ producto.nombre }}</strong>
+                                    <div class="dashboard-text-limit fw-bold" title="{{ producto.nombre }}">
+                                        {{ producto.nombre }}
+                                    </div>
                                     <br>
                                     {% if producto.stock == 0 %}
                                         <span class="text-danger small">Agotado</span>
@@ -197,7 +201,13 @@
                         <ul class="list-group list-group-flush">
                             {% for reclamo in reclamos_info %}
                             <li class="list-group-item">
-                                <strong>{{ reclamo.usuario }}</strong> - {{ reclamo.asunto }}<br>
+                                <div class="d-flex align-items-center">
+                                    <strong class="text-nowrap me-1">{{ reclamo.usuario }}</strong> 
+                                    <span class="me-1">-</span>
+                                    <span class="dashboard-text-limit" title="{{ reclamo.asunto }}">
+                                        {{ reclamo.asunto }}
+                                    </span>
+                                </div>
                                 <small class="text-muted">{{ reclamo.fecha|date:"d/m/Y H:i" }}</small>
                             </li>
                             {% empty %}

@@ -145,7 +145,12 @@
                      <td>
                         <ul class="list-unstyled mb-0">
                             {% for producto_venta in venta.producto_venta.all %}
-                            <li>{{ producto_venta.producto.nombre }} ({{ producto_venta.cantidad }})</li>
+                            <li class="d-flex align-items-center">
+                                <span class="admin-prod-name" title="{{ producto_venta.producto.nombre }}">
+                                    {{ producto_venta.producto.nombre }}
+                                </span>
+                                <strong class="ms-1 text-muted" style="font-size: 0.9em;">(x{{ producto_venta.cantidad }})</strong>
+                            </li>
                             {% endfor %}
                         </ul>
                     </td>

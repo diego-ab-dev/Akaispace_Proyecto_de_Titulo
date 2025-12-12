@@ -118,10 +118,17 @@ body {
 
 .producto-item {
     font-weight: 600;
-    display: block;
     color: #333;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;      
+    line-clamp: 2;                
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;        
+    line-height: 1.2em;            
+    word-break: break-word;     
+    cursor: help;             
 }
-
 .producto-linea {
     display: flex;
     align-items: center;

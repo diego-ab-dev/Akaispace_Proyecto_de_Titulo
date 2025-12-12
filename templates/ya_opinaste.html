@@ -19,7 +19,13 @@
             <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
         <h1>¡Ya opinaste!</h1>
-        <p>Ya registramos tu valoración para el producto <strong>"{{ producto.nombre }}"</strong>. Solo puedes opinar una vez por producto.</p>
+        <p class="mb-1">Ya registramos tu valoración para el producto:</p>
+
+        <div class="product-name-limit" title="{{ producto.nombre }}">
+            "{{ producto.nombre }}"
+        </div>
+
+        <p class="mt-3">Solo puedes opinar una vez por producto.</p>
         
         <a href="javascript:history.back()" class="btn-volver">Volver atrás</a>
     </div>

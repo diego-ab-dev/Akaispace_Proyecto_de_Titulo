@@ -154,6 +154,24 @@ a {
     }
 }
 
+.profile-product-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;     
+    line-clamp: 2;            
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;      
+    word-break: break-word;     
+    flex: 1;                     
+    cursor: help;                  
+    color: #555;                    
+}
+
+.card-content p, .card-content .d-flex {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    line-height: 1.5;
+}
 
 
 #notif-box {

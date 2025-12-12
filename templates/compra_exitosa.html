@@ -108,7 +108,9 @@
                         <img src="{{ producto_venta.producto.imagen_principal.url }}" alt="{{ producto_venta.producto.nombre }}" class="img-fluid" style="max-height: 60px;">
                     </div>
                     <div class="prod-info flex-grow-1">
-                        <h6 class="fw-bold mb-1">{{ producto_venta.producto.nombre }}</h6>
+                        <h6 class="fw-bold mb-1 compra-item-title" title="{{ producto_venta.producto.nombre }}">
+                            {{ producto_venta.producto.nombre }}
+                        </h6>
                         <p class="mb-0 text-muted small">Cantidad: {{ producto_venta.cantidad }}</p>
                         <p class="mb-0 text-muted small">Precio Unitario: ${{ producto_venta.precio_unitario|formato_chileno }}</p>
                         <p class="mb-0 fw-bold mt-1">Precio Total: ${{ producto_venta.total_producto|formato_chileno }}</p>

@@ -245,7 +245,9 @@
                     </div>
 
                     <div class="item-details flex-grow-1">
-                        <h5 class="fw-bold mb-1">{{ item.producto.nombre }}</h5>
+                        <h5 class="fw-bold mb-1 wishlist-item-title" title="{{ item.producto.nombre }}">
+                            {{ item.producto.nombre }}
+                        </h5>
                         <p class="text-muted mb-1 fs-5">${{ item.producto.precio|formato_chileno }}</p>
                         
                         <small class="text-muted">

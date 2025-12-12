@@ -95,7 +95,12 @@
                     <h3 class="card-header-title text-center">Mis Devoluciones</h3>
                     <div class="card-content">
                         {% for devolucion in devoluciones_recientes|slice:":1" %}
-                            <p><strong>Producto:</strong> {{ devolucion.producto.nombre }}</p>
+                            <div class="d-flex mb-2">
+                                <strong class="me-1">Producto:</strong>
+                                <span class="profile-product-name" title="{{ devolucion.producto.nombre }}">
+                                    {{ devolucion.producto.nombre }}
+                                </span>
+                            </div>
                             <p class="text-muted small">Motivo: {{ devolucion.motivo|truncatechars:30 }}</p>
                             <p class="text-muted small">Fecha: {{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</p>
                         {% empty %}
@@ -114,7 +119,12 @@
                     <h3 class="card-header-title text-center">Mis Opiniones</h3>
                     <div class="card-content">
                         {% for opinion in opiniones|slice:":1" %}
-                            <p><strong>Producto:</strong> {{ opinion.producto.nombre }}</p>
+                            <div class="d-flex mb-2">
+                                <strong class="me-1">Producto:</strong>
+                                <span class="profile-product-name" title="{{ opinion.producto.nombre }}">
+                                    {{ opinion.producto.nombre }}
+                                </span>
+                            </div>
                             <p class="text-muted small">Opinión: {{ opinion.comentario|truncatechars:30 }}</p>
                             <p class="text-warning">
                                 <i class="fa-solid fa-star"></i> {{ opinion.puntuacion }} / 5

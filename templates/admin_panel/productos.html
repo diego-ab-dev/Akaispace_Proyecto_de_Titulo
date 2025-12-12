@@ -118,7 +118,7 @@
                         {% endif %}
                     </td>
                     <td>{{ producto.codigo_de_barra }}</td>
-                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.nombre|truncatechars:25 }}</td>
                     <td>${{ producto.precio|formato_chileno }}</td>
                     <td>
                         {% if producto.stock == 0 %}

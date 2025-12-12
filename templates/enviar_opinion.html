@@ -15,7 +15,9 @@
 </head>
 <body>
     <div class="opinion-card">
-        <h1>Tu opinión de "{{ producto.nombre }}"</h1>
+        <h1 title="Tu opinión de {{ producto.nombre }}">
+            Tu opinión de "{{ producto.nombre }}"
+        </h1>
         <!--Formulario-->
         <form method="post" id="opinionForm">
             {% csrf_token %}

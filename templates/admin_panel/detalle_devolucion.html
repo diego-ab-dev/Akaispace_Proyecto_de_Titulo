@@ -59,7 +59,9 @@
                         <div class="p-3 border rounded bg-light d-flex align-items-center gap-3">
                             <img src="{{ devolucion.producto.imagen_principal.url }}" class="producto-miniatura" alt="Imagen producto">
                             <div>
-                                <strong class="d-block">{{ devolucion.producto.nombre }}</strong>
+                                <strong class="d-block admin-devolucion-title" title="{{ devolucion.producto.nombre }}">
+                                    {{ devolucion.producto.nombre }}
+                                </strong>
                                 <small class="text-muted">ID Producto: {{ devolucion.producto.id }} | Cantidad: {{ devolucion.cantidad }}</small>
                             </div>
                         </div>

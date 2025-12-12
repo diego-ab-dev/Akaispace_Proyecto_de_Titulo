@@ -25,7 +25,9 @@
 
             <div class="info-group">
                 <span class="info-label">Nombre:</span>
-                <span class="info-value">{{ producto.nombre }}</span>
+                <span class="info-value admin-detail-text" title="{{ producto.nombre }}">
+                    {{ producto.nombre }}
+                </span>
             </div>
             
             <div class="info-group">
@@ -45,7 +47,9 @@
 
             <div class="info-group">
                 <span class="info-label">Descripción:</span>
-                <span class="info-value">{{ producto.descripcion }}</span>
+                <div class="info-value description-box">
+                    {{ producto.descripcion|linebreaksbr }}
+                </div>
             </div>
 
             <div class="info-group">

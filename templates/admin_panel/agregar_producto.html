@@ -26,6 +26,9 @@
                 <div class="mb-3">
                     <label class="form-label">{{ form.nombre.label }}</label>
                     {{ form.nombre }}
+                    <div class="d-flex justify-content-end">
+                        <span id="char-count" class="text-muted small" style="font-size: 0.8rem;">0/60</span>
+                    </div>
                     <div class="text-danger small">{{ form.nombre.errors }}</div>
                 </div>
 
@@ -82,5 +85,30 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const nombreInput = document.querySelector('input[name="nombre"]');
+        const charCount = document.getElementById('char-count');
+        const maxLength = 60; 
+
+        if(nombreInput && charCount) {
+            charCount.textContent = `${nombreInput.value.length}/${maxLength}`;
+
+            nombreInput.addEventListener('input', function() {
+                const currentLength = this.value.length;
+                charCount.textContent = `${currentLength}/${maxLength}`;
+                
+                if(currentLength >= maxLength) {
+                    charCount.classList.add('text-danger');
+                    charCount.classList.remove('text-muted');
+                } else {
+                    charCount.classList.remove('text-danger');
+                    charCount.classList.add('text-muted');
+                }
+            });
+        }
+    });
+</script>
+
 </body>
 </html>

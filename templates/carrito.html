@@ -233,7 +233,9 @@
                                     <img class="img-fluid" src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}">
                                 </div>
                                 <div class="col">
-                                    <div class="row text-muted">{{ item.producto.nombre }}</div>
+                                    <div class="row text-muted cart-item-title" title="{{ item.producto.nombre }}">
+                                        {{ item.producto.nombre }}
+                                    </div>
                                     <div class="row text-muted">{{ item.producto.categoria|default:"N/A" }}</div>
                                 </div>
                                 <div class="col">

@@ -61,7 +61,7 @@ body {
 input[type="file"].form-control {
     padding: 8px;
     background-color: #fff;
-    border: 1px solid #6c757d;
+    border: 1px solid #4e84a8;
 }
 
 input[type="file"]::file-selector-button {

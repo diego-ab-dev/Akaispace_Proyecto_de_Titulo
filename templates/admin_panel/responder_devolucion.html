@@ -29,7 +29,9 @@
 
                     <div class="product-highlight-box">
                         <div class="highlight-label"><i class="fas fa-box-open"></i> Producto a Devolver</div>
-                        <div class="highlight-name">{{ devolucion.producto.nombre }}</div>
+                        <div class="highlight-name" title="{{ devolucion.producto.nombre }}">
+                            {{ devolucion.producto.nombre }}
+                        </div>
                         <div class="highlight-qty">
                             Codigo de Barra: <small class="text-muted">{{ devolucion.producto.codigo_de_barra }}</small>
                         </div>
@@ -85,8 +87,11 @@
                         <p class="mb-1"><strong>Contexto de la Venta (#{{ devolucion.venta.id }}):</strong></p>
                         <ul class="sale-list">
                             {% for item in devolucion.venta.producto_venta.all %}
-                                <li class="{% if item.producto.id == devolucion.producto.id %}highlight-item{% endif %}">
-                                    {{ item.producto.nombre }} (x{{ item.cantidad }})
+                                <li class="{% if item.producto.id == devolucion.producto.id %}highlight-item{% endif %} d-flex align-items-center">
+                                    <span class="context-prod-name" title="{{ item.producto.nombre }}">
+                                        {{ item.producto.nombre }}
+                                    </span>
+                                    <span class="ms-1 text-muted small">(x{{ item.cantidad }})</span>
                                 </li>
                             {% endfor %}
                         </ul>

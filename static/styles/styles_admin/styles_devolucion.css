@@ -273,3 +273,21 @@ body{
     background-color: #2d3853;
     color: #ffffff;
 }
+
+.admin-devolucion-name {
+    display: inline-block;
+    max-width: 200px;              
+    white-space: nowrap;        
+    overflow: hidden;              
+    text-overflow: ellipsis;        
+    vertical-align: middle;         
+    cursor: help;                  
+    color: #333;
+    font-weight: 600;
+}
+
+@media (max-width: 992px) {
+    .admin-devolucion-name {
+        max-width: 150px;
+    }
+}

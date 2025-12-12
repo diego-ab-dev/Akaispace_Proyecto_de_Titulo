@@ -69,8 +69,13 @@
                             <td>
                                 <ul class="product-list">
                                     {% for item in compra.producto_venta.all %}
-                                    <li>
-                                        {{ item.producto.nombre }} - Subtotal: ${{ item.total_producto|formato_chileno }}
+                                    <li class="d-flex align-items-center">
+                                        <span class="history-item-title me-1" title="{{ item.producto.nombre }}">
+                                            {{ item.producto.nombre }}
+                                        </span>
+                                        <span class="text-nowrap">
+                                            - Sub: ${{ item.total_producto|formato_chileno }}
+                                        </span>
                                     </li>
                                     {% endfor %}
                                 </ul>

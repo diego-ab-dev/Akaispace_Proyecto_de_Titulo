@@ -554,7 +554,13 @@ a:hover {
   margin-bottom: 26px;
   padding: 15px; 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fafafa;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
+  
 
 .section-products .single-product:hover {
   transform: translateY(-10px); 
@@ -657,7 +663,22 @@ a:hover {
 
 .section-products .single-product .part-2 .product-title {
     font-size: 1rem;
-    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: -webkit-box;           
+    -webkit-line-clamp: 2;         
+    line-clamp: 2;                 
+    -webkit-box-orient: vertical;   
+    overflow: hidden;               
+    text-overflow: ellipsis;        
+    line-height: 1.4em;           
+    height: 2.8em;                  
+    margin-bottom: 10px;
+}
+
+.section-products .single-product .part-2 {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; 
 }
 
 .section-products .single-product .part-2 h4 {

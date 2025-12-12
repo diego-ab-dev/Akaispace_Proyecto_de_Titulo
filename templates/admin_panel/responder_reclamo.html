@@ -35,9 +35,16 @@
             <p><strong>Total:</strong> ${{ reclamo.venta.total| formato_chileno }}</p>
             <p><strong>Fecha de la venta:</strong> {{ reclamo.venta.fecha }}</p>
 
-            <ul>
+            <ul class="lista-productos-reclamo">
                 {% for item in reclamo.venta.producto_venta.all %}
-                    <li>{{ item.producto.nombre }} (x{{ item.cantidad }})</li>
+                    <li>
+                        <div class="prod-row">
+                            <span class="reclamo-prod-name" title="{{ item.producto.nombre }}">
+                                {{ item.producto.nombre }}
+                            </span>
+                            <span class="prod-qty">(x{{ item.cantidad }})</span>
+                        </div>
+                    </li>
                 {% endfor %}
             </ul>
             {% else %}
