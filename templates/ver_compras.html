@@ -61,9 +61,18 @@
                             <td class="text-center fw-bold">{{ compra.id }}</td>
                             <td class="fw-bold">${{ compra.total|formato_chileno }}</td>
                             <td>{{ compra.fecha|date:"d/m/Y" }}</td>
-                            <td class="fw-bold 
-                                    {% if compra.datos_envio.estado == 'Anulada' %}text-danger{% else %}text-dark{% endif %}">
-                                {{ compra.datos_envio.estado }}
+                            <td class="fw-bold">
+                                <span class="
+                                    {% if compra.datos_envio.estado == 'En Preparación' %}estado-preparacion
+                                    {% elif compra.datos_envio.estado == 'Enviado' %}estado-enviado
+                                    {% elif compra.datos_envio.estado == 'En Tránsito' %}estado-transito
+                                    {% elif compra.datos_envio.estado == 'En Reparto' %}estado-reparto
+                                    {% elif compra.datos_envio.estado == 'Entregado' %}estado-entregado
+                                    {% elif compra.datos_envio.estado == 'Anulada' %}estado-anulada
+                                    {% endif %}
+                                ">
+                                    {{ compra.datos_envio.estado }}
+                                </span>
                             </td>
 
                             <td>

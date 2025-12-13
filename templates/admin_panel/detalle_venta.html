@@ -108,9 +108,23 @@
 
                 <div class="data-row mt-4">
                     <span class="data-label">Estado:</span> 
-                    <span class="badge bg-secondary">{{ venta.datos_envio.estado }}</span>
+                    <span class="
+                            {% if venta.datos_envio.estado == 'En Preparación' %}estado-preparacion
+                            {% elif venta.datos_envio.estado == 'Enviado' %}estado-enviado
+                            {% elif venta.datos_envio.estado == 'En Tránsito' %}estado-transito
+                            {% elif venta.datos_envio.estado == 'En Reparto' %}estado-reparto
+                            {% elif venta.datos_envio.estado == 'Entregado' %}estado-entregado
+                            {% elif venta.datos_envio.estado == 'Anulada' %}estado-anulada
+                            {% endif %}
+                        ">
+                        {{ venta.datos_envio.estado }}
+                    </span>
                 </div>
                 
+                <div class="data-row">
+                    <span class="data-label">Transportista:</span>
+                    <span class="fw-bold">{{ venta.datos_envio.transportista|default:"Starken" }}</span>
+                </div>
                 <div class="data-row">
                     <span class="data-label">Número de Seguimiento:</span>
                     <span class="text-primary">{{ venta.datos_envio.numero_seguimiento|default:"No asignado" }}</span>

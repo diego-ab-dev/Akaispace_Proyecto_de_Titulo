@@ -134,6 +134,7 @@
                     <p><strong>Región:</strong> {{ compra.usuario.region }}</p>
                     <p><strong>Ciudad:</strong> {{ compra.usuario.ciudad }}</p>
                     <p><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
+                    <p><strong>Transportista:</strong> {{ compra.datos_envio.transportista|default:"No asignado" }}</p>
                 </div>
             {% endif %}
         </div>
@@ -142,7 +143,7 @@
 
     <!--detalles de la compra-->
     <div class="right-sidebar">
-        <div class="sidebar-date">
+        <div class="sidebar-date text-center">
             Compra Realizada el {{ compra.fecha|date:"d \\d\\e F \\d\\e\\l Y \\a \\l\\a\\s H:i" }}
         </div>
 

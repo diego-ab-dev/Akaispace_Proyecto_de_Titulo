@@ -46,7 +46,19 @@
                                 <p><strong>Total:</strong> ${{ ultimo_pedido.total|formato_chileno }}</p>
                                 <p><strong>Cantidad:</strong> {{ ultimo_pedido.producto_venta.count }} </p>
                                 <p><strong>Fecha:</strong> {{ ultimo_pedido.fecha|date:"d/m/Y H:i" }}</p>
-                                <p><strong>Estado:</strong> <span class="text-muted">{{ ultimo_pedido.datos_envio.estado }}</span></p>
+                                <p><strong>Estado:</strong>
+                                     <span class="
+                                            {% if ultimo_pedido.datos_envio.estado == 'En Preparación' %}estado-preparacion
+                                            {% elif ultimo_pedido.datos_envio.estado == 'Enviado' %}estado-enviado
+                                            {% elif ultimo_pedido.datos_envio.estado == 'En Tránsito' %}estado-transito
+                                            {% elif ultimo_pedido.datos_envio.estado == 'En Reparto' %}estado-reparto
+                                            {% elif ultimo_pedido.datos_envio.estado == 'Entregado' %}estado-entregado
+                                            {% elif ultimo_pedido.datos_envio.estado == 'Anulada' %}estado-anulada
+                                            {% endif %}
+                                        ">
+                                        {{ ultimo_pedido.datos_envio.estado }}
+                                    </span>
+                                </p>
                             </div>
                             {% endwith %}
                         {% else %}

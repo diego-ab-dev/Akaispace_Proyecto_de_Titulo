@@ -630,15 +630,18 @@ def detalle_venta(request, venta_id):
 @admin_required
 def modificar_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
+    # Usamos getattr para evitar errores si no existe la relación aun
     envio = getattr(venta, 'datos_envio', None)
 
     error = None
     estado_post = None
     tracking_post = None
+    transportista_post = None # Variable inicial
 
     if request.method == 'POST':
         estado_post = request.POST.get('estado')
         tracking_post = request.POST.get('numero_seguimiento', '').strip()
+        transportista_post = request.POST.get('transportista') # 1. Capturamos el transportista
 
         estados_con_tracking = ["Enviado", "En Tránsito", "En Reparto"]
 
@@ -649,7 +652,7 @@ def modificar_venta(request, venta_id):
         if not error and tracking_post:
             if not re.match(r'^[A-Za-z0-9]{5,20}$', tracking_post):
                 error = "Número de seguimiento inválido. Solo letras y números (5–20 caracteres)."
-
+            # Validación de duplicados excluyendo el actual
             elif Envio.objects.filter(numero_seguimiento=tracking_post).exclude(id=envio.id if envio else None).exists():
                 error = f"Error: El número '{tracking_post}' ya fue asignado a otro pedido anteriormente."
         
@@ -660,12 +663,19 @@ def modificar_venta(request, venta_id):
                 'error': error,
                 'estado_post': estado_post,
                 'tracking_post': tracking_post,
+                'transportista_post': transportista_post, # Pasamos el valor fallido al contexto
             })
 
         if envio:
             envio.numero_seguimiento = tracking_post
+            # 2. Guardamos el transportista
+            if transportista_post: 
+                envio.transportista = transportista_post
+            
             envio.guardar_estado(estado_post)
         else:
+            # Nota: Si no existe objeto Envio, solo se actualiza el estado en Venta
+            # Si quisieras crear el objeto Envio aquí, deberías instanciarlo.
             venta.estado = estado_post
 
         venta.save()
@@ -740,18 +750,25 @@ def productos_menu(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
     fc25 = Producto.objects.filter(nombre="Fc 25", is_deleted=False).first()
     silent = Producto.objects.filter(nombre="Silent Hill 2", is_deleted=False).first()
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
+
+    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
 
     template_name = 'resultado_busqueda.html' if query else 'productosmenu.html'
     
     return render(request, template_name, {
         'page_obj': page_obj,
         'productos': page_obj.object_list,
-        'cod6': cod6,
         'fc25': fc25,
         'silent': silent,
+        'cod6': cod6,
+        'ps5': ps5,
+        'mando': mando,
+        'funko': funko,
         'favoritos_ids': favoritos_ids,
         'query': query, 
         'orden_actual': orden, 
@@ -799,6 +816,11 @@ def producto_detalle(request, producto_id):
     if usuario_id:
         usuario = get_object_or_404(Usuario, id=usuario_id)
         es_favorito = Favorito.objects.filter(usuario=usuario, producto=producto).exists()
+    
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
 
     return render(request, "producto_detalle.html", {
         "producto": producto,
@@ -812,6 +834,10 @@ def producto_detalle(request, producto_id):
         "total_opiniones": total_opiniones,
         "es_favorito": es_favorito,
         "productos_relacionados": productos_relacionados,
+        'cod6': cod6,
+        'ps5': ps5,
+        'mando': mando,
+        'funko': funko,
     })
 
     
@@ -852,6 +878,11 @@ def productos_por_categoria(request, categoria):
 
     nombre_categoria = dict(Producto.CATEGORIAS).get(categoria, categoria)
 
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+
     context = {
         'categoria': nombre_categoria,
         'categoria_cod': categoria,  
@@ -859,6 +890,10 @@ def productos_por_categoria(request, categoria):
         'page_obj': page_obj,
         'productos': page_obj.object_list,
         'orden_actual': orden,
+        'cod6': cod6,
+        'ps5': ps5,
+        'mando': mando,
+        'funko': funko,
     }
     return render(request, 'productos_por_categoria.html', context)
 # fin de vistas relacionadas a home y menu
@@ -1502,11 +1537,20 @@ def ver_carrito(request):
     total = sum((item.producto.precio or 0) * item.cantidad for item in items)
     total_items = sum(item.cantidad for item in items)
 
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+
     return render(request, "carrito.html", {
         "productos": items,
         "total": total,
         "total_items": total_items,
         "usuario": usuario,
+        'cod6': cod6,
+        'ps5': ps5,
+        'mando': mando,
+        'funko': funko,
     })
 
 
@@ -1564,8 +1608,17 @@ def lista_favoritos(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+
     return render(request, 'favorite.html', {'wishlist_items': favoritos, 'page_obj': page_obj,
-        'favoritos': page_obj.object_list,})
+        'favoritos': page_obj.object_list,         
+        'cod6': cod6,
+        'ps5': ps5,
+        'mando': mando,
+        'funko': funko,})
 
 def agregar_favorito(request, producto_id):
     usuario_id = request.session.get('usuario_id')
