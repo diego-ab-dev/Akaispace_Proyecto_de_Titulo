@@ -630,18 +630,17 @@ def detalle_venta(request, venta_id):
 @admin_required
 def modificar_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
-    # Usamos getattr para evitar errores si no existe la relación aun
     envio = getattr(venta, 'datos_envio', None)
 
     error = None
     estado_post = None
     tracking_post = None
-    transportista_post = None # Variable inicial
+    transportista_post = None 
 
     if request.method == 'POST':
         estado_post = request.POST.get('estado')
         tracking_post = request.POST.get('numero_seguimiento', '').strip()
-        transportista_post = request.POST.get('transportista') # 1. Capturamos el transportista
+        transportista_post = request.POST.get('transportista') 
 
         estados_con_tracking = ["Enviado", "En Tránsito", "En Reparto"]
 
@@ -652,7 +651,6 @@ def modificar_venta(request, venta_id):
         if not error and tracking_post:
             if not re.match(r'^[A-Za-z0-9]{5,20}$', tracking_post):
                 error = "Número de seguimiento inválido. Solo letras y números (5–20 caracteres)."
-            # Validación de duplicados excluyendo el actual
             elif Envio.objects.filter(numero_seguimiento=tracking_post).exclude(id=envio.id if envio else None).exists():
                 error = f"Error: El número '{tracking_post}' ya fue asignado a otro pedido anteriormente."
         
@@ -663,7 +661,7 @@ def modificar_venta(request, venta_id):
                 'error': error,
                 'estado_post': estado_post,
                 'tracking_post': tracking_post,
-                'transportista_post': transportista_post, # Pasamos el valor fallido al contexto
+                'transportista_post': transportista_post, 
             })
 
         if envio:
@@ -674,8 +672,6 @@ def modificar_venta(request, venta_id):
             
             envio.guardar_estado(estado_post)
         else:
-            # Nota: Si no existe objeto Envio, solo se actualiza el estado en Venta
-            # Si quisieras crear el objeto Envio aquí, deberías instanciarlo.
             venta.estado = estado_post
 
         venta.save()
