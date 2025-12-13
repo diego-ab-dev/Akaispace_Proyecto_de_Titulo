@@ -92,6 +92,81 @@ body {
     color: #ffffff;
 }
 
+
+.button {
+  --width: 120px;
+  --height: 35px;
+  --button-color: #000000; 
+  width: var(--width);
+  height: var(--height);
+  background: var(--button-color);
+  position: relative;
+  text-align: center;
+  border-radius: 20px;
+  font-family: "Poppins", sans-serif; 
+  transition: background 0.3s;
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-wrapper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    overflow: hidden;
+    border-radius: 0.45em; 
+}
+
+.text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #fff;
+  font-weight: 500;
+  transition: top 0.5s;
+}
+
+.icon {
+  position: absolute;
+  top: 100%; 
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: top 0.5s;
+}
+
+.icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.button:hover {
+  background: #333333; 
+}
+
+.button:hover .text {
+  top: -100%; 
+}
+
+.button:hover .icon {
+  top: 0; 
+}
+
+
+
+
 .btn-compras {
     background-color: #4e84a8;
     color: #ffffff;

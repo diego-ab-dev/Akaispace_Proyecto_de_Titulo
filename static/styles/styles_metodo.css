@@ -97,26 +97,60 @@ body {
     color: #000;
 }
 
-.btn-pagar-mockup {
-    background-color: #4E84A8;
-    color: white;
+.Btn {
+    width: 130px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4e84a8; 
     border: none;
-    border-radius: 6px;
-    padding: 15px;
-    width: 100%;
+    color: white;
     font-weight: 600;
     font-size: 1.1rem;
-    margin-top: 30px;
+    gap: 8px;
     cursor: pointer;
-    transition: background 0.3s;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.103);
+    position: relative;
+    overflow: hidden;
+    transition-duration: .3s;
+    padding: 15px;
+    margin: 30px auto 0 auto;
+    z-index: 1; 
 }
-.btn-pagar-mockup:hover {
-    background-color: #4a6f8a;
+
+.svgIcon {
+    width: 16px;
+    z-index: 2;
 }
+
+.svgIcon path {
+  fill: white;
+}
+
+.Btn::before {
+    width: calc(100% + 40px);
+    aspect-ratio: 1/1;
+    position: absolute;
+    content: "";
+    background-color: #4a6f8a; 
+    border-radius: 50%;
+    left: -20px;
+    top: 50%;
+    transform: translate(-150%, -50%);
+    transition-duration: .5s;
+    z-index: -1;
+}
+
+.Btn:hover::before {
+  transform: translate(0, -50%);
+}
+
+.Btn:active {
+  transform: translateY(4px);
+  transition-duration: .3s;
+}
+
 
 @media (max-width: 992px) {
     .main-container {
