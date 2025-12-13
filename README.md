@@ -12,6 +12,7 @@ PASO 1: INSTALACIÓN DEL ENTORNO
    python -m venv venv
    
    > En Windows: .\venv\Scripts\activate
+   
    > En Mac/Linux: source venv/bin/activate
 
 En caso de nunca haber usado un ambiente virtual, ya sea porque es un pc nuevo o si nunca has ejecutado Scripts en PowerShell, se debe ir a:
