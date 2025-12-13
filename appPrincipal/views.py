@@ -991,30 +991,6 @@ def logout(request):
     request.session.flush()  
     return redirect('login')
 
-def password_reset_request(request):
-    if request.method == 'POST':
-        form = forms.PasswordResetForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            try:
-                usuario = Usuario.objects.get(email=email)
-                token = get_random_string(length=32)
-                usuario.contraseña = make_password(token)
-                usuario.save()
-                send_mail(
-                    subject="Recuperación de contraseña - SD Games",
-                    message=f"Tu nueva contraseña temporal es: {token}",
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[email],
-                    fail_silently=False,
-                )
-                return redirect('login')
-            except Usuario.DoesNotExist:
-                form.add_error('email', "El correo no está registrado.")
-    else:
-        form = forms.PasswordResetForm()
-    return render(request, 'password_reset.html', {'form': form, 'mensaje_exito': "Se ha enviado una nueva contraseña a tu correo electrónico."})
-
 def obtener_ciudades(request):
     region = request.GET.get('region')
     ciudades = regiones_ciudades.get(region, [])
