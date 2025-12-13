@@ -91,9 +91,14 @@
                     <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX ONE' %}">XBOX ONE</a></li>
                     <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX SERIES' %}">XBOX SERIES</a></li>
                     <hr class="my-2">
-                    <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo & PC</span></li>
+                    <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
                     <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos Nintendo SWITCH' %}">SWITCH</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos para PC' %}">PC Gaming</a></li>
+                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos Nintendo 3DS' %}">3DS</a></li>
+                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos WII' %}">WII</a></li>
+                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos WII U' %}">WII U</a></li>
+                    <hr class="my-2">
+                    <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PC</span></li>
+                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos para PC' %}">Videojuegos PC</a></li>
                   </ul>
                 </div>
 
@@ -172,13 +177,23 @@
                       <div class="menu-links-col">
                           <ul class="list-unstyled mb-0">
                               <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PlayStation</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS4' %}">Controles PS4</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS5' %}">Controles PS5</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Psp' %}">Accesorios PSP/Vita</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Psp' %}">PSP</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Ps Vita' %}">VITA</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS1' %}">PLAY STATION 1</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS2' %}">PLAY STATION 2</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS3' %}">PLAY STATION 3</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS4' %}">PLAY STATION 4</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS5' %}">PLAY STATION 5</a></li>
                               <hr class="my-2">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft & Nintendo</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX SERIES' %}">Accesorios XBOX</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Nintendo SWITCH' %}">Joy-Cons Switch</a></li>
+                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft</span></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX 360' %}">XBOX 360</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX ONE' %}">XBOX ONE</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX SERIES' %}">XBOX SERIES</a></li>
+                              <hr class="my-2">
+                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Nintendo 3DS' %}">3DS</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios WII U' %}">WII U</a></li>
+                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Nintendo SWITCH' %}">SWITCH</a></li>
                           </ul>
                       </div>
 
@@ -214,10 +229,6 @@
                               <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Coleccionables</span></li>
                               <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Figuras Funko' %}">FUNKO POP</a></li>
                               <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Figuras Amiibo' %}">AMIIBO</a></li>
-                              <hr class="my-2">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Otros</span></li>
-                              <li><a class="dropdown-item ps-0" href="#">Estatuas</a></li>
-                              <li><a class="dropdown-item ps-0" href="#">Merchandising</a></li>
                           </ul>
                       </div>
 
@@ -416,7 +427,7 @@
                     <i class="fas fa-search fa-3x text-muted mb-3"></i>
                     <h3 class="mt-3">No encontramos resultados para "{{ query }}"</h3>
                     <p class="text-muted">Intenta revisar la ortografía o usar términos más generales.</p>
-                    <a href="/menu" class="btn btn-outline-dark mt-2">Ver todo el catálogo</a>
+                    <a href="/menu" class="btn btn-volver mt-2">Ver todo el catálogo</a>
                 </div>
               {% endfor %}
             </div>

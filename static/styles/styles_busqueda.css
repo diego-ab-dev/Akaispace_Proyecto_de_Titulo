@@ -1160,3 +1160,13 @@ footer{
         border-right: none;
     }
 }
+
+.btn-volver {
+  background-color: #1c253b;
+  color: #ffffff;
+}
+
+.btn-volver:hover {
+  background-color: #344266;
+  color: #ffffff;
+}

@@ -42,22 +42,88 @@ a {
     border: none;
 }
 
-.btn-logout {
-    background-color: #FF0000;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: background-color 0.2s;
+.Btn {
+  --black: #000000;
+  --ch-black: #141414;
+  --eer-black: #1b1b1b;
+  --night-rider: #FF0000;
+  --white: #ffffff;
+  --af-white: #f3f3f3;
+  --ch-white: #e1e1e1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition-duration: .3s;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+  background-color: var(--night-rider);
+  text-decoration: none; 
 }
 
-.btn-logout:hover {
-    background-color: #cc0000;
-    color: white;
+.sign {
+  width: 100%;
+  transition-duration: .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.sign svg {
+  width: 17px;
+}
+
+.sign svg path {
+  fill: var(--af-white);
+}
+
+.text {
+  position: absolute;
+  right: 0%;
+  width: 0%;
+  opacity: 0;
+  color: var(--af-white);
+  font-size: 1.2em;
+  font-weight: 600;
+  transition-duration: .3s;
+  padding-left: 10px;
+}
+
+.Btn:hover {
+  width: 125px;
+  border-radius: 5px;
+  transition-duration: .3s;
+}
+
+.Btn:hover .sign {
+  width: 30%;
+  transition-duration: .3s;
+  padding-left: 20px;
+}
+
+.Btn:hover .text {
+  opacity: 1;
+  width: 70%;
+  transition-duration: .3s;
+  padding-right: 10px;
+}
+
+.Btn:active {
+  transform: translate(2px ,2px);
+}
+
+.logout-wrapper {
+    width: 125px;
+    display: flex;
+    justify-content: flex-end; 
+    align-items: center;
+}
+
 
 .profile-card {
     background-color: #fafafa;
@@ -116,6 +182,51 @@ a {
     color: white;
     transform: translateY(-2px);
 }
+
+
+
+.button-more {
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  gap: 10px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: none;
+  overflow: hidden;
+  background: #1c253b;
+  color: #fff;
+  width: 100%; 
+  box-sizing: border-box; 
+  cursor: pointer; 
+}
+
+.button-text {
+  transform: translateX(15px);
+  font-size: 1.2em;
+  font-weight: 700;
+  transition-duration: 0.3s;
+  margin: 0; 
+  line-height: 1;
+}
+
+.iconer {
+  transform: translateY(35px);
+  transition-duration: 0.3s;
+  margin: 0; 
+  display: flex; 
+  align-items: center;
+}
+
+.button-more:hover .button-text {
+  transform: translateX(0px);
+}
+
+.button-more:hover .iconer {
+  transform: translateY(0px);
+}
+
+
 
 .btn-blue-custom {
     background-color: #4E84A8; 
