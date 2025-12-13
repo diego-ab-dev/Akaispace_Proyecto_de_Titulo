@@ -1001,41 +1001,39 @@ h2, h3, h5 {
 #notif-box.show { opacity: 1; visibility: visible; transform: translateY(0); }
 
 
-/* Contenedor principal de la descripción */
+
 .description-wrapper {
     position: relative;
 }
 
-/* El contenido con altura limitada por defecto */
 .description-content {
-    max-height: 100px; /* Altura inicial (ajústala a tu gusto, ej: 150px) */
+    max-height: 100px; 
     overflow: hidden;
     position: relative;
     transition: max-height 0.5s ease-in-out;
 }
 
-/* Clase que se agrega con JS para mostrar todo */
+
 .description-content.expanded {
-    max-height: 2000px; /* Un valor alto seguro para permitir que se abra todo */
+    max-height: 2000px; 
 }
 
-/* El degradado (fade out) */
+
 .description-fade {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 60px; /* Altura del desvanecimiento */
+    height: 60px; 
     background: linear-gradient(to bottom, rgba(250, 250, 250, 0), #fafafa 90%);
     transition: opacity 0.3s ease;
-    pointer-events: none; /* Para que no interfiera con clicks */
+    pointer-events: none; 
 }
 
-/* Botón minimalista */
 .btn-ver-mas {
     background: transparent;
     border: none;
-    color: #4E84A8; /* Tu color azul corporativo */
+    color: #4E84A8; 
     font-weight: 600;
     font-size: 0.9rem;
     padding: 10px 0;
@@ -1048,9 +1046,109 @@ h2, h3, h5 {
 
 .btn-ver-mas:hover {
     color: #1C253B;
-    background: transparent; /* Sobreescribimos el hover general de botones */
+    background: transparent; 
 }
 
 .btn-ver-mas:hover .arrow {
-    background: transparent; /* Fix para tu CSS global de botones */
+    background: transparent; 
+}
+
+
+.card-relacionada {
+    display: block;
+    background: #ffffff;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    height: 100%; 
+}
+
+.card-relacionada:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+}
+
+.card-rel-img-wrapper {
+    width: 100%;
+    height: 200px;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    position: relative;
+}
+
+.card-rel-img-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; 
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+}
+
+.card-relacionada:hover .card-rel-img-wrapper img {
+    transform: scale(1.1);
+}
+
+.card-rel-body {
+    padding: 15px;
+    text-align: left;
+}
+
+.text-primary {
+    color: #4E84A8 !important; 
+}
+
+@media (max-width: 768px) {
+    .card-rel-img-wrapper {
+        height: 150px;
+    }
+    .card-rel-body h6 {
+        font-size: 0.9rem;
+    }
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: #9c9592; 
+}
+.breadcrumb-item a:hover {
+    color: #4E84A8 !important;
+}
+
+.icon-circle {
+    width: 50px;
+    height: 50px;
+    background-color: #f0f4f8; 
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1C253B; 
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.col-4:hover .icon-circle {
+    background-color: #4E84A8; 
+    color: white;
+    transform: translateY(-3px);
+}
+
+.service-text {
+    font-size: 0.85rem;
+    color: #1C253B;
+    margin-top: 5px;
+}
+
+.service-subtext {
+    font-size: 0.7rem;
+    display: block; 
+}
+
+@media (max-width: 768px) {
+    .service-text { font-size: 0.75rem; }
+    .service-subtext { display: none;}
+    .icon-circle { width: 40px; height: 40px; font-size: 1rem; }
 }

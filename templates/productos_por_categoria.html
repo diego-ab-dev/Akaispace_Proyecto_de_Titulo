@@ -225,143 +225,136 @@
 
 
   <div class="main-container">
-    <section class="section-products">
+      <section class="section-products">
         <div class="container">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="filtros">
-                      <!--Seccion de filtrado-->
-                        <h4 class="fw-bold">Filtrar</h4>
-                        <form method="get">
-                            <div class="mb-3">
-                                <label for="genero" class="form-label">Género</label>
-                                <select name="genero" id="genero" class="form-select">
-                                    <option value="">Todos</option>
-                                    {% for key, value in generos %}
-                                        <option value="{{ key }}" {% if request.GET.genero == key %}selected{% endif %}>
-                                            {{ value }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                              <label for="orden_precio" class="form-label">Ordenar por precio</label>
-                              <select name="orden_precio" id="orden_precio" class="form-select">
-                                  <option value="">Sin orden</option>
-                                  <option value="asc" {% if request.GET.orden_precio == "asc" %}selected{% endif %}>Menor a mayor</option>
-                                  <option value="desc" {% if request.GET.orden_precio == "desc" %}selected{% endif %}>Mayor a menor</option>
-                              </select>
-                            </div>
-                            <button type="submit" class="btn w-100">Aplicar filtros</button>
-                        </form>
-                    </div>
-                </div>
-    
-                <!--Productos-->
-                <div class="col-md-12">
-                  <div class="row justify-content-center text-center">
-                    <div class="col-md-8 col-lg-6">
-                        <div class="header">
-                            <h2 class="anim-down display-6 fw-bold fst-italic text-center">Productos en {{ categoria }}</h2>
-                        </div>
-                    </div>
-                  </div>
-                  <div class="row gy-4">
-                    {% for producto in productos %}
-                      {% if producto.stock > 0 %}
-                        <div class="col-md-6 col-lg-4 col-xl-3">
-                            <div id="product-4" class="single-product" style="background-color: #fafafa; border-radius: 20px; padding: 20px;">
-                                <div class="part-1">
-                                    <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
-                                    <ul>
-                                        <li>
-                                            <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar" style="display: inline;">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="cantidad" value="1">
-                                                <button type="submit" class="btn-icon"><i class="fas fa-shopping-cart"></i></button>
-                                            </form>
-                                        </li>
-                                       <li>
-                                        <form method="POST" action="{% url 'agregar_favorito' producto.id %}" class="form-favorito" style="display: inline;">
-                                          {% csrf_token %}
-                                          <input type="hidden" name="cantidad" value="1">
-                                          
-                                          <button type="submit" class="btn-icon">
-                                            {% if producto.id in favoritos_ids %}
-                                                <i class="fas fa-heart" style="color: red;"></i>
-                                            {% else %}
-                                                <i class="far fa-heart"></i> {% endif %}
-                                          </button>
-                                        </form>
-                                      </li>
-                                        <li>
-                                            <form method="POST" action="{% url 'producto_detalle' producto.id %}" style="display: inline;">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="cantidad" value="1">
-                                                <button type="submit" class="btn-icon"><i class="fas fa-expand"></i></button>
-                                            </form>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="part-2">
-                                    <h3 class="product-title fw-bold fs-6">{{ producto.nombre}}</h3>
-                                    <h4 class="precioprod product-price fw-bold fs-4">${{ producto.precio|formato_chileno }}</h4>
-                                </div>
-                                <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Detalles</a>
-                                <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="cantidad" value="1">
-                                    <button type="submit" class="btn-carrito">Agregar al Carrito</button>
-                                </form>
-                            </div>
-                        </div>
-                      {% endif %}
-                    {% empty %}
-                        <p>No hay productos disponibles en este momento.</p>
-                    {% endfor %}
-                </div>
-                </div>
+          
+          <div class="row mb-4 align-items-center justify-content-between header-toolbar">
+            <div class="col-md-6 text-start">
+              <h2 class="fw-bold text-dark m-0" style="font-size: 1.8rem;">{{ categoria }}</h2>
+              <span class="text-muted small">
+                  Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }} productos
+              </span>
             </div>
+
+            <div class="col-md-6 mt-3 mt-md-0 text-end">
+              <form method="get" class="d-inline-flex align-items-center form-ordenar">
+                  <label for="ordenar" class="me-2 text-muted small fw-bold">Ordenar:</label>
+                  <select name="orden" id="ordenar" class="form-select form-select-sm custom-select" onchange="this.form.submit()">
+                      <option value="relevancia" {% if orden_actual == 'relevancia' %}selected{% endif %}>Relevancia</option>
+                      <option value="precio_asc" {% if orden_actual == 'precio_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
+                      <option value="precio_desc" {% if orden_actual == 'precio_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
+                  </select>
+              </form>
+            </div>
+          </div>
+          
+          <hr class="mb-5" style="color: #dee2e6;">
+
+          <div class="row gy-4">
+            {% for producto in productos %}
+              {% if producto.stock > 0 %}
+                <div class="col-md-6 col-lg-4 col-xl-3">
+                  <div class="single-product">
+                    
+                    <div class="part-1">
+                      {% if producto.stock <= 3 %}
+                          <span class="badge-overlay badge-low-stock">¡Últimos!</span>
+                      {% elif forloop.counter <= 4 and page_obj.number == 1 %}
+                          <span class="badge-overlay badge-new">Nuevo</span>
+                      {% endif %}
+                      
+                      <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
+                      
+                      <ul>
+                        <li>
+                          <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar" style="display: inline;">
+                              {% csrf_token %}
+                              <input type="hidden" name="cantidad" value="1">
+                              <button type="submit" class="btn-icon"><i class="fas fa-shopping-cart"></i></button>
+                          </form>
+                        </li>
+                        <li>
+                          <form method="POST" action="{% url 'agregar_favorito' producto.id %}" class="form-favorito" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="cantidad" value="1">
+                            <button type="submit" class="btn-icon">
+                              {% if producto.id in favoritos_ids %}
+                                  <i class="fas fa-heart" style="color: red;"></i>
+                              {% else %}
+                                  <i class="far fa-heart"></i> 
+                              {% endif %}
+                            </button>
+                          </form>
+                        </li>
+                        <li>
+                          <form method="POST" action="{% url 'producto_detalle' producto.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="cantidad" value="1">
+                            <button type="submit" class="btn-icon"><i class="fas fa-expand"></i></button>
+                          </form>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div class="part-2">
+                      <h3 class="product-title fw-bold fs-6">{{ producto.nombre }}</h3>
+                      
+                      {% if producto.stock <= 5 %}
+                          <small class="text-danger fw-bold" style="font-size: 0.75rem;">Quedan solo {{ producto.stock }}</small>
+                      {% endif %}
+
+                      <h4 class="precioprod product-price fw-bold fs-4">${{ producto.precio|formato_chileno }}</h4>
+                    </div>
+                    
+                    <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Detalles</a>
+                    <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar">
+                        {% csrf_token %}
+                        <input type="hidden" name="cantidad" value="1">
+                        <button type="submit" class="btn-carrito">Agregar al Carrito</button>
+                    </form>
+                  </div>
+                </div>
+              {% endif %}
+            {% empty %}
+              <div class="col-12 text-center py-5">
+                  <i class="fas fa-gamepad fa-3x text-muted mb-3"></i>
+                  <h3>No hay productos en esta categoría</h3>
+                  <p class="text-muted">Estamos reponiendo stock. ¡Vuelve pronto!</p>
+                  <a href="/menu" class="btn btn-outline-dark mt-2">Ver todo el catálogo</a>
+              </div>
+            {% endfor %}
+          </div>
         </div>
-    </section>
+      </section>
 
-
-    <!-- Paginacion -->
       <div class="pagination-wrapper">
           {% if page_obj.has_previous %}
-              <a href="?page={{ page_obj.previous_page_number }}" class="page-nav">
+              <a href="?{% param_replace page=page_obj.previous_page_number %}" class="page-nav">
                   <i class="fa-solid fa-chevron-left"></i>
               </a>
           {% else %}
-              <span class="page-nav disabled-nav">
-                  <i class="fa-solid fa-chevron-left"></i>
-              </span>
+              <span class="page-nav disabled-nav"><i class="fa-solid fa-chevron-left"></i></span>
           {% endif %}
 
           {% for num in page_obj.paginator.page_range %}
-              
               {% if num == page_obj.number %}
                   <span class="page-item active">{{ num }}</span>
-
               {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-                  <a href="?page={{ num }}" class="page-item">{{ num }}</a>
-
+                  <a href="?{% param_replace page=num %}" class="page-item">{{ num }}</a>
               {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
                   <span class="page-dots">...</span>
               {% endif %}
-
           {% endfor %}
 
           {% if page_obj.has_next %}
-              <a href="?page={{ page_obj.next_page_number }}" class="page-nav">
+              <a href="?{% param_replace page=page_obj.next_page_number %}" class="page-nav">
                   <i class="fa-solid fa-chevron-right"></i>
               </a>
           {% else %}
-              <span class="page-nav disabled-nav">
-                  <i class="fa-solid fa-chevron-right"></i>
-              </span>
+              <span class="page-nav disabled-nav"><i class="fa-solid fa-chevron-right"></i></span>
           {% endif %}
       </div>
+    </div>
 
       <!--Boton para ir hacia arriba-->
       <div class="go-top-container">

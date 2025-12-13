@@ -710,55 +710,51 @@ def home(request):
 
 def productos_menu(request):
     query = request.GET.get('buscar')
-    
+    orden = request.GET.get('orden') 
+
     if query:
         productos = Producto.objects.filter(
             nombre__icontains=query,
             stock__gt=0,
             is_deleted=False
-        ).order_by('id')
+        )
+    else:
+        productos = Producto.objects.filter(
+            stock__gt=0,
+            is_deleted=False
+        )
 
-        favoritos_ids = []
-        usuario_id = request.session.get('usuario_id')
-        if usuario_id:
-            favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
-
-        paginator = Paginator(productos, 16)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-
-        return render(request, 'resultado_busqueda.html', {
-            'query': query,
-            'favoritos_ids': favoritos_ids,
-            'page_obj': page_obj,
-            'productos': page_obj.object_list,
-        })
-
-    productos = Producto.objects.filter(
-        stock__gt=0,
-        is_deleted=False
-    ).order_by('-id')
-
-    paginator = Paginator(productos, 16)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    if orden == 'precio_asc':
+        productos = productos.order_by('precio')
+    elif orden == 'precio_desc':
+        productos = productos.order_by('-precio')
+    else:
+        productos = productos.order_by('-id')
 
     favoritos_ids = []
     usuario_id = request.session.get('usuario_id')
     if usuario_id:
         favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
 
+    paginator = Paginator(productos, 16)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
     fc25 = Producto.objects.filter(nombre="Fc 25", is_deleted=False).first()
     silent = Producto.objects.filter(nombre="Silent Hill 2", is_deleted=False).first()
 
-    return render(request, 'productosmenu.html', {
+    template_name = 'resultado_busqueda.html' if query else 'productosmenu.html'
+    
+    return render(request, template_name, {
         'page_obj': page_obj,
         'productos': page_obj.object_list,
         'cod6': cod6,
         'fc25': fc25,
         'silent': silent,
         'favoritos_ids': favoritos_ids,
+        'query': query, 
+        'orden_actual': orden, 
     })
 
 
@@ -792,6 +788,12 @@ def producto_detalle(request, producto_id):
             "percent": round(percent, 1)
         })
 
+    productos_relacionados = Producto.objects.filter(
+        categoria=producto.categoria, 
+        stock__gt=0,                 
+        is_deleted=False           
+    ).exclude(id=producto.id).order_by('?')[:4]
+
     es_favorito = False
     usuario_id = request.session.get('usuario_id')
     if usuario_id:
@@ -809,6 +811,7 @@ def producto_detalle(request, producto_id):
         "ratings": ratings_data, 
         "total_opiniones": total_opiniones,
         "es_favorito": es_favorito,
+        "productos_relacionados": productos_relacionados,
     })
 
     
@@ -827,20 +830,14 @@ def productos_por_categoria(request, categoria):
         stock__gt=0
     )
 
-    genero = request.GET.get('genero')
-    if genero:
-        productos = productos.filter(genero=genero)
-
-    precio_min = request.GET.get('precio_min')
-    precio_max = request.GET.get('precio_max')
-    if precio_min and precio_max:
-        productos = productos.filter(precio__gte=precio_min, precio__lte=precio_max)
-
-    orden_precio = request.GET.get('orden_precio')
-    if orden_precio == 'asc':
+    orden = request.GET.get('orden')
+    
+    if orden == 'precio_asc':
         productos = productos.order_by('precio')
-    elif orden_precio == 'desc':
+    elif orden == 'precio_desc':
         productos = productos.order_by('-precio')
+    else:
+        productos = productos.order_by('-id')
 
     favoritos_ids = []
     usuario_id = request.session.get('usuario_id')
@@ -853,12 +850,15 @@ def productos_por_categoria(request, categoria):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    nombre_categoria = dict(Producto.CATEGORIAS).get(categoria, categoria)
+
     context = {
-        'categoria': dict(Producto.CATEGORIAS).get(categoria, categoria),
-        'generos': Producto.GENEROS,
+        'categoria': nombre_categoria,
+        'categoria_cod': categoria,  
         'favoritos_ids': favoritos_ids,
         'page_obj': page_obj,
-        'productos': page_obj.object_list, 
+        'productos': page_obj.object_list,
+        'orden_actual': orden,
     }
     return render(request, 'productos_por_categoria.html', context)
 # fin de vistas relacionadas a home y menu
