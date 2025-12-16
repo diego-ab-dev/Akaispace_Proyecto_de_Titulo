@@ -87,11 +87,24 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const nombreInput = document.querySelector('input[name="nombre"]');
         const charCount = document.getElementById('char-count');
         const maxLength = 60;
+        const stockInput = document.querySelector('input[name="stock"]'); 
+        
+
+        // 2. AGREGAR ESTE BLOQUE DE CÓDIGO PARA LIMITAR A 3 DÍGITOS
+        if (stockInput) {
+            stockInput.addEventListener('input', function() {
+                // Si el valor tiene más de 3 caracteres, lo corta
+                if (this.value.length > 3) {
+                    this.value = this.value.slice(0, 3);
+                }
+            });
+        }
 
         if(nombreInput && charCount) {
             const updateCounter = () => {
