@@ -88,9 +88,8 @@
 
             <select name="estado" class="form-select w-auto">
                 <option value="">Todos los estados</option>
-                <option value="Pendiente" {% if estado_seleccionado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="Abierto" {% if estado_seleccionado == 'Abierto' %}selected{% endif %}>Abierto</option>
                 <option value="Respondido" {% if estado_seleccionado == 'Respondido' %}selected{% endif %}>Respondido</option>
-                <option value="Cancelado" {% if estado_seleccionado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
             </select>
 
             <input 
