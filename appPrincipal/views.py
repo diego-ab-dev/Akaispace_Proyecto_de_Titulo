@@ -910,13 +910,17 @@ def login(request):
         if not errors:
             try:
                 usuario = Usuario.objects.get(email=email)
+                
                 if check_password(contraseña, usuario.contraseña):
-                    request.session['usuario_id'] = usuario.id
-                    print(f"Usuario {usuario.id} - Admin: {usuario.es_administrador}")  
-                    if usuario.es_administrador:
-                        return redirect('admin_dashboard') 
+                    if usuario.is_deleted:
+                        errors['email'] = "Esta cuenta ha sido eliminada. Contacta al administrador."
                     else:
-                        return redirect('home') 
+                        request.session['usuario_id'] = usuario.id
+                        print(f"Usuario {usuario.id} - Admin: {usuario.es_administrador}")  
+                        if usuario.es_administrador:
+                            return redirect('admin_dashboard') 
+                        else:
+                            return redirect('home') 
                 else:
                     errors['contraseña'] = "Contraseña incorrecta."
             except Usuario.DoesNotExist:
