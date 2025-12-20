@@ -56,7 +56,10 @@
                                 <label class="form-label">Cantidad a devolver:</label>
                                 <select name="cantidad" class="form-control" required>
                                     {% for n in cantidad_comprada|range_filter %}
-                                        <option value="{{ n }}">{{ n }}</option>
+                                        <option value="{{ n }}" 
+                                            {% if form.cantidad.value|stringformat:"s" == n|stringformat:"s" %}selected{% endif %}>
+                                            {{ n }}
+                                        </option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -65,19 +68,19 @@
                         <div class="mb-2">
                             <label for="descripcion" class="form-label">Escribe aquí el motivo de la devolución:</label>
                             <textarea class="form-control custom-textarea" 
-                                      id="descripcion" 
-                                      name="descripcion" 
-                                      rows="6" 
-                                      placeholder="Escribe tu motivo aquí" 
-                                      required></textarea>
+                                    id="descripcion" 
+                                    name="descripcion" 
+                                    rows="6" 
+                                    placeholder="Escribe tu motivo aquí" 
+                                    required>{{ form.descripcion.value|default_if_none:"" }}</textarea>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label">Adjuntar fotos (opcional, máximo 3):</label>
 
                             <div class="evidencia-container">
-                                
-                                <div>
+    
+                                <div class="d-flex flex-column align-items-center" style="width: 100px;">
                                     <input type="file" name="imagen1" id="input_imagen1" accept="image/*" hidden>
                                     <div class="evidencia-box" id="box_imagen1">
                                         <div class="box-content">
@@ -85,9 +88,14 @@
                                             <span>Foto 1</span>
                                         </div>
                                     </div>
+                                    {% if form.imagen1.errors %}
+                                        <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
+                                            {{ form.imagen1.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
 
-                                <div>
+                                <div class="d-flex flex-column align-items-center" style="width: 100px;">
                                     <input type="file" name="imagen2" id="input_imagen2" accept="image/*" hidden>
                                     <div class="evidencia-box" id="box_imagen2">
                                         <div class="box-content">
@@ -95,9 +103,14 @@
                                             <span>Foto 2</span>
                                         </div>
                                     </div>
+                                    {% if form.imagen2.errors %}
+                                        <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
+                                            {{ form.imagen2.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
 
-                                <div>
+                                <div class="d-flex flex-column align-items-center" style="width: 100px;">
                                     <input type="file" name="imagen3" id="input_imagen3" accept="image/*" hidden>
                                     <div class="evidencia-box" id="box_imagen3">
                                         <div class="box-content">
@@ -105,6 +118,11 @@
                                             <span>Foto 3</span>
                                         </div>
                                     </div>
+                                    {% if form.imagen3.errors %}
+                                        <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
+                                            {{ form.imagen3.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
 
                             </div>

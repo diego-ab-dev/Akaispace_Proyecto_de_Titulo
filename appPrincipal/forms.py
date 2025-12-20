@@ -2,6 +2,7 @@ from django import forms
 from django.core import validators
 from django.core.exceptions import ValidationError
 from .models import Usuario, Producto, Opinion
+import os
 
 
 regiones_ciudades = {
@@ -121,7 +122,36 @@ class OpinionForm(forms.ModelForm):
     class Meta:
         model = Opinion
         fields = ['puntuacion', 'comentario']
+
+# form para devoluciones
+class SolicitudDevolucionForm(forms.Form):
+    cantidad = forms.IntegerField()
+    descripcion = forms.CharField(widget=forms.Textarea, required=True)
+    
+    mensaje_error = {'invalid_image': 'Archivo no válido. Solo imágenes (JPG, PNG).'}
+
+    imagen1 = forms.ImageField(required=False, error_messages=mensaje_error)
+    imagen2 = forms.ImageField(required=False, error_messages=mensaje_error)
+    imagen3 = forms.ImageField(required=False, error_messages=mensaje_error)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        campos_imagen = ['imagen1', 'imagen2', 'imagen3']
+        extensiones_validas = ['.jpg', '.jpeg', '.png', '.webp']
+
+        for campo in campos_imagen:
+            imagen = cleaned_data.get(campo)
+            
+            if imagen:
+                import os
+                ext = os.path.splitext(imagen.name)[1].lower()
+                if ext not in extensiones_validas:
+                    self.add_error(campo, "Formato no permitido.")
+
+        return cleaned_data
         
+
+
 
 
 # administracion
@@ -172,12 +202,12 @@ class ProductoForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'categoria': forms.Select(attrs={'class': 'form-select'}),
             'genero': forms.Select(attrs={'class': 'form-select'}),
-            'imagen_principal': forms.FileInput(attrs={'class': 'form-control'}),
-            'imagen_2': forms.FileInput(attrs={'class': 'form-control'}),
-            'imagen_3': forms.FileInput(attrs={'class': 'form-control'}),
-            'imagen_4': forms.FileInput(attrs={'class': 'form-control'}),
-            'imagen_5': forms.FileInput(attrs={'class': 'form-control'}),
-            'imagen_6': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen_principal': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'imagen_2': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'imagen_3': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'imagen_4': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'imagen_5': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'imagen_6': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
         labels = {
             'imagen_principal': 'Imagen 1 - Principal',
@@ -235,5 +265,26 @@ class ProductoForm(forms.ModelForm):
 
         return stock
 
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        campos_imagen = ['imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4', 'imagen_5', 'imagen_6']
+        
+        extensiones_validas = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 
+        for campo in campos_imagen:
+            imagen = cleaned_data.get(campo)
+            
+            if imagen and hasattr(imagen, 'content_type'):
+                
+                if not imagen.content_type.startswith('image/'):
+                    self.add_error(campo, "El archivo subido no es una imagen válida.")
+                    continue 
+                
+                ext = os.path.splitext(imagen.name)[1].lower()
+                if ext not in extensiones_validas:
+                    self.add_error(campo, f"Formato no permitido ({ext}). Solo se aceptan: {', '.join(extensiones_validas)}")
+
+        return cleaned_data
+ 
 

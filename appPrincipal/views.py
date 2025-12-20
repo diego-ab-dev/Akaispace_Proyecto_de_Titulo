@@ -12,7 +12,7 @@ import json
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.contrib.messages import get_messages
-from .forms import UsuarioForm, ProductoForm
+from .forms import UsuarioForm, ProductoForm, SolicitudDevolucionForm
 from appPrincipal.decorators import admin_required
 from django.utils.dateparse import parse_date
 from django.contrib import messages
@@ -1232,15 +1232,18 @@ def crear_devolucion(request, compra_id, producto_id):
     item = compra.producto_venta.get(producto=producto)
     cantidad_comprada = item.cantidad
 
+    form = SolicitudDevolucionForm()
+
     if request.method == 'POST':
-        motivo = request.POST.get('descripcion')
-        cantidad = request.POST.get('cantidad')
+        form = SolicitudDevolucionForm(request.POST, request.FILES)
 
-        img1 = request.FILES.get('imagen1')
-        img2 = request.FILES.get('imagen2')
-        img3 = request.FILES.get('imagen3')
+        if form.is_valid():
+            motivo = form.cleaned_data['descripcion']
+            cantidad = form.cleaned_data['cantidad']
+            img1 = form.cleaned_data['imagen1']
+            img2 = form.cleaned_data['imagen2']
+            img3 = form.cleaned_data['imagen3']
 
-        if motivo:
             devolucion = Devolucion.objects.create(
                 usuario=usuario,
                 venta=compra,
@@ -1253,11 +1256,15 @@ def crear_devolucion(request, compra_id, producto_id):
                 estado='Pendiente'
             )
             return redirect('/perfil?notif=Solicitud+de+devolución+enviada+con+éxito&type=success')
+        
+        else:
+            pass 
 
     return render(request, 'crear_devolucion.html', {
         'compra': compra,
         'producto': producto,
-        'cantidad_comprada': cantidad_comprada
+        'cantidad_comprada': cantidad_comprada,
+        'form': form 
     })
 
 def listar_devoluciones(request):
