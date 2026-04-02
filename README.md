@@ -10,8 +10,10 @@ PASO 1: INSTALACIÓN DEL ENTORNO
 2. Abra una terminal en la carpeta raíz del proyecto.
 3. Cree y active el entorno virtual:
 
-   python -m venv venv
-   
+   Crear:
+   > python -m venv venv
+
+   Activar:
    > En Windows: .\venv\Scripts\activate
    
    > En Mac/Linux: source venv/bin/activate
@@ -25,7 +27,7 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 
 4. Instale las librerías necesarias:
 
-   pip install -r requirements.txt
+   > pip install -r requirements.txt
 
 
 PASO 2: BASE DE DATOS (IMPORTACIÓN RÁPIDA)
@@ -47,7 +49,7 @@ Si su configuración local de MySQL es diferente, por favor ajuste la sección D
 PASO 3: EJECUCIÓN
 1. Inicie el servidor:
 
-   python manage.py runserver
+   > python manage.py runserver
 
 2. Abra su navegador en: http://127.0.0.1:8000/
 
