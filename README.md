@@ -97,7 +97,7 @@ Ingresa la contraseña de root. Cuando aparezca `mysql>`, ejecuta:
 ```sql
 CREATE DATABASE db_sdgames CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE db_sdgames;
-SOURCE C:/Proyectos/SD-GAMES-Proyecto-Integraci-n/db_sdgames.sql;
+SOURCE C:/Proyectos/Akaispace_Proyecto_de_Titulo/db_sdgames.sql;
 exit
 ```
 
@@ -158,7 +158,7 @@ Estas cuentas existen solo en la base de datos de prueba incluida en `db_sdgames
 Cada vez que vayas a trabajar en el proyecto:
 
 ```powershell
-cd C:\Proyectos\SD-GAMES-Proyecto-Integraci-n
+cd C:\Proyectos\Akaispace_Proyecto_de_Titulo
 .\venv\Scripts\activate
 git pull
 pip install -r requirements.txt
