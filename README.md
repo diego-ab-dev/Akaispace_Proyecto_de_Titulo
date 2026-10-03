@@ -52,7 +52,7 @@ En PowerShell:
 mkdir C:\Proyectos
 cd C:\Proyectos
 git clone URL_DEL_REPOSITORIO
-cd SD-GAMES-Proyecto-Integraci-n
+cd Akaispace_Proyecto_de_Titulo
 ```
 
 La URL se obtiene en GitHub, con el botón verde **Code**, pestaña **HTTPS**.
