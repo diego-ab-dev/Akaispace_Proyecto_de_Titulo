@@ -1,4 +1,4 @@
-# Guía de instalación y uso: Proyecto SD Games
+# Guía de instalación y uso: Proyecto Akaispace
 
 Guía para dejar el proyecto funcionando desde cero en un computador con Windows.
 
