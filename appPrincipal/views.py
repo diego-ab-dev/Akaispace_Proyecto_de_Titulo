@@ -9,8 +9,6 @@ from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
 import json
-from django.core.mail import send_mail
-from django.utils.crypto import get_random_string
 from django.contrib.messages import get_messages
 from .forms import UsuarioForm, ProductoForm, SolicitudDevolucionForm
 from appPrincipal.decorators import admin_required

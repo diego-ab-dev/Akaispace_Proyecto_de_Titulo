@@ -6,19 +6,20 @@
     <meta charset="UTF-8">
     <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_boleta.css' %}">
-    <!--Logo de sd games-->
-    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
-    <title>Boleta Nº {{ venta.id }} - SD Games</title>
+    <!--Logo de Akaispace-->
+    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
+    <title>Boleta Nº {{ venta.id }} - Akaispace</title>
 </head>
 <body>
 
     <div class="boleta-container">
         <div class="header">
-            <h2>SD GAMES</h2>
+            <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" style="width: 90px; display: block; margin: 0 auto 0.5rem;">
+            <h2>AKAISPACE</h2>
             <div class="info-empresa">
                 <p>R.U.T.: 76.999.888-K</p>
                 <p>Boleta Electrónica Nº {{ venta.id }}</p>
-                <p>Valdivia, Av. Simpson 641</p>
+                <p>Galería Caupolicán 544, Local 26, Valdivia</p>
                 <p>Fecha Emisión: {{ venta.fecha|date:"d/m/Y H:i" }}</p> </div>
         </div>
 

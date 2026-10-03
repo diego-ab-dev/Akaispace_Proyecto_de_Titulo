@@ -11,10 +11,10 @@
         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <!--LOGO-->
-    <link rel="icon" type="image/png" href="{% static 'images/sdgameslogo.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
     <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_login.css' %}">
-    <title>Inicio de sesión - SD Games</title>
+    <title>Inicio de sesión - Akaispace</title>
 </head>
     <body>
         <div class="container-fluid ps-md-0">
@@ -26,6 +26,7 @@
                     <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
                     <div class="row">
                       <div class="col-md-9 col-lg-8 mx-auto">
+                        <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" style="width: 110px; display: block; margin-bottom: 1rem;">
                         <h3 class="login-heading mb-4">Bienvenido/a!</h3>
                         <form method="POST" id="login-form">
                             {% csrf_token %}

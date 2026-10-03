@@ -20,13 +20,13 @@
     <!--CSS-->
     <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_dashboard.css' %}">
     <!--LOGO-->
-    <link rel="icon" type="image/png" href="{% static 'images/logoadmin.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
     <title>Panel de Administración</title>
 </head>
 <body id="body-pd" style="background-color:#EEF1F4;">
     <div class="p-4 mb-4 rounded shadow-sm" style="background:#4e84a8; color:white;">
         <h2 class="mb-0">Dashboard administrativo</h2>
-        <p class="m-0 opacity-75">Resumen general del estado de SD Games</p>
+        <p class="m-0 opacity-75">Resumen general del estado de Akaispace</p>
     </div>
     <header class="header" id="header">
         <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
@@ -35,7 +35,7 @@
     <!--navbar lateral-->
     <div class="l-navbar" id="nav-bar">
         <nav class="nav">
-            <div> <a href="{% url 'admin_dashboard' %}" class="nav_logo"> <i class='bx bx-layer nav_logo-icon'></i> <span class="nav_logo-name">SD Games Admin</span> </a>
+            <div> <a href="{% url 'admin_dashboard' %}" class="nav_logo"> <img src="{% static 'images/akaispace_favicon.png' %}" alt="Logo Akaispace" style="height: 26px; width: 26px;"> <span class="nav_logo-name">Akaispace Admin</span> </a>
                 <div class="nav_list"> 
                     <a href="{% url 'admin_dashboard' %}" class="nav_link active"> 
                         <i class='bx bx-home-alt nav_icon'></i> 
@@ -71,13 +71,13 @@
     </div>
     <!--fin de navbar lateral-->
 
-        <!--Resumen de SD GAMES-->
+        <!--Resumen de AKAISPACE-->
         <section id="counter" class="counter">
             <div class="main_counter_area">
                 <div class="overlay p-y-3">
                     <div class="container">
                         <div class="row">
-                            <h3>Resumen de SD Games:</h3>
+                            <h3>Resumen de Akaispace:</h3>
                             <div class="main_counter_content d-flex justify-content-center flex-wrap gap-4">
                                 <div class="single_counter p-y-2 m-t-1" style="background-color: #fafafa;">
                                     <a href="{% url 'admin_ventas' %}" class="card-link">
@@ -225,7 +225,7 @@
     </section>
 {{ datos_grafico|json_script:"datos_ventas_json" }}
 <script>
-    // contadores para el resumen de sd games
+    // contadores para el resumen de Akaispace
     async function updateCounts() {
         try {
             const response = await fetch("{% url 'get_dashboard_counts' %}");
