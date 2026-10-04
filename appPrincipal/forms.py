@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
 from .models import Usuario, Producto, Opinion
@@ -88,6 +89,7 @@ class UsuarioCustomForm(forms.Form):
     )
 
     contraseña = forms.CharField()
+    confirmar_contraseña = forms.CharField()
 
     direccion = forms.CharField(
         max_length=100,
@@ -127,6 +129,27 @@ class UsuarioCustomForm(forms.Form):
         if ciudad not in regiones_ciudades.get(region, []):
             raise forms.ValidationError(f'La ciudad {ciudad} no es válida para la región seleccionada.')
         return ciudad
+
+    def clean_email(self):
+        return self.cleaned_data['email'].strip().lower()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        contraseña = cleaned_data.get('contraseña')
+        if not contraseña:
+            return cleaned_data
+
+        if contraseña != cleaned_data.get('confirmar_contraseña'):
+            self.add_error('confirmar_contraseña', 'Las contraseñas no coinciden.')
+            return cleaned_data
+
+        # reglas de AUTH_PASSWORD_VALIDATORS (largo mínimo, no muy común, no parecida al nombre o correo)
+        usuario = Usuario(email=cleaned_data.get('email', ''), nombre=cleaned_data.get('nombre', ''))
+        try:
+            validate_password(contraseña, user=usuario)
+        except ValidationError as e:
+            self.add_error('contraseña', e)
+        return cleaned_data
 
 # form para opiniones
 class OpinionForm(forms.ModelForm):

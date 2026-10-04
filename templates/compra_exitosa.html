@@ -70,7 +70,7 @@
                             <span class="value text-end text-break">{{ venta.usuario.email }}</span>
                             
                             <span class="label">Rut</span>
-                            <span class="value text-end">{{ venta.usuario.rut }}</span>
+                            <span class="value text-end">{{ venta.usuario.rut|default:"No especificado" }}</span>
                             
                             <span class="label">Teléfono</span>
                             <span class="value text-end">{{ venta.usuario.telefono }}</span>

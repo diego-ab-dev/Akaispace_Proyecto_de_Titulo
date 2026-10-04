@@ -35,7 +35,7 @@
 
             <div class="info-group">
                 <span class="info-label">RUT:</span>
-                <span class="info-value">{{ usuario.rut }}</span>
+                <span class="info-value">{{ usuario.rut|default:"No especificado" }}</span>
             </div>
 
             <div class="info-group">
@@ -60,7 +60,7 @@
 
             <div class="info-group">
                 <span class="info-label">Administrador:</span>
-                <span class="info-value">{% if usuario.es_administrador %}Si{% else %}No{% endif %}</span>
+                <span class="info-value">{% if usuario.is_staff %}Si{% else %}No{% endif %}</span>
             </div>
 
             <div class="action-buttons">

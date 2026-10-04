@@ -104,7 +104,7 @@
                             </span>
                         </div>
 
-                        <p><strong>Rut:</strong> {{ usuario.rut }}</p>
+                        <p><strong>Rut:</strong> {{ usuario.rut|default:"No especificado" }}</p>
                         <p><strong>Teléfono:</strong> {{ usuario.telefono }}</p>
 
                         <div class="d-flex">

@@ -24,7 +24,7 @@
 
             <h2 class="mb-4 fw-bold text-dark">Selecciona Método de Pago</h2>
 
-            <form method="post" action="{% url 'seleccionar_pago' usuario.id %}">
+            <form method="post" action="{% url 'seleccionar_pago' %}">
                 {% csrf_token %}
                 
                 <div class="mb-4">

@@ -25,7 +25,7 @@
 
         <div class="info-cliente">
             <strong>Cliente:</strong> {{ venta.usuario.nombre }}<br>
-            <strong>RUT:</strong> {{ venta.usuario.rut }}<br>
+            <strong>RUT:</strong> {{ venta.usuario.rut|default:"No especificado" }}<br>
             <strong>Dirección:</strong> {{ venta.usuario.direccion }}<br>
             <strong>Ciudad:</strong> {{ venta.usuario.ciudad }}
         </div>

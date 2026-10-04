@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
@@ -20,7 +19,8 @@ USUARIOS_DEMO = [
         'direccion': 'Picarte 233',
         'region': 'LOS RIOS',
         'ciudad': 'Valdivia',
-        'es_administrador': True,
+        'is_staff': True,
+        'is_superuser': True,
     },
     {
         'email': 'user@gmail.com',
@@ -30,7 +30,6 @@ USUARIOS_DEMO = [
         'direccion': 'Gabriela Mistral 345',
         'region': 'VALPARAISO',
         'ciudad': 'Viña del Mar',
-        'es_administrador': False,
     },
 ]
 CONTRASEÑA_DEMO = '12345'
@@ -61,10 +60,9 @@ class Command(BaseCommand):
         for datos in USUARIOS_DEMO:
             datos = dict(datos)
             email = datos.pop('email')
-            _, creado = Usuario.objects.get_or_create(
-                email=email,
-                defaults={**datos, 'contraseña': make_password(CONTRASEÑA_DEMO)},
-            )
+            creado = not Usuario.objects.filter(email=email).exists()
+            if creado:
+                Usuario.objects.create_user(email=email, password=CONTRASEÑA_DEMO, **datos)
             estado = 'creado' if creado else 'ya existía'
             if verbose:
                 self.stdout.write(f'Usuario {email}: {estado}.')

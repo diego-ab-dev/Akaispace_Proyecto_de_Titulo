@@ -45,7 +45,7 @@
                 
                 <div class="data-row"><span class="data-label">Nombre:</span> {{ venta.usuario.nombre }}</div>
                 <div class="data-row"><span class="data-label">Correo:</span> {{ venta.usuario.email }}</div>
-                <div class="data-row"><span class="data-label">RUT:</span> {{ venta.usuario.rut }}</div>
+                <div class="data-row"><span class="data-label">RUT:</span> {{ venta.usuario.rut|default:"No especificado" }}</div>
                 <div class="data-row"><span class="data-label">Teléfono:</span> {{ venta.usuario.telefono }}</div>
                 <div class="data-row">
                     <span class="data-label">Dirección:</span> 

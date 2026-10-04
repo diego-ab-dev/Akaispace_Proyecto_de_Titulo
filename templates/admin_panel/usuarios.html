@@ -110,9 +110,9 @@
                     <td>{{ usuario.id }}</td>
                     <td>{{ usuario.nombre|truncatechars:30 }}</td>
                     <td>{{ usuario.email }}</td>
-                    <td>{{ usuario.rut }}</td>
+                    <td>{{ usuario.rut|default:"No especificado" }}</td>
                     <td>{{ usuario.telefono }}</td>
-                    <td>{{ usuario.es_administrador|yesno:"Sí,No" }}</td>
+                    <td>{{ usuario.is_staff|yesno:"Sí,No" }}</td>
                     <td>
                         <a href="{% url 'eliminar_usuario' usuario.id %}" onclick="confirmarEliminacion(event, this)" style="color: red;">Eliminar</a> |
                         <a href="{% url 'detalle_usuario' usuario.id %}" class="btn-more">Ver Más</a>

@@ -65,7 +65,7 @@
     <nav>
       <div class="navbar">
         <i class='bx bx-menu'></i>
-        <div class="logo"><a href="/home"><img src="{% static 'images/akaispace_favicon.png' %}" alt="Logo Akaispace" style="height: 45px; vertical-align: middle; margin-right: 8px;">Akaispace</a></div>
+        <div class="logo"><a href="{% url 'home' %}"><img src="{% static 'images/akaispace_favicon.png' %}" alt="Logo Akaispace" style="height: 45px; vertical-align: middle; margin-right: 8px;">Akaispace</a></div>
         <div class="nav-links">
           <div class="sidebar-logo">
             <span class="logo-name">Akaispace</span>
@@ -289,7 +289,7 @@
                     <div class="submenu-item">
                       <a href="/logout" class="submenu-link">Cerrar Sesión</a>
                     </div>
-                    {% if usuario.es_administrador %}
+                    {% if usuario.is_staff %}
                     <div class="submenu-item item2" style="background-color: #4e84a8;">
                       <a href="/admin-panel" class="submenu-link">Panel de Administración</a>
                     </div>
@@ -584,6 +584,8 @@ let navbar = document.querySelector(".navbar");
                         notifBox.className = 'notif show success'; 
                         setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
                     }
+                } else if (data.error === 'not_logged_in') {
+                    window.location.href = '{% url "login" %}?next=' + encodeURIComponent(window.location.pathname);
                 } else {
                     console.error('Error:', data.error);
                 }

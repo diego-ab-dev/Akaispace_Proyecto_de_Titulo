@@ -5,22 +5,26 @@ import re
 from datetime import datetime, date
 from urllib.parse import urlencode
 
-from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Avg, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.timezone import now
 from django.views.decorators.http import require_http_methods
 
 from appPrincipal import forms
-from appPrincipal.decorators import admin_required
+from appPrincipal.decorators import admin_required, login_required_json
 from .forms import ProductoForm, SolicitudDevolucionForm, OpinionForm, normalizar_rut, regiones_ciudades
+from .seguridad import MENSAJE_LOGIN_INVALIDO
 from .models import Producto, ItemCarritoProducto, Usuario, Carrito, Venta, ProductoVenta, Opinion, Favorito, Reclamo, Devolucion, Boleta, Envio
 
 logger = logging.getLogger(__name__)
@@ -117,9 +121,9 @@ def admin_usuarios(request):
 @admin_required
 def eliminar_usuario(request, usuario_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
-    usuario.is_deleted = True
-    usuario.deleted_at = timezone.now()
-    usuario.save()
+    if usuario != request.user:
+        # eliminación lógica: queda inactivo y ya no puede iniciar sesión
+        usuario.delete()
     return redirect('admin_usuarios')
 
 
@@ -138,9 +142,9 @@ def buscar_usuarios(request):
             usuarios_list = usuarios_list.filter(rut__icontains=query)
 
     if es_admin == "True":
-        usuarios_list = usuarios_list.filter(es_administrador=True)
+        usuarios_list = usuarios_list.filter(is_staff=True)
     elif es_admin == "False":
-        usuarios_list = usuarios_list.filter(es_administrador=False)
+        usuarios_list = usuarios_list.filter(is_staff=False)
 
     paginator = Paginator(usuarios_list, 10)
     page_number = request.GET.get('page')
@@ -182,22 +186,27 @@ def crear_usuario(request):
             except ValidationError as e:
                 return JsonResponse({'success': False, 'message': e.messages[0]})
 
+            try:
+                validate_password(contraseña, user=Usuario(email=email, nombre=nombre))
+            except ValidationError as e:
+                return JsonResponse({'success': False, 'message': ' '.join(e.messages)})
+
             ciudades_validas = regiones_ciudades.get(region, [])
             if ciudad not in ciudades_validas:
                 return JsonResponse({'success': False, 'message': 'La ciudad no es válida para la región seleccionada.'})
 
-            if Usuario.objects.filter(email=email, is_deleted=False).exists():
+            if Usuario.objects.filter(email=email).exists():
                 return JsonResponse({'success': False, 'message': 'El correo electrónico ya está registrado.'})
 
-            if Usuario.objects.filter(rut=rut, is_deleted=False).exists():
+            if Usuario.objects.filter(rut=rut).exists():
                 return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
 
-            Usuario.objects.create(
-                nombre=nombre,
+            Usuario.objects.create_user(
                 email=email,
-                contraseña=make_password(contraseña),
-                es_administrador=es_administrador,
-                telefono=telefono, 
+                password=contraseña,
+                nombre=nombre,
+                is_staff=es_administrador,
+                telefono=telefono,
                 direccion=direccion,
                 rut=rut,
                 region=region,
@@ -691,14 +700,7 @@ def anular_venta(request, venta_id):
 
 # vistas relacionadas a home y menu
 def home(request):
-    usuario_id = request.session.get('usuario_id')
-    usuario = None
-    if usuario_id:
-        try:
-            usuario = Usuario.objects.get(id=usuario_id)
-        except Usuario.DoesNotExist:
-            pass
-    return render(request, 'home.html', {'usuario': usuario})
+    return render(request, 'home.html')
 
 def productos_menu(request):
     query = request.GET.get('buscar')
@@ -724,9 +726,8 @@ def productos_menu(request):
         productos = productos.order_by('-id')
 
     favoritos_ids = []
-    usuario_id = request.session.get('usuario_id')
-    if usuario_id:
-        favoritos_ids = Favorito.objects.filter(usuario_id=usuario_id).values_list('producto_id', flat=True)
+    if request.user.is_authenticated:
+        favoritos_ids = Favorito.objects.filter(usuario=request.user).values_list('producto_id', flat=True)
 
     paginator = Paginator(productos, 16)
     page_number = request.GET.get('page')
@@ -794,10 +795,8 @@ def producto_detalle(request, producto_id):
     ).exclude(id=producto.id).order_by('?')[:4]
 
     es_favorito = False
-    usuario_id = request.session.get('usuario_id')
-    if usuario_id:
-        usuario = get_object_or_404(Usuario, id=usuario_id)
-        es_favorito = Favorito.objects.filter(usuario=usuario, producto=producto).exists()
+    if request.user.is_authenticated:
+        es_favorito = Favorito.objects.filter(usuario=request.user, producto=producto).exists()
     
     cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
     ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
@@ -840,10 +839,9 @@ def productos_por_categoria(request, categoria):
         productos = productos.order_by('-id')
 
     favoritos_ids = []
-    usuario_id = request.session.get('usuario_id')
-    if usuario_id:
+    if request.user.is_authenticated:
         favoritos_ids = Favorito.objects.filter(
-            usuario_id=usuario_id
+            usuario=request.user
         ).values_list('producto_id', flat=True)
 
     paginator = Paginator(productos, 16)
@@ -874,11 +872,23 @@ def productos_por_categoria(request, categoria):
 
 
 # Vistas relacionadas a los inicios y registros
+def _redirigir_tras_login(request, usuario):
+    siguiente = request.POST.get('next') or request.GET.get('next')
+    if siguiente and url_has_allowed_host_and_scheme(
+        siguiente, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(siguiente)
+    return redirect('admin_dashboard' if usuario.is_staff else 'home')
+
+
 def login(request):
-    errors = {}  
+    if request.user.is_authenticated:
+        return _redirigir_tras_login(request, request.user)
+
+    errors = {}
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
-        contraseña = request.POST.get('contraseña', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        contraseña = request.POST.get('contraseña', '')
 
         if not email:
             errors['email'] = "Por favor, ingresa tu correo electrónico."
@@ -886,23 +896,16 @@ def login(request):
             errors['contraseña'] = "Por favor, ingresa tu contraseña."
 
         if not errors:
-            try:
-                usuario = Usuario.objects.get(email=email)
-                
-                if check_password(contraseña, usuario.contraseña):
-                    if usuario.is_deleted:
-                        errors['email'] = "Esta cuenta ha sido eliminada. Contacta al administrador."
-                    else:
-                        request.session['usuario_id'] = usuario.id
-                        logger.info("Inicio de sesión: usuario %s (admin=%s)", usuario.id, usuario.es_administrador)
-                        if usuario.es_administrador:
-                            return redirect('admin_dashboard') 
-                        else:
-                            return redirect('home') 
-                else:
-                    errors['contraseña'] = "Contraseña incorrecta."
-            except Usuario.DoesNotExist:
-                errors['email'] = "Correo electrónico no registrado."
+            # authenticate rechaza usuarios inactivos (eliminados) y django-axes cuenta los intentos fallidos
+            usuario = authenticate(request, username=email, password=contraseña)
+            if usuario is None:
+                # mismo mensaje si el correo no existe o la contraseña es incorrecta
+                errors['email'] = MENSAJE_LOGIN_INVALIDO
+            else:
+                # auth_login cambia la llave de sesión (evita fijación de sesión)
+                auth_login(request, usuario)
+                logger.info("Inicio de sesión: usuario %s (admin=%s)", usuario.pk, usuario.is_staff)
+                return _redirigir_tras_login(request, usuario)
 
     return render(request, 'login.html', {'errors': errors})
 
@@ -916,7 +919,7 @@ def register(request):
         form.fields['ciudad'].choices = [(ciudad, ciudad) for ciudad in ciudades]
 
         if form.is_valid():
-            email = form.cleaned_data['email'].strip().lower()
+            email = form.cleaned_data['email']
             rut = form.cleaned_data['rut']
 
             usuario_email = Usuario.objects.filter(email=email).first()
@@ -943,17 +946,16 @@ def register(request):
                     'message': 'El RUT ya está registrado.'
                 })
             try:
-                registro = Usuario(
+                Usuario.objects.create_user(
+                    email=email,
+                    password=form.cleaned_data['contraseña'],
                     rut=rut,
                     nombre=form.cleaned_data['nombre'],
                     telefono=form.cleaned_data['telefono'],
-                    email=email,
-                    contraseña=make_password(form.cleaned_data['contraseña']),
                     direccion=form.cleaned_data['direccion'],
                     ciudad=form.cleaned_data['ciudad'],
                     region=form.cleaned_data['region'],
                 )
-                registro.save()
                 return JsonResponse({'success': True, 'message': 'Usuario registrado exitosamente.'})
 
             except IntegrityError as e:
@@ -970,7 +972,7 @@ def register(request):
     return render(request, 'register.html', data)
 
 def logout(request):
-    request.session.flush()  
+    auth_logout(request)
     return redirect('login')
 
 def obtener_ciudades(request):
@@ -981,12 +983,9 @@ def obtener_ciudades(request):
 
 
 # vistas sobre el perfil del usuario
+@login_required
 def perfil(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-    
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     compras = Venta.objects.filter(usuario=usuario).order_by('-fecha')[:3]
     opiniones = Opinion.objects.filter(usuario=usuario).order_by('-fecha_creacion')[:2]
     reclamos_recientes = Reclamo.objects.filter(usuario=usuario).order_by('-fecha')[:2]
@@ -1002,12 +1001,9 @@ def perfil(request):
 
 
 
+@login_required
 def ver_compras(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-    
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     orden = request.GET.get('orden', 'reciente')
 
     if orden == 'antiguo':
@@ -1035,8 +1031,9 @@ def ver_compras(request):
     })
 
 
+@login_required
 def ver_detalle_compra(request, compra_id):
-    compra = get_object_or_404(Venta, id=compra_id)
+    compra = get_object_or_404(Venta, id=compra_id, usuario=request.user)
 
     total_cantidad = sum(item.cantidad for item in compra.producto_venta.all())
 
@@ -1050,15 +1047,9 @@ def ver_detalle_compra(request, compra_id):
     })
 
 
+@login_required
 def marcar_recibido(request, compra_id):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    compra = get_object_or_404(Venta, id=compra_id)
-
-    if compra.usuario.id != usuario_id:
-        return redirect('perfil')
+    compra = get_object_or_404(Venta, id=compra_id, usuario=request.user)
 
     envio = compra.datos_envio
     base_url = reverse('ver_detalle', kwargs={'compra_id': compra_id})
@@ -1077,12 +1068,9 @@ def marcar_recibido(request, compra_id):
 
 
 
+@login_required
 def enviar_opinion(request, producto_id):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login') 
-    
-    usuario_actual = get_object_or_404(Usuario, id=usuario_id)
+    usuario_actual = request.user
     producto = get_object_or_404(Producto, id=producto_id)
 
     ya_opino = Opinion.objects.filter(usuario=usuario_actual, producto=producto).exists()
@@ -1109,12 +1097,9 @@ def enviar_opinion(request, producto_id):
         'producto': producto
     })
 
+@login_required
 def lista_opiniones(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     opiniones = Opinion.objects.filter(usuario=usuario).order_by('-fecha_creacion')
 
     paginator = Paginator(opiniones, 5) 
@@ -1126,12 +1111,9 @@ def lista_opiniones(request):
 
 
 
+@login_required
 def crear_reclamo(request, compra_id):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
 
     if request.method == 'POST':
@@ -1166,12 +1148,9 @@ def crear_reclamo(request, compra_id):
     })
 
 
+@login_required
 def lista_reclamos(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     todos_reclamos = Reclamo.objects.filter(usuario=usuario).order_by('-id')
 
     paginator = Paginator(todos_reclamos, 5) 
@@ -1183,12 +1162,9 @@ def lista_reclamos(request):
         'page_obj': page_obj,
     })
 
+@login_required
 def ver_detalle_reclamo(request, reclamo_id):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-    
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     
     reclamo = get_object_or_404(Reclamo, id=reclamo_id, usuario=usuario)
     
@@ -1198,12 +1174,9 @@ def ver_detalle_reclamo(request, reclamo_id):
 
 
 
+@login_required
 def crear_devolucion(request, compra_id, producto_id):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
     producto = get_object_or_404(Producto, id=producto_id)
 
@@ -1245,12 +1218,9 @@ def crear_devolucion(request, compra_id, producto_id):
         'form': form 
     })
 
+@login_required
 def listar_devoluciones(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     todos_devoluciones = Devolucion.objects.filter(usuario=usuario).order_by('-id')
 
     paginator = Paginator(todos_devoluciones, 5) 
@@ -1263,12 +1233,9 @@ def listar_devoluciones(request):
         'page_obj': page_obj,
     })
 
+@login_required
 def ver_detalle_devolucion(request, devolucion_id):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-    
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     devolucion = get_object_or_404(Devolucion, id=devolucion_id, usuario=usuario)
     
     monto_reembolso = 0
@@ -1287,42 +1254,39 @@ def ver_detalle_devolucion(request, devolucion_id):
     })
 
 
+@login_required
 def cambiar_contraseña(request):
     if request.method == 'POST':
-        contraseña_actual = request.POST.get('contraseña_actual')
-        nueva_contraseña = request.POST.get('nueva_contraseña')
-        confirmar_contraseña = request.POST.get('confirmar_contraseña')
-        usuario_id = request.session.get('usuario_id')
+        contraseña_actual = request.POST.get('contraseña_actual', '')
+        nueva_contraseña = request.POST.get('nueva_contraseña', '')
+        confirmar_contraseña = request.POST.get('confirmar_contraseña', '')
+        usuario = request.user
+        url_error = reverse('cambiar')
 
-        if not usuario_id:
-            return redirect("/cambiar/?notif=Debes iniciar sesión para cambiar tu contraseña.&type=error")
+        if not usuario.check_password(contraseña_actual):
+            return redirect(f"{url_error}?{urlencode({'notif': 'La contraseña actual no es correcta.', 'type': 'error'})}")
+
+        if nueva_contraseña != confirmar_contraseña:
+            return redirect(f"{url_error}?{urlencode({'notif': 'Las contraseñas nuevas no coinciden.', 'type': 'error'})}")
 
         try:
-            usuario = Usuario.objects.get(id=usuario_id)
+            validate_password(nueva_contraseña, user=usuario)
+        except ValidationError as e:
+            return redirect(f"{url_error}?{urlencode({'notif': ' '.join(e.messages), 'type': 'error'})}")
 
-            if not check_password(contraseña_actual, usuario.contraseña):
-                return redirect("/cambiar/?notif=La contraseña actual no es correcta.&type=error")
+        usuario.set_password(nueva_contraseña)
+        usuario.save()
+        # mantiene la sesión actual abierta (y cierra las de otros dispositivos)
+        update_session_auth_hash(request, usuario)
 
-            if nueva_contraseña != confirmar_contraseña:
-                return redirect("/cambiar/?notif=Las contraseñas nuevas no coinciden.&type=error")
-
-            usuario.contraseña = make_password(nueva_contraseña)
-            usuario.save()
-
-            return redirect("/perfil/?notif=Contraseña actualizada correctamente.&type=success")
-
-        except Usuario.DoesNotExist:
-            return redirect("/cambiar/?notif=Usuario no encontrado.&type=error")
+        return redirect(f"{reverse('perfil')}?{urlencode({'notif': 'Contraseña actualizada correctamente.', 'type': 'success'})}")
 
     return render(request, 'cambiar_contrausu.html')
 
 
+@login_required
 def editar_perfil(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return JsonResponse({'error': "Debes iniciar sesión para acceder a la edición de perfil."}, status=403)
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
 
     if request.method == 'POST':
         telefono = request.POST.get('telefono')
@@ -1353,13 +1317,9 @@ def editar_perfil(request):
 
 
 # vistas relacionadas con carrito
+@login_required_json
 def agregar_al_carrito(request, producto_id):
-    usuario_id = request.session.get('usuario_id')
-    
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     carrito, created = Carrito.objects.get_or_create(usuario=usuario)
     producto = get_object_or_404(Producto, id=producto_id)
 
@@ -1387,19 +1347,14 @@ def agregar_al_carrito(request, producto_id):
     })
 
 
+@login_required_json
 def eliminar_del_carrito(request, item_id):
     if request.method == 'POST':
-        usuario_id = request.session.get('usuario_id')
-        if not usuario_id:
-            return JsonResponse({'success': False, 'error': 'Usuario no autenticado'})
-
-        usuario = get_object_or_404(Usuario, id=usuario_id)
-
         try:
             item = get_object_or_404(
                 ItemCarritoProducto,
                 id=item_id,
-                carrito__usuario=usuario 
+                carrito__usuario=request.user
             )
 
             carrito = item.carrito
@@ -1420,12 +1375,13 @@ def eliminar_del_carrito(request, item_id):
     return JsonResponse({'success': False, 'error': 'Método no permitido'})
 
 
+@login_required_json
 def actualizar_cantidad_carrito(request):
     if request.method == 'POST':
         item_id = request.POST.get('item_id')
         nueva_cantidad = int(request.POST.get('cantidad', 1))
 
-        item = get_object_or_404(ItemCarritoProducto, id=item_id)
+        item = get_object_or_404(ItemCarritoProducto, id=item_id, carrito__usuario=request.user)
         producto = item.producto
 
         if nueva_cantidad > producto.stock:
@@ -1452,12 +1408,9 @@ def actualizar_cantidad_carrito(request):
 
     return JsonResponse({'success': False})
 
+@login_required
 def ver_carrito(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
 
     carrito, creado = Carrito.objects.get_or_create(usuario=usuario)
 
@@ -1481,7 +1434,6 @@ def ver_carrito(request):
         "productos": items,
         "total": total,
         "total_items": total_items,
-        "usuario": usuario,
         'cod6': cod6,
         'ps5': ps5,
         'mando': mando,
@@ -1489,14 +1441,10 @@ def ver_carrito(request):
     })
 
 
+@login_required_json
 def guardar_datos_envio(request):
     if request.method == "POST":
-
-        usuario_id = request.session.get("usuario_id")
-        if not usuario_id:
-            return JsonResponse({'success': False, 'error': 'Usuario no autenticado'}, status=401)
-
-        usuario = get_object_or_404(Usuario, id=usuario_id)
+        usuario = request.user
 
         region = request.POST.get("region")
         ciudad = request.POST.get("ciudad")
@@ -1519,12 +1467,9 @@ def guardar_datos_envio(request):
 
 
 # vistas de los favoritos
+@login_required
 def lista_favoritos(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return redirect('login')
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
 
     favoritos = Favorito.objects.filter(
         usuario=usuario,
@@ -1552,14 +1497,9 @@ def lista_favoritos(request):
         'mando': mando,
         'funko': funko,})
 
+@login_required_json
 def agregar_favorito(request, producto_id):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': 'not_logged_in'})
-        return redirect('login') 
-
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario = request.user
     producto = get_object_or_404(Producto, id=producto_id)
     
     favorito = Favorito.objects.filter(usuario=usuario, producto=producto).first()
@@ -1581,24 +1521,22 @@ def agregar_favorito(request, producto_id):
         'agregado': agregado  
     })
 
+@login_required_json
 @require_http_methods(["DELETE"])
 def eliminar_favorito(request, item_id):
-    favorito = get_object_or_404(Favorito, id=item_id)
+    favorito = get_object_or_404(Favorito, id=item_id, usuario=request.user)
     favorito.delete()
     return JsonResponse({'message': 'Artículo eliminado correctamente'}, status=200)
 
+@login_required_json
 @require_http_methods(["POST"])
 def eliminar_favoritos_seleccionados(request):
-    usuario_id = request.session.get('usuario_id')
-    if not usuario_id:
-        return JsonResponse({'success': False, 'error': 'No autorizado'}, status=401)
-
     try:
         data = json.loads(request.body)
         item_ids = data.get('ids', [])
 
         if item_ids:
-            Favorito.objects.filter(id__in=item_ids, usuario__id=usuario_id).delete()
+            Favorito.objects.filter(id__in=item_ids, usuario=request.user).delete()
             return JsonResponse({'success': True})
         
         return JsonResponse({'success': False, 'error': 'No se seleccionaron items'})
@@ -1608,8 +1546,9 @@ def eliminar_favoritos_seleccionados(request):
 
 
 # vistas relacionadas con pago y envio
-def seleccionar_pago(request, usuario_id):
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+@login_required
+def seleccionar_pago(request):
+    usuario = request.user
     carrito = usuario.carritos.last()
 
     if not carrito or not carrito.items.exists():
@@ -1631,18 +1570,18 @@ def seleccionar_pago(request, usuario_id):
         request.session['metodo_pago'] = metodo_pago
 
         if metodo_pago in ["tarjeta", "transferencia"]:
-            return redirect('compra_exitosa', usuario_id=usuario_id)
+            return redirect('compra_exitosa')
 
     return render(request, 'seleccionar_pago.html', {
-        'usuario': usuario,
         'total': total,
         'subtotal': subtotal,
         'costo_envio': costo_envio,
         'total_items': total_items  
     })
 
-def compra_exitosa(request, usuario_id):
-    usuario = get_object_or_404(Usuario, id=usuario_id)
+@login_required
+def compra_exitosa(request):
+    usuario = request.user
     carrito = usuario.carritos.last()
 
     if not carrito or not carrito.items.exists():
@@ -1652,33 +1591,38 @@ def compra_exitosa(request, usuario_id):
     direccion_envio = request.session.get('direccion_envio')
     metodo_pago = request.session.get('metodo_pago', 'tarjeta')
 
-    venta = Venta.objects.create(
-        carrito=carrito,
-        usuario=usuario,
-        metodo_envio=metodo_envio,
-        direccion_envio=direccion_envio,
-        metodo_pago=metodo_pago,
-    )
+    # todo o nada: si falta stock de algún producto no queda una venta a medias
+    try:
+        with transaction.atomic():
+            venta = Venta.objects.create(
+                carrito=carrito,
+                usuario=usuario,
+                metodo_envio=metodo_envio,
+                direccion_envio=direccion_envio,
+                metodo_pago=metodo_pago,
+            )
 
-    for item in carrito.items.all():
-        ProductoVenta.objects.create(
-            venta=venta,
-            producto=item.producto,
-            cantidad=item.cantidad,
-            precio_unitario=item.producto.precio,
-        )
+            for item in carrito.items.all():
+                ProductoVenta.objects.create(
+                    venta=venta,
+                    producto=item.producto,
+                    cantidad=item.cantidad,
+                    precio_unitario=item.producto.precio,
+                )
 
-    venta.calcular_total()
-    carrito.items.all().delete()
+            venta.calcular_total()
+            carrito.items.all().delete()
 
-    Envio.objects.create(
-        venta=venta,
-        estado='En Preparación',
-        transportista="Starken"
-    )
-    Boleta.objects.create(
-        venta=venta
-    )
+            Envio.objects.create(
+                venta=venta,
+                estado='En Preparación',
+                transportista="Starken"
+            )
+            Boleta.objects.create(
+                venta=venta
+            )
+    except ValueError as e:
+        return redirect(f"{reverse('ver_carrito')}?{urlencode({'notif': str(e), 'type': 'error'})}")
 
     total_cantidad = sum(item.cantidad for item in venta.producto_venta.all())
 
@@ -1689,8 +1633,11 @@ def compra_exitosa(request, usuario_id):
     })
 
 
+@login_required
 def ver_boleta(request, venta_id):
-    venta = get_object_or_404(Venta, id=venta_id)
+    # el cliente solo ve sus boletas; el administrador puede ver todas
+    ventas = Venta.objects.all() if request.user.is_staff else Venta.objects.filter(usuario=request.user)
+    venta = get_object_or_404(ventas, id=venta_id)
     Boleta.objects.get_or_create(venta=venta)
 
     return render(request, 'boleta.html', {'venta': venta})

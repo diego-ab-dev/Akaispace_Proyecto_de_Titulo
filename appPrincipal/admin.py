@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.html import format_html
 from .models import Usuario, Producto, Venta, Reclamo, Opinion
 
@@ -18,10 +20,41 @@ class ProductoAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="height: 50px;">', obj.imagen_principal.url)
         return 'Sin imagen'
 
-class UsuarioAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "email", "rut", "telefono", "direccion", "ciudad", "region")
-    search_fields = ("nombre", "email", "telefono",)
+class UsuarioCreationForm(UserCreationForm):
+    class Meta:
+        model = Usuario
+        fields = ("email", "nombre")
+
+
+class UsuarioChangeForm(UserChangeForm):
+    class Meta:
+        model = Usuario
+        fields = "__all__"
+
+
+class UsuarioAdmin(UserAdmin):
+    form = UsuarioChangeForm
+    add_form = UsuarioCreationForm
+    list_display = ("nombre", "email", "rut", "telefono", "ciudad", "region", "is_staff", "is_active")
+    list_filter = ("is_staff", "is_active", "is_deleted")
+    search_fields = ("nombre", "email", "rut", "telefono")
+    ordering = ("email",)
     list_per_page = 20
+
+    # UserAdmin usa "username"; este modelo inicia sesión con el email
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        ("Datos personales", {"fields": ("nombre", "rut", "telefono", "direccion", "region", "ciudad")}),
+        ("Permisos", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Eliminación", {"fields": ("is_deleted", "deleted_at")}),
+        ("Fechas", {"fields": ("last_login", "date_joined")}),
+    )
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("email", "nombre", "password1", "password2", "is_staff"),
+        }),
+    )
 
 class VentaAdmin(admin.ModelAdmin):
     list_display = ("usuario", "total", "estado", "fecha", "metodo_envio", "direccion_envio", "productos_comprados")

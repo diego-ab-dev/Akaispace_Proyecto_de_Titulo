@@ -1,27 +1,77 @@
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.timezone import now
 
+
+class UsuarioManager(BaseUserManager):
+    use_in_migrations = True
+
+    def _create_user(self, email, password, **extra_fields):
+        if not email:
+            raise ValueError('El correo electrónico es obligatorio.')
+        usuario = self.model(email=self.normalize_email(email).lower(), **extra_fields)
+        usuario.set_password(password)
+        usuario.save(using=self._db)
+        return usuario
+
+    def create_user(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', False)
+        extra_fields.setdefault('is_superuser', False)
+        return self._create_user(email, password, **extra_fields)
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        if not extra_fields['is_staff'] or not extra_fields['is_superuser']:
+            raise ValueError('Un superusuario debe tener is_staff=True e is_superuser=True.')
+        return self._create_user(email, password, **extra_fields)
+
+
 # clase Usuario
-class Usuario(models.Model):
+# Usa el sistema de autenticación de Django. Inicia sesión con el email (no hay username).
+# is_staff indica si es administrador del panel. Hereda de AbstractUser: password,
+# is_active, is_staff, is_superuser, last_login, date_joined, grupos y permisos.
+class Usuario(AbstractUser):
+    username = None
+    first_name = None
+    last_name = None
+
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    contraseña = models.CharField(max_length=100, default='')
-    rut = models.CharField(max_length=12, unique=True, default='Rut no especificado') 
-    telefono = models.CharField(max_length=20, verbose_name="Teléfono")
-    direccion = models.CharField(max_length=120, verbose_name="Dirección")
-    region = models.CharField(max_length=100, default='Región no especificada')  
-    ciudad = models.CharField(max_length=100, default='Ciudad no especificada')
-    es_administrador = models.BooleanField(default=False)
+    rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
+    telefono = models.CharField(max_length=20, blank=True, verbose_name="Teléfono")
+    direccion = models.CharField(max_length=120, blank=True, verbose_name="Dirección")
+    region = models.CharField(max_length=100, blank=True)
+    ciudad = models.CharField(max_length=100, blank=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['nombre']
+
+    objects = UsuarioManager()
+
+    def save(self, *args, **kwargs):
+        # el email se guarda en minúsculas para que el login no distinga mayúsculas
+        if self.email:
+            self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
+
+    # eliminación lógica: el usuario ya no puede iniciar sesión, pero se conservan sus compras
     def delete(self, *args, **kwargs):
         self.is_deleted = True
+        self.is_active = False
         self.deleted_at = now()
         self.save()
 
     def hard_delete(self):
-        super(Usuario, self).delete()
+        super().delete()
+
+    def get_full_name(self):
+        return self.nombre
+
+    def get_short_name(self):
+        return self.nombre
 
     def __str__(self):
         return self.nombre

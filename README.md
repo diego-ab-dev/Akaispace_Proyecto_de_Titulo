@@ -164,21 +164,40 @@ Estas cuentas las crea `python manage.py seed_demo` y existen solo en tu base de
 - Correo: user@gmail.com
 - Contraseña: 12345
 
+Las cuentas nuevas que se registren desde el sitio deben cumplir las reglas de contraseña: al menos 8 caracteres, no ser solo números, no ser una contraseña común y no parecerse al nombre ni al correo. Las cuentas de prueba usan `12345` solo por comodidad.
+
+Si quieres otra cuenta de administrador, ejecuta `python manage.py createsuperuser`.
+
+**Bloqueo por intentos fallidos:** después de 5 intentos de login fallidos con el mismo correo, ese correo queda bloqueado por 15 minutos. Para desbloquear todo durante el desarrollo, ejecuta `python manage.py axes_reset`.
+
 ---
 
-## Si ya tenías el proyecto instalado (antes del cambio a `seed_demo`)
+## Si ya tenías el proyecto instalado
 
-Después de hacer `git pull`, agrega estas 3 líneas a tu `.env` (genera la clave como en el Paso 6):
+El proyecto pasó al sistema de usuarios de Django y **las migraciones se reiniciaron desde cero**. La base de datos antigua (`db_sdgames`) ya no es compatible. Después de hacer `git pull`:
 
-```
-SECRET_KEY=la_clave_que_generaste
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-```
+1. Instala las librerías nuevas (con el entorno virtual activo):
 
-Sin `SECRET_KEY` el proyecto no arranca y muestra `SECRET_KEY not found`. Sin `DEBUG=True` no se cargan los estilos ni las imágenes.
+   ```powershell
+   pip install -r requirements.txt
+   ```
 
-Tu base de datos `db_sdgames` sigue funcionando: tu `.env` dice `DB_NAME=db_sdgames`, así que no necesitas cambiar nada más. Si prefieres empezar limpio con el nombre nuevo, crea `db_akaispace` (Paso 5), cambia `DB_NAME` en tu `.env` y ejecuta `migrate` y `seed_demo`.
+2. Crea la base de datos nueva, como en el Paso 5:
+
+   ```sql
+   CREATE DATABASE db_akaispace CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+   ```
+
+3. En tu `.env`, cambia `DB_NAME=db_sdgames` por `DB_NAME=db_akaispace`. Si aún no tienes `SECRET_KEY`, `DEBUG` y `ALLOWED_HOSTS`, agrégalos como se indica en el Paso 6.
+
+4. Crea las tablas y carga los datos de prueba:
+
+   ```powershell
+   python manage.py migrate
+   python manage.py seed_demo
+   ```
+
+La base `db_sdgames` puede quedarse ahí o puedes borrarla (`DROP DATABASE db_sdgames;`); el proyecto ya no la usa.
 
 ---
 
@@ -211,6 +230,9 @@ python manage.py runserver
 | `SECRET_KEY not found` | Falta `SECRET_KEY` en el archivo `.env` | Agregarla como se indica en el Paso 6 |
 | La página carga sin estilos ni imágenes | `DEBUG` no está en `True` en el `.env` | Agregar `DEBUG=True` al `.env` |
 | `Table '...' doesn't exist` | Faltan las tablas | Ejecutar `python manage.py migrate` |
+| `InconsistentMigrationHistory` | El `.env` apunta a la base de datos antigua | Seguir la sección "Si ya tenías el proyecto instalado" |
+| `No module named 'axes'` | Faltan librerías nuevas | Ejecutar `pip install -r requirements.txt` |
+| "Demasiados intentos fallidos" en el login | Se superó el límite de intentos | Esperar 15 minutos o ejecutar `python manage.py axes_reset` |
 | `Unknown command` al usar manage.py | Comando mal escrito | Los comandos van en minúscula y separados: `python manage.py runserver` |
 
 

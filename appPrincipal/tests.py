@@ -1,4 +1,3 @@
-from django.contrib.auth.hashers import check_password
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
@@ -11,9 +10,9 @@ class SeedDemoTests(TestCase):
         call_command('seed_demo', verbosity=0)
         self.assertEqual(Producto.objects.count(), 6)
         admin = Usuario.objects.get(email='admin@gmail.com')
-        self.assertTrue(admin.es_administrador)
-        self.assertTrue(check_password('12345', admin.contraseña))
-        self.assertFalse(Usuario.objects.get(email='user@gmail.com').es_administrador)
+        self.assertTrue(admin.is_staff)
+        self.assertTrue(admin.check_password('12345'))
+        self.assertFalse(Usuario.objects.get(email='user@gmail.com').is_staff)
 
     def test_es_idempotente(self):
         call_command('seed_demo', verbosity=0)
@@ -41,7 +40,7 @@ class RutTests(TestCase):
 class RegisterTests(TestCase):
     datos = {
         'rut': '12343455-2', 'nombre': 'Juan Perez', 'telefono': '+56 9 12345678',
-        'email': 'juan@example.com', 'contraseña': 'clave-segura-123', 'direccion': 'Calle 123',
+        'email': 'juan@example.com', 'contraseña': 'Akaispace-2026!', 'confirmar_contraseña': 'Akaispace-2026!', 'direccion': 'Calle 123',
         'region': 'LOS RIOS', 'ciudad': 'Valdivia',
     }
 
@@ -60,3 +59,155 @@ class RegisterTests(TestCase):
         self.client.post('/register/', self.datos)
         respuesta = self.client.post('/register/', {**self.datos, 'email': 'otro@example.com', 'rut': '12.343.455-2'})
         self.assertEqual(respuesta.json()['message'], 'El RUT ya está registrado.')
+
+
+def crear_cliente(email='cliente@example.com', password='Akaispace-2026!', **extra):
+    datos = {'nombre': 'Cliente Prueba', **extra}
+    return Usuario.objects.create_user(email=email, password=password, **datos)
+
+
+class LoginTests(TestCase):
+    def setUp(self):
+        self.usuario = crear_cliente()
+
+    def login(self, email, password='Akaispace-2026!'):
+        return self.client.post('/login/', {'email': email, 'contraseña': password})
+
+    def test_login_no_distingue_mayusculas_en_email(self):  # 13
+        respuesta = self.login('CLIENTE@Example.com')
+        self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.usuario.pk)
+
+    def test_mismo_mensaje_si_el_correo_no_existe_o_la_clave_es_incorrecta(self):  # 14
+        clave_mala = self.login('cliente@example.com', 'incorrecta')
+        correo_inexistente = self.login('nadie@example.com')
+        self.assertEqual(clave_mala.context['errors'], correo_inexistente.context['errors'])
+
+    def test_login_cambia_la_llave_de_sesion(self):  # 14
+        self.client.get('/login/')
+        self.client.session.save()
+        llave_antes = self.client.session.session_key
+        self.login('cliente@example.com')
+        self.assertNotEqual(self.client.session.session_key, llave_antes)
+
+    def test_bloqueo_tras_5_intentos_fallidos(self):  # 14
+        for _ in range(5):
+            self.login('cliente@example.com', 'incorrecta')
+        respuesta = self.login('cliente@example.com')  # aunque ahora la clave sea correcta
+        self.assertEqual(respuesta.status_code, 429)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_usuario_eliminado_no_puede_iniciar_sesion(self):
+        self.usuario.delete()
+        self.login('cliente@example.com')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_next_redirige_a_la_pagina_pedida_y_rechaza_sitios_externos(self):
+        respuesta = self.client.post('/login/?next=/compras/', {'email': 'cliente@example.com', 'contraseña': 'Akaispace-2026!'})
+        self.assertRedirects(respuesta, '/compras/', fetch_redirect_response=False)
+        self.client.logout()
+        respuesta = self.client.post('/login/?next=https://malicioso.com/', {'email': 'cliente@example.com', 'contraseña': 'Akaispace-2026!'})
+        self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
+
+
+class ContraseñaTests(TestCase):  # 15
+    def test_registro_rechaza_contraseña_debil(self):
+        datos = {**RegisterTests.datos, 'contraseña': '12345', 'confirmar_contraseña': '12345'}
+        respuesta = self.client.post('/register/', datos)
+        self.assertFalse(respuesta.json()['success'])
+        self.assertFalse(Usuario.objects.exists())
+
+    def test_registro_rechaza_confirmacion_distinta(self):
+        datos = {**RegisterTests.datos, 'confirmar_contraseña': 'Otra-Clave-2026!'}
+        self.assertEqual(self.client.post('/register/', datos).json()['message'], 'Las contraseñas no coinciden.')
+
+    def test_cambiar_contraseña_valida_reglas_y_mantiene_la_sesion(self):
+        usuario = crear_cliente()
+        self.client.force_login(usuario)
+        datos = {'contraseña_actual': 'Akaispace-2026!', 'nueva_contraseña': 'abc', 'confirmar_contraseña': 'abc'}
+        self.client.post('/cambiar/', datos)
+        usuario.refresh_from_db()
+        self.assertTrue(usuario.check_password('Akaispace-2026!'))
+
+        datos = {'contraseña_actual': 'Akaispace-2026!', 'nueva_contraseña': 'Nueva-Clave-2026!', 'confirmar_contraseña': 'Nueva-Clave-2026!'}
+        self.client.post('/cambiar/', datos)
+        usuario.refresh_from_db()
+        self.assertTrue(usuario.check_password('Nueva-Clave-2026!'))
+        self.assertEqual(self.client.get('/perfil/').status_code, 200)
+
+
+class AccesoTests(TestCase):  # 1 y 20
+    def setUp(self):
+        from .models import Venta
+        self.dueño = crear_cliente('dueno@example.com')
+        self.otro = crear_cliente('otro@example.com')
+        self.venta = Venta.objects.create(usuario=self.dueño, metodo_envio='tienda')
+
+    def test_paginas_privadas_piden_login(self):
+        for url in ['/perfil/', '/compras/', '/ver_carrito/', '/favorites/', '/seleccionar-pago/', f'/boleta/{self.venta.id}/']:
+            respuesta = self.client.get(url)
+            self.assertRedirects(respuesta, f'/login/?next={url}', fetch_redirect_response=False, msg_prefix=url)
+
+    def test_endpoints_ajax_responden_json_sin_sesion(self):
+        respuesta = self.client.post('/agregar_favorito/1/')
+        self.assertEqual(respuesta.status_code, 401)
+        self.assertEqual(respuesta.json()['error'], 'not_logged_in')
+
+    def test_no_se_puede_ver_la_compra_ni_la_boleta_de_otro_usuario(self):
+        self.client.force_login(self.otro)
+        self.assertEqual(self.client.get(f'/compra/{self.venta.id}/detalle/').status_code, 404)
+        self.assertEqual(self.client.get(f'/boleta/{self.venta.id}/').status_code, 404)
+
+    def test_el_dueño_si_ve_su_compra(self):
+        self.client.force_login(self.dueño)
+        self.assertEqual(self.client.get(f'/boleta/{self.venta.id}/').status_code, 200)
+
+    def test_cliente_no_entra_al_panel_admin(self):
+        self.client.force_login(self.otro)
+        self.assertRedirects(self.client.get('/admin-panel/'), '/', fetch_redirect_response=False)
+
+    def test_admin_entra_al_panel(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.assertEqual(self.client.get('/admin-panel/').status_code, 200)
+
+
+class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids en la URL
+    def setUp(self):
+        self.producto = Producto.objects.create(
+            codigo_de_barra='111', nombre='Juego', precio=10000, stock=3, categoria='Videojuegos PS5',
+            imagen_principal='productos/silent.png'
+        )
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+
+    def test_compra_completa_descuenta_stock_y_genera_boleta(self):
+        from .models import Venta
+        self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 2})
+        self.assertEqual(self.client.get('/seleccionar-pago/').status_code, 200)
+        respuesta = self.client.post('/seleccionar-pago/', {'metodo_pago': 'tarjeta'})
+        self.assertRedirects(respuesta, '/compra-exitosa/', fetch_redirect_response=False)
+        self.assertEqual(self.client.get('/compra-exitosa/').status_code, 200)
+
+        venta = Venta.objects.get(usuario=self.cliente)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 1)
+        self.assertTrue(hasattr(venta, 'boleta'))
+        self.assertEqual(self.client.get(f'/boleta/{venta.id}/').status_code, 200)
+
+    def test_sin_stock_no_queda_venta_a_medias(self):
+        from .models import ItemCarritoProducto, Carrito, Venta
+        carrito = Carrito.objects.create(usuario=self.cliente)
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=self.producto, cantidad=5)
+        respuesta = self.client.get('/compra-exitosa/')
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/'))
+        self.assertFalse(Venta.objects.exists())
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 3)
+
+    def test_no_se_puede_modificar_el_carrito_de_otro(self):
+        from .models import ItemCarritoProducto, Carrito
+        otro = crear_cliente('otro@example.com')
+        item = ItemCarritoProducto.objects.create(carrito=Carrito.objects.create(usuario=otro), producto=self.producto)
+        self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 2}).status_code, 404)
+        self.assertFalse(self.client.post(f'/eliminar/{item.id}/').json()['success'])
+        self.assertTrue(ItemCarritoProducto.objects.filter(id=item.id).exists())

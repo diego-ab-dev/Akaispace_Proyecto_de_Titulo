@@ -66,8 +66,8 @@ urlpatterns = [
     path('remove_favorito/<int:item_id>/', eliminar_favorito, name='eliminar_favorito'),
     path('eliminar_favoritos_seleccionados/', eliminar_favoritos_seleccionados, name='eliminar_favoritos_seleccionados'),
     # pago - compra
-    path('seleccionar-pago/<int:usuario_id>/', seleccionar_pago, name='seleccionar_pago'),
-    path('compra-exitosa/<int:usuario_id>/', compra_exitosa, name='compra_exitosa'),
+    path('seleccionar-pago/', seleccionar_pago, name='seleccionar_pago'),
+    path('compra-exitosa/', compra_exitosa, name='compra_exitosa'),
     path('boleta/<int:venta_id>/', ver_boleta, name='ver_boleta'),
 
 

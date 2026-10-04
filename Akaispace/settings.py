@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'axes',
     'appPrincipal',
 ]
 
@@ -54,6 +56,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # debe ir al final: bloquea el login tras varios intentos fallidos
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'Akaispace.urls'
@@ -100,9 +104,11 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {'user_attributes': ('email', 'nombre')},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -111,6 +117,27 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+# Autenticación
+AUTH_USER_MODEL = 'appPrincipal.Usuario'
+
+AUTHENTICATION_BACKENDS = [
+    # django-axes debe ir primero para poder bloquear los intentos
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+LOGIN_URL = 'login'
+
+# Límite de intentos de login (django-axes): tras 5 intentos fallidos con el mismo
+# correo desde la misma IP, se bloquea por 15 minutos.
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=15)
+AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
+AXES_RESET_ON_SUCCESS = True
+AXES_USERNAME_CALLABLE = 'appPrincipal.seguridad.email_para_axes'
+AXES_LOCKOUT_CALLABLE = 'appPrincipal.seguridad.login_bloqueado'
 
 
 # Internationalization
