@@ -4,6 +4,18 @@ from django.test import TestCase, override_settings
 from .models import Producto, Usuario
 
 
+def _urls_con_admin_de_django():
+    # el admin de Django solo se monta con DEBUG=True y los tests corren con DEBUG=False,
+    # así que los tests del admin usan esta lista de URLs (ROOT_URLCONF='appPrincipal.tests')
+    from django.contrib import admin
+    from django.urls import path
+    from Akaispace.urls import urlpatterns as urls_del_sitio
+    return [path('admin/', admin.site.urls), *urls_del_sitio]
+
+
+urlpatterns = _urls_con_admin_de_django()
+
+
 @override_settings(DEBUG=True)
 class SeedDemoTests(TestCase):
     def test_carga_productos_y_usuarios(self):
@@ -278,6 +290,7 @@ class ModeloTests(TestCase):  # 17, 25, 26 y 28
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 7)  # 5 + 2 devueltos una sola vez
 
+    @override_settings(ROOT_URLCONF='appPrincipal.tests')
     def test_admin_de_django_elimina_productos_de_forma_logica(self):
         self.client.force_login(Usuario.objects.create_superuser(email='root@example.com', password='x', nombre='Root'))
         self.client.post(f'/admin/appPrincipal/producto/{self.producto.id}/delete/', {'post': 'yes'})
@@ -285,8 +298,67 @@ class ModeloTests(TestCase):  # 17, 25, 26 y 28
 
 
 class AdminDjangoTests(TestCase):
+    def test_sin_debug_el_admin_de_django_no_existe(self):
+        self.client.force_login(Usuario.objects.create_superuser(email='root@example.com', password='x', nombre='Root'))
+        self.assertEqual(self.client.get('/admin/').status_code, 404)
+
+    @override_settings(ROOT_URLCONF='appPrincipal.tests')
     def test_listados_del_admin_cargan(self):
         self.client.force_login(Usuario.objects.create_superuser(email='root@example.com', password='x', nombre='Root'))
         for modelo in ['usuario', 'producto', 'venta', 'reclamo', 'opinion']:
             respuesta = self.client.get(f'/admin/appPrincipal/{modelo}/')
             self.assertEqual(respuesta.status_code, 200, modelo)
+
+
+class PanelFiltrosTests(TestCase):  # filtro de fechas compartido por ventas, reclamos y devoluciones
+    def setUp(self):
+        from django.utils import timezone
+        from .models import Venta
+        self.hoy = timezone.localdate()
+        self.venta = Venta.objects.create(usuario=crear_cliente(), metodo_envio='tienda')
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def test_fecha_fin_incluye_las_ventas_de_ese_mismo_dia(self):
+        respuesta = self.client.get('/admin-panel/ventas/', {'fecha_inicio': self.hoy, 'fecha_fin': self.hoy})
+        self.assertEqual(list(respuesta.context['ventas']), [self.venta])
+
+    def test_fecha_futura_no_se_aplica_y_se_informa(self):
+        from datetime import timedelta
+        respuesta = self.client.get('/admin-panel/reclamos/', {'fecha_fin': self.hoy + timedelta(days=1)})
+        self.assertEqual(respuesta.context['errores'], ["La fecha de fin no puede ser futura."])
+
+    def test_fecha_imposible_se_ignora(self):
+        respuesta = self.client.get('/admin-panel/devoluciones/', {'fecha_inicio': '2026-02-31'})
+        self.assertEqual(respuesta.status_code, 200)
+
+
+class PlantillasTests(TestCase):  # 21: plantilla base y navbar compartido
+    def test_todas_las_paginas_heredan_de_una_plantilla_base(self):
+        from pathlib import Path
+        from django.conf import settings
+        carpeta = Path(settings.BASE_DIR) / 'templates'
+        bases = {'base.html'}
+        for ruta in carpeta.rglob('*.html'):
+            nombre = ruta.relative_to(carpeta).as_posix()
+            if nombre in bases or 'partials/' in nombre:
+                continue
+            self.assertIn('{% extends ', ruta.read_text(encoding='utf-8'), nombre)
+
+    def test_destacados_del_navbar_vienen_del_context_processor(self):
+        destacado = Producto.objects.create(
+            codigo_de_barra='333', nombre='Play Station 5', precio=1, stock=1, categoria='Ps5 Consolas',
+            imagen_principal='productos/silent.png'
+        )
+        respuesta = self.client.get('/menu/')
+        self.assertContains(respuesta, f'href="/producto/{destacado.id}/"')
+
+    def test_destacados_se_consultan_solo_al_usarse(self):
+        from .context_processors import ProductosDestacados
+        destacados = ProductosDestacados()
+        with self.assertNumQueries(0):
+            self.assertIsInstance(destacados, ProductosDestacados)
+        with self.assertNumQueries(1):
+            destacados.ps5
+            destacados.ps5  # la segunda vez usa el caché
+        with self.assertRaises(AttributeError):
+            destacados.no_existe

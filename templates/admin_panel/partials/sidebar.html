@@ -1,0 +1,45 @@
+{% load static %}
+{% comment %}Header y navbar lateral del panel. El link activo se marca según la URL actual.{% endcomment %}
+{% with n=request.resolver_match.url_name %}
+<header class="header" id="header">
+    <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
+    <div><h4>{{ request.user.nombre }}</h4></div>
+</header>
+<!--navbar lateral-->
+<div class="l-navbar" id="nav-bar">
+    <nav class="nav">
+        <div> <a href="{% url 'admin_dashboard' %}" class="nav_logo"> <img src="{% static 'images/akaispace_favicon.png' %}" alt="Logo Akaispace" style="height: 26px; width: 26px;"> <span class="nav_logo-name">Akaispace Admin</span> </a>
+            <div class="nav_list">
+                <a href="{% url 'admin_dashboard' %}" class="nav_link{% if n == 'admin_dashboard' %} active{% endif %}">
+                    <i class='bx bx-home-alt nav_icon'></i>
+                    <span class="nav_name">Dashboard</span>
+                </a>
+                <a href="{% url 'admin_usuarios' %}" class="nav_link{% if n == 'admin_usuarios' or n == 'buscar_usuarios' %} active{% endif %}">
+                    <i class='bx bx-user nav_icon'></i>
+                    <span class="nav_name">Usuarios</span>
+                </a>
+                <a href="{% url 'admin_productos' %}" class="nav_link{% if n == 'admin_productos' %} active{% endif %}">
+                    <i class='bx bx-cube nav_icon'></i>
+                    <span class="nav_name">Productos</span>
+                </a>
+                <a href="{% url 'admin_ventas' %}" class="nav_link{% if n == 'admin_ventas' %} active{% endif %}">
+                    <i class='bx bx-cart nav_icon'></i>
+                    <span class="nav_name">Ventas</span>
+                </a>
+                <a href="{% url 'admin_reclamos' %}" class="nav_link{% if n == 'admin_reclamos' %} active{% endif %}">
+                    <i class='bx bx-error-circle nav_icon'></i>
+                    <span class="nav_name">Reclamos</span>
+                </a>
+                <a href="{% url 'admin_devoluciones' %}" class="nav_link{% if n == 'admin_devoluciones' %} active{% endif %}">
+                    <i class='bx bx-revision nav_icon'></i>
+                    <span class="nav_name">Devoluciones</span>
+                </a>
+            </div>
+        </div>
+        <a href="{% url 'logout' %}" class="nav_link">
+            <i class='bx bx-log-out nav_icon'></i>
+            <span class="nav_name">Salir</span>
+        </a>
+    </nav>
+</div>
+{% endwith %}

@@ -1,19 +1,16 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 {% load static %}
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_agregar_prod.css' %}">
-    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
-    <title>Ingresar Producto Nuevo</title>
-</head>
-<body>
 
+{% block title %}Ingresar Producto Nuevo{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_agregar_prod.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="main-container">
         <h1 class="page-title">Ingresar Producto Nuevo</h1>
-        
+
         <div class="form-card">
             <form method="post" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
@@ -87,14 +84,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const nombreInput = document.querySelector('input[name="nombre"]');
         const charCount = document.getElementById('char-count');
         const maxLength = 60;
         const stockInput = document.querySelector('input[name="stock"]'); 
-        
+
         if (stockInput) {
             stockInput.addEventListener('input', function() {
                 if (this.value.length > 3) {
@@ -119,7 +116,7 @@
                 e.preventDefault(); 
 
                 document.querySelectorAll('.text-danger.small').forEach(el => el.textContent = '');
-                
+
                 const submitBtn = form.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.textContent;
                 submitBtn.disabled = true;
@@ -155,7 +152,7 @@
                             if (input) {
                                 const errorDiv = input.parentElement.querySelector('.text-danger.small') 
                                               || input.parentElement.parentElement.querySelector('.text-danger.small'); 
-                                
+
                                 if (errorDiv) {
                                     errorDiv.textContent = data.errors[key][0]; 
                                 }
@@ -163,7 +160,7 @@
                         });
                         submitBtn.disabled = false;
                         submitBtn.textContent = originalBtnText;
-                        
+
                         const firstError = document.querySelector('.text-danger.small:not(:empty)');
                         if(firstError) firstError.scrollIntoView({behavior: 'smooth', block: 'center'});
                     }
@@ -180,5 +177,4 @@
         }
     });
 </script>
-</body>
-</html>
+{% endblock %}

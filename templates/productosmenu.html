@@ -1,297 +1,15 @@
-<!DOCTYPE html>
-{% load static %}
-{% load custom_filters %}
-<html lang="en">
+{% extends "base_tienda.html" %}
+{% load static custom_filters %}
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}Akaispace - Menu{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"></script>
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_menu.css' %}">
+{% endblock %}
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  <link href="https://raw.githubusercontent.com/daneden/animate.css/master/animate.css" rel="stylesheet">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+{% block navbar %}{% include "partials/navbar.html" with en_menu=True %}{% endblock %}
 
-  <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
-  <!--LOGO-->
-  <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
-  <!--CSS-->
-  <link rel="stylesheet" href="{% static 'styles/styles_menu.css' %}">
-  <title>Akaispace - Menu</title>
-</head>
-
-<body>
-<!--NAVBAR-->
-  <nav>
-    <div class="navbar">
-      <i class='bx bx-menu'></i>
-      <div class="logo"><a href="{% url 'home' %}"><img src="{% static 'images/akaispace_favicon.png' %}" alt="Logo Akaispace" style="height: 45px; vertical-align: middle; margin-right: 8px;">Akaispace</a></div>
-      <div class="nav-links">
-        <div class="sidebar-logo">
-          <span class="logo-name">Akaispace</span>
-          <i class='bx bx-x'></i>
-        </div>
-        <ul class="links">
-          <li>
-            <a href="#">Videojuegos</a>
-            <i class='bx bxs-chevron-down htmlcss-arrow arrow'></i>
-            
-            <div class="htmlCss-sub-menu sub-menu mega-menu-box">
-              <div class="d-flex">
-                
-                <div class="menu-links-col">
-                  <ul class="list-unstyled mb-0"> <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PlayStation</span></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos PS3' %}">PlayStation 3</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos PS4' %}">PlayStation 4</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos PS5' %}">PlayStation 5</a></li>
-                    <hr class="my-2">
-                    <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft</span></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX 360' %}">XBOX 360</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX ONE' %}">XBOX ONE</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX SERIES' %}">XBOX SERIES</a></li>
-                    <hr class="my-2">
-                    <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos Nintendo SWITCH' %}">SWITCH</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos Nintendo 3DS' %}">3DS</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos WII' %}">WII</a></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos WII U' %}">WII U</a></li>
-                    <hr class="my-2">
-                    <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PC</span></li>
-                    <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos para PC' %}">Videojuegos PC</a></li>
-                  </ul>
-                </div>
-
-                <div class="menu-image-col">
-                  <div class="promo-card">
-                      {% if cod6 %}
-                      <a href="{% url 'producto_detalle' cod6.id %}" class="text-decoration-none">
-                      {% else %}
-                      <a href="#" class="text-decoration-none">
-                      {% endif %}
-                      
-                      <div class="promo-image-wrapper">
-                          <img src="{% static 'images/cod6.png' %}" alt="Novedad Destacada">
-                          <div class="promo-badge">¡NUEVO!</div>
-                      </div>
-                      <div class="promo-content mt-2 text-center">
-                          <h6 class="text-light mb-0 fw-bold">Call of Duty: Black Ops 6</h6>
-                          <small style="color: #00D2D5;">Ver detalles <i class="fas fa-arrow-right"></i></small>
-                      </div>
-                    </a>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </li>
-          <li>
-              <a href="#">Consolas</a>
-              <i class='bx bxs-chevron-down js-arrow arrow'></i>
-              
-              <div class="js-sub-menu sub-menu mega-menu-box">
-                  <div class="d-flex">
-                      <div class="menu-links-col">
-                          <ul class="list-unstyled mb-0">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PlayStation</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Ps4 Consolas' %}">PlayStation 4</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Ps5 Consolas' %}">PlayStation 5</a></li>
-                              <hr class="my-2">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Xbox One Consolas' %}">XBOX ONE</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Xbox Series Consolas' %}">XBOX SERIES</a></li>
-                              <hr class="my-2">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Wii U Consolas' %}">WII U</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Switch Consolas' %}">SWITCH</a></li>
-                          </ul>
-                      </div>
-
-                      <div class="menu-image-col">
-                          <div class="promo-card">
-                              {% if ps5 %}
-                              <a href="{% url 'producto_detalle' ps5.id %}" class="text-decoration-none">
-                                  <div class="promo-image-wrapper">
-                                      <img src="{{ ps5.imagen_principal.url }}" alt="{{ ps5.nombre }}">
-                                      <div class="promo-badge">¡TOP VENTAS!</div>
-                                  </div>
-                                  <div class="promo-content mt-2 text-center">
-                                      <h6 class="text-light mb-0 fw-bold">{{ ps5.nombre }}</h6>
-                                      <small style="color: #00D2D5;">Ver consola <i class="fas fa-arrow-right"></i></small>
-                                  </div>
-                              </a>
-                              {% else %}
-                                  <p class="text-muted text-center">Próximamente</p>
-                              {% endif %}
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </li>
-          <li>
-              <a href="#">Accesorios</a>
-              <i class='bx bxs-chevron-down js-arrow arrow'></i>
-              
-              <div class="js-sub-menu sub-menu mega-menu-box">
-                  <div class="d-flex">
-                      <div class="menu-links-col">
-                          <ul class="list-unstyled mb-0">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PlayStation</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Psp' %}">PSP</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Ps Vita' %}">VITA</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS1' %}">PLAY STATION 1</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS2' %}">PLAY STATION 2</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS3' %}">PLAY STATION 3</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS4' %}">PLAY STATION 4</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS5' %}">PLAY STATION 5</a></li>
-                              <hr class="my-2">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX 360' %}">XBOX 360</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX ONE' %}">XBOX ONE</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX SERIES' %}">XBOX SERIES</a></li>
-                              <hr class="my-2">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Nintendo 3DS' %}">3DS</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios WII U' %}">WII U</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Nintendo SWITCH' %}">SWITCH</a></li>
-                          </ul>
-                      </div>
-
-                      <div class="menu-image-col">
-                          <div class="promo-card">
-                              {% if mando %}
-                              <a href="{% url 'producto_detalle' mando.id %}" class="text-decoration-none">
-                                  <div class="promo-image-wrapper">
-                                      <img src="{{ mando.imagen_principal.url }}" alt="{{ mando.nombre }}">
-                                      <div class="promo-badge" style="background-color: #8e44ad;">EXCLUSIVO</div>
-                                  </div>
-                                  <div class="promo-content mt-2 text-center">
-                                      <h6 class="text-light mb-0 fw-bold">DualSense Chroma Pearl</h6>
-                                      <small style="color: #00D2D5;">Ver accesorio <i class="fas fa-arrow-right"></i></small>
-                                  </div>
-                              </a>
-                              {% else %}
-                                  <p class="text-muted text-center">Sin stock destacado</p>
-                              {% endif %}
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </li>
-          <li>
-              <a href="#">Figuras</a>
-              <i class='bx bxs-chevron-down js-arrow arrow'></i>
-              
-              <div class="js-sub-menu sub-menu mega-menu-box">
-                  <div class="d-flex">
-                      <div class="menu-links-col">
-                          <ul class="list-unstyled mb-0">
-                              <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Coleccionables</span></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Figuras Funko' %}">FUNKO POP</a></li>
-                              <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Figuras Amiibo' %}">AMIIBO</a></li>
-                          </ul>
-                      </div>
-
-                      <div class="menu-image-col">
-                          <div class="promo-card">
-                              {% if funko %}
-                              <a href="{% url 'producto_detalle' funko.id %}" class="text-decoration-none">
-                                  <div class="promo-image-wrapper">
-                                      <img src="{{ funko.imagen_principal.url }}" alt="{{ funko.nombre }}">
-                                      <div class="promo-badge" style="background-color: #f39c12;">COLECCIÓN</div>
-                                  </div>
-                                  <div class="promo-content mt-2 text-center">
-                                      <h6 class="text-light mb-0 fw-bold">{{ funko.nombre }}</h6>
-                                      <small style="color: #00D2D5;">Lo quiero <i class="fas fa-arrow-right"></i></small>
-                                  </div>
-                              </a>
-                              {% else %}
-                                  <p class="text-muted text-center">Próximamente</p>
-                              {% endif %}
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </li>
-        </ul>
-        <div class="sidebar-login">
-          <button onclick="window.location.href='/login'">
-            Iniciar Sesión
-            <div class="arrow-wrapper">
-              <div class="arrow"></div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <div class="d-flex login-desktop">
-        {% if usuario %}
-          <div class="menu d-flex align-items-center gap-2">
-            <div class="item">
-              <a href="#" class="link">
-                <span class="user-name-limit" title="{{ usuario.nombre|default:usuario.email }}"> 
-                    Hola, {{ usuario.nombre|default:usuario.email }} 
-                </span>
-                <svg viewBox="0 0 360 360" xml:space="preserve">
-                  <g id="SVGRepo_iconCarrier">
-                    <path
-                      id="XMLID_225_"
-                      d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"
-                    ></path>
-                  </g>
-                </svg>
-              </a>
-              <div class="submenu">
-                <div class="submenu-item perfil-item">
-                  <a href="/perfil" class="submenu-link">Mi Perfil</a>
-                </div>
-                <div class="submenu-item">
-                  <a href="/logout" class="submenu-link">Cerrar Sesión</a>
-                </div>
-                {% if usuario.is_staff %}
-                <div class="submenu-item item2" style="background-color: #4e84a8;">
-                  <a href="/admin-panel" class="submenu-link">Panel de Administración</a>
-                </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        {% else %}
-          <button onclick="window.location.href='/login'">
-            Iniciar Sesión
-            <div class="arrow-wrapper">
-              <div class="arrow"></div>
-            </div>
-          </button>
-        {% endif %}
-      </div>      
-      <div class="icons d-flex gap-3">
-        <a href="/favorites" style="color: #FFFFFF;">
-          <i class="fas fa-heart"></i>
-        </a>
-        <a href="{% url 'ver_carrito' %}" style="color: #FFFFFF;">
-          <i class="fas fa-shopping-cart"></i>
-        </a>
-      </div>
-      <div class="search-box">
-        <i class='bx bx-search'></i>
-        <div class="input-box">
-          <form method="get" action="{% url 'productos_menu' %}" class="d-flex mx-auto" role="search"
-            style="width: 50%;">
-            <input class="form-control me-2" type="text" placeholder="Buscar productos" aria-label="Search" id="name"
-              name="buscar">
-          </form>
-        </div>
-      </div>
-    </div>
-  </nav>
-<!--Fin del navbar-->
-
-
+{% block content %}
 <div id="notif-box" class="notif {{ request.GET.type }}">
     <span id="notif-msg">{{ request.GET.notif }}</span>
 </div>
@@ -308,15 +26,15 @@
                   Black Ops 6</h4>
                 <p class="parrafos-carrousel text-dark">Prepárate para la adrenalina de Call of Duty: Black Ops 6. Vive
                   una experiencia de combate que no querrás dejar. ¡Consíguelo ahora!</p>
-                {% if cod6 %}
-                <a class="btn-comprar" href="{% url 'producto_detalle' cod6.id %}">Ver Producto</a>
+                {% if destacados.cod6 %}
+                <a class="btn-comprar" href="{% url 'producto_detalle' destacados.cod6.id %}">Ver Producto</a>
                 {% else %}
                 <p class="parrafos-carrousel text-muted">Producto no disponible</p>
                 {% endif %}
               </div>
               <div class="col-md-5 col-12 order-md-2 order-1">
-                {% if cod6 %}
-                <a href="{% url 'producto_detalle' cod6.id %}">
+                {% if destacados.cod6 %}
+                <a href="{% url 'producto_detalle' destacados.cod6.id %}">
                   <img src="{% static 'images/cod6.png' %}" class="mx-auto"
                     style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="slide">
                 </a>
@@ -337,15 +55,15 @@
                 <p class="parrafos-carrousel text-dark">¡Vive la emoción del fútbol como nunca antes con FC25! Llévate
                   el juego que todos
                   quieren y domina la cancha desde casa.</p>
-                {% if fc25 %}
-                <a class="btn-comprar" href="{% url 'producto_detalle' fc25.id %}">COMPRAR</a>
+                {% if destacados.fc25 %}
+                <a class="btn-comprar" href="{% url 'producto_detalle' destacados.fc25.id %}">COMPRAR</a>
                 {% else %}
                 <p class="parrafos-carrousel text-muted">Producto no disponible</p>
                 {% endif %}
               </div>
               <div class="col-md-5 col-12 order-md-2 order-1">
-                {% if fc25 %}
-                <a href="{% url 'producto_detalle' fc25.id %}">
+                {% if destacados.fc25 %}
+                <a href="{% url 'producto_detalle' destacados.fc25.id %}">
                   <img src="{% static 'images/fc25.png' %}" class="mx-auto"
                     style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="slide">
                 </a>
@@ -365,15 +83,15 @@
                 <h4 class="textcarrousel text-dark">Silent Hill 2</h4>
                 <p class="parrafos-carrousel text-dark">Sumérgete en el terror psicológico de Silent Hill 2. Atrévete a
                   enfrentar tus miedos y descubre los oscuros secretos que te esperan.</p>
-                {% if silent %}
-                <a class="btn-comprar" href="{% url 'producto_detalle' silent.id %}">COMPRAR</a>
+                {% if destacados.silent %}
+                <a class="btn-comprar" href="{% url 'producto_detalle' destacados.silent.id %}">COMPRAR</a>
                 {% else %}
                 <p class="parrafos-carrousel text-muted">Producto no disponible</p>
                 {% endif %}
               </div>
               <div class="col-md-5 col-12 order-md-2 order-1">
-                {% if silent %}
-                <a href="{% url 'producto_detalle' silent.id %}">
+                {% if destacados.silent %}
+                <a href="{% url 'producto_detalle' destacados.silent.id %}">
                   <img src="{% static 'images/silent.png' %}" class="mx-auto"
                     style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="slide">
                 </a>
@@ -400,7 +118,7 @@
       <!--seccion de productos-->
       <section class="section-products">
         <div class="container">
-          
+
           <div class="row mb-4 align-items-center justify-content-between header-toolbar">
             <div class="col-md-4 text-start">
               {% if query %}
@@ -427,23 +145,23 @@
               </form>
             </div>
           </div>
-          
+
           <hr class="mb-5" style="color: #dee2e6;">
 
           <div class="row gy-4"> {% for producto in productos %}
               {% if producto.stock > 0 %}
                 <div class="col-md-6 col-lg-4 col-xl-3">
                   <div class="single-product">
-                    
+
                     <div class="part-1">
                       {% if producto.stock <= 3 %}
                           <span class="badge-overlay badge-low-stock">¡Últimos!</span>
                       {% elif forloop.counter <= 4 and page_obj.number == 1 and not query %}
                           <span class="badge-overlay badge-new">Nuevo</span>
                       {% endif %}
-                      
+
                       <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
-                      
+
                       <ul>
                         <li>
                           <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar" style="display: inline;">
@@ -482,7 +200,7 @@
 
                       <h4 class="precioprod product-price fw-bold fs-4">${{ producto.precio|formato_chileno }}</h4>
                     </div>
-                    
+
                     <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Producto</a>
                     <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar">
                         {% csrf_token %}
@@ -516,7 +234,7 @@
           {% endif %}
 
           {% for num in page_obj.paginator.page_range %}
-              
+
               {% if num == page_obj.number %}
                   <span class="page-item active">{{ num }}</span>
 
@@ -539,7 +257,7 @@
               </span>
           {% endif %}
       </div>
-      
+
       <!--boton de ir arriba-->
       <div class="go-top-container">
         <div class="go-top-button">
@@ -589,56 +307,6 @@
     ride: 'carousel'
   });
 
-let navbar = document.querySelector(".navbar");
-  let searchBox = document.querySelector(".search-box .bx-search");
-  
-  if (searchBox && navbar) {
-      searchBox.addEventListener("click", () => {
-        navbar.classList.toggle("showInput");
-        if (navbar.classList.contains("showInput")) {
-          searchBox.classList.replace("bx-search", "bx-x");
-        } else {
-          searchBox.classList.replace("bx-x", "bx-search");
-        }
-      });
-  }
-
-  let navLinks = document.querySelector(".nav-links");
-  let menuOpenBtn = document.querySelector(".navbar .bx-menu");
-  let menuCloseBtn = document.querySelector(".nav-links .bx-x");
-
-  if (menuOpenBtn && navLinks) {
-      menuOpenBtn.onclick = function () {
-        navLinks.style.left = "0";
-      }
-  }
-  
-  if (menuCloseBtn && navLinks) {
-      menuCloseBtn.onclick = function () {
-        navLinks.style.left = "-100%";
-      }
-  }
-
-  let htmlcssArrow = document.querySelector(".htmlcss-arrow");
-  if (htmlcssArrow && navLinks) {
-      htmlcssArrow.onclick = function () {
-        navLinks.classList.toggle("show1");
-      }
-  }
-
-  let moreArrow = document.querySelector(".more-arrow");
-  if (moreArrow && navLinks) {
-      moreArrow.onclick = function () {
-        navLinks.classList.toggle("show2");
-      }
-  }
-
-  let jsArrow = document.querySelector(".js-arrow");
-  if (jsArrow && navLinks) {
-      jsArrow.onclick = function () {
-        navLinks.classList.toggle("show3");
-      }
-  }
 
   document.addEventListener('DOMContentLoaded', function() {
     const notifBox = document.getElementById('notif-box');
@@ -682,7 +350,7 @@ let navbar = document.querySelector(".navbar");
     favForms.forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault(); 
-            
+
             const url = this.action;
             const formData = new FormData(this);
 
@@ -722,59 +390,4 @@ let navbar = document.querySelector(".navbar");
 
   });
 </script>
-
-<!--footer-->
-<footer class="text-center text-lg-start text-light">
-  <section class="">
-    <div class="container text-center text-md-start mt-5">
-      <div class="row mt-3">
-        <div class="col-md-3 col-lg-4 col-xl-3 mx-auto mb-4">
-          <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
-            <a href="" style="text-decoration: none; color: #00D2D5;">Akaispace</a>
-          </h6>
-          <p class="parrafo-footer">
-            Akaispace es una tienda de videojuegos y accesorios ubicada en Valdivia, que ofrece una amplia
-            selección de
-            títulos para todas las plataformas y edades. Desde los últimos lanzamientos hasta clásicos
-            retro,
-            Akaispace tiene algo para cada tipo de jugador. La tienda se enorgullece de su equipo
-            experto, siempre
-            dispuesto a
-            recomendar juegos y a brindar un excelente servicio al cliente.
-          </p>
-        </div>
-        <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mb-4">
-          <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">
-            Enlaces Rápidos:
-          </h6>
-          <p>
-            <a href="#home" class="footerli text-reset">Home</a>
-          </p>
-          <p>
-            <a href="" class="footerli text-reset">Productos</a>
-          </p>
-          <p>
-            <a href="" class="footerli text-reset">Sobre Nosotros</a>
-          </p>
-          <p>
-            <a href="" class="footerli text-reset">Local</a>
-          </p>
-        </div>
-        <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
-          <h6 class="text-uppercase fw-bold mb-4" style="color: #00D2D5;">Contacto:</h6>
-          <p>
-            <i class="fas fa-envelope me-3"></i>
-            akaispacevaldivia@gmail.com
-          </p>
-          <p><i class="fas fa-phone me-3"></i> +56 9 6156 1944</p>
-          <p><i class="fas fa-map-marker-alt me-3"></i> Galería Caupolicán 544, Local 26, Valdivia</p>
-        </div>
-      </div>
-    </div>
-  </section>
-  <div class="text-center p-4" style="background-color: #252e46;">
-    Copyright © 2025 - 2025 Akaispace   Privacy Policy
-  </div>
-</footer>
-</body>
-</html>
+{% endblock %}

@@ -1,148 +1,140 @@
-<!DOCTYPE html>
-{% load static %}
-{% load custom_filters %}
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Compras</title>
-    <!--Boostrap-->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!--LOGO-->
-    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
-    <!--CSS-->
-    <link rel="stylesheet" href="{% static 'styles/styles_ver_compras.css' %}">
-</head>
-<body>
-    <div class="main-wrapper">
-        <div class="content-container">
-            
-            <div class="top-header-grid">
-                <div class="header-left">
-                    <a href="{% url 'perfil' %}" class="btn-regresar">
-                        <i class="fa-solid fa-arrow-left-long"></i> Regresar
-                    </a>
-                </div>
-                
-                <div class="header-center">
-                    <h1>Historial de Compras</h1>
-                </div>
-                
-                <div class="header-right">
-                    <div class="dropdown">
-                        <button class="btn-filtrar dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Filtrar Por
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="?orden=reciente">Más recientes</a></li>
-                            
-                            <li><a class="dropdown-item" href="?orden=antiguo">Más antiguos</a></li>
-                        </ul>
-                    </div>
-                </div>
+{% extends "base.html" %}
+{% load static custom_filters %}
+
+{% block title %}Historial de Compras{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_ver_compras.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+    <div class="content-container">
+
+        <div class="top-header-grid">
+            <div class="header-left">
+                <a href="{% url 'perfil' %}" class="btn-regresar">
+                    <i class="fa-solid fa-arrow-left-long"></i> Regresar
+                </a>
             </div>
 
-            <div class="table-wrapper">
-                <table class="design-table">
-                    <thead>
-                        <tr>
-                            <th class="text-center" style="width: 5%;">#</th>
-                            <th style="width: 15%;">Total</th>
-                            <th style="width: 15%;">Fecha</th>
-                            <th style="width: 15%;">Estado</th>
-                            <th style="width: 35%;">Productos</th>
-                            <th class="text-center" style="width: 15%;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for compra in page_obj %}
-                        <tr>
-                            <td class="text-center fw-bold">{{ compra.id }}</td>
-                            <td class="fw-bold">${{ compra.total|formato_chileno }}</td>
-                            <td>{{ compra.fecha|date:"d/m/Y" }}</td>
-                            <td class="fw-bold">
-                                <span class="
-                                    {% if compra.datos_envio.estado == 'En Preparación' %}estado-preparacion
-                                    {% elif compra.datos_envio.estado == 'Enviado' %}estado-enviado
-                                    {% elif compra.datos_envio.estado == 'En Tránsito' %}estado-transito
-                                    {% elif compra.datos_envio.estado == 'En Reparto' %}estado-reparto
-                                    {% elif compra.datos_envio.estado == 'Entregado' %}estado-entregado
-                                    {% elif compra.datos_envio.estado == 'Anulada' %}estado-anulada
-                                    {% endif %}
-                                ">
-                                    {{ compra.datos_envio.estado }}
-                                </span>
-                            </td>
-
-                            <td>
-                                <ul class="product-list">
-                                    {% for item in compra.producto_venta.all %}
-                                    <li class="d-flex align-items-center">
-                                        <span class="history-item-title me-1" title="{{ item.producto.nombre }}">
-                                            {{ item.producto.nombre }}
-                                        </span>
-                                        <span class="text-nowrap">
-                                            - Sub: ${{ item.total_producto|formato_chileno }}
-                                        </span>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </td>
-                            <td class="text-center action-cell">
-                                <a href="{% url 'ver_detalle' compra.id %}" class="btn-action">
-                                    Ver Detalle
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center no-data" style="padding: 40px;">
-                                No hay compras registradas.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="header-center">
+                <h1>Historial de Compras</h1>
             </div>
-            <!-- Paginacion -->
-            <div class="pagination-wrapper">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}&orden={{ orden }}" class="page-nav">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </a>
-                {% else %}
-                    <span class="page-nav disabled-nav">
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </span>
-                {% endif %}
 
-                {% for num in page_obj.paginator.page_range %}
-                    
-                    {% if num == page_obj.number %}
-                        <span class="page-item active">{{ num }}</span>
+            <div class="header-right">
+                <div class="dropdown">
+                    <button class="btn-filtrar dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Filtrar Por
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="?orden=reciente">Más recientes</a></li>
 
-                    {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-                        <a href="?page={{ num }}&orden={{ orden }}" class="page-item">{{ num }}</a>
-
-                    {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
-                        <span class="page-dots">...</span>
-                    {% endif %}
-
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&orden={{ orden }}" class="page-nav">
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </a>
-                {% else %}
-                    <span class="page-nav disabled-nav">
-                        <i class="fa-solid fa-chevron-right"></i>
-                    </span>
-                {% endif %}
+                        <li><a class="dropdown-item" href="?orden=antiguo">Más antiguos</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
+
+        <div class="table-wrapper">
+            <table class="design-table">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 5%;">#</th>
+                        <th style="width: 15%;">Total</th>
+                        <th style="width: 15%;">Fecha</th>
+                        <th style="width: 15%;">Estado</th>
+                        <th style="width: 35%;">Productos</th>
+                        <th class="text-center" style="width: 15%;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compra in page_obj %}
+                    <tr>
+                        <td class="text-center fw-bold">{{ compra.id }}</td>
+                        <td class="fw-bold">${{ compra.total|formato_chileno }}</td>
+                        <td>{{ compra.fecha|date:"d/m/Y" }}</td>
+                        <td class="fw-bold">
+                            <span class="
+                                {% if compra.datos_envio.estado == 'En Preparación' %}estado-preparacion
+                                {% elif compra.datos_envio.estado == 'Enviado' %}estado-enviado
+                                {% elif compra.datos_envio.estado == 'En Tránsito' %}estado-transito
+                                {% elif compra.datos_envio.estado == 'En Reparto' %}estado-reparto
+                                {% elif compra.datos_envio.estado == 'Entregado' %}estado-entregado
+                                {% elif compra.datos_envio.estado == 'Anulada' %}estado-anulada
+                                {% endif %}
+                            ">
+                                {{ compra.datos_envio.estado }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <ul class="product-list">
+                                {% for item in compra.producto_venta.all %}
+                                <li class="d-flex align-items-center">
+                                    <span class="history-item-title me-1" title="{{ item.producto.nombre }}">
+                                        {{ item.producto.nombre }}
+                                    </span>
+                                    <span class="text-nowrap">
+                                        - Sub: ${{ item.total_producto|formato_chileno }}
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="text-center action-cell">
+                            <a href="{% url 'ver_detalle' compra.id %}" class="btn-action">
+                                Ver Detalle
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center no-data" style="padding: 40px;">
+                            No hay compras registradas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Paginacion -->
+        <div class="pagination-wrapper">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&orden={{ orden }}" class="page-nav">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            {% else %}
+                <span class="page-nav disabled-nav">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+
+                {% if num == page_obj.number %}
+                    <span class="page-item active">{{ num }}</span>
+
+                {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                    <a href="?page={{ num }}&orden={{ orden }}" class="page-item">{{ num }}</a>
+
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <span class="page-dots">...</span>
+                {% endif %}
+
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&orden={{ orden }}" class="page-nav">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            {% else %}
+                <span class="page-nav disabled-nav">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </span>
+            {% endif %}
+        </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

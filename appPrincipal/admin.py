@@ -4,7 +4,8 @@ from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.html import format_html
 from .models import Usuario, Producto, Venta, Reclamo, Opinion
 
-# Edite admin.py para que se reflejen los datos de las tablas en el panel de administracion que ofrece django
+# Configuración del admin de Django (/admin/), disponible solo con DEBUG=True (ver Akaispace/urls.py).
+# No es el panel de la tienda: ese es /admin-panel/ (appPrincipal/views/panel/).
 # Las tablas "ItemCarritoProducto" y "Carrito" no aparecen en el panel de admin ya que no tiene mucho sentido que las pueda ver
 
 class ProductoAdmin(admin.ModelAdmin):

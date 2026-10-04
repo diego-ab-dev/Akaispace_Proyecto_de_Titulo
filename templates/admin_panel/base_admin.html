@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+Páginas del panel de administración con navbar lateral.
+El bloque `encabezado` va antes del header (por ejemplo el <h1> de la sección).
+{% endcomment %}
+
+{% block body_attrs %} id="body-pd" style="background-color:#EEF1F4;"{% endblock %}
+
+{% block navbar %}
+{% block encabezado %}{% endblock %}
+{% include "admin_panel/partials/sidebar.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/panel_admin.js' %}"></script>
+{% endblock %}

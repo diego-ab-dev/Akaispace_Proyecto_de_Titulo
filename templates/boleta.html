@@ -1,68 +1,64 @@
-<!DOCTYPE html>
-{% load static %}
-{% load custom_filters %} 
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <!--CSS-->
-    <link rel="stylesheet" href="{% static 'styles/styles_boleta.css' %}">
-    <!--Logo de Akaispace-->
-    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
-    <title>Boleta Nº {{ venta.id }} - Akaispace</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% load static custom_filters %}
 
-    <div class="boleta-container">
-        <div class="header">
-            <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" style="width: 90px; display: block; margin: 0 auto 0.5rem;">
-            <h2>AKAISPACE</h2>
-            <div class="info-empresa">
-                <p>R.U.T.: 76.999.888-K</p>
-                <p>Boleta Electrónica Nº {{ venta.id }}</p>
-                <p>Galería Caupolicán 544, Local 26, Valdivia</p>
-                <p>Fecha Emisión: {{ venta.fecha|date:"d/m/Y H:i" }}</p> </div>
-        </div>
+{% block title %}Boleta Nº {{ venta.id }} - Akaispace{% endblock %}
 
-        <div class="info-cliente">
-            <strong>Cliente:</strong> {{ venta.usuario.nombre }}<br>
-            <strong>RUT:</strong> {{ venta.usuario.rut|default:"No especificado" }}<br>
-            <strong>Dirección:</strong> {{ venta.usuario.direccion }}<br>
-            <strong>Ciudad:</strong> {{ venta.usuario.ciudad }}
-        </div>
+{% block librerias %}{% endblock %}
 
-        <table class="tabla-productos">
-            {% for item in venta.producto_venta.all %}
-            <tr>
-                <td>{{ item.cantidad }} x {{ item.producto.nombre|truncatechars:20 }}</td>
-                <td class="precio">${{ item.total_producto|formato_chileno }}</td>
-            </tr>
-            {% endfor %}
-        </table>
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_boleta.css' %}">
+{% endblock %}
 
-        <div class="totales">
-            <div style="display:flex; justify-content:space-between;">
-                <span>Subtotal:</span>
-                <span>${{ venta.subtotal|formato_chileno }}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-                <span>Envío:</span>
-                <span>${{ venta.envio|formato_chileno }}</span>
-            </div>
-            <br>
-            <div class="row-total">
-                <span>TOTAL:</span>
-                <span>${{ venta.total|formato_chileno }}</span>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p style="font-size: 10px; margin-top: 20px;">Timbre Electrónico SII<br>Res. 80 de 2025</p>
-            <div class="barcode">||| |||| || | |||| ||</div>
-            <p style="font-size: 12px;">¡Gracias por preferirnos!</p>
-        </div>
-
-        <button onclick="window.print()" class="btn-print">Imprimir Boleta</button>
+{% block content %}
+<div class="boleta-container">
+    <div class="header">
+        <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" style="width: 90px; display: block; margin: 0 auto 0.5rem;">
+        <h2>AKAISPACE</h2>
+        <div class="info-empresa">
+            <p>R.U.T.: 76.999.888-K</p>
+            <p>Boleta Electrónica Nº {{ venta.id }}</p>
+            <p>Galería Caupolicán 544, Local 26, Valdivia</p>
+            <p>Fecha Emisión: {{ venta.fecha|date:"d/m/Y H:i" }}</p> </div>
     </div>
 
-</body>
-</html>
+    <div class="info-cliente">
+        <strong>Cliente:</strong> {{ venta.usuario.nombre }}<br>
+        <strong>RUT:</strong> {{ venta.usuario.rut|default:"No especificado" }}<br>
+        <strong>Dirección:</strong> {{ venta.usuario.direccion }}<br>
+        <strong>Ciudad:</strong> {{ venta.usuario.ciudad }}
+    </div>
+
+    <table class="tabla-productos">
+        {% for item in venta.producto_venta.all %}
+        <tr>
+            <td>{{ item.cantidad }} x {{ item.producto.nombre|truncatechars:20 }}</td>
+            <td class="precio">${{ item.total_producto|formato_chileno }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="totales">
+        <div style="display:flex; justify-content:space-between;">
+            <span>Subtotal:</span>
+            <span>${{ venta.subtotal|formato_chileno }}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+            <span>Envío:</span>
+            <span>${{ venta.envio|formato_chileno }}</span>
+        </div>
+        <br>
+        <div class="row-total">
+            <span>TOTAL:</span>
+            <span>${{ venta.total|formato_chileno }}</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p style="font-size: 10px; margin-top: 20px;">Timbre Electrónico SII<br>Res. 80 de 2025</p>
+        <div class="barcode">||| |||| || | |||| ||</div>
+        <p style="font-size: 12px;">¡Gracias por preferirnos!</p>
+    </div>
+
+    <button onclick="window.print()" class="btn-print">Imprimir Boleta</button>
+</div>
+{% endblock %}

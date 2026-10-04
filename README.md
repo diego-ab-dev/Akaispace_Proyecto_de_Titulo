@@ -220,6 +220,39 @@ python manage.py runserver
 
 ---
 
+## Dónde va cada cosa (para agregar funcionalidades)
+
+**Vistas** (`appPrincipal/views/`): un archivo por funcionalidad. Las del cliente están en la carpeta (`catalogo.py`, `cuentas.py`, `carrito.py`, `pago.py`, `compras.py`, `opiniones.py`...) y las del panel de administración en `views/panel/`. Cada vista nueva se agrega también en el `__init__.py` de su carpeta, y en `Akaispace/urls.py` se usa como `views.nombre_de_la_vista`.
+
+**Plantillas** (`templates/`): ninguna página se escribe desde cero; todas heredan de una base:
+
+| La página es... | Hereda de | Trae incluido |
+|---|---|---|
+| De la tienda, con navbar y footer | `base_tienda.html` | Navbar, footer y su JavaScript |
+| Del panel, con menú lateral | `admin_panel/base_admin.html` | Header, menú lateral y su JavaScript |
+| Cualquier otra (perfil, formularios, detalles) | `base.html` | Bootstrap, Font Awesome, Boxicons y el favicon |
+
+Una página nueva solo define sus bloques:
+
+```django
+{% extends "base_tienda.html" %}
+{% load static %}
+
+{% block title %}Mi página - Akaispace{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_mi_pagina.css' %}">
+{% endblock %}
+
+{% block content %}
+...
+{% endblock %}
+```
+
+El navbar está en `templates/partials/navbar.html`, el footer en `templates/partials/footer.html` y el menú lateral del panel en `templates/admin_panel/partials/sidebar.html`. Para cambiarlos se edita solo ese archivo. Los productos promocionados del navbar (`destacados`) se cargan en `appPrincipal/context_processors.py`, así que las vistas no tienen que enviarlos.
+
+---
+
 ## Solución de problemas
 
 | Mensaje de error | Causa | Solución |

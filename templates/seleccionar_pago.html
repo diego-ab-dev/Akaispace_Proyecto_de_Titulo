@@ -1,21 +1,14 @@
-<!DOCTYPE html>
-{% load static %}
-{% load custom_filters %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <!--LOGO-->
-    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
-    <!--CSS-->
-    <link rel="stylesheet" href="{% static 'styles/styles_metodo.css' %}">
-    <title>Selecciona el Método de Pago</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% load static custom_filters %}
+
+{% block title %}Selecciona el Método de Pago{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'styles/styles_metodo.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="main-container">
         <div class="left-panel">
             <a href="{% url 'ver_carrito' %}" class="back-link">
@@ -26,7 +19,7 @@
 
             <form method="post" action="{% url 'seleccionar_pago' %}">
                 {% csrf_token %}
-                
+
                 <div class="mb-4">
                     <select class="form-select py-3" name="metodo_pago" id="metodo_pago" onchange="mostrarFormulario()" style="border:none; box-shadow:none;">
                         <option value="" selected disabled>Selecciona una opción</option>
@@ -36,7 +29,7 @@
 
                 <div id="form-tarjeta" class="form-container bg-white p-4 rounded shadow-sm border-0">
                     <h5 class="mb-3 fw-bold">Detalles de la Tarjeta</h5>
-                    
+
                     <div class="mb-3">
                         <label class="form-label text-muted small">Número de Tarjeta</label>
                         <input type="text" class="form-control bg-light border-0" id="numero_tarjeta" maxlength="19" 
@@ -64,7 +57,7 @@
                     <p class="mb-1"><strong>Rut:</strong> 76.999.888-K</p>
                     <p class="mb-1"><strong>Email:</strong> akaispacevaldivia@gmail.com</p>
                 </div>
-                
+
                 <button type="submit" class="Btn">
                     Pagar
                     <svg viewBox="0 0 576 512" class="svgIcon">
@@ -158,5 +151,4 @@
         }
     }
 </script>
-</body>
-</html>
+{% endblock %}

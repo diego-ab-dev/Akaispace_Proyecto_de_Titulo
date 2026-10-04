@@ -1,44 +1,38 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 {% load static %}
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ingreso de Reclamo</title>
-    <!--Boostrap-->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!--CSS-->
-    <link rel="stylesheet" href="{% static 'styles/styles_reclamo.css' %}">
-    <!--LOGO-->
-    <link rel="icon" type="image/png" href="{% static 'images/akaispace_favicon.png' %}">
-</head>
-<body>
-    <div class="reclamo-card">
-        <h1>Ingreso de Reclamo</h1>
 
-        <form method="post">
-            {% csrf_token %}
-            
-            <div class="mb-4">
-                <label for="asunto" class="form-label">Asunto del Reclamo</label>
-                <input type="text" class="form-control" id="asunto" name="asunto" required maxlength="50">
-            </div>
+{% block title %}Ingreso de Reclamo{% endblock %}
 
-            <div class="mb-4">
-                <label for="descripcion" class="form-label">Descripción</label>
-                <textarea class="form-control" id="descripcion" name="descripcion" rows="6" placeholder="Escribe aquí tu descripción" required></textarea>
-            </div>
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_reclamo.css' %}">
+{% endblock %}
 
-            <div class="buttons-row">
-                <button type="submit" class="btn-custom btn-enviar">
-                    Enviar
-                </button>
-                
-                <a href="javascript:history.back()" class="btn-custom btn-cancelar">
-                    Cancelar
-                </a>
-            </div>
-        </form>
-    </div>
-</body>
-</html>
+{% block content %}
+<div class="reclamo-card">
+    <h1>Ingreso de Reclamo</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-4">
+            <label for="asunto" class="form-label">Asunto del Reclamo</label>
+            <input type="text" class="form-control" id="asunto" name="asunto" required maxlength="50">
+        </div>
+
+        <div class="mb-4">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcion" name="descripcion" rows="6" placeholder="Escribe aquí tu descripción" required></textarea>
+        </div>
+
+        <div class="buttons-row">
+            <button type="submit" class="btn-custom btn-enviar">
+                Enviar
+            </button>
+
+            <a href="javascript:history.back()" class="btn-custom btn-cancelar">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
