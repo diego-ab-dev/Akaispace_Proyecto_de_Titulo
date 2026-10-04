@@ -1,47 +1,31 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Producto ,ItemCarritoProducto, Usuario, Carrito, Venta, ProductoVenta ,Opinion, Favorito, Reclamo, Devolucion, Boleta, Envio
-from appPrincipal import forms
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
-from django.db.models import Avg, Count, Q, Sum, Exists, OuterRef
-from django.db import IntegrityError
-from django.contrib.auth.hashers import make_password, check_password
-from django.conf import settings
-import json
-from django.contrib.messages import get_messages
-from .forms import UsuarioForm, ProductoForm, SolicitudDevolucionForm
-from appPrincipal.decorators import admin_required
-from django.utils.dateparse import parse_date
-from django.contrib import messages
-from .forms import OpinionForm
-from django.core.paginator import Paginator
-from django.utils.timezone import now
-from django.utils import timezone
-from datetime import datetime, date
 import calendar
-from django.urls import reverse
+import json
+import logging
+import re
+from datetime import datetime, date
 from urllib.parse import urlencode
 
+from django.contrib.auth.hashers import make_password, check_password
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.db import IntegrityError
+from django.db.models import Avg, Q, Sum
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.utils.timezone import now
+from django.views.decorators.http import require_http_methods
+
+from appPrincipal import forms
+from appPrincipal.decorators import admin_required
+from .forms import ProductoForm, SolicitudDevolucionForm, OpinionForm, normalizar_rut, regiones_ciudades
+from .models import Producto, ItemCarritoProducto, Usuario, Carrito, Venta, ProductoVenta, Opinion, Favorito, Reclamo, Devolucion, Boleta, Envio
+
+logger = logging.getLogger(__name__)
+
 # Vistas para administracion
-regiones_ciudades = {
-    'ARICA Y PARINACOTA': ['Arica', 'Putre'],
-    'TARAPACA': ['Iquique', 'Alto Hospicio'],
-    'ANTOFAGASTA': ['Antofagasta', 'Calama', 'Tocopilla'],
-    'ATACAMA': ['Copiapó', 'Vallenar', 'Chañaral'],
-    'COQUIMBO': ['La Serena', 'Coquimbo', 'Ovalle'],
-    'VALPARAISO': ['Valparaíso', 'Viña del Mar', 'Quillota', 'San Antonio'],
-    'METROPOLITANA': ['Santiago', 'Puente Alto', 'Maipú', 'La Florida'],
-    'OHIGGINS': ['Rancagua', 'San Fernando', 'Pichilemu'],
-    'MAULE': ['Talca', 'Curicó', 'Linares'],
-    'ÑUBLE': ['Chillán', 'San Carlos'],
-    'BIOBIO': ['Concepción', 'Los Ángeles', 'Coronel'],
-    'ARAUCANIA': ['Temuco', 'Villarrica', 'Angol'],
-    'LOS RIOS': ['Valdivia', 'La Unión'],
-    'LOS LAGOS': ['Puerto Montt', 'Osorno', 'Castro'],
-    'AYSEN': ['Coyhaique', 'Puerto Aysén'],
-    'MAGALLANES': ['Punta Arenas', 'Puerto Natales'],
-}
 
 # dashboard principal administracion
 @admin_required
@@ -192,6 +176,11 @@ def crear_usuario(request):
 
             if contraseña != confirmar_contraseña:
                 return JsonResponse({'success': False, 'message': 'Las contraseñas no coinciden.'})
+
+            try:
+                rut = normalizar_rut(rut)
+            except ValidationError as e:
+                return JsonResponse({'success': False, 'message': e.messages[0]})
 
             ciudades_validas = regiones_ciudades.get(region, [])
             if ciudad not in ciudades_validas:
@@ -645,7 +634,6 @@ def modificar_venta(request, venta_id):
         if estado_post in estados_con_tracking and not tracking_post:
             error = "Debe ingresar un número de seguimiento para este estado."
 
-        import re
         if not error and tracking_post:
             if not re.match(r'^[A-Za-z0-9]{5,20}$', tracking_post):
                 error = "Número de seguimiento inválido. Solo letras y números (5–20 caracteres)."
@@ -835,14 +823,6 @@ def producto_detalle(request, producto_id):
     })
 
     
-def vista_carrusel(request):
-    productos = Producto.objects.all()
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first() 
-    fc25 = Producto.objects.filter(nombre="Fc 25").first()
-    silent = Producto.objects.filter(nombre="Silent Hill 2").first()    
-    return render(request, 'productosmenu.html', {'productos': productos, 'cod6': cod6, 'fc25': fc25, 'silent':silent})
-
-
 def productos_por_categoria(request, categoria):
     productos = Producto.objects.filter(
         categoria=categoria,
@@ -914,7 +894,7 @@ def login(request):
                         errors['email'] = "Esta cuenta ha sido eliminada. Contacta al administrador."
                     else:
                         request.session['usuario_id'] = usuario.id
-                        print(f"Usuario {usuario.id} - Admin: {usuario.es_administrador}")  
+                        logger.info("Inicio de sesión: usuario %s (admin=%s)", usuario.id, usuario.es_administrador)
                         if usuario.es_administrador:
                             return redirect('admin_dashboard') 
                         else:
@@ -977,15 +957,15 @@ def register(request):
                 return JsonResponse({'success': True, 'message': 'Usuario registrado exitosamente.'})
 
             except IntegrityError as e:
-                return JsonResponse({'success': False, 'message': 'Error inesperado.'})
-
-            except IntegrityError as e:
                 if 'email' in str(e):
                     return JsonResponse({'success': False, 'message': 'El correo ya está registrado.'})
                 elif 'rut' in str(e):
                     return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
+                return JsonResponse({'success': False, 'message': 'Error inesperado.'})
         else:
-            print(form.errors)
+            logger.debug("Registro inválido: %s", form.errors.as_json())
+            primer_error = next(iter(form.errors.values()))[0]
+            return JsonResponse({'success': False, 'message': primer_error})
     data = {'form': form, 'regiones_ciudades': regiones_ciudades}
     return render(request, 'register.html', data)
 
@@ -1119,8 +1099,8 @@ def enviar_opinion(request, producto_id):
                 nueva_opinion.producto = producto
                 nueva_opinion.save()
                 return redirect('/perfil?notif=Opinión+ingresada+con+éxito&type=success')
-            except Exception as e:
-                print(e)
+            except Exception:
+                logger.exception("Error al guardar la opinión del usuario %s", usuario_actual.id)
     else:
         form = OpinionForm()
 
@@ -1242,7 +1222,7 @@ def crear_devolucion(request, compra_id, producto_id):
             img2 = form.cleaned_data['imagen2']
             img3 = form.cleaned_data['imagen3']
 
-            devolucion = Devolucion.objects.create(
+            Devolucion.objects.create(
                 usuario=usuario,
                 venta=compra,
                 producto=producto,
@@ -1337,7 +1317,6 @@ def cambiar_contraseña(request):
     return render(request, 'cambiar_contrausu.html')
 
 
-@csrf_exempt
 def editar_perfil(request):
     usuario_id = request.session.get('usuario_id')
     if not usuario_id:
@@ -1370,35 +1349,10 @@ def editar_perfil(request):
     }
     return render(request, 'editar_datos.html', context)
 
-regiones_ciudades = {
-    'ARICA Y PARINACOTA': ['Arica', 'Putre'],
-    'TARAPACA': ['Iquique', 'Alto Hospicio'],
-    'ANTOFAGASTA': ['Antofagasta', 'Calama', 'Tocopilla'],
-    'ATACAMA': ['Copiapó', 'Vallenar', 'Chañaral'],
-    'COQUIMBO': ['La Serena', 'Coquimbo', 'Ovalle'],
-    'VALPARAISO': ['Valparaíso', 'Viña del Mar', 'Quillota', 'San Antonio'],
-    'METROPOLITANA': ['Santiago', 'Puente Alto', 'Maipú', 'La Florida'],
-    'OHIGGINS': ['Rancagua', 'San Fernando', 'Pichilemu'],
-    'MAULE': ['Talca', 'Curicó', 'Linares'],
-    'ÑUBLE': ['Chillán', 'San Carlos'],
-    'BIOBIO': ['Concepción', 'Los Ángeles', 'Coronel'],
-    'ARAUCANIA': ['Temuco', 'Villarrica', 'Angol'],
-    'LOS RIOS': ['Valdivia', 'La Unión'],
-    'LOS LAGOS': ['Puerto Montt', 'Osorno', 'Castro'],
-    'AYSEN': ['Coyhaique', 'Puerto Aysén'],
-    'MAGALLANES': ['Punta Arenas', 'Puerto Natales'],
-}
 # fin de vistas sobre el perfil del usuario
 
 
 # vistas relacionadas con carrito
-def usuario_compro_producto(usuario, producto):
-    return ItemCarritoProducto.objects.filter(
-        carrito__venta__isnull=False,  
-        carrito__usuario=usuario,
-        producto=producto
-    ).exists()
-
 def agregar_al_carrito(request, producto_id):
     usuario_id = request.session.get('usuario_id')
     
@@ -1534,9 +1488,6 @@ def ver_carrito(request):
         'funko': funko,
     })
 
-
-def carrito(request):
-    return render(request, 'carrito.html')
 
 def guardar_datos_envio(request):
     if request.method == "POST":

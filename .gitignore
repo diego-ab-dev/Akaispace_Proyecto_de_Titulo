@@ -5,12 +5,13 @@ venv/
 __pycache__/
 *.pyc
 
-# Archivos de entorno
+# Archivos de entorno (configuración personal de cada computador)
 .env
+
+# Archivos subidos por los usuarios y estáticos generados por collectstatic
+media/
+staticfiles/
 
 # Archivos del sistema
 .DS_Store
 Thumbs.db
-
-# personal settings
-.env

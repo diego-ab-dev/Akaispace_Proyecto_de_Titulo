@@ -31,7 +31,7 @@ def range_filter(value):
 def get_item(dictionary, key):
     try:
         return dictionary.get(key)
-    except:
+    except AttributeError:
         return None
 
 @register.simple_tag(takes_context=True)

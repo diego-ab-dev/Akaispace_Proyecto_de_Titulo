@@ -25,31 +25,42 @@ regiones_ciudades = {
 }
 
 
+# validacion de rut chileno (modulo 11)
+def calcular_dv(cuerpo):
+    suma = 0
+    multiplicador = 2
+    for digito in reversed(cuerpo):
+        suma += int(digito) * multiplicador
+        multiplicador = 2 if multiplicador == 7 else multiplicador + 1
+
+    dv = 11 - (suma % 11)
+    if dv == 11:
+        return '0'
+    if dv == 10:
+        return 'K'
+    return str(dv)
+
+
+def normalizar_rut(rut):
+    """Devuelve el rut con formato 12.345.678-9, o lanza ValidationError si no es válido."""
+    limpio = (rut or '').strip().upper().replace('.', '').replace('-', '')
+    cuerpo, dv = limpio[:-1], limpio[-1:]
+
+    if not cuerpo.isdigit() or len(cuerpo) < 7 or len(cuerpo) > 8 or dv not in '0123456789K':
+        raise ValidationError('El RUT no tiene un formato válido.')
+    if calcular_dv(cuerpo) != dv:
+        raise ValidationError('El RUT no es válido (dígito verificador incorrecto).')
+
+    return f"{int(cuerpo):,}".replace(',', '.') + '-' + dv
+
+
 # formulario usuario
 class UsuarioCustomForm(forms.Form):
 
-    # validacion de rut de usuario
-    def validar_rut(rut):
-        rut = rut.upper().replace(".", "").replace("-", "")
-        cuerpo = rut[:-1]
-        verificador = rut[-1]
+    rut = forms.CharField()
 
-        suma = 0
-        multiplicador = 2
-        for caracter in reversed(cuerpo):
-            suma += int(caracter) * multiplicador
-            multiplicador = 9 if multiplicador == 7 else multiplicador + 1
-
-        resto = suma % 11
-        dv = 11 - resto
-        if dv == 10:
-            dv = 'K'
-        elif dv == 11:
-            dv = '0'
-
-        return str(dv) == verificador
-
-    rut = forms.CharField(validators=[validar_rut]) 
+    def clean_rut(self):
+        return normalizar_rut(self.cleaned_data['rut'])
         
     nombre = forms.CharField(
         max_length=50, 
@@ -143,7 +154,6 @@ class SolicitudDevolucionForm(forms.Form):
             imagen = cleaned_data.get(campo)
             
             if imagen:
-                import os
                 ext = os.path.splitext(imagen.name)[1].lower()
                 if ext not in extensiones_validas:
                     self.add_error(campo, "Formato no permitido.")

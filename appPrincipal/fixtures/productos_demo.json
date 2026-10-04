@@ -1,0 +1,128 @@
+[
+  {
+    "model": "appPrincipal.producto",
+    "pk": 1,
+    "fields": {
+      "codigo_de_barra": "23423423",
+      "nombre": "Silent Hill 2",
+      "precio": 33990,
+      "stock": 20,
+      "descripcion": "Silent Hill 2 es un videojuego de terror psicológico y supervivencia desarrollado por Team Silent, un grupo de Konami Computer Entertainment Tokyo, y publicado por Konami para PlayStation 2.",
+      "imagen_principal": "productos/silent.png",
+      "imagen_2": "",
+      "imagen_3": "",
+      "imagen_4": "",
+      "imagen_5": "",
+      "imagen_6": "",
+      "categoria": "Videojuegos PS5",
+      "genero": "TERROR",
+      "deleted_at": null,
+      "is_deleted": false
+    }
+  },
+  {
+    "model": "appPrincipal.producto",
+    "pk": 2,
+    "fields": {
+      "codigo_de_barra": "432423423",
+      "nombre": "Fc 25",
+      "precio": 27990,
+      "stock": 10,
+      "descripcion": "EA Sports FC 25 es un videojuego de fútbol, desarrollado por EA, y publicado por EA Sports. Es la segunda entrega de la serie EA Sports FC y la trigésimo segunda si se incluyen las entregas bajo el nombre de EA Sports FIFA, conocido popularmente como FIFA.",
+      "imagen_principal": "productos/fc25.png",
+      "imagen_2": "",
+      "imagen_3": "",
+      "imagen_4": "",
+      "imagen_5": "",
+      "imagen_6": "",
+      "categoria": "Videojuegos XBOX SERIES",
+      "genero": "DEPORTES",
+      "deleted_at": null,
+      "is_deleted": false
+    }
+  },
+  {
+    "model": "appPrincipal.producto",
+    "pk": 3,
+    "fields": {
+      "codigo_de_barra": "3242432342",
+      "nombre": "Call of Duty: Black Ops 6",
+      "precio": 40990,
+      "stock": 13,
+      "descripcion": "Call of Duty: Black Ops 6 es un videojuego de acción de disparos en primera persona desarrollado por Treyarch y Raven Software y publicado por Activision. Es la vigésima primera entrega de la serie Call of Duty y es la sexta entrada principal de la subserie Black Ops, después de Call of Duty: Black Ops Cold War.",
+      "imagen_principal": "productos/cod6.png",
+      "imagen_2": "",
+      "imagen_3": "",
+      "imagen_4": "",
+      "imagen_5": "",
+      "imagen_6": "",
+      "categoria": "Videojuegos PS5",
+      "genero": "ACCION",
+      "deleted_at": null,
+      "is_deleted": false
+    }
+  },
+  {
+    "model": "appPrincipal.producto",
+    "pk": 4,
+    "fields": {
+      "codigo_de_barra": "3242334243",
+      "nombre": "Control Sony Dualsense Chroma Pearl Ps5",
+      "precio": 50990,
+      "stock": 20,
+      "descripcion": "Con Sony no solo podrás ver y escuchar todo con más detalle, sino que también sentirás vibraciones mucho más intensas.\r\nToma el control con mayor comodidad, disfruta de un sonido de alta fidelidad y gana precisión en el juego gracias a las mejoras en su diseño y botones.\r\n\r\nMayor comodidad y realismo\r\nPermite jugar sin necesidad de cables en el medio. Está diseñado no solo para controlar mejor tus videojuegos, sino también para aumentar tu realismo y experiencia.\r\n\r\nActiva el Bluetooth\r\nCuenta con una conexión Bluetooth de alta tecnología para usarla en cualquier ordenador o dispositivo; ya no necesitarás aplicaciones de terceros ni un cable USB. Además, tiene una gran capacidad antiinterferente, un fácil manejo y una señal de conexión estable.",
+      "imagen_principal": "productos/chroma.png",
+      "imagen_2": "",
+      "imagen_3": "",
+      "imagen_4": "",
+      "imagen_5": "",
+      "imagen_6": "",
+      "categoria": "Accesorios PS5",
+      "genero": "ACCESORIOS",
+      "deleted_at": null,
+      "is_deleted": false
+    }
+  },
+  {
+    "model": "appPrincipal.producto",
+    "pk": 5,
+    "fields": {
+      "codigo_de_barra": "35532452335",
+      "nombre": "Play Station 5",
+      "precio": 520990,
+      "stock": 20,
+      "descripcion": "Disfruta de tiempos de carga superveloces con un SSD de velocidad ultrarrápida, una experiencia más inmersiva gracias a la compatibilidad con respuesta háptica1, gatillos adaptativos1 y audio 3D1, además de una increíble colección de juegos de PlayStation.",
+      "imagen_principal": "productos/ps5_consola_fisico_021-52fb99d678ac79046b16484924210844-1024-1024.jpg",
+      "imagen_2": "productos/sony-consolas-playstation-5-ps5.jpg",
+      "imagen_3": "productos/50564842523_8146f80c8d_k_FjLJpnd.jpg",
+      "imagen_4": "productos/50544735806_dd39e95f06_h.jpg",
+      "imagen_5": "productos/50544012768_bdcd8add7c_h.jpg",
+      "imagen_6": "",
+      "categoria": "Ps5 Consolas",
+      "genero": "CONSOLAS",
+      "deleted_at": null,
+      "is_deleted": false
+    }
+  },
+  {
+    "model": "appPrincipal.producto",
+    "pk": 6,
+    "fields": {
+      "codigo_de_barra": "32523525235",
+      "nombre": "Funko Pop John Wick",
+      "precio": 10990,
+      "stock": 4,
+      "descripcion": "DESCRIPCIÓN\r\n\r\nAviso legal\r\n• La edad mínima recomendada para utilizarla es 3 años.",
+      "imagen_principal": "productos/jon1.png",
+      "imagen_2": "productos/jon2.png",
+      "imagen_3": "",
+      "imagen_4": "",
+      "imagen_5": "",
+      "imagen_6": "",
+      "categoria": "Figuras Funko",
+      "genero": "FIGURAS",
+      "deleted_at": null,
+      "is_deleted": false
+    }
+  }
+]

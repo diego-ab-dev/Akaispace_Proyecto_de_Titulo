@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Usuario, Producto, Venta, Reclamo, Opinion, Boleta
+from django.utils.html import format_html
+from .models import Usuario, Producto, Venta, Reclamo, Opinion
 
 # Edite admin.py para que se reflejen los datos de las tablas en el panel de administracion que ofrece django
 # Las tablas "ItemCarritoProducto" y "Carrito" no aparecen en el panel de admin ya que no tiene mucho sentido que las pueda ver
@@ -11,12 +12,11 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter=("categoria", "genero")
     list_per_page = 20
 
+    @admin.display(description='Imagen Principal')
     def imagen_display(self, obj):
         if obj.imagen_principal:
-            return obj.imagen_principal.url
+            return format_html('<img src="{}" style="height: 50px;">', obj.imagen_principal.url)
         return 'Sin imagen'
-    imagen_display.allow_tags = True
-    imagen_display.short_description = 'Imagen Principal'
 
 class UsuarioAdmin(admin.ModelAdmin):
     list_display = ("nombre", "email", "rut", "telefono", "direccion", "ciudad", "region")

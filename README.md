@@ -95,17 +95,15 @@ Con el entorno virtual activo o sin él (da lo mismo), entra a MySQL:
 Ingresa la contraseña de root. Cuando aparezca `mysql>`, ejecuta:
 
 ```sql
-CREATE DATABASE db_sdgames CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-USE db_sdgames;
-SOURCE C:/Proyectos/Akaispace_Proyecto_de_Titulo/db_sdgames.sql;
+CREATE DATABASE db_akaispace CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 exit
 ```
 
-En `SOURCE` se usan barras normales (`/`). Si clonaste el proyecto en otra carpeta, ajusta la ruta.
+La base de datos queda vacía. Las tablas y los datos de prueba se crean en el Paso 7.
 
 ## Paso 6: Configurar la conexión (archivo .env)
 
-La contraseña de la base de datos no se escribe en `settings.py`, sino en un archivo `.env` propio de cada computador. Este archivo **no se sube a GitHub**.
+La contraseña de la base de datos y la clave secreta de Django no se escriben en `settings.py`, sino en un archivo `.env` propio de cada computador. Este archivo **no se sube a GitHub**.
 
 Crea tu `.env` copiando la plantilla:
 
@@ -114,15 +112,27 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-En el Bloc de notas, completa la línea `DB_PASSWORD=` con tu contraseña de MySQL (sin comillas ni espacios) y guarda:
+Primero genera una clave secreta (con el entorno virtual activo):
+
+```powershell
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+En el Bloc de notas, pega esa clave en `SECRET_KEY=`, completa `DB_PASSWORD=` con tu contraseña de MySQL (sin comillas ni espacios) y guarda:
 
 ```
-DB_NAME=db_sdgames
+SECRET_KEY=la_clave_que_generaste
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+DB_NAME=db_akaispace
 DB_USER=root
 DB_PASSWORD=tu_contraseña
 DB_HOST=localhost
 DB_PORT=3306
 ```
+
+`DEBUG=True` es solo para desarrollo. En un servidor real va `DEBUG=False`, con una `SECRET_KEY` distinta y el dominio en `ALLOWED_HOSTS`.
 
 ## Paso 7: Ejecutar el proyecto
 
@@ -130,8 +140,11 @@ Con el entorno virtual activo:
 
 ```powershell
 python manage.py migrate
+python manage.py seed_demo
 python manage.py runserver
 ```
+
+`migrate` crea las tablas y `seed_demo` carga los productos de ejemplo (con sus imágenes) y los usuarios de prueba. `seed_demo` se puede ejecutar más de una vez sin duplicar datos.
 
 Abre el navegador en: http://127.0.0.1:8000/
 
@@ -141,7 +154,7 @@ Para detener el servidor, presiona `Ctrl + C`.
 
 ## Credenciales de acceso (usuarios de prueba)
 
-Estas cuentas existen solo en la base de datos de prueba incluida en `db_sdgames.sql`.
+Estas cuentas las crea `python manage.py seed_demo` y existen solo en tu base de datos local.
 
 **Rol administrador** (acceso total al panel y gestión):
 - Correo: admin@gmail.com
@@ -150,6 +163,22 @@ Estas cuentas existen solo en la base de datos de prueba incluida en `db_sdgames
 **Rol cliente** (usuario normal para comprar):
 - Correo: user@gmail.com
 - Contraseña: 12345
+
+---
+
+## Si ya tenías el proyecto instalado (antes del cambio a `seed_demo`)
+
+Después de hacer `git pull`, agrega estas 3 líneas a tu `.env` (genera la clave como en el Paso 6):
+
+```
+SECRET_KEY=la_clave_que_generaste
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+Sin `SECRET_KEY` el proyecto no arranca y muestra `SECRET_KEY not found`. Sin `DEBUG=True` no se cargan los estilos ni las imágenes.
+
+Tu base de datos `db_sdgames` sigue funcionando: tu `.env` dice `DB_NAME=db_sdgames`, así que no necesitas cambiar nada más. Si prefieres empezar limpio con el nombre nuevo, crea `db_akaispace` (Paso 5), cambia `DB_NAME` en tu `.env` y ejecuta `migrate` y `seed_demo`.
 
 ---
 
@@ -178,7 +207,10 @@ python manage.py runserver
 | `py` no se reconoce como comando | Python no se instaló desde python.org | Reinstalar Python 3.12 desde python.org y reabrir PowerShell |
 | `MariaDB 10.5 or later is required` | El proyecto se está conectando al MySQL de XAMPP | Detener MySQL en XAMPP y verificar que el servicio MySQL 8.4 esté iniciado |
 | `Access denied for user 'root'@'localhost'` | Contraseña incorrecta en `.env` | Revisar `DB_PASSWORD` en el archivo `.env` |
-| `Unknown database 'db_sdgames'` | No se creó o no se importó la base de datos | Repetir el Paso 5 |
+| `Unknown database 'db_akaispace'` | No se creó la base de datos | Repetir el Paso 5 |
+| `SECRET_KEY not found` | Falta `SECRET_KEY` en el archivo `.env` | Agregarla como se indica en el Paso 6 |
+| La página carga sin estilos ni imágenes | `DEBUG` no está en `True` en el `.env` | Agregar `DEBUG=True` al `.env` |
+| `Table '...' doesn't exist` | Faltan las tablas | Ejecutar `python manage.py migrate` |
 | `Unknown command` al usar manage.py | Comando mal escrito | Los comandos van en minúscula y separados: `python manage.py runserver` |
 
 

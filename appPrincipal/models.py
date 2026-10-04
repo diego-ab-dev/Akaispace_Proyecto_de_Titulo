@@ -115,15 +115,6 @@ class Producto(models.Model):
             self.imagen_principal, self.imagen_2, self.imagen_3, 
             self.imagen_4, self.imagen_5, self.imagen_6] if img]
 
-    def agregar_producto(self):
-        pass 
-
-    def editar_producto(self):
-        pass
-
-    def eliminar_producto(self):
-        pass
-
     def promedio_puntuacion(self):
         opiniones = self.opiniones.all()
         if not opiniones:
@@ -133,9 +124,6 @@ class Producto(models.Model):
 # clase Carrito
 class Carrito(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='carritos')
-
-    def genera_venta(self):
-        pass
 
     def total_carrito(self):
         return sum(
@@ -237,15 +225,6 @@ class Reclamo(models.Model):
     def __str__(self):
         return f"Reclamo {self.id} - {self.asunto}"
 
-    def visualizar_reclamo(self):
-        pass
-
-    def responder_reclamo(self):
-        pass
-
-    def editar_reclamo(self):
-        pass
-
 # clase Devolucion
 class Devolucion(models.Model):
     ESTADO_CHOICES = [
@@ -271,9 +250,6 @@ class Devolucion(models.Model):
     def __str__(self):
         return f"Devolución {self.id} - {self.usuario.nombre}"
 
-    def solicitar(self):
-        pass
-    
     def aprobar(self):
         self.estado = 'Aprobada'
         self.fecha_resolucion = now()
@@ -309,8 +285,6 @@ class Envio(models.Model):
         return f"Envío #{self.id} para Venta {self.venta.id}"
     
     def guardar_estado(self, nuevo_estado):
-        from django.utils.timezone import now
-        
         self.estado = nuevo_estado
         
         if nuevo_estado == "En Preparación":
@@ -345,16 +319,10 @@ class Boleta(models.Model):
     def __str__(self):
         return f"Boleta #{self.id} - Venta {self.venta.id}"
 
-    def generar_pdf(self):
-        pass
-        
-    def enviar_correo(self):
-        pass
-
 # clase Favorito
 class Favorito(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
 
-    def str(self):
+    def __str__(self):
         return f"{self.usuario} - {self.producto}"
