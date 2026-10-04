@@ -76,6 +76,22 @@ class Usuario(AbstractUser):
     def __str__(self):
         return self.nombre
 
+# borrado lógico de productos
+class ProductoQuerySet(models.QuerySet):
+    def delete(self):
+        # Producto.objects.filter(...).delete() también es lógico (incluye la acción masiva de /admin/)
+        return self.update(is_deleted=True, deleted_at=now())
+
+    def hard_delete(self):
+        return super().delete()
+
+
+class ProductoManager(models.Manager.from_queryset(ProductoQuerySet)):
+    # Producto.objects solo devuelve productos no eliminados
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+
 # clase Producto
 class Producto(models.Model):
     CATEGORIAS = [
@@ -152,13 +168,19 @@ class Producto(models.Model):
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+    # objects: solo productos activos. todos: incluye los eliminados (historial, admin).
+    # Al acceder a un producto desde una relación (ej: producto_venta.producto) Django
+    # usa un manager sin filtro, así que el historial sigue mostrando productos eliminados.
+    objects = ProductoManager()
+    todos = ProductoQuerySet.as_manager()
+
     def delete(self, *args, **kwargs):
         self.is_deleted = True
         self.deleted_at = now()
         self.save()
 
     def hard_delete(self):
-        super(Producto, self).delete()
+        super().delete()
 
     def imagenes(self):
         return [img for img in [
@@ -173,7 +195,7 @@ class Producto(models.Model):
 
 # clase Carrito
 class Carrito(models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='carritos')
+    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='carrito')
 
     def total_carrito(self):
         return sum(
@@ -184,25 +206,26 @@ class Carrito(models.Model):
 class ItemCarritoProducto(models.Model):
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    cantidad = models.PositiveIntegerField(default=1) 
+    cantidad = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['carrito', 'producto'], name='item_carrito_unico'),
+        ]
 
 # clase Venta
+# El estado de la venta (preparación, enviado, entregado, anulada...) vive en Envio.estado.
 class Venta(models.Model):
-    ESTADO_CHOICES = [
-        ('Sin Enviar', 'Sin Enviar'),
-        ('Enviado', 'Enviado'),
-    ]
     ENVIO_CHOICES = [
         ('domicilio', 'Envío a domicilio'),
         ('tienda', 'Retiro en tienda'),
     ]
-    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, null=True)
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='ventas', default='')
+    # PROTECT: un usuario con compras no se puede borrar de verdad (solo borrado lógico)
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='ventas')
     envio = models.PositiveIntegerField(default=0)
     subtotal = models.PositiveIntegerField(default=0)
     total = models.PositiveIntegerField(default=0)
     metodo_pago = models.CharField(max_length=30, null=True, blank=True) 
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Sin Enviar')
     fecha = models.DateTimeField(auto_now_add=True)
     metodo_envio = models.CharField(max_length=10, choices=ENVIO_CHOICES, default='')
     direccion_envio = models.TextField(blank=True, null=True)
@@ -226,7 +249,8 @@ class Venta(models.Model):
 # clase ProductoVenta
 class ProductoVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='producto_venta')
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    # PROTECT: un producto vendido no se puede borrar de verdad (solo borrado lógico)
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.PositiveIntegerField(default=1)
     precio_unitario = models.PositiveIntegerField() 
 
@@ -263,8 +287,8 @@ class Reclamo(models.Model):
         ('Abierto', 'Abierto'),
         ('Respondido', 'Respondido'),
     ]
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='reclamos')
-    venta = models.ForeignKey(Venta, on_delete=models.SET_NULL, null=True, blank=True, related_name='reclamos')
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='reclamos')
+    venta = models.ForeignKey(Venta, on_delete=models.PROTECT, null=True, blank=True, related_name='reclamos')
     estado = models.CharField(max_length=20,choices=ESTADO_CHOICES, default='Abierto')
     asunto = models.CharField(max_length=255, default='No especificado')
     fecha = models.DateTimeField(default=now)
@@ -282,10 +306,10 @@ class Devolucion(models.Model):
         ('Aprobada', 'Aprobada'),
         ('Rechazada', 'Rechazada'),
     ]
-    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='devoluciones', null=True, blank=True)
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, null=True, blank=True)
+    venta = models.ForeignKey(Venta, on_delete=models.PROTECT, related_name='devoluciones', null=True, blank=True)
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, null=True, blank=True)
     cantidad = models.PositiveIntegerField(default=1)
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT)
     
     fecha_solicitud = models.DateTimeField(auto_now_add=True)
     motivo = models.TextField(verbose_name="Motivo de la devolución")
@@ -373,6 +397,11 @@ class Boleta(models.Model):
 class Favorito(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['usuario', 'producto'], name='favorito_unico'),
+        ]
 
     def __str__(self):
         return f"{self.usuario} - {self.producto}"

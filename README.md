@@ -158,13 +158,15 @@ Estas cuentas las crea `python manage.py seed_demo` y existen solo en tu base de
 
 **Rol administrador** (acceso total al panel y gestión):
 - Correo: admin@gmail.com
-- Contraseña: 12345
+- Contraseña: Akaispace-Admin-2026
 
 **Rol cliente** (usuario normal para comprar):
 - Correo: user@gmail.com
-- Contraseña: 12345
+- Contraseña: Akaispace-Cliente-2026
 
-Las cuentas nuevas que se registren desde el sitio deben cumplir las reglas de contraseña: al menos 8 caracteres, no ser solo números, no ser una contraseña común y no parecerse al nombre ni al correo. Las cuentas de prueba usan `12345` solo por comodidad.
+Las cuentas nuevas que se registren desde el sitio deben cumplir las reglas de contraseña: al menos 8 caracteres, no ser solo números, no ser una contraseña común y no parecerse al nombre ni al correo.
+
+Si tus cuentas de prueba todavía tienen la contraseña antigua (`12345`), ejecuta `python manage.py seed_demo`: restablece las contraseñas de prueba sin tocar el resto de los datos.
 
 Si quieres otra cuenta de administrador, ejecuta `python manage.py createsuperuser`.
 

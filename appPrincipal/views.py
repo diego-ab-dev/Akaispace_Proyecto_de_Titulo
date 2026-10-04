@@ -242,7 +242,7 @@ def admin_productos(request):
     genero = request.GET.get('genero', '')
     ordenar = request.GET.get('ordenar', 'recientes')
 
-    productos_list = Producto.objects.filter(is_deleted=False)
+    productos_list = Producto.objects.all()
 
     if query:
         productos_list = productos_list.filter(
@@ -314,8 +314,7 @@ def agregar_producto(request):
 @admin_required
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-    producto.is_deleted = True
-    producto.save()
+    producto.delete()  # borrado lógico: guarda también deleted_at
     return redirect('admin_productos')
 
 
@@ -607,18 +606,6 @@ def admin_ventas(request):
 
 
 @admin_required
-def admin_cambiar_estado_venta(request, venta_id):
-    venta = get_object_or_404(Venta, id=venta_id)
-    if request.method == 'POST':
-        nuevo_estado = request.POST.get('estado')
-        if nuevo_estado in dict(Venta.ESTADO_CHOICES):
-            venta.estado = nuevo_estado
-            venta.save()
-        else:
-            return redirect(f"{reverse('admin_ventas')}?msg=estado_invalido")
-
-
-@admin_required
 def detalle_venta(request, venta_id):
     venta = get_object_or_404(Venta.objects.prefetch_related('producto_venta__producto'), id=venta_id)
     return render(request, 'admin_panel/detalle_venta.html', {'venta': venta})
@@ -640,7 +627,9 @@ def modificar_venta(request, venta_id):
 
         estados_con_tracking = ["Enviado", "En Tránsito", "En Reparto"]
 
-        if estado_post in estados_con_tracking and not tracking_post:
+        if estado_post not in dict(Envio.ESTADO_CHOICES):
+            error = "Estado no válido."
+        elif estado_post in estados_con_tracking and not tracking_post:
             error = "Debe ingresar un número de seguimiento para este estado."
 
         if not error and tracking_post:
@@ -659,17 +648,14 @@ def modificar_venta(request, venta_id):
                 'transportista_post': transportista_post, 
             })
 
-        if envio:
-            envio.numero_seguimiento = tracking_post
-            # 2. Guardamos el transportista
-            if transportista_post: 
-                envio.transportista = transportista_post
-            
-            envio.guardar_estado(estado_post)
-        else:
-            venta.estado = estado_post
+        # el estado de la venta vive en Envio; si por algún motivo no existe, se crea
+        if envio is None:
+            envio = Envio.objects.create(venta=venta)
+        envio.numero_seguimiento = tracking_post
+        if transportista_post:
+            envio.transportista = transportista_post
+        envio.guardar_estado(estado_post)
 
-        venta.save()
         return redirect('detalle_venta', venta_id=venta.id)
 
     return render(request, 'admin_panel/modificar_venta.html', {
@@ -682,15 +668,18 @@ def modificar_venta(request, venta_id):
 @admin_required
 def anular_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
-    envio = venta.datos_envio
+    envio, _ = Envio.objects.get_or_create(venta=venta)
 
-    envio.estado = "Anulada"
-    envio.save()
+    # si ya estaba anulada no se vuelve a sumar el stock
+    if envio.estado != "Anulada":
+        with transaction.atomic():
+            envio.estado = "Anulada"
+            envio.save()
 
-    for item in venta.producto_venta.all():
-        producto = item.producto
-        producto.stock += item.cantidad
-        producto.save()
+            for item in venta.producto_venta.all():
+                producto = item.producto
+                producto.stock += item.cantidad
+                producto.save()
 
     return redirect(f"{reverse('detalle_venta', args=[venta_id])}?msg=anulada")
 #fin
@@ -710,12 +699,10 @@ def productos_menu(request):
         productos = Producto.objects.filter(
             nombre__icontains=query,
             stock__gt=0,
-            is_deleted=False
         )
     else:
         productos = Producto.objects.filter(
             stock__gt=0,
-            is_deleted=False
         )
 
     if orden == 'precio_asc':
@@ -733,13 +720,13 @@ def productos_menu(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    fc25 = Producto.objects.filter(nombre="Fc 25", is_deleted=False).first()
-    silent = Producto.objects.filter(nombre="Silent Hill 2", is_deleted=False).first()
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
+    fc25 = Producto.objects.filter(nombre="Fc 25").first()
+    silent = Producto.objects.filter(nombre="Silent Hill 2").first()
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
 
-    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
-    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
-    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5").first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5").first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick").first()
 
     template_name = 'resultado_busqueda.html' if query else 'productosmenu.html'
     
@@ -790,18 +777,17 @@ def producto_detalle(request, producto_id):
 
     productos_relacionados = Producto.objects.filter(
         categoria=producto.categoria, 
-        stock__gt=0,                 
-        is_deleted=False           
+        stock__gt=0,
     ).exclude(id=producto.id).order_by('?')[:4]
 
     es_favorito = False
     if request.user.is_authenticated:
         es_favorito = Favorito.objects.filter(usuario=request.user, producto=producto).exists()
     
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
-    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
-    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
-    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5").first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5").first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick").first()
 
     return render(request, "producto_detalle.html", {
         "producto": producto,
@@ -825,7 +811,6 @@ def producto_detalle(request, producto_id):
 def productos_por_categoria(request, categoria):
     productos = Producto.objects.filter(
         categoria=categoria,
-        is_deleted=False,
         stock__gt=0
     )
 
@@ -850,10 +835,10 @@ def productos_por_categoria(request, categoria):
 
     nombre_categoria = dict(Producto.CATEGORIAS).get(categoria, categoria)
 
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
-    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
-    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
-    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5").first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5").first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick").first()
 
     context = {
         'categoria': nombre_categoria,
@@ -1178,9 +1163,10 @@ def ver_detalle_reclamo(request, reclamo_id):
 def crear_devolucion(request, compra_id, producto_id):
     usuario = request.user
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
-    producto = get_object_or_404(Producto, id=producto_id)
+    # Producto.todos: se puede devolver un producto aunque ya no esté en el catálogo
+    producto = get_object_or_404(Producto.todos, id=producto_id)
 
-    item = compra.producto_venta.get(producto=producto)
+    item = get_object_or_404(compra.producto_venta, producto=producto)
     cantidad_comprada = item.cantidad
 
     form = SolicitudDevolucionForm()
@@ -1425,10 +1411,10 @@ def ver_carrito(request):
     total = sum((item.producto.precio or 0) * item.cantidad for item in items)
     total_items = sum(item.cantidad for item in items)
 
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
-    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
-    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
-    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5").first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5").first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick").first()
 
     return render(request, "carrito.html", {
         "productos": items,
@@ -1485,10 +1471,10 @@ def lista_favoritos(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6", is_deleted=False).first()
-    ps5 = Producto.objects.filter(nombre="Play Station 5", is_deleted=False).first()
-    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5", is_deleted=False).first()
-    funko = Producto.objects.filter(nombre="Funko Pop John Wick", is_deleted=False).first()
+    cod6 = Producto.objects.filter(nombre="Call of Duty: Black Ops 6").first()
+    ps5 = Producto.objects.filter(nombre="Play Station 5").first()
+    mando = Producto.objects.filter(nombre="Control Sony Dualsense Chroma Pearl Ps5").first()
+    funko = Producto.objects.filter(nombre="Funko Pop John Wick").first()
 
     return render(request, 'favorite.html', {'wishlist_items': favoritos, 'page_obj': page_obj,
         'favoritos': page_obj.object_list,         
@@ -1549,7 +1535,7 @@ def eliminar_favoritos_seleccionados(request):
 @login_required
 def seleccionar_pago(request):
     usuario = request.user
-    carrito = usuario.carritos.last()
+    carrito = Carrito.objects.filter(usuario=usuario).first()
 
     if not carrito or not carrito.items.exists():
         return redirect('ver_carrito')
@@ -1582,7 +1568,7 @@ def seleccionar_pago(request):
 @login_required
 def compra_exitosa(request):
     usuario = request.user
-    carrito = usuario.carritos.last()
+    carrito = Carrito.objects.filter(usuario=usuario).first()
 
     if not carrito or not carrito.items.exists():
         return redirect('ver_carrito')
@@ -1595,7 +1581,6 @@ def compra_exitosa(request):
     try:
         with transaction.atomic():
             venta = Venta.objects.create(
-                carrito=carrito,
                 usuario=usuario,
                 metodo_envio=metodo_envio,
                 direccion_envio=direccion_envio,

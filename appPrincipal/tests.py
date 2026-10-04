@@ -11,7 +11,7 @@ class SeedDemoTests(TestCase):
         self.assertEqual(Producto.objects.count(), 6)
         admin = Usuario.objects.get(email='admin@gmail.com')
         self.assertTrue(admin.is_staff)
-        self.assertTrue(admin.check_password('12345'))
+        self.assertTrue(admin.check_password('Akaispace-Admin-2026'))
         self.assertFalse(Usuario.objects.get(email='user@gmail.com').is_staff)
 
     def test_es_idempotente(self):
@@ -211,3 +211,82 @@ class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids 
         self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 2}).status_code, 404)
         self.assertFalse(self.client.post(f'/eliminar/{item.id}/').json()['success'])
         self.assertTrue(ItemCarritoProducto.objects.filter(id=item.id).exists())
+
+
+class ModeloTests(TestCase):  # 17, 25, 26 y 28
+    def setUp(self):
+        from .models import Venta, ProductoVenta
+        self.producto = Producto.objects.create(
+            codigo_de_barra='222', nombre='Consola', precio=1000, stock=5, categoria='Ps5 Consolas',
+            imagen_principal='productos/silent.png'
+        )
+        self.cliente = crear_cliente()
+        self.venta = Venta.objects.create(usuario=self.cliente, metodo_envio='tienda')
+        ProductoVenta.objects.create(venta=self.venta, producto=self.producto, cantidad=2, precio_unitario=1000)
+
+    def test_objects_oculta_eliminados_y_todos_los_incluye(self):  # 28
+        self.producto.delete()
+        self.assertFalse(Producto.objects.filter(id=self.producto.id).exists())
+        self.assertTrue(Producto.todos.filter(id=self.producto.id).exists())
+        self.assertIsNotNone(Producto.todos.get(id=self.producto.id).deleted_at)
+
+    def test_delete_masivo_tambien_es_logico(self):  # 28
+        Producto.objects.filter(id=self.producto.id).delete()
+        producto = Producto.todos.get(id=self.producto.id)
+        self.assertTrue(producto.is_deleted)
+        self.assertIsNotNone(producto.deleted_at)
+
+    def test_historial_conserva_el_producto_eliminado(self):  # 17 y 28
+        self.producto.delete()
+        linea = self.venta.producto_venta.get()
+        self.assertEqual(linea.producto.nombre, 'Consola')
+
+    def test_no_se_puede_borrar_de_verdad_un_producto_o_usuario_con_ventas(self):  # 17
+        from django.db.models import ProtectedError
+        with self.assertRaises(ProtectedError):
+            self.producto.hard_delete()
+        with self.assertRaises(ProtectedError):
+            self.cliente.hard_delete()
+
+    def test_un_solo_carrito_por_usuario_e_items_unicos(self):  # 26
+        from django.db import IntegrityError, transaction
+        from .models import Carrito, ItemCarritoProducto, Favorito
+        carrito = Carrito.objects.create(usuario=self.cliente)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Carrito.objects.create(usuario=self.cliente)
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=self.producto)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ItemCarritoProducto.objects.create(carrito=carrito, producto=self.producto)
+        Favorito.objects.create(usuario=self.cliente, producto=self.producto)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Favorito.objects.create(usuario=self.cliente, producto=self.producto)
+
+    def test_varios_usuarios_sin_rut(self):  # 26
+        crear_cliente('a@example.com')
+        crear_cliente('b@example.com')
+        self.assertEqual(Usuario.objects.filter(rut__isnull=True).count(), 3)
+
+    def test_estado_se_modifica_en_envio_y_anular_dos_veces_no_duplica_stock(self):  # 25
+        from .models import Envio
+        Envio.objects.create(venta=self.venta)
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.client.post(f'/admin-panel/ventas/modificar/{self.venta.id}/', {'estado': 'Entregado'})
+        self.assertEqual(Envio.objects.get(venta=self.venta).estado, 'Entregado')
+
+        self.client.get(f'/ventas/anular/{self.venta.id}/')
+        self.client.get(f'/ventas/anular/{self.venta.id}/')
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 7)  # 5 + 2 devueltos una sola vez
+
+    def test_admin_de_django_elimina_productos_de_forma_logica(self):
+        self.client.force_login(Usuario.objects.create_superuser(email='root@example.com', password='x', nombre='Root'))
+        self.client.post(f'/admin/appPrincipal/producto/{self.producto.id}/delete/', {'post': 'yes'})
+        self.assertTrue(Producto.todos.get(id=self.producto.id).is_deleted)
+
+
+class AdminDjangoTests(TestCase):
+    def test_listados_del_admin_cargan(self):
+        self.client.force_login(Usuario.objects.create_superuser(email='root@example.com', password='x', nombre='Root'))
+        for modelo in ['usuario', 'producto', 'venta', 'reclamo', 'opinion']:
+            respuesta = self.client.get(f'/admin/appPrincipal/{modelo}/')
+            self.assertEqual(respuesta.status_code, 200, modelo)

@@ -8,11 +8,20 @@ from .models import Usuario, Producto, Venta, Reclamo, Opinion
 # Las tablas "ItemCarritoProducto" y "Carrito" no aparecen en el panel de admin ya que no tiene mucho sentido que las pueda ver
 
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ("codigo_de_barra", "nombre", "precio", "stock", "imagen_display", "categoria", "genero")
+    list_display = ("codigo_de_barra", "nombre", "precio", "stock", "imagen_display", "categoria", "genero", "is_deleted")
     search_fields = ("nombre", "codigo_de_barra")
     list_editable = ("stock", "categoria", "genero")
-    list_filter=("categoria", "genero")
+    list_filter=("categoria", "genero", "is_deleted")
     list_per_page = 20
+
+    # muestra también los productos eliminados (borrado lógico) para poder revisarlos o restaurarlos
+    def get_queryset(self, request):
+        return Producto.todos.all()
+
+    # el borrado de productos es lógico (no elimina filas), así que no hace falta revisar
+    # las relaciones protegidas (ventas, devoluciones) antes de confirmar
+    def get_deleted_objects(self, objs, request):
+        return [str(obj) for obj in objs], {}, set(), []
 
     @admin.display(description='Imagen Principal')
     def imagen_display(self, obj):
@@ -57,10 +66,8 @@ class UsuarioAdmin(UserAdmin):
     )
 
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ("usuario", "total", "estado", "fecha", "metodo_envio", "direccion_envio", "productos_comprados")
-    list_filter = ("estado", "fecha",)
-    list_editable = ("estado",)
-    date_hierarchy = "fecha"
+    list_display = ("usuario", "total", "estado_envio", "fecha", "metodo_envio", "direccion_envio", "productos_comprados")
+    list_filter = ("datos_envio__estado", "fecha",)
     list_per_page = 20
 
     def productos_comprados(self, obj):
@@ -69,13 +76,17 @@ class VentaAdmin(admin.ModelAdmin):
 
     productos_comprados.short_description = "Productos Comprados"
 
+    @admin.display(description="Estado", ordering="datos_envio__estado")
+    def estado_envio(self, obj):
+        envio = getattr(obj, 'datos_envio', None)
+        return envio.estado if envio else '-'
+
 
 
 class ReclamoAdmin(admin.ModelAdmin):
     list_display=("usuario", "estado","asunto", "descripcion", "fecha", "respuesta")
     list_filter=("estado", "fecha",)
     list_editable = ("estado", "respuesta")
-    date_hierarchy = "fecha"
     list_per_page=20
 
 admin.site.register(Usuario, UsuarioAdmin)

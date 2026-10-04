@@ -274,9 +274,8 @@ class ProductoForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             return codigo
         
-        productos = Producto.objects.filter(codigo_de_barra=codigo)
-
-        if productos.filter(is_deleted=False).exists():
+        # Producto.objects ya excluye los eliminados
+        if Producto.objects.filter(codigo_de_barra=codigo).exists():
             raise forms.ValidationError(
                 "Ya existe un producto activo con este código de barras."
             )

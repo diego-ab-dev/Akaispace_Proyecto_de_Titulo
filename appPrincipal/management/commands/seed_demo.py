@@ -13,6 +13,7 @@ FIXTURES_DIR = Path(__file__).resolve().parents[2] / 'fixtures'
 USUARIOS_DEMO = [
     {
         'email': 'admin@gmail.com',
+        'password': 'Akaispace-Admin-2026',
         'nombre': 'Admin',
         'rut': '12.343.455-2',
         'telefono': '+56 9 45533453',
@@ -24,6 +25,7 @@ USUARIOS_DEMO = [
     },
     {
         'email': 'user@gmail.com',
+        'password': 'Akaispace-Cliente-2026',
         'nombre': 'Usuario',
         'rut': '75.292.177-6',
         'telefono': '+56 9 45645354',
@@ -32,7 +34,6 @@ USUARIOS_DEMO = [
         'ciudad': 'Viña del Mar',
     },
 ]
-CONTRASEÑA_DEMO = '12345'
 
 
 class Command(BaseCommand):
@@ -60,10 +61,16 @@ class Command(BaseCommand):
         for datos in USUARIOS_DEMO:
             datos = dict(datos)
             email = datos.pop('email')
-            creado = not Usuario.objects.filter(email=email).exists()
-            if creado:
-                Usuario.objects.create_user(email=email, password=CONTRASEÑA_DEMO, **datos)
-            estado = 'creado' if creado else 'ya existía'
+            password = datos.pop('password')
+            usuario = Usuario.objects.filter(email=email).first()
+            if usuario is None:
+                Usuario.objects.create_user(email=email, password=password, **datos)
+                estado = 'creado'
+            else:
+                # restablece la contraseña de prueba por si cambió
+                usuario.set_password(password)
+                usuario.save()
+                estado = 'ya existía, contraseña restablecida'
             if verbose:
                 self.stdout.write(f'Usuario {email}: {estado}.')
 
