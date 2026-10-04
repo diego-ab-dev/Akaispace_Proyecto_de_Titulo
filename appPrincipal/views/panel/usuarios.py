@@ -1,4 +1,6 @@
 """Panel de administración: usuarios."""
+import logging
+
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -8,8 +10,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import admin_required
-from appPrincipal.forms import normalizar_rut, regiones_ciudades
+from appPrincipal.constants import REGIONES_CIUDADES
+from appPrincipal.forms import normalizar_rut
 from appPrincipal.models import Usuario
+
+logger = logging.getLogger(__name__)
 
 
 @admin_required
@@ -68,7 +73,7 @@ def buscar_usuarios(request):
 def crear_usuario(request):
     if request.method == 'GET':
         return render(request, 'admin_panel/crear_usuario.html', {
-            'regiones_ciudades': regiones_ciudades,
+            'regiones_ciudades': REGIONES_CIUDADES,
         })
 
     if request.method == 'POST':
@@ -99,7 +104,7 @@ def crear_usuario(request):
             except ValidationError as e:
                 return JsonResponse({'success': False, 'message': ' '.join(e.messages)})
 
-            ciudades_validas = regiones_ciudades.get(region, [])
+            ciudades_validas = REGIONES_CIUDADES.get(region, [])
             if ciudad not in ciudades_validas:
                 return JsonResponse({'success': False, 'message': 'La ciudad no es válida para la región seleccionada.'})
 
@@ -131,8 +136,10 @@ def crear_usuario(request):
                 error_msg = 'El RUT ya existe.'
             return JsonResponse({'success': False, 'message': error_msg})
             
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Error del servidor: {str(e)}'})
+        except Exception:
+            # el detalle queda en el log; al navegador solo va un mensaje genérico
+            logger.exception("Error al crear un usuario desde el panel")
+            return JsonResponse({'success': False, 'message': 'Ocurrió un error inesperado. Inténtalo de nuevo.'}, status=500)
 
 
 @admin_required

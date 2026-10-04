@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from appPrincipal.forms import regiones_ciudades
+from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.models import Devolucion, Opinion, Reclamo, Venta
 
 
@@ -70,7 +70,7 @@ def editar_perfil(request):
         region = request.POST.get('region')
         ciudad = request.POST.get('ciudad')
 
-        if region and ciudad not in regiones_ciudades.get(region, []):
+        if region and ciudad not in REGIONES_CIUDADES.get(region, []):
             return JsonResponse({'error': 'La ciudad no coincide con la región seleccionada.'}, status=400)
 
         usuario.telefono = telefono or usuario.telefono
@@ -81,10 +81,10 @@ def editar_perfil(request):
 
         return JsonResponse({'success': 'Perfil actualizado correctamente.'})
 
-    ciudades = regiones_ciudades.get(usuario.region, [])
+    ciudades = REGIONES_CIUDADES.get(usuario.region, [])
     context = {
         'usuario': usuario,
-        'regiones': regiones_ciudades.keys(),
+        'regiones': REGIONES_CIUDADES.keys(),
         'ciudades': ciudades,
     }
     return render(request, 'editar_datos.html', context)

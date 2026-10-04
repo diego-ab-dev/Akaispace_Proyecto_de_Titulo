@@ -575,3 +575,84 @@ class OpinionesTests(TestCase):  # 16
         crear_venta(self.cliente, self.producto)
         self.opinar()
         self.assertTrue(Opinion.objects.filter(usuario=self.cliente, producto=self.producto).exists())
+
+
+class RegionesTests(TestCase):  # 23
+    def test_cada_region_del_select_tiene_sus_ciudades(self):
+        from .constants import REGIONES, REGIONES_CIUDADES
+        self.assertEqual([codigo for codigo, _ in REGIONES], list(REGIONES_CIUDADES))
+
+    def test_el_carrito_recibe_las_regiones_desde_constants(self):
+        self.client.force_login(crear_cliente())
+        self.assertContains(self.client.get('/ver_carrito/'), 'id="regiones-ciudades"')
+
+    def test_datos_de_envio_se_validan(self):
+        cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1')
+        self.client.force_login(cliente)
+        malos = [
+            {'region': 'LOS RIOS', 'ciudad': 'Santiago', 'direccion': 'Calle 1'},  # ciudad de otra región
+            {'region': 'INVENTADA', 'ciudad': 'Valdivia', 'direccion': 'Calle 1'},
+            {'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': ''},
+            {'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': 'x' * 101},
+        ]
+        for datos in malos:
+            self.assertEqual(self.client.post('/guardar_datos_envio/', datos).status_code, 400, datos)
+        cliente.refresh_from_db()
+        self.assertEqual((cliente.ciudad, cliente.direccion), ('Valdivia', 'Picarte 1'))
+
+        self.client.post('/guardar_datos_envio/', {'region': 'LOS LAGOS', 'ciudad': 'Osorno', 'direccion': 'Calle 2'})
+        cliente.refresh_from_db()
+        self.assertEqual((cliente.region, cliente.ciudad), ('LOS LAGOS', 'Osorno'))
+
+
+class DashboardTests(TestCase):  # 27
+    def test_grafico_suma_por_mes_sin_ventas_anuladas_en_una_consulta(self):
+        from datetime import datetime
+        from django.utils import timezone
+        from .models import Venta
+        from .views.panel.dashboard import ventas_por_mes
+        producto = crear_producto()
+        cliente = crear_cliente()
+        anio = timezone.localdate().year
+        marzo = crear_venta(cliente, producto)
+        anulada = crear_venta(cliente, producto, estado='Anulada')
+        # 1 de abril a las 00:30 hora de Chile: en UTC todavía es 31 de marzo, debe contar en abril
+        abril = crear_venta(cliente, producto)
+        Venta.objects.filter(id__in=[marzo.id, anulada.id]).update(
+            fecha=timezone.make_aware(datetime(anio, 3, 10, 12)), total=1000)
+        Venta.objects.filter(id=abril.id).update(fecha=timezone.make_aware(datetime(anio, 4, 1, 0, 30)), total=500)
+
+        with self.assertNumQueries(1):
+            totales = ventas_por_mes(anio)
+        self.assertEqual(totales[2], 1000)
+        self.assertEqual(totales[3], 500)
+        self.assertEqual(sum(totales), 1500)
+
+
+class ErroresInternosTests(TestCase):  # 35
+    def test_crear_usuario_no_muestra_el_detalle_del_error(self):
+        from unittest import mock
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        datos = {'nombre': 'Nuevo', 'email': 'nuevo@example.com', 'contraseña': 'Akaispace-2026!',
+                 'confirmar_contraseña': 'Akaispace-2026!', 'rut': '12343455-2', 'region': 'LOS RIOS', 'ciudad': 'Valdivia'}
+        with mock.patch('appPrincipal.views.panel.usuarios.Usuario.objects.create_user',
+                        side_effect=RuntimeError('detalle interno secreto')), \
+                self.assertLogs('appPrincipal', level='ERROR'):
+            respuesta = self.client.post('/admin-panel/usuarios/crear/', datos)
+        self.assertEqual(respuesta.status_code, 500)
+        self.assertNotIn('secreto', respuesta.json()['message'])
+
+    def test_eliminar_favoritos_con_datos_invalidos_responde_400(self):
+        self.client.force_login(crear_cliente())
+        for cuerpo in ['no es json', '{"ids": ["abc"]}', '[1, 2]']:
+            respuesta = self.client.post('/eliminar_favoritos_seleccionados/', cuerpo, content_type='application/json')
+            self.assertEqual(respuesta.status_code, 400, cuerpo)
+            self.assertEqual(respuesta.json()['error'], 'Solicitud inválida.')
+
+    def test_eliminar_favoritos_acepta_ids_como_texto(self):
+        from .models import Favorito
+        cliente = crear_cliente()
+        favorito = Favorito.objects.create(usuario=cliente, producto=crear_producto())
+        self.client.force_login(cliente)
+        self.client.post('/eliminar_favoritos_seleccionados/', {'ids': [str(favorito.id)]}, content_type='application/json')
+        self.assertFalse(Favorito.objects.exists())

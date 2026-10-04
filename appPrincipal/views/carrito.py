@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
+from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.decorators import login_required_json
 from appPrincipal.models import Carrito, ItemCarritoProducto, Producto
 
@@ -50,31 +51,20 @@ def agregar_al_carrito(request, producto_id):
 
 
 @login_required_json
+@require_POST
 def eliminar_del_carrito(request, item_id):
-    if request.method == 'POST':
-        try:
-            item = get_object_or_404(
-                ItemCarritoProducto,
-                id=item_id,
-                carrito__usuario=request.user
-            )
+    item = ItemCarritoProducto.objects.filter(id=item_id, carrito__usuario=request.user).first()
+    if item is None:
+        return JsonResponse({'success': False, 'error': 'El producto ya no está en tu carrito.'}, status=404)
 
-            carrito = item.carrito
-            item.delete()
+    carrito = item.carrito
+    item.delete()
 
-            total_items = sum(i.cantidad for i in carrito.items.all())
-            total = carrito.total_carrito()
-
-            return JsonResponse({
-                'success': True,
-                'total_items': total_items,
-                'total': total,
-            })
-
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-    return JsonResponse({'success': False, 'error': 'Método no permitido'})
+    return JsonResponse({
+        'success': True,
+        'total_items': sum(i.cantidad for i in carrito.items.all()),
+        'total': carrito.total_carrito(),
+    })
 
 
 @login_required_json
@@ -133,28 +123,31 @@ def ver_carrito(request):
         "productos": items,
         "total": total,
         "total_items": total_items,
+        "regiones_ciudades": REGIONES_CIUDADES,
     })
 
 
 @login_required_json
+@require_POST
 def guardar_datos_envio(request):
-    if request.method == "POST":
-        usuario = request.user
+    region = request.POST.get("region", "")
+    ciudad = request.POST.get("ciudad", "")
+    direccion = request.POST.get("direccion", "").strip()
 
-        region = request.POST.get("region")
-        ciudad = request.POST.get("ciudad")
-        direccion = request.POST.get("direccion")
+    if ciudad not in REGIONES_CIUDADES.get(region, []):
+        return JsonResponse({'success': False, 'error': 'La ciudad no corresponde a la región seleccionada.'}, status=400)
+    if not direccion or len(direccion) > 100:
+        return JsonResponse({'success': False, 'error': 'Ingresa una dirección de hasta 100 caracteres.'}, status=400)
 
-        usuario.region = region
-        usuario.ciudad = ciudad
-        usuario.direccion = direccion
-        usuario.save()
+    usuario = request.user
+    usuario.region = region
+    usuario.ciudad = ciudad
+    usuario.direccion = direccion
+    usuario.save(update_fields=['region', 'ciudad', 'direccion'])
 
-        return JsonResponse({
-            'success': True,
-            'region': region,
-            'ciudad': ciudad,
-            'direccion': direccion,
-        })
-
-    return JsonResponse({'success': False}, status=400)
+    return JsonResponse({
+        'success': True,
+        'region': region,
+        'ciudad': ciudad,
+        'direccion': direccion,
+    })

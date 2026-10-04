@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from appPrincipal import forms
-from appPrincipal.forms import regiones_ciudades
+from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.models import Usuario
 from appPrincipal.seguridad import MENSAJE_LOGIN_INVALIDO
 
@@ -58,7 +58,7 @@ def register(request):
     if request.method == 'POST':
         form = forms.UsuarioCustomForm(request.POST)
         region_seleccionada = request.POST.get('region')
-        ciudades = regiones_ciudades.get(region_seleccionada, [])
+        ciudades = REGIONES_CIUDADES.get(region_seleccionada, [])
         form.fields['ciudad'].choices = [(ciudad, ciudad) for ciudad in ciudades]
 
         if form.is_valid():
@@ -111,7 +111,7 @@ def register(request):
             logger.debug("Registro inválido: %s", form.errors.as_json())
             primer_error = next(iter(form.errors.values()))[0]
             return JsonResponse({'success': False, 'message': primer_error})
-    data = {'form': form, 'regiones_ciudades': regiones_ciudades}
+    data = {'form': form, 'regiones_ciudades': REGIONES_CIUDADES}
     return render(request, 'register.html', data)
 
 def logout(request):
@@ -120,5 +120,5 @@ def logout(request):
 
 def obtener_ciudades(request):
     region = request.GET.get('region')
-    ciudades = regiones_ciudades.get(region, [])
+    ciudades = REGIONES_CIUDADES.get(region, [])
     return JsonResponse({'ciudades': ciudades})

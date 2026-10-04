@@ -1,18 +1,33 @@
 """Panel de administración: dashboard principal."""
-import calendar
 from datetime import datetime
 
-from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.utils import timezone
 
 from appPrincipal.decorators import admin_required
 from appPrincipal.models import Devolucion, Envio, Producto, Reclamo, Venta
 
 
+def ventas_por_mes(anio):
+    """Total vendido en cada mes del año (lista de 12 montos), sin contar las ventas anuladas."""
+    inicio = timezone.make_aware(datetime(anio, 1, 1))
+    fin = timezone.make_aware(datetime(anio + 1, 1, 1))
+    ventas = Venta.objects.filter(fecha__gte=inicio, fecha__lt=fin).exclude(
+        datos_envio__estado='Anulada'
+    ).values_list('fecha', 'total')
+
+    # una sola consulta y se agrupa aquí: TruncMonth en MySQL depende de que el servidor
+    # tenga cargadas las tablas de zonas horarias, y si no las tiene devuelve vacío
+    totales = [0] * 12
+    for fecha, total in ventas:
+        totales[timezone.localtime(fecha).month - 1] += total
+    return totales
+
+
 @admin_required
 def admin_dashboard(request):
-    ultimas_ventas = Venta.objects.prefetch_related('producto_venta__producto').order_by('-fecha')[:4]
+    ultimas_ventas = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').order_by('-fecha')[:4]
     ventas_info = [
         {
             "usuario": venta.usuario.nombre,
@@ -42,21 +57,7 @@ def admin_dashboard(request):
         for producto in productos_bajo_stock
     ]
 
-    anio_actual = datetime.now().year
-    datos_grafico = []
-
-    for mes in range(1, 13):
-        ultimo_dia = calendar.monthrange(anio_actual, mes)[1]
-        
-        fecha_inicio = f"{anio_actual}-{mes:02d}-01"
-        fecha_fin = f"{anio_actual}-{mes:02d}-{ultimo_dia}"
-
-        total_mes = Venta.objects.filter(
-            fecha__range=[fecha_inicio + " 00:00:00", fecha_fin + " 23:59:59"]
-        ).aggregate(Sum('total'))['total__sum'] or 0
-        
-        datos_grafico.append(total_mes)
-
+    datos_grafico = ventas_por_mes(timezone.localdate().year)
 
     context = {
         "ventas_info": ventas_info,

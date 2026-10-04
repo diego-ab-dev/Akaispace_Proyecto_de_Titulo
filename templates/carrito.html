@@ -158,26 +158,10 @@
     </div>
 </div>
 
+{{ regiones_ciudades|json_script:"regiones-ciudades" }}
 <script>
-    // lista de regiones y ciudades para el modal
-    const regionesCiudades = {
-        'ARICA Y PARINACOTA': ['Arica', 'Putre'],
-        'TARAPACA': ['Iquique', 'Alto Hospicio'],
-        'ANTOFAGASTA': ['Antofagasta', 'Calama', 'Tocopilla'],
-        'ATACAMA': ['Copiapó', 'Vallenar', 'Chañaral'],
-        'COQUIMBO': ['La Serena', 'Coquimbo', 'Ovalle'],
-        'VALPARAISO': ['Valparaíso', 'Viña del Mar', 'Quillota', 'San Antonio'],
-        'METROPOLITANA': ['Santiago', 'Puente Alto', 'Maipú', 'La Florida'],
-        'OHIGGINS': ['Rancagua', 'San Fernando', 'Pichilemu'],
-        'MAULE': ['Talca', 'Curicó', 'Linares'],
-        'ÑUBLE': ['Chillán', 'San Carlos'],
-        'BIOBIO': ['Concepción', 'Los Ángeles', 'Coronel'],
-        'ARAUCANIA': ['Temuco', 'Villarrica', 'Angol'],
-        'LOS RIOS': ['Valdivia', 'La Unión'],
-        'LOS LAGOS': ['Puerto Montt', 'Osorno', 'Castro'],
-        'AYSEN': ['Coyhaique', 'Puerto Aysén'],
-        'MAGALLANES': ['Punta Arenas', 'Puerto Natales'],
-    };
+    // lista de regiones y ciudades para el modal (viene de appPrincipal/constants.py)
+    const regionesCiudades = JSON.parse(document.getElementById('regiones-ciudades').textContent);
 
     function cargarRegiones() {
     let selectRegion = document.getElementById("input-region");
@@ -367,6 +351,8 @@ function eliminarItem(itemId, element) {
                     document.getElementById("envio-ciudad").innerText = data.ciudad;
                     document.getElementById("envio-direccion").innerText = data.direccion;
                     cerrarModal();
+                } else if (data.error) {
+                    mostrarError(data.error);
                 }
             });
         }
