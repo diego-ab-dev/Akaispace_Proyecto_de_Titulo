@@ -1,0 +1,112 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static %}
+
+{% block title %}Portada{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_portada.css' %}">
+{% endblock %}
+
+{% block encabezado %}
+<h1>Portada</h1>
+{% endblock %}
+
+{% block content %}
+<div class="portada">
+    <p class="portada-intro">
+        Aquí decides qué se muestra en el carrusel del menú, en los nuevos lanzamientos del home y en la
+        tarjeta de cada menú del navbar. Los cambios se ven en el sitio de inmediato.
+    </p>
+
+    {% for seccion in secciones %}
+    <section class="portada-seccion">
+        <header class="portada-seccion__header">
+            <div>
+                <h2>{{ seccion.nombre }}</h2>
+                {% if seccion.de_uno %}
+                <p class="portada-seccion__nota">Se muestra solo el primero activo (el de menor orden).</p>
+                {% endif %}
+            </div>
+            <a href="{% url 'crear_destacado' %}?seccion={{ seccion.codigo }}" class="btn-portada btn-portada--primario">
+                <i class='bx bx-plus'></i> Agregar
+            </a>
+        </header>
+
+        {% if seccion.destacados %}
+        <ul class="portada-lista">
+            {% for destacado in seccion.destacados %}
+            <li class="portada-item{% if not destacado.activo %} portada-item--inactivo{% endif %}">
+                <div class="portada-item__imagen">
+                    {% if destacado.imagen_url %}
+                        <img src="{{ destacado.imagen_url }}" alt="{{ destacado.titulo }}">
+                    {% elif destacado.video_url %}
+                        <i class='bx bxl-youtube'></i>
+                    {% else %}
+                        <i class='bx bx-image'></i>
+                    {% endif %}
+                </div>
+                <div class="portada-item__datos">
+                    <strong>{{ destacado.titulo }}</strong>
+                    <span class="portada-item__producto">
+                        {% if destacado.producto %}
+                            {{ destacado.producto.nombre }}{% if destacado.producto.is_deleted %} <em>(producto eliminado)</em>{% endif %}
+                        {% else %}
+                            Sin producto
+                        {% endif %}
+                    </span>
+                    {% if destacado.etiqueta %}<span class="portada-item__etiqueta">{{ destacado.etiqueta }}</span>{% endif %}
+                </div>
+                <div class="portada-item__orden" title="Orden">#{{ destacado.orden }}</div>
+                <span class="portada-estado {% if destacado.activo %}portada-estado--activo{% else %}portada-estado--inactivo{% endif %}">
+                    {{ destacado.activo|yesno:"Visible,Oculto" }}
+                </span>
+                <div class="portada-item__acciones">
+                    <a href="{% url 'editar_destacado' destacado.id %}" class="btn-portada">Editar</a>
+                    <form method="post" action="{% url 'cambiar_estado_destacado' destacado.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-portada">{{ destacado.activo|yesno:"Ocultar,Mostrar" }}</button>
+                    </form>
+                    <button type="button" class="btn-portada btn-portada--peligro"
+                            data-url="{% url 'eliminar_destacado' destacado.id %}" data-titulo="{{ destacado.titulo }}"
+                            onclick="confirmarEliminacion(this)">Eliminar</button>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="portada-vacia">No hay nada configurado. En el sitio esta parte {% if seccion.de_uno %}muestra "Próximamente"{% else %}no se muestra{% endif %}.</p>
+        {% endif %}
+    </section>
+    {% endfor %}
+</div>
+
+<!--modal para confirmar la eliminación-->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmacionLabel">Eliminar destacado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                ¿Eliminar "<span id="tituloEliminar"></span>" de la portada? Si solo quieres quitarlo por un tiempo, usa "Ocultar".
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="form-eliminar" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmarEliminacion(boton) {
+        document.getElementById('form-eliminar').action = boton.dataset.url;
+        document.getElementById('tituloEliminar').textContent = boton.dataset.titulo;
+        new bootstrap.Modal(document.getElementById('modalConfirmacion')).show();
+    }
+</script>
+{% endblock %}

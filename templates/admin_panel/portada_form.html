@@ -1,0 +1,67 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static %}
+
+{% block title %}{% if destacado %}Editar destacado{% else %}Nuevo destacado{% endif %}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_portada.css' %}">
+{% endblock %}
+
+{% block encabezado %}
+<h1>{% if destacado %}Editar destacado{% else %}Nuevo destacado{% endif %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="portada">
+    <a href="{% url 'admin_portada' %}" class="portada-volver"><i class='bx bx-arrow-back'></i> Volver a Portada</a>
+
+    <form method="post" enctype="multipart/form-data" class="portada-seccion portada-form" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+        {% endif %}
+
+        <div class="row g-3">
+            {% for campo in form %}
+            <div class="{% if campo.name == 'texto' or campo.name == 'imagen' %}col-12{% elif campo.name == 'activo' %}col-12{% else %}col-md-6{% endif %}"
+                 data-campo="{{ campo.name }}">
+                {% if campo.name == 'activo' %}
+                    <div class="form-check form-switch">
+                        {{ campo }}
+                        <label class="form-check-label" for="{{ campo.id_for_label }}">Visible en el sitio</label>
+                    </div>
+                {% else %}
+                    <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                    {{ campo }}
+                {% endif %}
+                {% if campo.help_text %}<div class="form-text">{{ campo.help_text }}</div>{% endif %}
+                {% if campo.errors %}<div class="text-danger small mt-1">{{ campo.errors.0 }}</div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="portada-form__acciones">
+            <a href="{% url 'admin_portada' %}" class="btn-portada">Cancelar</a>
+            <button type="submit" class="btn-portada btn-portada--primario">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // muestra solo los campos que usa cada sección (el video es solo para nuevos lanzamientos,
+    // y la etiqueta solo para las promos del navbar)
+    (function () {
+        const seccion = document.getElementById('id_seccion');
+        function actualizar() {
+            const valor = seccion.value;
+            const esLanzamiento = valor === 'lanzamientos';
+            const esMenu = valor.startsWith('menu_');
+            document.querySelector('[data-campo="video_url"]').hidden = !esLanzamiento;
+            document.querySelector('[data-campo="etiqueta"]').hidden = !esMenu;
+            document.querySelector('[data-campo="texto"]').hidden = esMenu;
+        }
+        seccion.addEventListener('change', actualizar);
+        actualizar();
+    })();
+</script>
+{% endblock %}

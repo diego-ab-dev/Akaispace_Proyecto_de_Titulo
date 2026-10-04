@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.timezone import now
@@ -397,3 +399,64 @@ class Favorito(models.Model):
 
     def __str__(self):
         return f"{self.usuario} - {self.producto}"
+
+# clase Destacado
+# Contenido de portada que el administrador edita desde su panel (HU-09): carrusel del menú,
+# nuevos lanzamientos del home y la tarjeta promocional de cada menú del navbar.
+class Destacado(models.Model):
+    SECCION_CARRUSEL = 'carrusel'
+    SECCION_LANZAMIENTOS = 'lanzamientos'
+    SECCIONES = [
+        (SECCION_CARRUSEL, 'Carrusel del menú'),
+        (SECCION_LANZAMIENTOS, 'Nuevos lanzamientos (home)'),
+        ('menu_videojuegos', 'Navbar: menú Videojuegos'),
+        ('menu_consolas', 'Navbar: menú Consolas'),
+        ('menu_accesorios', 'Navbar: menú Accesorios'),
+        ('menu_figuras', 'Navbar: menú Figuras'),
+    ]
+    # en las secciones del navbar se muestra solo uno (el primero activo según el orden)
+    SECCIONES_DE_UNO = ['menu_videojuegos', 'menu_consolas', 'menu_accesorios', 'menu_figuras']
+
+    seccion = models.CharField(max_length=20, choices=SECCIONES, verbose_name="Sección")
+    # SET_NULL: si el producto se borra de verdad, el destacado queda sin link en vez de desaparecer
+    producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True, blank=True)
+    titulo = models.CharField(max_length=80, verbose_name="Título")
+    texto = models.TextField(blank=True, max_length=400)
+    imagen = models.ImageField(upload_to='destacados/', blank=True, null=True,
+                               help_text="Opcional: si no se sube, se usa la imagen del producto.")
+    etiqueta = models.CharField(max_length=20, blank=True, help_text="Texto corto sobre la imagen, ej: ¡NUEVO!")
+    video_url = models.URLField(blank=True, verbose_name="Video de YouTube",
+                                help_text="Solo para nuevos lanzamientos. Ej: https://www.youtube.com/watch?v=...")
+    orden = models.PositiveIntegerField(default=0, help_text="Los números menores se muestran primero.")
+    activo = models.BooleanField(default=True, help_text="Si se desactiva, deja de mostrarse en el sitio.")
+
+    class Meta:
+        ordering = ['seccion', 'orden', 'id']
+
+    def __str__(self):
+        return f"{self.get_seccion_display()}: {self.titulo}"
+
+    @property
+    def imagen_url(self):
+        if self.imagen:
+            return self.imagen.url
+        if self.producto and self.producto.imagen_principal:
+            return self.producto.imagen_principal.url
+        return ''
+
+    @property
+    def producto_disponible(self):
+        """El producto enlazado, solo si sigue a la venta (si no, no se muestra el botón)."""
+        if self.producto and not self.producto.is_deleted:
+            return self.producto
+        return None
+
+    @property
+    def video_embed_url(self):
+        """URL para incrustar el video (acepta links youtube.com/watch?v=, youtu.be/ y /embed/)."""
+        return youtube_embed_url(self.video_url)
+
+
+def youtube_embed_url(url):
+    m = re.search(r'(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{11})', url or '')
+    return f"https://www.youtube.com/embed/{m.group(1)}" if m else ''

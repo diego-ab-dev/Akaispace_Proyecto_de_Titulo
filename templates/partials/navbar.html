@@ -5,7 +5,7 @@ Navbar de la tienda. Variantes (se pasan con {% include ... with %}):
   en_menu: oculta el link "Productos" (la página del menú)
   carrito: agrupa login, iconos y buscador en .nav-extras (styles_carrito.css)
   nav_clase: clase para el <nav> (producto_detalle usa "navbar-main", ver styles_prod_detalle.css)
-Los productos promocionados vienen de `destacados` (context_processors.py).
+Las tarjetas promocionales de cada menú vienen de `portada` (context_processors.py) y se editan en el panel.
 {% endcomment %}
 <nav{% if nav_clase %} class="{{ nav_clase }}"{% endif %}>
   <div class="navbar">
@@ -55,23 +55,7 @@ Los productos promocionados vienen de `destacados` (context_processors.py).
               </div>
 
               <div class="menu-image-col">
-                <div class="promo-card">
-                    {% if destacados.cod6 %}
-                    <a href="{% url 'producto_detalle' destacados.cod6.id %}" class="text-decoration-none">
-                    {% else %}
-                    <a href="#" class="text-decoration-none">
-                    {% endif %}
-                    
-                    <div class="promo-image-wrapper">
-                        <img src="{% static 'images/cod6.png' %}" alt="Novedad Destacada">
-                        <div class="promo-badge">¡NUEVO!</div>
-                    </div>
-                    <div class="promo-content mt-2 text-center">
-                        <h6 class="text-light mb-0 fw-bold">Call of Duty: Black Ops 6</h6>
-                        <small style="color: #00D2D5;">Ver detalles <i class="fas fa-arrow-right"></i></small>
-                    </div>
-                  </a>
-                </div>
+                {% include "partials/promo_menu.html" with destacado=portada.menu_videojuegos texto_link="Ver detalles" vacio="Próximamente" %}
               </div>
 
             </div>
@@ -100,22 +84,7 @@ Los productos promocionados vienen de `destacados` (context_processors.py).
                     </div>
 
                     <div class="menu-image-col">
-                        <div class="promo-card">
-                            {% if destacados.ps5 %}
-                            <a href="{% url 'producto_detalle' destacados.ps5.id %}" class="text-decoration-none">
-                                <div class="promo-image-wrapper">
-                                    <img src="{{ destacados.ps5.imagen_principal.url }}" alt="{{ destacados.ps5.nombre }}">
-                                    <div class="promo-badge">¡TOP VENTAS!</div>
-                                </div>
-                                <div class="promo-content mt-2 text-center">
-                                    <h6 class="text-light mb-0 fw-bold">{{ destacados.ps5.nombre }}</h6>
-                                    <small style="color: #00D2D5;">Ver consola <i class="fas fa-arrow-right"></i></small>
-                                </div>
-                            </a>
-                            {% else %}
-                                <p class="text-muted text-center">Próximamente</p>
-                            {% endif %}
-                        </div>
+                        {% include "partials/promo_menu.html" with destacado=portada.menu_consolas texto_link="Ver consola" vacio="Próximamente" %}
                     </div>
                 </div>
             </div>
@@ -150,22 +119,7 @@ Los productos promocionados vienen de `destacados` (context_processors.py).
                     </div>
 
                     <div class="menu-image-col">
-                        <div class="promo-card">
-                            {% if destacados.mando %}
-                            <a href="{% url 'producto_detalle' destacados.mando.id %}" class="text-decoration-none">
-                                <div class="promo-image-wrapper">
-                                    <img src="{{ destacados.mando.imagen_principal.url }}" alt="{{ destacados.mando.nombre }}">
-                                    <div class="promo-badge" style="background-color: #8e44ad;">EXCLUSIVO</div>
-                                </div>
-                                <div class="promo-content mt-2 text-center">
-                                    <h6 class="text-light mb-0 fw-bold">DualSense Chroma Pearl</h6>
-                                    <small style="color: #00D2D5;">Ver accesorio <i class="fas fa-arrow-right"></i></small>
-                                </div>
-                            </a>
-                            {% else %}
-                                <p class="text-muted text-center">Sin stock destacado</p>
-                            {% endif %}
-                        </div>
+                        {% include "partials/promo_menu.html" with destacado=portada.menu_accesorios texto_link="Ver accesorio" color_etiqueta="#8e44ad" vacio="Sin stock destacado" %}
                     </div>
                 </div>
             </div>
@@ -185,22 +139,7 @@ Los productos promocionados vienen de `destacados` (context_processors.py).
                     </div>
 
                     <div class="menu-image-col">
-                        <div class="promo-card">
-                            {% if destacados.funko %}
-                            <a href="{% url 'producto_detalle' destacados.funko.id %}" class="text-decoration-none">
-                                <div class="promo-image-wrapper">
-                                    <img src="{{ destacados.funko.imagen_principal.url }}" alt="{{ destacados.funko.nombre }}">
-                                    <div class="promo-badge" style="background-color: #f39c12;">COLECCIÓN</div>
-                                </div>
-                                <div class="promo-content mt-2 text-center">
-                                    <h6 class="text-light mb-0 fw-bold">{{ destacados.funko.nombre }}</h6>
-                                    <small style="color: #00D2D5;">Lo quiero <i class="fas fa-arrow-right"></i></small>
-                                </div>
-                            </a>
-                            {% else %}
-                                <p class="text-muted text-center">Próximamente</p>
-                            {% endif %}
-                        </div>
+                        {% include "partials/promo_menu.html" with destacado=portada.menu_figuras texto_link="Lo quiero" color_etiqueta="#f39c12" vacio="Próximamente" %}
                     </div>
                 </div>
             </div>

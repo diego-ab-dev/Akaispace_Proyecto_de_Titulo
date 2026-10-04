@@ -249,7 +249,9 @@ Una página nueva solo define sus bloques:
 {% endblock %}
 ```
 
-El navbar está en `templates/partials/navbar.html`, el footer en `templates/partials/footer.html` y el menú lateral del panel en `templates/admin_panel/partials/sidebar.html`. Para cambiarlos se edita solo ese archivo. Los productos promocionados del navbar (`destacados`) se cargan en `appPrincipal/context_processors.py`, así que las vistas no tienen que enviarlos.
+El navbar está en `templates/partials/navbar.html`, el footer en `templates/partials/footer.html` y el menú lateral del panel en `templates/admin_panel/partials/sidebar.html`. Para cambiarlos se edita solo ese archivo.
+
+**Portada editable** (carrusel del menú, nuevos lanzamientos del home y la tarjeta promocional de cada menú del navbar): se administra desde el panel, en **Portada**. Se guarda en el modelo `Destacado` y llega a las plantillas como `portada` (`appPrincipal/context_processors.py`). El contenido inicial lo crea la migración `0004_portada_inicial`, y `python manage.py seed_demo` lo enlaza con los productos de ejemplo.
 
 ---
 

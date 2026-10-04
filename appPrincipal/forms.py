@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
 from .constants import REGIONES, REGIONES_CIUDADES
-from .models import Usuario, Producto, Opinion
+from .models import Destacado, Opinion, Producto, Usuario, youtube_embed_url
 import os
 
 
@@ -289,3 +289,47 @@ class ProductoForm(forms.ModelForm):
         return cleaned_data
  
 
+
+
+# form de la portada (carrusel, nuevos lanzamientos y promos del navbar) en el panel
+class DestacadoForm(forms.ModelForm):
+    class Meta:
+        model = Destacado
+        fields = ['seccion', 'producto', 'titulo', 'texto', 'imagen', 'etiqueta', 'video_url', 'orden', 'activo']
+        widgets = {
+            'seccion': forms.Select(attrs={'class': 'form-select'}),
+            'producto': forms.Select(attrs={'class': 'form-select'}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '80'}),
+            'texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'maxlength': '400'}),
+            'imagen': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'etiqueta': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '20'}),
+            'video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.youtube.com/watch?v=...'}),
+            'orden': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # solo productos a la venta, ordenados para encontrarlos fácil
+        self.fields['producto'].queryset = Producto.objects.order_by('nombre')
+        self.fields['producto'].empty_label = 'Sin producto'
+
+    def clean_video_url(self):
+        video_url = self.cleaned_data.get('video_url', '')
+        if video_url and not youtube_embed_url(video_url):
+            raise forms.ValidationError('Pega el link de un video de YouTube (por ejemplo https://www.youtube.com/watch?v=...).')
+        return video_url
+
+    def clean(self):
+        cleaned_data = super().clean()
+        seccion = cleaned_data.get('seccion')
+        producto = cleaned_data.get('producto')
+        imagen = cleaned_data.get('imagen')
+        if seccion == Destacado.SECCION_LANZAMIENTOS:
+            # un lanzamiento puede no estar a la venta aún, pero necesita algo que mostrar
+            if not cleaned_data.get('video_url') and not imagen and not producto:
+                self.add_error('video_url', 'Agrega un video, una imagen o un producto para este lanzamiento.')
+        elif seccion and not producto:
+            # el carrusel y las promos del navbar llevan al producto
+            self.add_error('producto', 'Elige el producto al que lleva este destacado.')
+        return cleaned_data

@@ -1,4 +1,4 @@
-from appPrincipal.models import Producto
+from appPrincipal.models import Destacado
 
 
 def usuario_context(request):
@@ -7,32 +7,34 @@ def usuario_context(request):
     return {'usuario': usuario}
 
 
-class ProductosDestacados:
-    """Productos que se promocionan en el navbar y en el carrusel del menú.
+class Portada:
+    """Contenido de portada que el admin edita en el panel (modelo Destacado).
 
-    Se usa en las plantillas como {{ destacados.ps5 }}. Cada producto se consulta
-    solo la primera vez que una plantilla lo pide, así las páginas que no muestran
-    el navbar (por ejemplo el panel de administración) no hacen consultas extra.
+    En las plantillas: {{ portada.carrusel }} y {{ portada.lanzamientos }} son listas, y
+    {{ portada.menu_consolas }} (y los demás menús del navbar) es un solo destacado o None.
+    Se consulta la base de datos solo la primera vez que una plantilla lo usa, y una sola
+    vez por página, así las páginas sin navbar (como el panel) no hacen consultas extra.
     """
-    NOMBRES = {
-        'cod6': "Call of Duty: Black Ops 6",
-        'fc25': "Fc 25",
-        'silent': "Silent Hill 2",
-        'ps5': "Play Station 5",
-        'mando': "Control Sony Dualsense Chroma Pearl Ps5",
-        'funko': "Funko Pop John Wick",
-    }
 
     def __init__(self):
-        self._cache = {}
+        self._por_seccion = None
 
-    def __getattr__(self, clave):
-        if clave not in self.NOMBRES:
-            raise AttributeError(clave)
-        if clave not in self._cache:
-            self._cache[clave] = Producto.objects.filter(nombre=self.NOMBRES[clave]).first()
-        return self._cache[clave]
+    def _cargar(self):
+        if self._por_seccion is None:
+            self._por_seccion = {}
+            activos = Destacado.objects.filter(activo=True).select_related('producto')
+            for destacado in activos:
+                self._por_seccion.setdefault(destacado.seccion, []).append(destacado)
+        return self._por_seccion
+
+    def __getattr__(self, seccion):
+        if seccion not in dict(Destacado.SECCIONES):
+            raise AttributeError(seccion)
+        destacados = self._cargar().get(seccion, [])
+        if seccion in Destacado.SECCIONES_DE_UNO:
+            return destacados[0] if destacados else None
+        return destacados
 
 
-def destacados_context(request):
-    return {'destacados': ProductosDestacados()}
+def portada_context(request):
+    return {'portada': Portada()}

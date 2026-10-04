@@ -22,4 +22,5 @@ from .panel import (
     admin_reclamos, detalle_reclamo, responder_reclamo,
     admin_usuarios, buscar_usuarios, crear_usuario, detalle_usuario, eliminar_usuario,
     admin_ventas, anular_venta, detalle_venta, modificar_venta,
+    admin_portada, cambiar_estado_destacado, crear_destacado, editar_destacado, eliminar_destacado,
 )

@@ -1,0 +1,227 @@
+/* Panel > Portada (templates/admin_panel/portada.html y portada_form.html) */
+
+.portada {
+    max-width: 1100px;
+    padding: 1.5rem 0 3rem;
+}
+
+.portada-intro {
+    color: #5b6470;
+    margin-bottom: 1.5rem;
+}
+
+.portada-seccion {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.portada-seccion__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.portada-seccion__header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1c253b;
+    margin: 0;
+}
+
+.portada-seccion__nota {
+    font-size: 0.85rem;
+    color: #7a828c;
+    margin: 0.25rem 0 0;
+}
+
+.portada-vacia {
+    color: #7a828c;
+    font-style: italic;
+    margin: 0;
+}
+
+.portada-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.portada-item {
+    display: grid;
+    grid-template-columns: 64px 1fr auto auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid #eef1f4;
+}
+
+.portada-item:first-child {
+    border-top: none;
+}
+
+.portada-item--inactivo .portada-item__imagen,
+.portada-item--inactivo .portada-item__datos {
+    opacity: 0.5;
+}
+
+.portada-item__imagen {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    background: #eef1f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: #7a828c;
+    font-size: 1.75rem;
+}
+
+.portada-item__imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.portada-item__datos {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.portada-item__datos strong {
+    color: #1c253b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.portada-item__producto {
+    font-size: 0.875rem;
+    color: #7a828c;
+}
+
+.portada-item__etiqueta {
+    align-self: flex-start;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: #00a3a6;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+}
+
+.portada-item__orden {
+    color: #7a828c;
+    font-variant-numeric: tabular-nums;
+}
+
+.portada-estado {
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+}
+
+.portada-estado--activo {
+    background: #e3f4ea;
+    color: #1e7b45;
+}
+
+.portada-estado--inactivo {
+    background: #eef1f4;
+    color: #5b6470;
+}
+
+.portada-item__acciones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.portada-item__acciones form {
+    margin: 0;
+}
+
+.btn-portada {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid #c9d3dc;
+    background: #ffffff;
+    color: #1c253b;
+    border-radius: 8px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-portada:hover {
+    background: #eef1f4;
+    color: #1c253b;
+}
+
+.btn-portada--primario {
+    background: #4e84a8;
+    border-color: #4e84a8;
+    color: #ffffff;
+}
+
+.btn-portada--primario:hover {
+    background: #3f6f8f;
+    color: #ffffff;
+}
+
+.btn-portada--peligro {
+    color: #c82333;
+    border-color: #f0c2c7;
+}
+
+.btn-portada--peligro:hover {
+    background: #fdecee;
+    color: #c82333;
+}
+
+.portada-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #4e84a8;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.portada-form .form-label {
+    font-weight: 600;
+    color: #1c253b;
+}
+
+.portada-form__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .portada-item {
+        grid-template-columns: 56px 1fr;
+    }
+
+    .portada-item__orden,
+    .portada-estado,
+    .portada-item__acciones {
+        grid-column: 2;
+    }
+
+    .portada-item__acciones {
+        flex-wrap: wrap;
+    }
+}

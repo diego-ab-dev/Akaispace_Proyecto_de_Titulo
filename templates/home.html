@@ -109,7 +109,8 @@
   </section>
 
 
- <!--Apartado de Nuevos Lanzamientos-->
+{# Apartado de Nuevos Lanzamientos: se edita en el panel de administración (Portada > Nuevos lanzamientos) #}
+{% if portada.lanzamientos %}
 <section class="wrapper paused">
     <div class="container cont-vid">
       <div class="row">
@@ -117,46 +118,34 @@
           <h1 class="anim-down display-6 fw-bold fst-italic text-center">Nuevos Lanzamientos</h1>
         </div>
       </div>
-      <div class="row align-items-center mb-5 anim-up">
-        <div class="col-md-6 mb-4 mb-md-0">
+      {% for lanzamiento in portada.lanzamientos %}
+      {# se alternan: video a la izquierda en los impares y a la derecha en los pares #}
+      <div class="row align-items-center anim-up{% if not forloop.last %} mb-5{% endif %}">
+        <div class="col-md-6 mb-4 mb-md-0{% if forloop.counter|divisibleby:2 %} order-1 order-md-2{% endif %}">
           <div class="video-placeholder-container">
             <div class="video-placeholder">
-                <iframe width="560" height="315" src="https://www.youtube.com/embed/wFGEMfyAQtI?si=uR1kNT3b9-aTYjWK?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="box-shadow: 0 0 10px rgba(0, 0, 0, .8);"></iframe>
+              {% if lanzamiento.video_embed_url %}
+                <iframe width="560" height="315" src="{{ lanzamiento.video_embed_url }}" title="{{ lanzamiento.titulo }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="box-shadow: 0 0 10px rgba(0, 0, 0, .8);"></iframe>
+              {% elif lanzamiento.imagen_url %}
+                <img src="{{ lanzamiento.imagen_url }}" alt="{{ lanzamiento.titulo }}" class="img-fluid" style="box-shadow: 0 0 10px rgba(0, 0, 0, .8);">
+              {% endif %}
             </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <h2 class="fw-bold mb-3 text-dark">Battlefield 6</h2>
-          <p class="text-dark" style="text-align: justify;">
-            Battlefield 6 es un videojuego de disparos en primera persona de 2025 desarrollado por 
-            Battlefield Studios​y publicado por Electronic Arts. Siendo la decimoctava entrega de 
-            la serie Battlefield, el juego se lanzó para PlayStation 5, Windows y Xbox Series X/S 
-            el 10 de octubre de 2025.
-          </p>
-          <a href="/menu" class="btn-product-cta">Ver Producto</a>
+        <div class="col-md-6{% if forloop.counter|divisibleby:2 %} order-2 order-md-1{% endif %}">
+          <h2 class="fw-bold mb-3 text-dark">{{ lanzamiento.titulo }}</h2>
+          <p class="text-dark" style="text-align: justify;">{{ lanzamiento.texto }}</p>
+          {% if lanzamiento.producto_disponible %}
+          <a href="{% url 'producto_detalle' lanzamiento.producto_disponible.id %}" class="btn-product-cta">Ver Producto</a>
+          {% else %}
+          <a href="/menu" class="btn-product-cta">Ver Productos</a>
+          {% endif %}
         </div>
       </div>
-
-      <div class="row align-items-center anim-up">
-        <div class="col-md-6 order-2 order-md-1">
-          <h2 class="fw-bold mb-3 text-dark">EA Sports FC 26</h2>
-          <p class="text-dark" style="text-align: justify;">
-            EA Sports FC 26 es un videojuego de fútbol desarrollado por EA Vancouver y EA 
-            Romania y publicado por Electronic Arts. Su lanzamiento mundial fue el 26 de 
-            septiembre de 2025 para Microsoft Windows, PlayStation 4, PlayStation 5, Xbox 
-            One, Xbox Series X/S, Nintendo Switch, Nintendo Switch 2 y Amazon Luna.
-          </p>
-          <a href="/menu" class="btn-product-cta">Ver Producto</a>
-        </div>
-        <div class="col-md-6 order-1 order-md-2 mb-4 mb-md-0">
-          <div class="video-placeholder-container">
-            <div class="video-placeholder">
-                <iframe width="560" height="315" src="https://www.youtube.com/embed/TSi0iJYSQ24?si=ohSTTIwMLJ7TQIDa" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="box-shadow: 0 0 10px rgba(0, 0, 0, .8);"></iframe>
-          </div>
-        </div>
-      </div>
+      {% endfor %}
     </div>
   </section>
+{% endif %}
 
 
 

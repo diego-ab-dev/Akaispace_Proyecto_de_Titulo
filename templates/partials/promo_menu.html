@@ -1,0 +1,21 @@
+{% comment %}
+Tarjeta promocional de un menú del navbar. Se incluye con:
+  destacado: el Destacado de esa sección (portada.menu_...) o None
+  texto_link, color_etiqueta (opcional), vacio: mensaje si el admin no configuró ninguno
+{% endcomment %}
+<div class="promo-card">
+    {% if destacado %}
+    <a href="{% if destacado.producto_disponible %}{% url 'producto_detalle' destacado.producto_disponible.id %}{% else %}#{% endif %}" class="text-decoration-none">
+        <div class="promo-image-wrapper">
+            {% if destacado.imagen_url %}<img src="{{ destacado.imagen_url }}" alt="{{ destacado.titulo }}">{% endif %}
+            {% if destacado.etiqueta %}<div class="promo-badge"{% if color_etiqueta %} style="background-color: {{ color_etiqueta }};"{% endif %}>{{ destacado.etiqueta }}</div>{% endif %}
+        </div>
+        <div class="promo-content mt-2 text-center">
+            <h6 class="text-light mb-0 fw-bold">{{ destacado.titulo }}</h6>
+            <small style="color: #00D2D5;">{{ texto_link }} <i class="fas fa-arrow-right"></i></small>
+        </div>
+    </a>
+    {% else %}
+        <p class="text-muted text-center">{{ vacio }}</p>
+    {% endif %}
+</div>

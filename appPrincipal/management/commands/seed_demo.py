@@ -5,7 +5,8 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
-from appPrincipal.models import Usuario
+from appPrincipal import portada_inicial
+from appPrincipal.models import Destacado, Producto, Usuario
 
 FIXTURES_DIR = Path(__file__).resolve().parents[2] / 'fixtures'
 
@@ -56,6 +57,11 @@ class Command(BaseCommand):
                     shutil.copy2(archivo, ruta_destino)
         if verbose:
             self.stdout.write('Productos de ejemplo cargados.')
+
+        # carrusel, lanzamientos y promos del navbar enlazados a los productos de ejemplo
+        portada_inicial.cargar(Destacado, Producto)
+        if verbose:
+            self.stdout.write('Portada de ejemplo lista.')
 
         # usuarios de prueba
         for datos in USUARIOS_DEMO:

@@ -344,24 +344,28 @@ class PlantillasTests(TestCase):  # 21: plantilla base y navbar compartido
                 continue
             self.assertIn('{% extends ', ruta.read_text(encoding='utf-8'), nombre)
 
-    def test_destacados_del_navbar_vienen_del_context_processor(self):
-        destacado = Producto.objects.create(
-            codigo_de_barra='333', nombre='Play Station 5', precio=1, stock=1, categoria='Ps5 Consolas',
+    def test_promos_del_navbar_vienen_de_la_portada(self):
+        from .models import Destacado
+        producto = Producto.objects.create(
+            codigo_de_barra='333', nombre='Consola X', precio=1, stock=1, categoria='Ps5 Consolas',
             imagen_principal='productos/silent.png'
         )
+        Destacado.objects.create(seccion='menu_consolas', titulo='Consola X', producto=producto, etiqueta='¡TOP!')
         respuesta = self.client.get('/menu/')
-        self.assertContains(respuesta, f'href="/producto/{destacado.id}/"')
+        self.assertContains(respuesta, f'href="/producto/{producto.id}/"')
+        self.assertContains(respuesta, '¡TOP!')
 
-    def test_destacados_se_consultan_solo_al_usarse(self):
-        from .context_processors import ProductosDestacados
-        destacados = ProductosDestacados()
+    def test_la_portada_se_consulta_solo_al_usarse_y_una_vez(self):
+        from .context_processors import Portada
+        portada = Portada()
         with self.assertNumQueries(0):
-            self.assertIsInstance(destacados, ProductosDestacados)
+            self.assertIsInstance(portada, Portada)
         with self.assertNumQueries(1):
-            destacados.ps5
-            destacados.ps5  # la segunda vez usa el caché
+            portada.carrusel
+            portada.menu_consolas
+            portada.lanzamientos
         with self.assertRaises(AttributeError):
-            destacados.no_existe
+            portada.no_existe
 
 
 def crear_producto(nombre='Juego', stock=5, **extra):
@@ -656,3 +660,127 @@ class ErroresInternosTests(TestCase):  # 35
         self.client.force_login(cliente)
         self.client.post('/eliminar_favoritos_seleccionados/', {'ids': [str(favorito.id)]}, content_type='application/json')
         self.assertFalse(Favorito.objects.exists())
+
+
+class PortadaSitioTests(TestCase):  # 24 / HU-09: lo que el admin configura se ve en el sitio
+    def setUp(self):
+        from .models import Destacado
+        Destacado.objects.all().delete()  # parte sin el contenido inicial de la migración
+        self.producto = crear_producto('Juego Nuevo')
+
+    def crear(self, **datos):
+        from .models import Destacado
+        return Destacado.objects.create(**datos)
+
+    def test_carrusel_muestra_solo_los_activos_en_orden(self):
+        self.crear(seccion='carrusel', titulo='Segundo', producto=self.producto, orden=2)
+        self.crear(seccion='carrusel', titulo='Primero', producto=self.producto, orden=1)
+        self.crear(seccion='carrusel', titulo='Oculto', producto=self.producto, orden=0, activo=False)
+        html = self.client.get('/menu/').content.decode()
+        self.assertNotIn('Oculto', html)
+        self.assertLess(html.index('Primero'), html.index('Segundo'))
+        self.assertIn(f'href="/producto/{self.producto.id}/"', html)
+
+    def test_slide_con_producto_eliminado_no_lleva_al_producto(self):
+        self.crear(seccion='carrusel', titulo='Ya no está', producto=self.producto)
+        self.producto.delete()
+        respuesta = self.client.get('/menu/')
+        self.assertContains(respuesta, 'Ya no está')
+        self.assertContains(respuesta, 'Producto no disponible')
+
+    def test_lanzamientos_del_home_con_video_de_youtube(self):
+        self.crear(seccion='lanzamientos', titulo='Juego 2027', texto='Muy esperado',
+                   video_url='https://youtu.be/wFGEMfyAQtI')
+        respuesta = self.client.get('/')
+        self.assertContains(respuesta, 'Nuevos Lanzamientos')
+        self.assertContains(respuesta, 'https://www.youtube.com/embed/wFGEMfyAQtI')
+
+    def test_lanzamientos_alternan_el_lado_del_video(self):
+        for i in range(2):
+            self.crear(seccion='lanzamientos', titulo=f'Juego {i}', video_url='https://youtu.be/wFGEMfyAQtI', orden=i)
+        self.assertContains(self.client.get('/'), 'order-md-2', count=1)  # solo el segundo va a la derecha
+
+    def test_sin_lanzamientos_la_seccion_no_aparece(self):
+        self.assertNotContains(self.client.get('/'), 'Nuevos Lanzamientos')
+
+    def test_promo_de_menu_muestra_el_primero_activo(self):
+        self.crear(seccion='menu_figuras', titulo='Figura B', producto=self.producto, orden=2)
+        self.crear(seccion='menu_figuras', titulo='Figura A', producto=self.producto, orden=1)
+        html = self.client.get('/menu/').content.decode()
+        self.assertIn('Figura A', html)
+        self.assertNotIn('Figura B', html)
+
+    def test_links_de_youtube_aceptados(self):
+        from .models import youtube_embed_url
+        esperado = 'https://www.youtube.com/embed/wFGEMfyAQtI'
+        for url in ['https://www.youtube.com/watch?v=wFGEMfyAQtI', 'https://youtu.be/wFGEMfyAQtI?si=abc',
+                    'https://www.youtube.com/embed/wFGEMfyAQtI', 'https://www.youtube.com/watch?t=5&v=wFGEMfyAQtI']:
+            self.assertEqual(youtube_embed_url(url), esperado, url)
+        self.assertEqual(youtube_embed_url('https://vimeo.com/123'), '')
+
+
+class PortadaPanelTests(TestCase):  # 24 / HU-09: el admin la edita desde su panel
+    def setUp(self):
+        self.producto = crear_producto('Juego Nuevo')
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def datos(self, **cambios):
+        return {'seccion': 'carrusel', 'producto': self.producto.id, 'titulo': 'Slide nuevo',
+                'texto': 'Texto', 'etiqueta': '', 'video_url': '', 'orden': 1, 'activo': 'on', **cambios}
+
+    def test_listado_y_formulario_cargan(self):
+        self.assertContains(self.client.get('/admin-panel/portada/'), 'Carrusel del menú')
+        self.assertEqual(self.client.get('/admin-panel/portada/nuevo/?seccion=lanzamientos').status_code, 200)
+
+    def test_crear_editar_ocultar_y_eliminar(self):
+        from .models import Destacado
+        self.assertRedirects(self.client.post('/admin-panel/portada/nuevo/', self.datos()), '/admin-panel/portada/')
+        destacado = Destacado.objects.get(titulo='Slide nuevo')
+
+        self.client.post(f'/admin-panel/portada/{destacado.id}/editar/', self.datos(titulo='Slide editado'))
+        destacado.refresh_from_db()
+        self.assertEqual(destacado.titulo, 'Slide editado')
+
+        self.client.post(f'/admin-panel/portada/{destacado.id}/estado/')
+        destacado.refresh_from_db()
+        self.assertFalse(destacado.activo)
+
+        self.assertEqual(self.client.get(f'/admin-panel/portada/{destacado.id}/eliminar/').status_code, 405)
+        self.client.post(f'/admin-panel/portada/{destacado.id}/eliminar/')
+        self.assertFalse(Destacado.objects.filter(id=destacado.id).exists())
+
+    def test_carrusel_y_menus_necesitan_producto(self):
+        for seccion in ['carrusel', 'menu_consolas']:
+            respuesta = self.client.post('/admin-panel/portada/nuevo/', self.datos(seccion=seccion, producto=''))
+            self.assertFormError(respuesta.context['form'], 'producto', 'Elige el producto al que lleva este destacado.')
+
+    def test_lanzamiento_sin_producto_con_video_es_valido_y_link_invalido_no(self):
+        from .models import Destacado
+        self.client.post('/admin-panel/portada/nuevo/', self.datos(
+            seccion='lanzamientos', producto='', titulo='Lanzamiento', video_url='https://youtu.be/wFGEMfyAQtI'))
+        self.assertTrue(Destacado.objects.filter(titulo='Lanzamiento').exists())
+
+        respuesta = self.client.post('/admin-panel/portada/nuevo/', self.datos(
+            seccion='lanzamientos', producto='', video_url='https://vimeo.com/123'))
+        self.assertIn('video_url', respuesta.context['form'].errors)
+
+    def test_cliente_no_puede_editar_la_portada(self):
+        self.client.force_login(crear_cliente())
+        self.assertRedirects(self.client.get('/admin-panel/portada/'), '/', fetch_redirect_response=False)
+
+
+class PortadaInicialTests(TestCase):  # la migración deja el sitio igual que antes
+    def test_migracion_crea_el_contenido_que_estaba_en_las_plantillas(self):
+        from .models import Destacado
+        self.assertEqual(Destacado.objects.filter(seccion='carrusel').count(), 3)
+        self.assertEqual(Destacado.objects.filter(seccion='lanzamientos').count(), 2)
+        self.assertEqual(Destacado.objects.filter(seccion__startswith='menu_').count(), 4)
+
+    def test_cargar_enlaza_los_productos_y_no_duplica(self):
+        from . import portada_inicial
+        from .models import Destacado
+        ps5 = crear_producto('Play Station 5')
+        portada_inicial.cargar(Destacado, Producto)
+        portada_inicial.cargar(Destacado, Producto)
+        self.assertEqual(Destacado.objects.count(), 9)
+        self.assertEqual(Destacado.objects.get(seccion='menu_consolas').producto, ps5)

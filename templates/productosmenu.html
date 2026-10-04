@@ -17,92 +17,35 @@
 <!--carrusel principal-->
   <div id="myCarousel" class="carousel slide carousel-fade" data-ride="carousel">
     <div class="carousel-inner">
-      <div class="carousel-item active">
+      {# los slides se editan en el panel de administración (Portada > Carrusel del menú) #}
+      {% for slide in portada.carrusel %}
+      <div class="carousel-item{% if forloop.first %} active{% endif %}">
         <div class="mask flex-center">
           <div class="container">
             <div class="row align-items-center">
               <div class="col-md-7 col-12 order-md-1 order-2">
-                <h4 class="textcarrousel text-dark">Call of Duty <br>
-                  Black Ops 6</h4>
-                <p class="parrafos-carrousel text-dark">Prepárate para la adrenalina de Call of Duty: Black Ops 6. Vive
-                  una experiencia de combate que no querrás dejar. ¡Consíguelo ahora!</p>
-                {% if destacados.cod6 %}
-                <a class="btn-comprar" href="{% url 'producto_detalle' destacados.cod6.id %}">Ver Producto</a>
+                <h4 class="textcarrousel text-dark">{{ slide.titulo }}</h4>
+                <p class="parrafos-carrousel text-dark">{{ slide.texto }}</p>
+                {% if slide.producto_disponible %}
+                <a class="btn-comprar" href="{% url 'producto_detalle' slide.producto_disponible.id %}">Ver Producto</a>
                 {% else %}
                 <p class="parrafos-carrousel text-muted">Producto no disponible</p>
                 {% endif %}
               </div>
               <div class="col-md-5 col-12 order-md-2 order-1">
-                {% if destacados.cod6 %}
-                <a href="{% url 'producto_detalle' destacados.cod6.id %}">
-                  <img src="{% static 'images/cod6.png' %}" class="mx-auto"
-                    style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="slide">
-                </a>
-                {% else %}
-                <p class="parrafos-carrousel text-muted">Producto no disponible</p>
+                {% if slide.imagen_url %}
+                {% if slide.producto_disponible %}<a href="{% url 'producto_detalle' slide.producto_disponible.id %}">{% endif %}
+                  <img src="{{ slide.imagen_url }}" class="mx-auto"
+                    style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="{{ slide.titulo }}">
+                {% if slide.producto_disponible %}</a>{% endif %}
                 {% endif %}
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="carousel-item">
-        <div class="mask flex-center">
-          <div class="container">
-            <div class="row align-items-center">
-              <div class="col-md-7 col-12 order-md-1 order-2">
-                <h4 class="textcarrousel text-dark">FC25</h4>
-                <p class="parrafos-carrousel text-dark">¡Vive la emoción del fútbol como nunca antes con FC25! Llévate
-                  el juego que todos
-                  quieren y domina la cancha desde casa.</p>
-                {% if destacados.fc25 %}
-                <a class="btn-comprar" href="{% url 'producto_detalle' destacados.fc25.id %}">COMPRAR</a>
-                {% else %}
-                <p class="parrafos-carrousel text-muted">Producto no disponible</p>
-                {% endif %}
-              </div>
-              <div class="col-md-5 col-12 order-md-2 order-1">
-                {% if destacados.fc25 %}
-                <a href="{% url 'producto_detalle' destacados.fc25.id %}">
-                  <img src="{% static 'images/fc25.png' %}" class="mx-auto"
-                    style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="slide">
-                </a>
-                {% else %}
-                <p class="parrafos-carrousel text-muted">Producto no disponible</p>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="carousel-item">
-        <div class="mask flex-center">
-          <div class="container">
-            <div class="row align-items-center">
-              <div class="col-md-7 col-12 order-md-1 order-2">
-                <h4 class="textcarrousel text-dark">Silent Hill 2</h4>
-                <p class="parrafos-carrousel text-dark">Sumérgete en el terror psicológico de Silent Hill 2. Atrévete a
-                  enfrentar tus miedos y descubre los oscuros secretos que te esperan.</p>
-                {% if destacados.silent %}
-                <a class="btn-comprar" href="{% url 'producto_detalle' destacados.silent.id %}">COMPRAR</a>
-                {% else %}
-                <p class="parrafos-carrousel text-muted">Producto no disponible</p>
-                {% endif %}
-              </div>
-              <div class="col-md-5 col-12 order-md-2 order-1">
-                {% if destacados.silent %}
-                <a href="{% url 'producto_detalle' destacados.silent.id %}">
-                  <img src="{% static 'images/silent.png' %}" class="mx-auto"
-                    style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="slide">
-                </a>
-                {% else %}
-                <p class="parrafos-carrousel text-muted">Producto no disponible</p>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {% endfor %}
+      {% if portada.carrusel|length > 1 %}
       <a class="carousel-control-prev" href="#myCarousel" role="button" data-bs-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="sr-only">Previous</span>
@@ -111,6 +54,7 @@
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="sr-only">Next</span>
       </a>
+      {% endif %}
 
 
       <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>

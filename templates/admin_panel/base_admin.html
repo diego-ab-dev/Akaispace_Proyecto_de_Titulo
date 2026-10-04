@@ -5,6 +5,11 @@ Páginas del panel de administración con navbar lateral.
 El bloque `encabezado` va antes del header (por ejemplo el <h1> de la sección).
 {% endcomment %}
 
+{% block librerias %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/panel.css' %}">
+{% endblock %}
+
 {% block body_attrs %} id="body-pd" style="background-color:#EEF1F4;"{% endblock %}
 
 {% block navbar %}

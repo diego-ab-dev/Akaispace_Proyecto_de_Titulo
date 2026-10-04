@@ -34,6 +34,10 @@
                     <i class='bx bx-revision nav_icon'></i>
                     <span class="nav_name">Devoluciones</span>
                 </a>
+                <a href="{% url 'admin_portada' %}" class="nav_link{% if n == 'admin_portada' or n == 'crear_destacado' or n == 'editar_destacado' %} active{% endif %}">
+                    <i class='bx bx-images nav_icon'></i>
+                    <span class="nav_name">Portada</span>
+                </a>
             </div>
         </div>
         <a href="{% url 'logout' %}" class="nav_link">
