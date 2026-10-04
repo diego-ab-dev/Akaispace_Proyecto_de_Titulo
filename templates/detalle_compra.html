@@ -176,9 +176,12 @@
                 </a>
 
         {% if compra.datos_envio.estado == "Enviado" or compra.datos_envio.estado == "En Tránsito" or compra.datos_envio.estado == "En Reparto" %}
-            <a href="{% url 'marcar_recibido' compra.id %}" class="btn btn-success mt-3" style="width: 100%;">
-                Marcar como recibido
-            </a>
+            <form method="post" action="{% url 'marcar_recibido' compra.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success mt-3" style="width: 100%;">
+                    Marcar como recibido
+                </button>
+            </form>
         {% endif %}
 
 
@@ -188,7 +191,6 @@
     </div>
 
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const estado = "{{ compra.datos_envio.estado }}";

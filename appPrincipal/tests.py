@@ -285,8 +285,8 @@ class ModeloTests(TestCase):  # 17, 25, 26 y 28
         self.client.post(f'/admin-panel/ventas/modificar/{self.venta.id}/', {'estado': 'Entregado'})
         self.assertEqual(Envio.objects.get(venta=self.venta).estado, 'Entregado')
 
-        self.client.get(f'/ventas/anular/{self.venta.id}/')
-        self.client.get(f'/ventas/anular/{self.venta.id}/')
+        self.client.post(f'/ventas/anular/{self.venta.id}/')
+        self.client.post(f'/ventas/anular/{self.venta.id}/')
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 7)  # 5 + 2 devueltos una sola vez
 
@@ -362,3 +362,216 @@ class PlantillasTests(TestCase):  # 21: plantilla base y navbar compartido
             destacados.ps5  # la segunda vez usa el caché
         with self.assertRaises(AttributeError):
             destacados.no_existe
+
+
+def crear_producto(nombre='Juego', stock=5, **extra):
+    datos = {'codigo_de_barra': nombre[:20], 'precio': 10000, 'categoria': 'Videojuegos PS5',
+             'imagen_principal': 'productos/silent.png', **extra}
+    return Producto.objects.create(nombre=nombre, stock=stock, **datos)
+
+
+def crear_venta(cliente, producto, cantidad=2, estado='Entregado'):
+    from .models import Envio, ProductoVenta, Venta
+    venta = Venta.objects.create(usuario=cliente, metodo_envio='tienda')
+    ProductoVenta.objects.create(venta=venta, producto=producto, cantidad=cantidad, precio_unitario=producto.precio)
+    Envio.objects.create(venta=venta, estado=estado)
+    return venta
+
+
+class CarritoTests(TestCase):  # 12
+    def setUp(self):
+        self.producto = crear_producto(stock=3)
+        self.client.force_login(crear_cliente())
+
+    def agregar(self, cantidad, producto=None):
+        return self.client.post(f'/agregar/{(producto or self.producto).id}/', {'cantidad': cantidad})
+
+    def items(self):
+        from .models import ItemCarritoProducto
+        return list(ItemCarritoProducto.objects.values_list('cantidad', flat=True))
+
+    def test_cantidad_invalida_o_negativa_se_rechaza(self):
+        for cantidad in ['abc', '-2', '0', '']:
+            self.assertEqual(self.agregar(cantidad).status_code, 400, cantidad)
+        self.assertEqual(self.items(), [])
+
+    def test_pasarse_del_stock_no_responde_exito_ni_agrega(self):
+        self.assertTrue(self.agregar(2).json()['success'])
+        respuesta = self.agregar(2).json()  # 2 + 2 > 3
+        self.assertFalse(respuesta['success'])
+        self.assertIn('1 unidad', respuesta['error'])
+        self.assertEqual(self.items(), [2])
+
+    def test_sin_stock_no_se_crea_el_item(self):
+        self.assertFalse(self.agregar(5).json()['success'])
+        self.assertEqual(self.items(), [])
+
+    def test_no_se_pueden_agregar_productos_eliminados(self):
+        self.producto.delete()
+        self.assertEqual(self.agregar(1).status_code, 404)
+        self.assertEqual(self.client.get(f'/producto/{self.producto.id}/').status_code, 404)
+
+    def test_agregar_por_get_no_esta_permitido(self):
+        self.assertEqual(self.client.get(f'/agregar/{self.producto.id}/').status_code, 405)
+
+    def test_actualizar_cantidad_con_texto_no_se_cae(self):
+        from .models import ItemCarritoProducto
+        self.agregar(1)
+        item = ItemCarritoProducto.objects.get()
+        self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 'x'}).status_code, 400)
+        self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': 'x', 'cantidad': 1}).status_code, 400)
+
+
+class CheckoutTests(TestCase):  # 9
+    def setUp(self):
+        from .models import Carrito, ItemCarritoProducto
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+        self.con_stock = crear_producto('Con stock', stock=5)
+        self.eliminado = crear_producto('Eliminado', stock=5)
+        carrito = Carrito.objects.create(usuario=self.cliente)
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=self.con_stock, cantidad=2)
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=self.eliminado, cantidad=1)
+
+    def test_producto_eliminado_en_el_carrito_no_deja_venta_ni_descuenta_stock(self):
+        from .models import Venta
+        self.eliminado.delete()
+        respuesta = self.client.get('/compra-exitosa/')
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/'))
+        self.assertFalse(Venta.objects.exists())
+        self.con_stock.refresh_from_db()
+        self.assertEqual(self.con_stock.stock, 5)
+
+    def test_calcular_total_ya_no_toca_el_stock(self):
+        from .models import Venta
+        self.assertEqual(self.client.get('/compra-exitosa/').status_code, 200)
+        venta = Venta.objects.get()
+        venta.calcular_total()  # recalcular el total no puede volver a descontar
+        self.con_stock.refresh_from_db()
+        self.assertEqual(self.con_stock.stock, 3)
+        self.assertEqual(venta.total, 30000)
+
+
+class DevolucionesTests(TestCase):  # 4, 5 y 18
+    def setUp(self):
+        self.producto = crear_producto(stock=5)
+        self.cliente = crear_cliente()
+        self.venta = crear_venta(self.cliente, self.producto, cantidad=2)
+        self.url = f'/devolucion/crear/{self.venta.id}/{self.producto.id}/'
+        self.client.force_login(self.cliente)
+
+    def pedir(self, cantidad):
+        return self.client.post(self.url, {'cantidad': cantidad, 'descripcion': 'Llegó roto'})
+
+    def responder_como_admin(self, devolucion, accion):
+        jefe = Usuario.objects.filter(email='jefe@example.com').first() or crear_cliente('jefe@example.com', is_staff=True)
+        self.client.force_login(jefe)
+        url = f'/admin-panel/devoluciones/responder/{devolucion.id}/'
+        return self.client.post(url, {'accion': accion, 'respuesta': 'ok'})
+
+    def test_no_se_puede_devolver_mas_de_lo_comprado_ni_cantidades_negativas(self):
+        from .models import Devolucion
+        for cantidad in [3, 0, -5, 'abc']:
+            self.pedir(cantidad)
+        self.assertFalse(Devolucion.objects.exists())
+
+    def test_lo_ya_solicitado_descuenta_de_lo_que_se_puede_devolver(self):
+        from .models import Devolucion
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+        self.pedir(1)
+        self.pedir(2)  # solo queda 1
+        self.pedir(1)
+        self.assertEqual(list(Devolucion.objects.values_list('cantidad', flat=True)), [1, 1])
+        self.assertEqual(self.client.get(self.url).status_code, 302)  # ya no queda nada por devolver
+
+    def test_solo_se_puede_devolver_una_compra_entregada(self):
+        from .models import Devolucion, Envio
+        Envio.objects.filter(venta=self.venta).update(estado='Enviado')
+        self.pedir(1)
+        self.assertFalse(Devolucion.objects.exists())
+
+    def test_aprobar_dos_veces_repone_el_stock_una_sola_vez(self):
+        from .models import Devolucion
+        self.pedir(2)
+        devolucion = Devolucion.objects.get()
+        self.responder_como_admin(devolucion, 'aceptar')
+        self.responder_como_admin(devolucion, 'aceptar')
+        self.responder_como_admin(devolucion, 'rechazar')
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 7)
+        self.assertEqual(Devolucion.objects.get().estado, 'Aprobada')
+
+    def test_anular_una_venta_con_devolucion_aprobada_no_repone_dos_veces(self):
+        from .models import Devolucion
+        self.pedir(1)
+        self.responder_como_admin(Devolucion.objects.get(), 'aceptar')
+        self.client.post(f'/ventas/anular/{self.venta.id}/')
+        self.client.post(f'/ventas/anular/{self.venta.id}/')
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 7)  # 5 + 1 devuelto + 1 al anular
+
+    def test_detalle_de_compra_con_devolucion_sin_producto_no_se_cae(self):  # 18
+        from .models import Devolucion
+        Devolucion.objects.create(usuario=self.cliente, venta=self.venta, producto=None, motivo='x')
+        self.assertEqual(self.client.get(f'/compra/{self.venta.id}/detalle/').status_code, 200)
+
+
+class AccionesPorPostTests(TestCase):  # 6
+    def setUp(self):
+        self.producto = crear_producto()
+        self.cliente = crear_cliente()
+        self.venta = crear_venta(self.cliente, self.producto, estado='Enviado')
+        self.jefe = crear_cliente('jefe@example.com', is_staff=True)
+
+    def test_acciones_del_panel_no_se_ejecutan_con_un_link(self):
+        from .models import Envio
+        self.client.force_login(self.jefe)
+        for url in [f'/admin-panel/usuarios/eliminar/{self.cliente.id}/',
+                    f'/admin-panel/productos/eliminar/{self.producto.id}/',
+                    f'/ventas/anular/{self.venta.id}/']:
+            self.assertEqual(self.client.get(url).status_code, 405, url)
+        self.cliente.refresh_from_db()
+        self.assertTrue(self.cliente.is_active)
+        self.assertTrue(Producto.objects.filter(id=self.producto.id).exists())
+        self.assertEqual(Envio.objects.get().estado, 'Enviado')
+
+    def test_acciones_del_panel_funcionan_por_post(self):
+        self.client.force_login(self.jefe)
+        self.client.post(f'/admin-panel/productos/eliminar/{self.producto.id}/')
+        self.assertFalse(Producto.objects.filter(id=self.producto.id).exists())
+
+    def test_marcar_recibido_solo_por_post(self):
+        from .models import Envio
+        self.client.force_login(self.cliente)
+        url = f'/marcar-recibido/{self.venta.id}/'
+        self.assertEqual(self.client.get(url).status_code, 405)
+        self.client.post(url)
+        self.assertEqual(Envio.objects.get().estado, 'Entregado')
+
+
+class OpinionesTests(TestCase):  # 16
+    def setUp(self):
+        self.producto = crear_producto()
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+        self.url = f'/opinion/enviar/{self.producto.id}/'
+
+    def opinar(self):
+        return self.client.post(self.url, {'puntuacion': 5, 'comentario': 'Excelente'})
+
+    def test_no_se_puede_opinar_sin_haber_comprado(self):
+        from .models import Opinion
+        self.opinar()
+        self.assertFalse(Opinion.objects.exists())
+
+    def test_no_se_puede_opinar_si_el_pedido_no_ha_llegado(self):
+        from .models import Opinion
+        crear_venta(self.cliente, self.producto, estado='Enviado')
+        self.opinar()
+        self.assertFalse(Opinion.objects.exists())
+
+    def test_se_puede_opinar_un_producto_recibido(self):
+        from .models import Opinion
+        crear_venta(self.cliente, self.producto)
+        self.opinar()
+        self.assertTrue(Opinion.objects.filter(usuario=self.cliente, producto=self.producto).exists())

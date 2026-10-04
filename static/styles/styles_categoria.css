@@ -1027,6 +1027,10 @@ footer{
     background-color: #dc3545;
 }
 
+#notif-box.favorite {
+    background-color: #e83e8c;
+}
+
 #notif-box.show {
     opacity: 1;
     visibility: visible;

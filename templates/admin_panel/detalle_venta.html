@@ -140,14 +140,14 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
-                    <a href="{% url 'anular_venta' venta.id %}" class="btn-modal-confirm">
-                        Sí, Anular Venta
-                    </a>
+                    <form method="post" action="{% url 'anular_venta' venta.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-modal-confirm">Sí, Anular Venta</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script>
 setTimeout(() => {
     const toast = document.getElementById('toast');

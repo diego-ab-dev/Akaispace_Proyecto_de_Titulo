@@ -2,38 +2,50 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import login_required_json
 from appPrincipal.models import Carrito, ItemCarritoProducto, Producto
 
 
+def _leer_entero(valor):
+    """Valor enviado por el cliente como entero, o None si no es un número."""
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return None
+
+
 @login_required_json
+@require_POST
 def agregar_al_carrito(request, producto_id):
-    usuario = request.user
-    carrito, created = Carrito.objects.get_or_create(usuario=usuario)
+    # Producto.objects no incluye los productos eliminados: no se pueden agregar
     producto = get_object_or_404(Producto, id=producto_id)
+    cantidad = _leer_entero(request.POST.get('cantidad', 1))
 
-    cantidad = int(request.POST.get('cantidad', 1))
+    if cantidad is None or cantidad < 1:
+        return JsonResponse({'success': False, 'error': 'La cantidad no es válida.'}, status=400)
 
-    item_carrito, item_created = ItemCarritoProducto.objects.get_or_create(
-        carrito=carrito, producto=producto
-    )
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    item = carrito.items.filter(producto=producto).first()
+    en_carrito = item.cantidad if item else 0
 
-    if item_created:
-        if cantidad <= producto.stock:
-            item_carrito.cantidad = cantidad
-            item_carrito.save()
+    if en_carrito + cantidad > producto.stock:
+        disponibles = max(producto.stock - en_carrito, 0)
+        mensaje = (f"Solo puedes agregar {disponibles} unidad(es) más de {producto.nombre}."
+                   if disponibles else f"No hay más stock disponible de {producto.nombre}.")
+        return JsonResponse({'success': False, 'error': mensaje})
+
+    if item:
+        item.cantidad += cantidad
+        item.save()
     else:
-        if item_carrito.cantidad + cantidad <= producto.stock:
-            item_carrito.cantidad += cantidad
-            item_carrito.save()
-
-    carrito_total_items = sum(i.cantidad for i in carrito.items.all())
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=producto, cantidad=cantidad)
 
     return JsonResponse({
         'success': True,
         'message': 'Producto agregado correctamente',
-        'total_items': carrito_total_items
+        'total_items': sum(i.cantidad for i in carrito.items.all()),
     })
 
 
@@ -68,8 +80,10 @@ def eliminar_del_carrito(request, item_id):
 @login_required_json
 def actualizar_cantidad_carrito(request):
     if request.method == 'POST':
-        item_id = request.POST.get('item_id')
-        nueva_cantidad = int(request.POST.get('cantidad', 1))
+        item_id = _leer_entero(request.POST.get('item_id'))
+        nueva_cantidad = _leer_entero(request.POST.get('cantidad', 1))
+        if item_id is None or nueva_cantidad is None:
+            return JsonResponse({'success': False, 'error': 'La cantidad no es válida.'}, status=400)
 
         item = get_object_or_404(ItemCarritoProducto, id=item_id, carrito__usuario=request.user)
         producto = item.producto

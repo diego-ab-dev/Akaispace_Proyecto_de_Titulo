@@ -1,12 +1,13 @@
 """Panel de administración: devoluciones."""
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import F, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.timezone import now
 
 from appPrincipal.decorators import admin_required
-from appPrincipal.models import Devolucion, ProductoVenta
+from appPrincipal.models import Devolucion, Producto, ProductoVenta
 from appPrincipal.views.panel.filtros import filtrar_por_fechas
 
 
@@ -43,51 +44,46 @@ def admin_devoluciones(request):
 @admin_required
 def responder_devolucion(request, devolucion_id):
     devolucion = get_object_or_404(Devolucion, id=devolucion_id)
-    
-    monto_a_reembolsar = 0
-    try:
-        item_venta = ProductoVenta.objects.get(
-            venta=devolucion.venta, 
-            producto=devolucion.producto
-        )
-        monto_a_reembolsar = item_venta.precio_unitario * devolucion.cantidad
-    except ProductoVenta.DoesNotExist:
-        monto_a_reembolsar = 0
 
+    # una devolución se resuelve una sola vez: si ya fue aprobada o rechazada solo se puede ver
+    if devolucion.estado != 'Pendiente':
+        return redirect('detalle_devolucion', devolucion_id=devolucion.id)
+
+    item_venta = ProductoVenta.objects.filter(venta=devolucion.venta, producto=devolucion.producto).first()
+    monto_a_reembolsar = item_venta.precio_unitario * devolucion.cantidad if item_venta else 0
 
     if request.method == 'POST':
-        accion = request.POST.get('accion') 
-        respuesta = request.POST.get('respuesta')
-        
-        if accion == 'aceptar':
-            try:
-                item_venta = ProductoVenta.objects.get(
-                    venta=devolucion.venta, 
-                    producto=devolucion.producto
-                )
-                
-                producto = devolucion.producto
-                producto.stock += devolucion.cantidad
-                producto.save()
-                
-                devolucion.estado = 'Aprobada'
+        accion = request.POST.get('accion')
+        if accion not in ('aceptar', 'rechazar'):
+            return redirect('responder_devolucion', devolucion_id=devolucion.id)
 
-            except ProductoVenta.DoesNotExist:
-                devolucion.estado = 'Aprobada'
+        with transaction.atomic():
+            # se bloquea la fila y se revisa de nuevo el estado: dos clics seguidos no reponen el stock dos veces
+            devolucion = Devolucion.objects.select_for_update().get(id=devolucion.id)
+            if devolucion.estado != 'Pendiente':
+                return redirect('detalle_devolucion', devolucion_id=devolucion.id)
 
-        elif accion == 'rechazar':
-            devolucion.estado = 'Rechazada'
-            
-        devolucion.respuesta_admin = respuesta
-        devolucion.fecha_resolucion = now()
-        devolucion.save()
-        
+            if accion == 'aceptar':
+                envio = getattr(devolucion.venta, 'datos_envio', None)
+                venta_anulada = envio is not None and envio.estado == 'Anulada'
+                # si la venta se anuló, ese stock ya se repuso al anular
+                if devolucion.producto_id and not venta_anulada:
+                    Producto.todos.filter(id=devolucion.producto_id).update(stock=F('stock') + devolucion.cantidad)
+                devolucion.estado = 'Aprobada'
+            else:
+                devolucion.estado = 'Rechazada'
+
+            devolucion.respuesta_admin = request.POST.get('respuesta')
+            devolucion.fecha_resolucion = now()
+            devolucion.save()
+
         return redirect('admin_devoluciones')
 
     return render(request, 'admin_panel/responder_devolucion.html', {
         'devolucion': devolucion,
-        'monto_a_reembolsar': monto_a_reembolsar 
+        'monto_a_reembolsar': monto_a_reembolsar
     })
+
 
 @admin_required
 def detalle_devolucion(request, devolucion_id):

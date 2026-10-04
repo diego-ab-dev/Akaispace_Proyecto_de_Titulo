@@ -119,6 +119,7 @@
         </div>
     </div>  
 
+<form id="form-eliminar" method="post" hidden>{% csrf_token %}</form>
 <script>
     // para el modal de confirmacion
 let enlaceEliminar;
@@ -131,7 +132,10 @@ let enlaceEliminar;
     }
     document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
         if (enlaceEliminar) {
-            window.location.href = enlaceEliminar.href;
+            // eliminar cambia datos: se envía por POST (con el token CSRF), no con un link
+            const formEliminar = document.getElementById('form-eliminar');
+            formEliminar.action = enlaceEliminar.href;
+            formEliminar.submit();
         }
     });
 </script>

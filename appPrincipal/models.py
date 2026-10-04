@@ -238,14 +238,6 @@ class Venta(models.Model):
         self.total = self.subtotal + self.envio
         self.save()
 
-        for producto_venta in self.producto_venta.all():
-            producto = producto_venta.producto
-            if producto.stock >= producto_venta.cantidad:
-                producto.stock -= producto_venta.cantidad
-                producto.save()
-            else:
-                raise ValueError(f"Stock insuficiente para el producto {producto.nombre}")
-
 # clase ProductoVenta
 class ProductoVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='producto_venta')

@@ -159,7 +159,7 @@ class OpinionForm(forms.ModelForm):
 
 # form para devoluciones
 class SolicitudDevolucionForm(forms.Form):
-    cantidad = forms.IntegerField()
+    cantidad = forms.IntegerField(min_value=1)
     descripcion = forms.CharField(widget=forms.Textarea, required=True)
     
     mensaje_error = {'invalid_image': 'Archivo no válido. Solo imágenes (JPG, PNG).'}
@@ -167,6 +167,13 @@ class SolicitudDevolucionForm(forms.Form):
     imagen1 = forms.ImageField(required=False, error_messages=mensaje_error)
     imagen2 = forms.ImageField(required=False, error_messages=mensaje_error)
     imagen3 = forms.ImageField(required=False, error_messages=mensaje_error)
+
+    def __init__(self, *args, cantidad_maxima, **kwargs):
+        # no se puede devolver más de lo que se compró (menos lo ya solicitado)
+        super().__init__(*args, **kwargs)
+        self.fields['cantidad'].validators.append(validators.MaxValueValidator(
+            cantidad_maxima, message=f"Solo puedes devolver hasta {cantidad_maxima} unidad(es)."
+        ))
 
     def clean(self):
         cleaned_data = super().clean()

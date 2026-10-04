@@ -47,13 +47,16 @@
                                 <div class="product-meta">Compraste: {{ cantidad_comprada }}</div>
                                 <label class="form-label">Cantidad a devolver:</label>
                                 <select name="cantidad" class="form-control" required>
-                                    {% for n in cantidad_comprada|range_filter %}
+                                    {% for n in cantidad_disponible|range_filter %}
                                         <option value="{{ n }}" 
                                             {% if form.cantidad.value|stringformat:"s" == n|stringformat:"s" %}selected{% endif %}>
                                             {{ n }}
                                         </option>
                                     {% endfor %}
                                 </select>
+                                {% if form.cantidad.errors %}
+                                    <div class="text-danger small mt-1">{{ form.cantidad.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
 

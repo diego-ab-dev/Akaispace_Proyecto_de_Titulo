@@ -3,13 +3,14 @@ import re
 
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import admin_required
-from appPrincipal.models import Envio, Venta
+from appPrincipal.models import Envio, Producto, Venta
 from appPrincipal.views.panel.filtros import filtrar_por_fechas
 
 
@@ -109,19 +110,27 @@ def modificar_venta(request, venta_id):
 
 
 @admin_required
+@require_POST
 def anular_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
-    envio, _ = Envio.objects.get_or_create(venta=venta)
 
-    # si ya estaba anulada no se vuelve a sumar el stock
-    if envio.estado != "Anulada":
-        with transaction.atomic():
+    with transaction.atomic():
+        envio, _ = Envio.objects.get_or_create(venta=venta)
+        # se bloquea el envío y se revisa el estado dentro de la transacción:
+        # anular dos veces (o dos clics seguidos) no puede sumar el stock dos veces
+        envio = Envio.objects.select_for_update().get(id=envio.id)
+        if envio.estado != "Anulada":
             envio.estado = "Anulada"
             envio.save()
 
+            devuelto = dict(
+                venta.devoluciones.filter(estado='Aprobada', producto__isnull=False)
+                .values_list('producto_id').annotate(total=Sum('cantidad'))
+            )
             for item in venta.producto_venta.all():
-                producto = item.producto
-                producto.stock += item.cantidad
-                producto.save()
+                # las unidades de devoluciones ya aprobadas volvieron al stock en su momento
+                reponer = item.cantidad - devuelto.get(item.producto_id, 0)
+                if reponer > 0:
+                    Producto.todos.filter(id=item.producto_id).update(stock=F('stock') + reponer)
 
     return redirect(f"{reverse('detalle_venta', args=[venta_id])}?msg=anulada")

@@ -1,12 +1,14 @@
 """Opiniones (reseñas) de productos."""
 import logging
+from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from appPrincipal.forms import OpinionForm
-from appPrincipal.models import Opinion, Producto
+from appPrincipal.models import Opinion, Producto, ProductoVenta
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,14 @@ logger = logging.getLogger(__name__)
 def enviar_opinion(request, producto_id):
     usuario_actual = request.user
     producto = get_object_or_404(Producto, id=producto_id)
+
+    # HU-04: solo se puede opinar sobre un producto comprado y ya recibido
+    lo_recibio = ProductoVenta.objects.filter(
+        venta__usuario=usuario_actual, producto=producto, venta__datos_envio__estado='Entregado'
+    ).exists()
+    if not lo_recibio:
+        aviso = urlencode({'notif': 'Solo puedes opinar sobre productos que compraste y recibiste.', 'type': 'error'})
+        return redirect(f"{reverse('perfil')}?{aviso}")
 
     ya_opino = Opinion.objects.filter(usuario=usuario_actual, producto=producto).exists()
 

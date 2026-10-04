@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import admin_required
 from appPrincipal.forms import normalizar_rut, regiones_ciudades
@@ -25,6 +26,7 @@ def admin_usuarios(request):
     })
 
 @admin_required
+@require_POST
 def eliminar_usuario(request, usuario_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     if usuario != request.user:

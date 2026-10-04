@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.timezone import now
+from django.views.decorators.http import require_POST
 
 from appPrincipal.models import Devolucion, Venta
 
@@ -46,8 +47,11 @@ def ver_detalle_compra(request, compra_id):
 
     total_cantidad = sum(item.cantidad for item in compra.producto_venta.all())
 
-    devoluciones = Devolucion.objects.filter(venta=compra)
-    devoluciones_existentes = {d.producto.id: True for d in devoluciones}
+    # producto_id puede ser null (el modelo lo permite): esas devoluciones no marcan ningún producto
+    devoluciones_existentes = {
+        producto_id: True
+        for producto_id in Devolucion.objects.filter(venta=compra, producto__isnull=False).values_list('producto_id', flat=True)
+    }
 
     return render(request, 'detalle_compra.html', {
         'compra': compra,
@@ -57,13 +61,14 @@ def ver_detalle_compra(request, compra_id):
 
 
 @login_required
+@require_POST
 def marcar_recibido(request, compra_id):
     compra = get_object_or_404(Venta, id=compra_id, usuario=request.user)
 
-    envio = compra.datos_envio
+    envio = getattr(compra, 'datos_envio', None)
     base_url = reverse('ver_detalle', kwargs={'compra_id': compra_id})
 
-    if envio.estado not in ["Enviado", "En Tránsito", "En Reparto"]:
+    if envio is None or envio.estado not in ["Enviado", "En Tránsito", "En Reparto"]:
         qs = urlencode({'notif': "Aún no puedes marcar como recibido.", 'type': 'error'})
         return redirect(f"{base_url}?{qs}")
 

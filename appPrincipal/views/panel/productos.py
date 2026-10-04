@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import admin_required
 from appPrincipal.forms import ProductoForm
@@ -86,6 +87,7 @@ def agregar_producto(request):
     return render(request, 'admin_panel/agregar_producto.html', {'form': form})
 
 @admin_required
+@require_POST
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     producto.delete()  # borrado lógico: guarda también deleted_at
