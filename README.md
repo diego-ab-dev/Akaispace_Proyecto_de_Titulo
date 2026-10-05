@@ -164,7 +164,7 @@ Estas cuentas las crea `python manage.py seed_demo` y existen solo en tu base de
 - Correo: user@gmail.com
 - Contraseña: Akaispace-Cliente-2026
 
-Las cuentas nuevas que se registren desde el sitio deben cumplir las reglas de contraseña: al menos 8 caracteres, no ser solo números, no ser una contraseña común y no parecerse al nombre ni al correo.
+Las cuentas nuevas que se registren desde el sitio deben cumplir las reglas de contraseña: al menos 8 caracteres, tener al menos una letra y un número, no ser una contraseña común y no parecerse al nombre ni al correo.
 
 Si tus cuentas de prueba todavía tienen la contraseña antigua (`12345`), ejecuta `python manage.py seed_demo`: restablece las contraseñas de prueba sin tocar el resto de los datos.
 

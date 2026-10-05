@@ -160,6 +160,22 @@ class ContraseñaTests(TestCase):  # 15
         self.assertFalse(respuesta.json()['success'])
         self.assertFalse(Usuario.objects.exists())
 
+    def test_contraseña_sin_letra_o_sin_numero_es_rechazada(self):  # RNF-01
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+        for clave in ['Akaispace-Tienda!', 'Valdivia-Gamer-Store']:  # largas y no comunes, pero sin número
+            datos = {**RegisterTests.datos, 'contraseña': clave, 'confirmar_contraseña': clave}
+            respuesta = self.client.post('/register/', datos).json()
+            self.assertFalse(respuesta['success'], clave)
+            self.assertIn('una letra y un número', respuesta['message'])
+        with self.assertRaises(ValidationError):
+            validate_password('2026-2027-2028!')  # sin letras
+        self.assertFalse(Usuario.objects.exists())
+        validate_password('Akaispace-2026!')  # con letra y número: no lanza error
+
+    def test_las_reglas_se_muestran_antes_de_escribir_la_contraseña(self):  # RNF-01
+        self.assertContains(self.client.get('/register/'), 'al menos una letra y un número')
+
     def test_registro_rechaza_confirmacion_distinta(self):
         datos = {**RegisterTests.datos, 'confirmar_contraseña': 'Otra-Clave-2026!'}
         self.assertEqual(self.client.post('/register/', datos).json()['message'], 'Las contraseñas no coinciden.')

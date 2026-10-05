@@ -117,6 +117,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        # complejidad (RNF-01): al menos una letra y un número
+        'NAME': 'appPrincipal.seguridad.LetraYNumeroValidator',
+    },
 ]
 
 
