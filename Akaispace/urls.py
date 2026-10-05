@@ -34,6 +34,8 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('logout/', views.logout, name='logout'),
     path('obtener_ciudades/', views.obtener_ciudades, name='obtener_ciudades'),
+    # legal
+    path('politica-de-privacidad/', views.politica_privacidad, name='politica_privacidad'),
     # perfil cliente
     path('perfil/', views.perfil, name='perfil'),
     path('editar/', views.editar_perfil, name='editar'),

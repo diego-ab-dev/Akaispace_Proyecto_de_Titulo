@@ -11,6 +11,7 @@ from .compras import marcar_recibido, ver_compras, ver_detalle_compra
 from .cuentas import login, logout, obtener_ciudades, register
 from .devoluciones import crear_devolucion, listar_devoluciones, ver_detalle_devolucion
 from .favoritos import agregar_favorito, eliminar_favorito, eliminar_favoritos_seleccionados, lista_favoritos
+from .legal import politica_privacidad
 from .opiniones import enviar_opinion, lista_opiniones
 from .pago import compra_exitosa, seleccionar_pago, ver_boleta
 from .perfil import cambiar_contraseña, editar_perfil, perfil

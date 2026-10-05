@@ -5,10 +5,11 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from appPrincipal import forms
-from appPrincipal.constants import REGIONES_CIUDADES
+from appPrincipal.constants import POLITICA_PRIVACIDAD_VERSION, REGIONES_CIUDADES
 from appPrincipal.models import Usuario
 from appPrincipal.seguridad import MENSAJE_LOGIN_INVALIDO
 
@@ -88,6 +89,8 @@ def register(request):
                     'success': False,
                     'message': 'El RUT ya está registrado.'
                 })
+            # el formulario solo es válido si marcó ambas casillas; se guarda cuándo y qué versión aceptó
+            momento_consentimiento = timezone.now()
             try:
                 Usuario.objects.create_user(
                     email=email,
@@ -98,6 +101,9 @@ def register(request):
                     direccion=form.cleaned_data['direccion'],
                     ciudad=form.cleaned_data['ciudad'],
                     region=form.cleaned_data['region'],
+                    privacidad_aceptada_en=momento_consentimiento,
+                    privacidad_version=POLITICA_PRIVACIDAD_VERSION,
+                    datos_navegacion_autorizados_en=momento_consentimiento,
                 )
                 return JsonResponse({'success': True, 'message': 'Usuario registrado exitosamente.'})
 

@@ -52,6 +52,21 @@
                 <span class="info-value">{% if usuario.is_staff %}Si{% else %}No{% endif %}</span>
             </div>
 
+            <!-- consentimientos del registro (HU-01); las cuentas creadas desde el panel no los tienen -->
+            <div class="info-group">
+                <span class="info-label">Política de privacidad:</span>
+                <span class="info-value">
+                    {% if usuario.privacidad_aceptada_en %}Aceptada el {{ usuario.privacidad_aceptada_en|date:"d/m/Y H:i" }} (versión {{ usuario.privacidad_version }}){% else %}No registrada{% endif %}
+                </span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">Datos de navegación:</span>
+                <span class="info-value">
+                    {% if usuario.datos_navegacion_autorizados_en %}Autorizados el {{ usuario.datos_navegacion_autorizados_en|date:"d/m/Y H:i" }}{% else %}No autorizados{% endif %}
+                </span>
+            </div>
+
             <div class="action-buttons">
 
                 <a href="{% url 'eliminar_usuario' usuario.id %}" 

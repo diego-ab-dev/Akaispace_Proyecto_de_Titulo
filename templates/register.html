@@ -100,6 +100,27 @@
                                 </button>
                             </div>
 
+                            <!-- consentimientos (HU-01): separados, obligatorios y sin marcar de antemano -->
+                            <fieldset class="consentimientos mb-4">
+                                <legend class="visually-hidden">Consentimientos</legend>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="aceptaPrivacidad" name="acepta_privacidad" value="on" required>
+                                    <label class="form-check-label" for="aceptaPrivacidad">
+                                        He leído y acepto la
+                                        <a href="{% url 'politica_privacidad' %}" target="_blank" rel="noopener">Política de Privacidad</a>
+                                        de Akaispace.
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="autorizaNavegacion" name="autoriza_datos_navegacion" value="on" required>
+                                    <label class="form-check-label" for="autorizaNavegacion">
+                                        Autorizo el uso de mis datos de navegación (productos visitados, búsquedas, carrito y compras)
+                                        para recibir recomendaciones personalizadas, según la
+                                        <a href="{% url 'politica_privacidad' %}#navegacion" target="_blank" rel="noopener">sección 4 de la política</a>.
+                                    </label>
+                                </div>
+                            </fieldset>
+
                             <div class="text-center">
                                 <a class="small fw-bold" style="text-decoration: none; color:black;" href="/login">¿Ya tienes una cuenta? Inicia sesion aquí.</a>
                             </div>
@@ -282,6 +303,20 @@
                 isValid = false;
                 mostrarNotificacion("Las contraseñas no coinciden.");
                 confirmarContraseña.focus();
+                return;
+            }
+
+            // validar consentimientos
+            const aceptaPrivacidad = document.getElementById('aceptaPrivacidad');
+            if (!aceptaPrivacidad.checked) {
+                mostrarNotificacion("Debes aceptar la Política de Privacidad para crear tu cuenta.");
+                aceptaPrivacidad.focus();
+                return;
+            }
+            const autorizaNavegacion = document.getElementById('autorizaNavegacion');
+            if (!autorizaNavegacion.checked) {
+                mostrarNotificacion("Debes autorizar el uso de tus datos de navegación para crear tu cuenta.");
+                autorizaNavegacion.focus();
                 return;
             }
 

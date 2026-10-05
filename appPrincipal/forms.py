@@ -85,9 +85,17 @@ class UsuarioCustomForm(forms.Form):
     region = forms.ChoiceField(choices=REGIONES, widget=forms.Select(attrs={'id': 'id_region', 'class': 'form-control'}))
     ciudad = forms.ChoiceField(choices=[], widget=forms.Select(attrs={'id': 'id_ciudad', 'class': 'form-control'}))
 
+    # HU-01: dos consentimientos separados y obligatorios (no vienen marcados de antemano)
+    acepta_privacidad = forms.BooleanField(error_messages={
+        'required': 'Debes aceptar la Política de Privacidad para crear tu cuenta.',
+    })
+    autoriza_datos_navegacion = forms.BooleanField(error_messages={
+        'required': 'Debes autorizar el uso de tus datos de navegación para crear tu cuenta.',
+    })
+
     def clean_ciudad(self):
         ciudad = self.cleaned_data.get('ciudad')
-        region = self.cleaned_data.get('region')  
+        region = self.cleaned_data.get('region')
         if ciudad not in REGIONES_CIUDADES.get(region, []):
             raise forms.ValidationError(f'La ciudad {ciudad} no es válida para la región seleccionada.')
         return ciudad

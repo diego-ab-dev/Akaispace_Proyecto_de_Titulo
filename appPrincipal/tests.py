@@ -54,7 +54,36 @@ class RegisterTests(TestCase):
         'rut': '12343455-2', 'nombre': 'Juan Perez', 'telefono': '+56 9 12345678',
         'email': 'juan@example.com', 'contraseña': 'Akaispace-2026!', 'confirmar_contraseña': 'Akaispace-2026!', 'direccion': 'Calle 123',
         'region': 'LOS RIOS', 'ciudad': 'Valdivia',
+        'acepta_privacidad': 'on', 'autoriza_datos_navegacion': 'on',
     }
+
+    def test_registro_guarda_los_consentimientos_y_la_version_aceptada(self):  # HU-01
+        from .constants import POLITICA_PRIVACIDAD_VERSION
+        self.assertTrue(self.client.post('/register/', self.datos).json()['success'])
+        usuario = Usuario.objects.get(email='juan@example.com')
+        self.assertIsNotNone(usuario.privacidad_aceptada_en)
+        self.assertIsNotNone(usuario.datos_navegacion_autorizados_en)
+        self.assertEqual(usuario.privacidad_version, POLITICA_PRIVACIDAD_VERSION)
+
+    def test_sin_aceptar_la_politica_no_se_crea_la_cuenta(self):  # HU-01
+        datos = {k: v for k, v in self.datos.items() if k != 'acepta_privacidad'}
+        respuesta = self.client.post('/register/', datos).json()
+        self.assertFalse(respuesta['success'])
+        self.assertIn('Política de Privacidad', respuesta['message'])
+        self.assertFalse(Usuario.objects.exists())
+
+    def test_sin_autorizar_datos_de_navegacion_no_se_crea_la_cuenta(self):  # HU-01
+        datos = {k: v for k, v in self.datos.items() if k != 'autoriza_datos_navegacion'}
+        respuesta = self.client.post('/register/', datos).json()
+        self.assertFalse(respuesta['success'])
+        self.assertIn('datos de navegación', respuesta['message'])
+        self.assertFalse(Usuario.objects.exists())
+
+    def test_politica_de_privacidad_es_publica_y_esta_enlazada(self):  # HU-01
+        respuesta = self.client.get('/politica-de-privacidad/')
+        self.assertContains(respuesta, 'Política de Privacidad')
+        self.assertContains(self.client.get('/register/'), 'href="/politica-de-privacidad/"')
+        self.assertContains(self.client.get('/'), 'href="/politica-de-privacidad/"')
 
     def test_registro_valido_guarda_rut_normalizado(self):
         respuesta = self.client.post('/register/', self.datos)

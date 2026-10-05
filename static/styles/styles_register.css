@@ -11,7 +11,10 @@ body {
 
 /* imagen */
 .card-img-left {
-  width: 45%;
+  /* ancho fijo: sin esto el texto largo de los consentimientos ensancha el formulario
+     y la imagen se encoge hasta quedar como una franja */
+  flex: 0 0 42%;
+  max-width: 42%;
   background: scroll center url('https://images.pexels.com/photos/275033/pexels-photo-275033.jpeg?cs=srgb&dl=pexels-pixabay-275033.jpg&fm=jpg');
   background-size: cover;
   background-position: center center;
@@ -89,3 +92,40 @@ body {
     padding-right: 2.5rem; 
 }
 
+
+/* consentimientos del registro */
+.consentimientos {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+.consentimientos .form-check {
+  margin-bottom: 0.75rem;
+}
+
+.consentimientos .form-check-label {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #3a4357;
+}
+
+.consentimientos .form-check-label a {
+  color: #4E84A8;
+  font-weight: 600;
+}
+
+.consentimientos .form-check-input:checked {
+  background-color: #4E84A8;
+  border-color: #4E84A8;
+}
+
+.consentimientos .form-check-input:focus {
+  border-color: #4E84A8;
+  box-shadow: 0 0 0 0.2rem rgba(78, 132, 168, 0.25);
+}
+
+/* el formulario ocupa el resto del ancho de la tarjeta, sin empujar a la imagen */
+.card.flex-row > .card-body {
+  flex: 1 1 0;
+  min-width: 0;
+}

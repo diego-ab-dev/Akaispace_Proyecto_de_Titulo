@@ -47,6 +47,13 @@ class Usuario(AbstractUser):
     ciudad = models.CharField(max_length=100, blank=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    # consentimientos del registro (HU-01): cuándo los dio y qué versión de la política aceptó.
+    # Quedan vacíos en las cuentas creadas desde el panel o por comandos.
+    privacidad_aceptada_en = models.DateTimeField(null=True, blank=True, verbose_name="Aceptó la política de privacidad")
+    privacidad_version = models.CharField(max_length=20, blank=True, verbose_name="Versión de la política aceptada")
+    datos_navegacion_autorizados_en = models.DateTimeField(
+        null=True, blank=True, verbose_name="Autorizó el uso de datos de navegación"
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nombre']

@@ -39,3 +39,21 @@ REGIONES = [
     ('AYSEN', 'Región de Aysén del General Carlos Ibáñez del Campo'),
     ('MAGALLANES', 'Región de Magallanes y de la Antártica Chilena'),
 ]
+
+# Política de privacidad (templates/politica_privacidad.html).
+# Si cambia el contenido de la política, sube la versión y la fecha: cada usuario guarda
+# la versión que aceptó al registrarse (Usuario.privacidad_version).
+POLITICA_PRIVACIDAD_VERSION = '1.0'
+POLITICA_PRIVACIDAD_FECHA = '5 de octubre de 2026'
+
+# Datos del responsable del tratamiento que aparecen en la política.
+# El RUT es ficticio (proyecto académico): reemplazarlo por el real antes de publicar el sitio.
+RESPONSABLE_DATOS = {
+    'nombre_comercial': 'Akaispace',
+    'razon_social': 'Carlos Fuentes Riquelme',
+    'rut': '15.432.876-9',
+    'domicilio': 'Galería Caupolicán 544, Local 26, Valdivia, Región de Los Ríos, Chile',
+    'correo_privacidad': 'akaispacevaldivia@gmail.com',
+    'telefono': '+56 9 6156 1944',
+    'proveedor_hosting': 'Amazon Web Services (AWS), con servidores en São Paulo, Brasil',
+}
