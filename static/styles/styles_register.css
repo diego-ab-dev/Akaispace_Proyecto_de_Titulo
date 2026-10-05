@@ -129,3 +129,8 @@ body {
   flex: 1 1 0;
   min-width: 0;
 }
+
+.consentimiento-opcional {
+  color: #6c757d;
+  font-weight: 600;
+}

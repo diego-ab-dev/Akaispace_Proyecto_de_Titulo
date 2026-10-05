@@ -670,12 +670,6 @@ footer {
 }
 
 /* política de privacidad */
-/* overflow-x: hidden convierte al body en contenedor de scroll y el índice (position: sticky)
-   deja de seguir la página; clip recorta igual sin ese efecto */
-body {
-  overflow-x: clip;
-}
-
 .politica {
   color: #1C253B;
 }
@@ -720,9 +714,6 @@ body {
 .politica-indice {
   position: sticky;
   top: 110px;
-  /* en pantallas bajas el índice hace scroll propio en vez de quedar cortado */
-  max-height: calc(100vh - 130px);
-  overflow-y: auto;
   background-color: #ffffff;
   border-radius: 12px;
   padding: 1.25rem;
@@ -859,7 +850,6 @@ body {
 @media (max-width: 991px) {
   .politica-indice {
     position: static;
-    max-height: none;
     margin-bottom: 1.25rem;
   }
 }

@@ -72,17 +72,19 @@ class RegisterTests(TestCase):
         self.assertIn('Política de Privacidad', respuesta['message'])
         self.assertFalse(Usuario.objects.exists())
 
-    def test_sin_autorizar_datos_de_navegacion_no_se_crea_la_cuenta(self):  # HU-01
+    def test_autorizar_datos_de_navegacion_es_opcional(self):  # HU-01
         datos = {k: v for k, v in self.datos.items() if k != 'autoriza_datos_navegacion'}
-        respuesta = self.client.post('/register/', datos).json()
-        self.assertFalse(respuesta['success'])
-        self.assertIn('datos de navegación', respuesta['message'])
-        self.assertFalse(Usuario.objects.exists())
+        self.assertTrue(self.client.post('/register/', datos).json()['success'])
+        usuario = Usuario.objects.get(email='juan@example.com')
+        self.assertIsNotNone(usuario.privacidad_aceptada_en)
+        self.assertIsNone(usuario.datos_navegacion_autorizados_en)
 
     def test_politica_de_privacidad_es_publica_y_esta_enlazada(self):  # HU-01
         respuesta = self.client.get('/politica-de-privacidad/')
         self.assertContains(respuesta, 'Política de Privacidad')
-        self.assertContains(self.client.get('/register/'), 'href="/politica-de-privacidad/"')
+        registro = self.client.get('/register/')
+        self.assertContains(registro, 'href="/politica-de-privacidad/"')
+        self.assertContains(registro, 'Declaro ser mayor de 18 años')
         self.assertContains(self.client.get('/'), 'href="/politica-de-privacidad/"')
 
     def test_registro_valido_guarda_rut_normalizado(self):

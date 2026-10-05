@@ -85,13 +85,13 @@ class UsuarioCustomForm(forms.Form):
     region = forms.ChoiceField(choices=REGIONES, widget=forms.Select(attrs={'id': 'id_region', 'class': 'form-control'}))
     ciudad = forms.ChoiceField(choices=[], widget=forms.Select(attrs={'id': 'id_ciudad', 'class': 'form-control'}))
 
-    # HU-01: dos consentimientos separados y obligatorios (no vienen marcados de antemano)
+    # HU-01: dos consentimientos separados que no vienen marcados de antemano. La política es
+    # obligatoria y en la misma casilla declara su edad (mayor de 18 o con autorización de su
+    # padre, madre o tutor); los datos de navegación son opcionales (solo activan las recomendaciones)
     acepta_privacidad = forms.BooleanField(error_messages={
-        'required': 'Debes aceptar la Política de Privacidad para crear tu cuenta.',
+        'required': 'Debes declarar tu edad y aceptar la Política de Privacidad para crear tu cuenta.',
     })
-    autoriza_datos_navegacion = forms.BooleanField(error_messages={
-        'required': 'Debes autorizar el uso de tus datos de navegación para crear tu cuenta.',
-    })
+    autoriza_datos_navegacion = forms.BooleanField(required=False)
 
     def clean_ciudad(self):
         ciudad = self.cleaned_data.get('ciudad')

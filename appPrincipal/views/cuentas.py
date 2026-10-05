@@ -89,8 +89,10 @@ def register(request):
                     'success': False,
                     'message': 'El RUT ya está registrado.'
                 })
-            # el formulario solo es válido si marcó ambas casillas; se guarda cuándo y qué versión aceptó
+            # se guarda cuándo y qué versión de la política aceptó (obligatoria para registrarse)
+            # y, si la marcó, cuándo autorizó el uso de sus datos de navegación (opcional)
             momento_consentimiento = timezone.now()
+            autoriza_navegacion = form.cleaned_data['autoriza_datos_navegacion']
             try:
                 Usuario.objects.create_user(
                     email=email,
@@ -103,7 +105,7 @@ def register(request):
                     region=form.cleaned_data['region'],
                     privacidad_aceptada_en=momento_consentimiento,
                     privacidad_version=POLITICA_PRIVACIDAD_VERSION,
-                    datos_navegacion_autorizados_en=momento_consentimiento,
+                    datos_navegacion_autorizados_en=momento_consentimiento if autoriza_navegacion else None,
                 )
                 return JsonResponse({'success': True, 'message': 'Usuario registrado exitosamente.'})
 
