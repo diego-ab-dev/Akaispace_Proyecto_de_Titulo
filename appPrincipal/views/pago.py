@@ -62,6 +62,16 @@ def seleccionar_pago(request):
     if not carrito or not carrito.items.exists():
         return redirect('ver_carrito')
 
+    # se revisa antes de mostrar el pago (el stock pudo bajar desde que se agregó al carrito);
+    # al confirmar la compra se vuelve a revisar con las filas bloqueadas
+    for item in carrito.items.select_related('producto'):
+        if item.producto.is_deleted or item.cantidad > item.producto.stock:
+            mensaje = (f"Solo hay {item.producto.stock} unidad(es) disponibles de {item.producto.nombre}. "
+                       "Ajusta la cantidad para continuar.")
+            if item.producto.is_deleted:
+                mensaje = f"{item.producto.nombre} ya no está disponible."
+            return redirect(f"{reverse('ver_carrito')}?{urlencode({'notif': mensaje, 'type': 'error'})}")
+
     subtotal = sum(item.cantidad * item.producto.precio for item in carrito.items.all())
 
     costo_envio = 5990

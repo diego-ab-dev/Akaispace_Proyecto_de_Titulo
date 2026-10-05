@@ -425,6 +425,23 @@ class CarritoTests(TestCase):  # 12
         self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 'x'}).status_code, 400)
         self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': 'x', 'cantidad': 1}).status_code, 400)
 
+    def test_actualizar_sobre_el_stock_no_cambia_la_cantidad(self):
+        from .models import ItemCarritoProducto
+        self.agregar(1)
+        item = ItemCarritoProducto.objects.get()
+        respuesta = self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 500}).json()
+        self.assertFalse(respuesta['success'])
+        self.assertEqual(self.items(), [1])
+
+    def test_no_se_llega_al_pago_con_mas_cantidad_que_stock(self):
+        # el stock bajó después de agregar al carrito
+        self.agregar(3)
+        self.producto.stock = 1
+        self.producto.save()
+        respuesta = self.client.get('/seleccionar-pago/')
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
+
 
 class CheckoutTests(TestCase):  # 9
     def setUp(self):

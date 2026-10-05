@@ -877,3 +877,65 @@ footer {
         border-right: none;
     }
 }
+/* cantidad de cada producto: [ - 1 + ] con botones, sin escribir (templates/carrito.html) */
+.cantidad-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #c9d3dc;
+    border-radius: 6px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.cantidad-valor {
+    min-width: 2.25rem;
+    padding: 0 0.25rem;
+    text-align: center;
+    font-weight: 600;
+    color: #1c253b;
+    font-variant-numeric: tabular-nums;
+}
+
+/* con el id para ganarle a "#carrito-container button" (el estilo del botón "Proceder") */
+#carrito-container .btn-cantidad {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: #4e84a8;
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1;
+}
+
+#carrito-container .btn-cantidad:hover:not(:disabled) {
+    background: #eef1f4;
+}
+
+#carrito-container .btn-cantidad:active {
+    transform: none;
+}
+
+#carrito-container .btn-cantidad:disabled {
+    color: #b5bdc6;
+    cursor: not-allowed;
+}
+
+.cantidad-stock {
+    color: #7a828c;
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+}
+
+.cantidad-error {
+    color: #dc3545;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    margin-top: 0.25rem;
+}
+
+.cantidad-error:empty {
+    display: none;
+}

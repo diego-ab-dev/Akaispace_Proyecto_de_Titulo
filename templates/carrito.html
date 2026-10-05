@@ -49,8 +49,17 @@
                                     <form class="d-inline" method="POST" action="{% url 'actualizar_cantidad_carrito' %}" id="form-{{ item.id }}">
                                         {% csrf_token %}
                                         <input type="hidden" name="item_id" value="{{ item.id }}">
-                                        <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="{{ item.producto.stock }}" onchange="actualizarCantidad('{{ item.id }}')">
+                                        {# la cantidad solo cambia con los botones (no se escribe), así nunca pasa del stock #}
+                                        <input type="hidden" name="cantidad" class="input-cantidad" value="{{ item.cantidad }}"
+                                               data-item="{{ item.id }}" data-confirmada="{{ item.cantidad }}" data-stock="{{ item.producto.stock }}">
+                                        <div class="cantidad-stepper">
+                                            <button type="button" class="btn-cantidad" data-paso="-1" aria-label="Quitar una unidad">&minus;</button>
+                                            <span class="cantidad-valor" aria-live="polite">{{ item.cantidad }}</span>
+                                            <button type="button" class="btn-cantidad" data-paso="1" aria-label="Agregar una unidad">+</button>
+                                        </div>
                                     </form>
+                                    <div class="cantidad-stock">{{ item.producto.stock }} disponible{{ item.producto.stock|pluralize }}</div>
+                                    <div class="cantidad-error" id="error-{{ item.id }}" aria-live="polite"></div>
                                 </div>
                                 <div class="col">${{ item.producto.precio|formato_chileno }}</div>
                                 <a href="#" class="btn-eliminar-item" 
@@ -118,7 +127,7 @@
             {% endif %}
 
             {% if productos %}
-                <form method="GET" action="{% url 'seleccionar_pago' %}">
+                <form method="GET" action="{% url 'seleccionar_pago' %}" id="form-proceder">
                     <button type="submit">
                         <span class="transition"></span>
                         <span class="gradient"></span>
@@ -192,16 +201,6 @@
         }).format(valor);
     }
 
-    // esto es para un error que existia con presionar enter
-    document.querySelectorAll('input[type="number"]').forEach(input => {
-    input.addEventListener('keydown', function (e) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            this.blur(); 
-        }
-        });
-    });
-
     function mostrarError(mensaje) {
     const errorBox = document.getElementById("mensaje-error");
     errorBox.textContent = mensaje;
@@ -212,38 +211,125 @@
     }, 3000);
     }
 
-    // actualizar la cantidad del carrito en tiempo real
-    function actualizarCantidad(itemId) {
-    const form = document.getElementById(`form-${itemId}`);
-    const formData = new FormData(form);
+    // ---- cantidades del carrito ----
+    // La cantidad cambia solo con los botones - / + (no se escribe), así que nunca pasa del stock.
+    // Se guarda en el servidor medio segundo después del último clic: varios clics seguidos son un solo guardado.
+    const guardadosPendientes = new Map();  // item_id -> promesa del guardado en curso
+    const temporizadores = new Map();
 
-    fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const mainCount = document.getElementById('total-items-count');
-            if (mainCount) mainCount.textContent = data.total_items;
+    function stepperDe(input) {
+        return input.form.querySelector('.cantidad-stepper');
+    }
 
-            const summaryCount = document.getElementById('total-items-count-summary');
-            if (summaryCount) summaryCount.textContent = data.total_items;
+    function mostrarCantidad(input, cantidad) {
+        input.value = cantidad;
+        const stepper = stepperDe(input);
+        stepper.querySelector('.cantidad-valor').textContent = cantidad;
+        // el "-" se desactiva en 1 (para sacar el producto está la ✖) y el "+" al llegar al stock
+        stepper.querySelector('[data-paso="-1"]').disabled = cantidad <= 1;
+        stepper.querySelector('[data-paso="1"]').disabled = cantidad >= parseInt(input.dataset.stock, 10);
+    }
 
-            const subtotalElem = document.getElementById('subtotal-resumen');
-            if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
+    function marcarError(input, mensaje) {
+        document.getElementById(`error-${input.dataset.item}`).textContent = mensaje;
+    }
 
-            const envio = 5990;
-            const totalFinalElem = document.getElementById('total-final');
-            if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
+    function actualizarCantidad(input) {
+        const form = input.form;
+        const formData = new FormData(form);
 
-        } else if (data.error) {
-            mostrarError(data.error);
+        const guardado = fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                input.dataset.confirmada = formData.get('cantidad');
+
+                const mainCount = document.getElementById('total-items-count');
+                if (mainCount) mainCount.textContent = data.total_items;
+
+                const summaryCount = document.getElementById('total-items-count-summary');
+                if (summaryCount) summaryCount.textContent = data.total_items;
+
+                const subtotalElem = document.getElementById('subtotal-resumen');
+                if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
+
+                const envio = 5990;
+                const totalFinalElem = document.getElementById('total-final');
+                if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
+                return true;
+            }
+            // el servidor la rechazó (por ejemplo el stock bajó mientras tanto): se vuelve a la guardada
+            mostrarCantidad(input, parseInt(input.dataset.confirmada, 10));
+            marcarError(input, data.error || 'No se pudo actualizar la cantidad.');
+            return false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarCantidad(input, parseInt(input.dataset.confirmada, 10));
+            marcarError(input, 'No se pudo actualizar la cantidad. Inténtalo de nuevo.');
+            return false;
+        })
+        .finally(() => {
+            if (guardadosPendientes.get(input.dataset.item) === guardado) {
+                guardadosPendientes.delete(input.dataset.item);
+            }
+        });
+
+        guardadosPendientes.set(input.dataset.item, guardado);
+        return guardado;
+    }
+
+    // guarda ya (sin esperar el temporizador) si hay un cambio sin guardar
+    function guardarAhora(input) {
+        clearTimeout(temporizadores.get(input.dataset.item));
+        temporizadores.delete(input.dataset.item);
+        const pendiente = guardadosPendientes.get(input.dataset.item);
+        if (pendiente && input.dataset.enviando === input.value) {
+            return pendiente;  // ese mismo valor ya se está guardando
         }
-    })
-    .catch(error => console.error('Error:', error));
-}
+        if (input.value !== input.dataset.confirmada) {
+            input.dataset.enviando = input.value;
+            return actualizarCantidad(input);
+        }
+        return pendiente || Promise.resolve(true);
+    }
+
+    document.querySelectorAll('.input-cantidad').forEach(input => {
+        mostrarCantidad(input, parseInt(input.value, 10));
+    });
+
+    document.querySelectorAll('.btn-cantidad').forEach(boton => {
+        boton.addEventListener('click', function () {
+            const input = this.closest('form').querySelector('.input-cantidad');
+            const stock = parseInt(input.dataset.stock, 10);
+            // nunca más del stock ni menos de 1 (si el stock bajó a 0, el servidor rechaza y avisa)
+            const nueva = Math.max(Math.min(parseInt(input.value, 10) + parseInt(this.dataset.paso, 10), stock), 1);
+            mostrarCantidad(input, nueva);
+            marcarError(input, '');
+            clearTimeout(temporizadores.get(input.dataset.item));
+            temporizadores.set(input.dataset.item, setTimeout(() => guardarAhora(input), 500));
+        });
+    });
+
+    // "Proceder a la compra" espera a que se guarden las cantidades y no avanza si alguna falló
+    const formProceder = document.getElementById('form-proceder');
+    if (formProceder) {
+        formProceder.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const inputs = Array.from(document.querySelectorAll('.input-cantidad'));
+            Promise.all(inputs.map(guardarAhora)).then(resultados => {
+                if (resultados.every(Boolean)) {
+                    formProceder.submit();
+                } else {
+                    mostrarError('Revisa las cantidades marcadas antes de continuar.');
+                }
+            });
+        });
+    }
 
 // eliminar un item del carrito y que se actualice en tiempo real
 function eliminarItem(itemId, element) {
