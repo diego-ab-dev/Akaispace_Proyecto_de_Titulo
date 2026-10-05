@@ -4,6 +4,8 @@
 {% block title %}{% if destacado %}Editar destacado{% else %}Nuevo destacado{% endif %}{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_portada.css' %}">
 {% endblock %}
 
@@ -62,6 +64,15 @@
         }
         seccion.addEventListener('change', actualizar);
         actualizar();
+
+        // el select de productos se vuelve buscable (por nombre, consola o código de barra)
+        if (window.TomSelect) {
+            new TomSelect('#id_producto', {
+                maxOptions: 50,
+                allowEmptyOption: true,  // "Sin producto" sigue siendo una opción (lanzamientos)
+                render: { no_results: () => '<div class="no-results">No hay productos con ese texto</div>' },
+            });
+        }
     })();
 </script>
 {% endblock %}

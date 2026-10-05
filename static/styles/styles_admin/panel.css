@@ -106,7 +106,8 @@ a{text-decoration: none}
     font-size: 1.25rem
 }
 
-.show{
+/* .l-navbar.show y no solo .show: Bootstrap también usa .show en modales y desplegables */
+.l-navbar.show{
     left: 0
 }
 
@@ -154,7 +155,7 @@ a{text-decoration: none}
                 padding: 1rem 1rem 0 0
             }
             
-            .show{
+            .l-navbar.show{
                 width: calc(var(--nav-width) + 156px)
             }
             

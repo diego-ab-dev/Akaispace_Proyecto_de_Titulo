@@ -313,6 +313,11 @@ class DestacadoForm(forms.ModelForm):
         # solo productos a la venta, ordenados para encontrarlos fácil
         self.fields['producto'].queryset = Producto.objects.order_by('nombre')
         self.fields['producto'].empty_label = 'Sin producto'
+        # categoría y código de barra para distinguir juegos con el mismo nombre en distintas consolas
+        # (el buscador del formulario también busca por este texto)
+        self.fields['producto'].label_from_instance = lambda p: (
+            f"{p.nombre} · {p.get_categoria_display()} · Cód. {p.codigo_de_barra}"
+        )
 
     def clean_video_url(self):
         video_url = self.cleaned_data.get('video_url', '')
@@ -332,4 +337,16 @@ class DestacadoForm(forms.ModelForm):
         elif seccion and not producto:
             # el carrusel y las promos del navbar llevan al producto
             self.add_error('producto', 'Elige el producto al que lleva este destacado.')
+
+        if seccion and cleaned_data.get('activo'):
+            self.instance.seccion = seccion
+            if self.instance.supera_maximo_visibles():
+                self.add_error('activo', mensaje_maximo_visibles(seccion))
         return cleaned_data
+
+
+def mensaje_maximo_visibles(seccion):
+    nombre = dict(Destacado.SECCIONES)[seccion]
+    maximo = Destacado.MAXIMO_VISIBLES[seccion]
+    return (f'"{nombre}" ya tiene {maximo} elementos visibles (el máximo). '
+            'Oculta o elimina alguno, o guarda este como oculto.')

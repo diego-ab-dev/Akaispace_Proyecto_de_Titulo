@@ -176,6 +176,9 @@ class Producto(models.Model):
     objects = ProductoManager()
     todos = ProductoQuerySet.as_manager()
 
+    def __str__(self):
+        return self.nombre
+
     def delete(self, *args, **kwargs):
         self.is_deleted = True
         self.deleted_at = now()
@@ -416,6 +419,8 @@ class Destacado(models.Model):
     ]
     # en las secciones del navbar se muestra solo uno (el primero activo según el orden)
     SECCIONES_DE_UNO = ['menu_videojuegos', 'menu_consolas', 'menu_accesorios', 'menu_figuras']
+    # máximo de destacados visibles a la vez para que el sitio no se alargue (los ocultos no cuentan)
+    MAXIMO_VISIBLES = {SECCION_CARRUSEL: 8, SECCION_LANZAMIENTOS: 4}
 
     seccion = models.CharField(max_length=20, choices=SECCIONES, verbose_name="Sección")
     # SET_NULL: si el producto se borra de verdad, el destacado queda sin link en vez de desaparecer
@@ -435,6 +440,14 @@ class Destacado(models.Model):
 
     def __str__(self):
         return f"{self.get_seccion_display()}: {self.titulo}"
+
+    def supera_maximo_visibles(self):
+        """True si, al quedar visible, la sección pasaría su máximo de visibles."""
+        maximo = self.MAXIMO_VISIBLES.get(self.seccion)
+        if maximo is None:
+            return False
+        otros = Destacado.objects.filter(seccion=self.seccion, activo=True).exclude(pk=self.pk)
+        return otros.count() >= maximo
 
     @property
     def imagen_url(self):

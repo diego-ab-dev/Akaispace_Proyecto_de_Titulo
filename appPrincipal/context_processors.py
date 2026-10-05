@@ -33,7 +33,8 @@ class Portada:
         destacados = self._cargar().get(seccion, [])
         if seccion in Destacado.SECCIONES_DE_UNO:
             return destacados[0] if destacados else None
-        return destacados
+        # el panel no deja pasar el máximo, esto solo cubre datos cargados por otro lado
+        return destacados[:Destacado.MAXIMO_VISIBLES.get(seccion)]
 
 
 def portada_context(request):

@@ -18,6 +18,10 @@
         tarjeta de cada menú del navbar. Los cambios se ven en el sitio de inmediato.
     </p>
 
+    {% for message in messages %}
+    <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
     {% for seccion in secciones %}
     <section class="portada-seccion">
         <header class="portada-seccion__header">
@@ -25,6 +29,10 @@
                 <h2>{{ seccion.nombre }}</h2>
                 {% if seccion.de_uno %}
                 <p class="portada-seccion__nota">Se muestra solo el primero activo (el de menor orden).</p>
+                {% elif seccion.maximo %}
+                <p class="portada-seccion__nota">
+                    {{ seccion.visibles }} de {{ seccion.maximo }} visibles como máximo{% if seccion.visibles >= seccion.maximo %}: para mostrar otro, oculta alguno{% endif %}.
+                </p>
                 {% endif %}
             </div>
             <a href="{% url 'crear_destacado' %}?seccion={{ seccion.codigo }}" class="btn-portada btn-portada--primario">

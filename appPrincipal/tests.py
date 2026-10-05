@@ -764,6 +764,36 @@ class PortadaPanelTests(TestCase):  # 24 / HU-09: el admin la edita desde su pan
             seccion='lanzamientos', producto='', video_url='https://vimeo.com/123'))
         self.assertIn('video_url', respuesta.context['form'].errors)
 
+    def test_selector_muestra_el_nombre_del_producto(self):
+        respuesta = self.client.get('/admin-panel/portada/nuevo/')
+        self.assertContains(respuesta, 'Juego Nuevo · ')
+        self.assertNotContains(respuesta, 'Producto object')
+
+    def test_no_se_pasa_el_maximo_de_visibles(self):
+        from .models import Destacado
+        Destacado.objects.filter(seccion='lanzamientos').delete()
+        maximo = Destacado.MAXIMO_VISIBLES['lanzamientos']
+        for i in range(maximo):
+            Destacado.objects.create(seccion='lanzamientos', titulo=f'L{i}', producto=self.producto)
+        lleno = self.datos(seccion='lanzamientos', titulo='Uno más')
+
+        respuesta = self.client.post('/admin-panel/portada/nuevo/', lleno)
+        self.assertIn('activo', respuesta.context['form'].errors)
+
+        # oculto sí se puede guardar, pero no mostrarlo mientras la sección esté llena
+        lleno.pop('activo')
+        self.client.post('/admin-panel/portada/nuevo/', lleno)
+        oculto = Destacado.objects.get(titulo='Uno más', activo=False)
+        self.client.post(f'/admin-panel/portada/{oculto.id}/estado/')
+        oculto.refresh_from_db()
+        self.assertFalse(oculto.activo)
+
+        # editar uno que ya está visible no choca con el máximo
+        visible = Destacado.objects.get(titulo='L0')
+        respuesta = self.client.post(f'/admin-panel/portada/{visible.id}/editar/',
+                                     self.datos(seccion='lanzamientos', titulo='L0 editado'))
+        self.assertRedirects(respuesta, '/admin-panel/portada/')
+
     def test_cliente_no_puede_editar_la_portada(self):
         self.client.force_login(crear_cliente())
         self.assertRedirects(self.client.get('/admin-panel/portada/'), '/', fetch_redirect_response=False)
