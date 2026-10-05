@@ -809,6 +809,102 @@ nav .navbar .links li .sub-menu li{
 /* Fin de seccion de Redes sociales */
 
 
+/* Seccion del Local (mapa y horarios) */
+.card-local {
+  background-color: #ffffff;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 50px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, .8);
+}
+
+.local-mapa {
+  height: 100%;
+  min-height: 420px;
+}
+
+.local-mapa iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border: 0;
+  display: block;
+}
+
+.local-info {
+  padding: 40px;
+}
+
+.local-direccion {
+  margin-bottom: 25px;
+}
+
+.local-direccion h2 {
+  font-size: 1.5rem;
+}
+
+.local-horario-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 700;
+  color: #1C253B;
+  margin-bottom: 8px;
+}
+
+.local-estado {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.local-estado.abierto {
+  color: #2e7d4f;
+}
+
+.local-horario {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+}
+
+.local-horario li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef0f3;
+  color: #555;
+}
+
+.local-horario li:last-child {
+  border-bottom: none;
+}
+
+.local-horario li.cerrado span:last-child {
+  color: #999;
+}
+
+.local-horario li.hoy {
+  color: #1C253B;
+  font-weight: 700;
+}
+
+@media (max-width: 991px) {
+  .local-mapa,
+  .local-mapa iframe {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .local-info {
+    padding: 20px;
+  }
+}
+/* Fin de seccion del Local */
+
+
 
 
 

@@ -148,6 +148,63 @@
 {% endif %}
 
 
+<!--Local fisico: mapa y horarios-->
+<a name="local" id="local"></a>
+  <section class="wrapper paused">
+    <div class="container">
+      <div class="row">
+        <div class="col text-center mb-5">
+          <h1 class="anim-down display-6 fw-bold fst-italic text-center">Visita Nuestro Local</h1>
+        </div>
+      </div>
+
+      <div class="card-local anim-up">
+        <div class="row g-0">
+
+          <div class="col-lg-7">
+            <div class="local-mapa">
+              <iframe
+                src="https://maps.google.com/maps?q=Galer%C3%ADa%20Caupolic%C3%A1n%20544%2C%20Valdivia%2C%20Chile&z=17&hl=es&output=embed"
+                title="Mapa del local de Akaispace en Galería Caupolicán 544, Valdivia"
+                loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="local-info">
+              <div class="local-direccion">
+                <h2 class="fw-bold mb-1 text-dark">Akaispace Valdivia</h2>
+                <p class="text-muted mb-0">Galería Caupolicán 544, Local 26<br>Valdivia, Región de Los Ríos</p>
+              </div>
+
+              <div class="local-horario-titulo">
+                <span>Horario de atención</span>
+                <span class="local-estado" id="local-estado"></span>
+              </div>
+
+              {# data-dia sigue a Date.getDay(): 0 = domingo #}
+              <ul class="local-horario">
+                <li data-dia="1"><span>Lunes</span><span>10:00 - 19:30</span></li>
+                <li data-dia="2"><span>Martes</span><span>10:00 - 19:30</span></li>
+                <li data-dia="3"><span>Miércoles</span><span>10:00 - 19:30</span></li>
+                <li data-dia="4"><span>Jueves</span><span>10:00 - 19:30</span></li>
+                <li data-dia="5"><span>Viernes</span><span>10:00 - 19:30</span></li>
+                <li data-dia="6"><span>Sábado</span><span>10:00 - 19:30</span></li>
+                <li data-dia="0" class="cerrado"><span>Domingo</span><span>Cerrado</span></li>
+              </ul>
+
+              <a href="https://www.google.com/maps/dir/?api=1&destination=Galer%C3%ADa%20Caupolic%C3%A1n%20544%2C%20Valdivia%2C%20Chile"
+                target="_blank" rel="noopener" class="btn-product-cta">
+                Cómo llegar
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
 
 <!--redes sociales-->
 <a name="redes" id="redes"></a>
@@ -228,6 +285,21 @@
     var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
     return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
   }
+
+  // Marca el día de hoy en el horario del local y si está abierto ahora (hora de Chile)
+  (function () {
+    const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+    const dia = ahora.getDay();
+    const minutos = ahora.getHours() * 60 + ahora.getMinutes();
+    const hoy = document.querySelector('.local-horario li[data-dia="' + dia + '"]');
+    if (hoy) hoy.classList.add('hoy');
+
+    const estado = document.getElementById('local-estado');
+    if (!estado) return;
+    const abierto = dia !== 0 && minutos >= 10 * 60 && minutos < 19 * 60 + 30;
+    estado.textContent = abierto ? 'Abierto ahora' : 'Cerrado ahora';
+    estado.classList.add(abierto ? 'abierto' : 'cerrado');
+  })();
 
   window.addEventListener('DOMContentLoaded', (ev0) => {
     window.addEventListener('scroll', (ev1) => {
