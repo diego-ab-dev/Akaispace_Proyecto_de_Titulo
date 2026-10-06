@@ -88,8 +88,6 @@ def cargar(Destacado, Producto):
                 video_url=datos.get('video_url', ''), imagen=imagen,
             )
 
-    # en una base nueva la migración corre antes de que seed_demo cargue los productos,
-    # así que los enlaces se completan cuando los productos ya existen
     for datos in CONTENIDO_INICIAL:
         if not datos.get('producto'):
             continue

@@ -32,9 +32,6 @@ class UsuarioManager(BaseUserManager):
 
 
 # clase Usuario
-# Usa el sistema de autenticación de Django. Inicia sesión con el email (no hay username).
-# is_staff indica si es administrador del panel. Hereda de AbstractUser: password,
-# is_active, is_staff, is_superuser, last_login, date_joined, grupos y permisos.
 class Usuario(AbstractUser):
     username = None
     first_name = None
@@ -49,8 +46,6 @@ class Usuario(AbstractUser):
     ciudad = models.CharField(max_length=100, blank=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
-    # consentimientos del registro (HU-01): cuándo los dio y qué versión de la política aceptó.
-    # Quedan vacíos en las cuentas creadas desde el panel o por comandos.
     privacidad_aceptada_en = models.DateTimeField(null=True, blank=True, verbose_name="Aceptó la política de privacidad")
     privacidad_version = models.CharField(max_length=20, blank=True, verbose_name="Versión de la política aceptada")
     datos_navegacion_autorizados_en = models.DateTimeField(
@@ -63,12 +58,10 @@ class Usuario(AbstractUser):
     objects = UsuarioManager()
 
     def save(self, *args, **kwargs):
-        # el email se guarda en minúsculas para que el login no distinga mayúsculas
         if self.email:
             self.email = self.email.strip().lower()
         super().save(*args, **kwargs)
 
-    # eliminación lógica: el usuario ya no puede iniciar sesión, pero se conservan sus compras
     def delete(self, *args, **kwargs):
         self.is_deleted = True
         self.is_active = False
@@ -90,7 +83,6 @@ class Usuario(AbstractUser):
 # borrado lógico de productos
 class ProductoQuerySet(models.QuerySet):
     def delete(self):
-        # Producto.objects.filter(...).delete() también es lógico (incluye la acción masiva de /admin/)
         return self.update(is_deleted=True, deleted_at=now())
 
     def hard_delete(self):
@@ -98,7 +90,6 @@ class ProductoQuerySet(models.QuerySet):
 
 
 class ProductoManager(models.Manager.from_queryset(ProductoQuerySet)):
-    # Producto.objects solo devuelve productos no eliminados
     def get_queryset(self):
         return super().get_queryset().filter(is_deleted=False)
 
@@ -178,10 +169,6 @@ class Producto(models.Model):
     genero = models.CharField(max_length=20, choices=GENEROS, verbose_name="Género", default='OTRO')
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
-
-    # objects: solo productos activos. todos: incluye los eliminados (historial, admin).
-    # Al acceder a un producto desde una relación (ej: producto_venta.producto) Django
-    # usa un manager sin filtro, así que el historial sigue mostrando productos eliminados.
     objects = ProductoManager()
     todos = ProductoQuerySet.as_manager()
 
@@ -228,10 +215,7 @@ class ItemCarritoProducto(models.Model):
         ]
 
 # clase Venta
-# El estado de la venta (preparación, enviado, entregado, anulada...) vive en Envio.estado.
 class Venta(models.Model):
-    # opciones de entrega del checkout (precios y reglas en appPrincipal/envios.py).
-    # 'domicilio' es la opción antigua: ya no se ofrece, pero las ventas anteriores la conservan.
     ENVIO_CHOICES = [
         ('tienda', 'Retiro en tienda'),
         ('delivery', 'Delivery Express en Valdivia'),
@@ -239,7 +223,6 @@ class Venta(models.Model):
         ('por_pagar', 'Envío por pagar'),
         ('domicilio', 'Envío a domicilio'),
     ]
-    # PROTECT: un usuario con compras no se puede borrar de verdad (solo borrado lógico)
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='ventas')
     envio = models.PositiveIntegerField(default=0)
     subtotal = models.PositiveIntegerField(default=0)
@@ -253,7 +236,6 @@ class Venta(models.Model):
         self.subtotal = sum(
             producto_venta.total_producto for producto_venta in self.producto_venta.all()
         )
-        # las ventas con la opción antigua ('domicilio') conservan el envío que se cobró
         if self.metodo_envio in OPCIONES_ENVIO:
             self.envio = costo_envio(self.metodo_envio, self.subtotal)
         self.total = self.subtotal + self.envio
@@ -261,7 +243,6 @@ class Venta(models.Model):
 
     @property
     def envio_por_pagar(self):
-        """El envío lo paga el cliente a la encomienda al recibir (no se cobró en la compra)."""
         return self.metodo_envio == 'por_pagar'
 
     @property
@@ -270,7 +251,6 @@ class Venta(models.Model):
 
     @property
     def estados_envio(self):
-        """Estados por los que pasa el envío de esta venta (dependen del tipo de entrega)."""
         return estados_para(self.metodo_envio)
 
     @property
@@ -280,7 +260,6 @@ class Venta(models.Model):
 # clase ProductoVenta
 class ProductoVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='producto_venta')
-    # PROTECT: un producto vendido no se puede borrar de verdad (solo borrado lógico)
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.PositiveIntegerField(default=1)
     precio_unitario = models.PositiveIntegerField() 
@@ -376,7 +355,6 @@ class Envio(models.Model):
         ('Entregado', 'Entregado'),
         ("Anulada", "Anulada"),
     ]
-    # clase CSS de cada estado (colores en los CSS de compras, perfil y panel)
     CLASES_ESTADO = {
         'En Preparación': 'estado-preparacion',
         'Enviado': 'estado-enviado',
@@ -386,7 +364,6 @@ class Envio(models.Model):
         'Entregado': 'estado-entregado',
         'Anulada': 'estado-anulada',
     }
-    # campo de fecha que se marca al llegar a cada estado
     FECHAS_ESTADO = {
         'En Preparación': 'fecha_preparacion',
         'Enviado': 'fecha_envio',
@@ -411,8 +388,6 @@ class Envio(models.Model):
         return f"Envío #{self.id} para Venta {self.venta.id}"
     
     def guardar_estado(self, nuevo_estado):
-        # la fecha se marca solo al cambiar de estado: guardar de nuevo el mismo estado
-        # (por ejemplo, para corregir el número de seguimiento) no la reemplaza
         if nuevo_estado != self.estado and nuevo_estado in self.FECHAS_ESTADO:
             setattr(self, self.FECHAS_ESTADO[nuevo_estado], now())
         self.estado = nuevo_estado
@@ -462,8 +437,6 @@ class Favorito(models.Model):
         return f"{self.usuario} - {self.producto}"
 
 # clase Destacado
-# Contenido de portada que el administrador edita desde su panel (HU-09): carrusel del menú,
-# nuevos lanzamientos del home y la tarjeta promocional de cada menú del navbar.
 class Destacado(models.Model):
     SECCION_CARRUSEL = 'carrusel'
     SECCION_LANZAMIENTOS = 'lanzamientos'
@@ -475,13 +448,9 @@ class Destacado(models.Model):
         ('menu_accesorios', 'Navbar: menú Accesorios'),
         ('menu_figuras', 'Navbar: menú Figuras'),
     ]
-    # en las secciones del navbar se muestra solo uno (el primero activo según el orden)
     SECCIONES_DE_UNO = ['menu_videojuegos', 'menu_consolas', 'menu_accesorios', 'menu_figuras']
-    # máximo de destacados visibles a la vez para que el sitio no se alargue (los ocultos no cuentan)
     MAXIMO_VISIBLES = {SECCION_CARRUSEL: 8, SECCION_LANZAMIENTOS: 4}
-
     seccion = models.CharField(max_length=20, choices=SECCIONES, verbose_name="Sección")
-    # SET_NULL: si el producto se borra de verdad, el destacado queda sin link en vez de desaparecer
     producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True, blank=True)
     titulo = models.CharField(max_length=80, verbose_name="Título")
     texto = models.TextField(blank=True, max_length=400)
@@ -500,7 +469,6 @@ class Destacado(models.Model):
         return f"{self.get_seccion_display()}: {self.titulo}"
 
     def supera_maximo_visibles(self):
-        """True si, al quedar visible, la sección pasaría su máximo de visibles."""
         maximo = self.MAXIMO_VISIBLES.get(self.seccion)
         if maximo is None:
             return False
@@ -517,14 +485,12 @@ class Destacado(models.Model):
 
     @property
     def producto_disponible(self):
-        """El producto enlazado, solo si sigue a la venta (si no, no se muestra el botón)."""
         if self.producto and not self.producto.is_deleted:
             return self.producto
         return None
 
     @property
     def video_embed_url(self):
-        """URL para incrustar el video (acepta links youtube.com/watch?v=, youtu.be/ y /embed/)."""
         return youtube_embed_url(self.video_url)
 
 

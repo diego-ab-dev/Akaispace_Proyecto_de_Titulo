@@ -437,7 +437,7 @@ def crear_venta(cliente, producto, cantidad=2, estado='Entregado'):
     return venta
 
 
-class CarritoTests(TestCase):  # 12
+class CarritoTests(TestCase): 
     def setUp(self):
         self.producto = crear_producto(stock=3)
         self.client.force_login(crear_cliente())
@@ -456,7 +456,7 @@ class CarritoTests(TestCase):  # 12
 
     def test_pasarse_del_stock_no_responde_exito_ni_agrega(self):
         self.assertTrue(self.agregar(2).json()['success'])
-        respuesta = self.agregar(2).json()  # 2 + 2 > 3
+        respuesta = self.agregar(2).json()  
         self.assertFalse(respuesta['success'])
         self.assertIn('1 unidad', respuesta['error'])
         self.assertEqual(self.items(), [2])
@@ -489,7 +489,6 @@ class CarritoTests(TestCase):  # 12
         self.assertEqual(self.items(), [1])
 
     def test_no_se_llega_al_pago_con_mas_cantidad_que_stock(self):
-        # el stock bajó después de agregar al carrito
         self.agregar(3)
         self.producto.stock = 1
         self.producto.save()
@@ -498,7 +497,7 @@ class CarritoTests(TestCase):  # 12
         self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
 
 
-class CheckoutTests(TestCase):  # 9
+class CheckoutTests(TestCase): 
     def setUp(self):
         from .models import Carrito, ItemCarritoProducto
         self.cliente = crear_cliente()
@@ -523,13 +522,13 @@ class CheckoutTests(TestCase):  # 9
         from .models import Venta
         self.assertEqual(self.client.get('/compra-exitosa/').status_code, 200)
         venta = Venta.objects.get()
-        venta.calcular_total()  # recalcular el total no puede volver a descontar
+        venta.calcular_total()  
         self.con_stock.refresh_from_db()
         self.assertEqual(self.con_stock.stock, 3)
         self.assertEqual(venta.total, 30000)
 
 
-class DevolucionesTests(TestCase):  # 4, 5 y 18
+class DevolucionesTests(TestCase):  
     def setUp(self):
         self.producto = crear_producto(stock=5)
         self.cliente = crear_cliente()
@@ -556,10 +555,10 @@ class DevolucionesTests(TestCase):  # 4, 5 y 18
         from .models import Devolucion
         self.assertEqual(self.client.get(self.url).status_code, 200)
         self.pedir(1)
-        self.pedir(2)  # solo queda 1
+        self.pedir(2)  
         self.pedir(1)
         self.assertEqual(list(Devolucion.objects.values_list('cantidad', flat=True)), [1, 1])
-        self.assertEqual(self.client.get(self.url).status_code, 302)  # ya no queda nada por devolver
+        self.assertEqual(self.client.get(self.url).status_code, 302)  
 
     def test_solo_se_puede_devolver_una_compra_entregada(self):
         from .models import Devolucion, Envio
@@ -585,15 +584,15 @@ class DevolucionesTests(TestCase):  # 4, 5 y 18
         self.client.post(f'/ventas/anular/{self.venta.id}/')
         self.client.post(f'/ventas/anular/{self.venta.id}/')
         self.producto.refresh_from_db()
-        self.assertEqual(self.producto.stock, 7)  # 5 + 1 devuelto + 1 al anular
+        self.assertEqual(self.producto.stock, 7) 
 
-    def test_detalle_de_compra_con_devolucion_sin_producto_no_se_cae(self):  # 18
+    def test_detalle_de_compra_con_devolucion_sin_producto_no_se_cae(self):  
         from .models import Devolucion
         Devolucion.objects.create(usuario=self.cliente, venta=self.venta, producto=None, motivo='x')
         self.assertEqual(self.client.get(f'/compra/{self.venta.id}/detalle/').status_code, 200)
 
 
-class AccionesPorPostTests(TestCase):  # 6
+class AccionesPorPostTests(TestCase): 
     def setUp(self):
         self.producto = crear_producto()
         self.cliente = crear_cliente()
@@ -626,7 +625,7 @@ class AccionesPorPostTests(TestCase):  # 6
         self.assertEqual(Envio.objects.get().estado, 'Entregado')
 
 
-class OpinionesTests(TestCase):  # 16
+class OpinionesTests(TestCase):  
     def setUp(self):
         self.producto = crear_producto()
         self.cliente = crear_cliente()
@@ -654,7 +653,7 @@ class OpinionesTests(TestCase):  # 16
         self.assertTrue(Opinion.objects.filter(usuario=self.cliente, producto=self.producto).exists())
 
 
-class RegionesTests(TestCase):  # 23
+class RegionesTests(TestCase):  
     def test_cada_region_del_select_tiene_sus_ciudades(self):
         from .constants import REGIONES, REGIONES_CIUDADES
         self.assertEqual([codigo for codigo, _ in REGIONES], list(REGIONES_CIUDADES))
@@ -667,7 +666,7 @@ class RegionesTests(TestCase):  # 23
         cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1')
         self.client.force_login(cliente)
         malos = [
-            {'region': 'LOS RIOS', 'ciudad': 'Santiago', 'direccion': 'Calle 1'},  # ciudad de otra región
+            {'region': 'LOS RIOS', 'ciudad': 'Santiago', 'direccion': 'Calle 1'}, 
             {'region': 'INVENTADA', 'ciudad': 'Valdivia', 'direccion': 'Calle 1'},
             {'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': ''},
             {'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': 'x' * 101},
@@ -682,7 +681,7 @@ class RegionesTests(TestCase):  # 23
         self.assertEqual((cliente.region, cliente.ciudad), ('LOS LAGOS', 'Osorno'))
 
 
-class DashboardTests(TestCase):  # 27
+class DashboardTests(TestCase): 
     def test_grafico_suma_por_mes_sin_ventas_anuladas_en_una_consulta(self):
         from datetime import datetime
         from django.utils import timezone
@@ -693,7 +692,6 @@ class DashboardTests(TestCase):  # 27
         anio = timezone.localdate().year
         marzo = crear_venta(cliente, producto)
         anulada = crear_venta(cliente, producto, estado='Anulada')
-        # 1 de abril a las 00:30 hora de Chile: en UTC todavía es 31 de marzo, debe contar en abril
         abril = crear_venta(cliente, producto)
         Venta.objects.filter(id__in=[marzo.id, anulada.id]).update(
             fecha=timezone.make_aware(datetime(anio, 3, 10, 12)), total=1000)
@@ -706,7 +704,7 @@ class DashboardTests(TestCase):  # 27
         self.assertEqual(sum(totales), 1500)
 
 
-class ErroresInternosTests(TestCase):  # 35
+class ErroresInternosTests(TestCase): 
     def test_crear_usuario_no_muestra_el_detalle_del_error(self):
         from unittest import mock
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
@@ -735,10 +733,10 @@ class ErroresInternosTests(TestCase):  # 35
         self.assertFalse(Favorito.objects.exists())
 
 
-class PortadaSitioTests(TestCase):  # 24 / HU-09: lo que el admin configura se ve en el sitio
+class PortadaSitioTests(TestCase): 
     def setUp(self):
         from .models import Destacado
-        Destacado.objects.all().delete()  # parte sin el contenido inicial de la migración
+        Destacado.objects.all().delete() 
         self.producto = crear_producto('Juego Nuevo')
 
     def crear(self, **datos):
@@ -771,7 +769,7 @@ class PortadaSitioTests(TestCase):  # 24 / HU-09: lo que el admin configura se v
     def test_lanzamientos_alternan_el_lado_del_video(self):
         for i in range(2):
             self.crear(seccion='lanzamientos', titulo=f'Juego {i}', video_url='https://youtu.be/wFGEMfyAQtI', orden=i)
-        self.assertContains(self.client.get('/'), 'order-md-2', count=1)  # solo el segundo va a la derecha
+        self.assertContains(self.client.get('/'), 'order-md-2', count=1) 
 
     def test_sin_lanzamientos_la_seccion_no_aparece(self):
         self.assertNotContains(self.client.get('/'), 'Nuevos Lanzamientos')
@@ -792,7 +790,7 @@ class PortadaSitioTests(TestCase):  # 24 / HU-09: lo que el admin configura se v
         self.assertEqual(youtube_embed_url('https://vimeo.com/123'), '')
 
 
-class PortadaPanelTests(TestCase):  # 24 / HU-09: el admin la edita desde su panel
+class PortadaPanelTests(TestCase):  
     def setUp(self):
         self.producto = crear_producto('Juego Nuevo')
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
@@ -852,16 +850,12 @@ class PortadaPanelTests(TestCase):  # 24 / HU-09: el admin la edita desde su pan
 
         respuesta = self.client.post('/admin-panel/portada/nuevo/', lleno)
         self.assertIn('activo', respuesta.context['form'].errors)
-
-        # oculto sí se puede guardar, pero no mostrarlo mientras la sección esté llena
         lleno.pop('activo')
         self.client.post('/admin-panel/portada/nuevo/', lleno)
         oculto = Destacado.objects.get(titulo='Uno más', activo=False)
         self.client.post(f'/admin-panel/portada/{oculto.id}/estado/')
         oculto.refresh_from_db()
         self.assertFalse(oculto.activo)
-
-        # editar uno que ya está visible no choca con el máximo
         visible = Destacado.objects.get(titulo='L0')
         respuesta = self.client.post(f'/admin-panel/portada/{visible.id}/editar/',
                                      self.datos(seccion='lanzamientos', titulo='L0 editado'))
@@ -872,7 +866,7 @@ class PortadaPanelTests(TestCase):  # 24 / HU-09: el admin la edita desde su pan
         self.assertRedirects(self.client.get('/admin-panel/portada/'), '/', fetch_redirect_response=False)
 
 
-class PortadaInicialTests(TestCase):  # la migración deja el sitio igual que antes
+class PortadaInicialTests(TestCase):  
     def test_migracion_crea_el_contenido_que_estaba_en_las_plantillas(self):
         from .models import Destacado
         self.assertEqual(Destacado.objects.filter(seccion='carrusel').count(), 3)
@@ -889,10 +883,10 @@ class PortadaInicialTests(TestCase):  # la migración deja el sitio igual que an
         self.assertEqual(Destacado.objects.get(seccion='menu_consolas').producto, ps5)
 
 
-class EnviosTests(TestCase):  # HU-08: retiro en tienda o despacho, con los precios reales de la tienda
+class EnviosTests(TestCase):  
     def setUp(self):
         from .models import Carrito
-        self.producto = crear_producto(stock=10)  # $10.000 c/u
+        self.producto = crear_producto(stock=10) 
         self.carrito = Carrito.objects.create(usuario=crear_cliente())
 
     def cliente_en(self, ciudad, region='LOS RIOS', direccion='Picarte 123'):
@@ -1001,7 +995,7 @@ class EnviosTests(TestCase):  # HU-08: retiro en tienda o despacho, con los prec
         self.assertEqual(venta.envio, 5990)
 
 
-class EnviosPanelTests(TestCase):  # HU-08 en el panel: estados según el tipo de entrega
+class EnviosPanelTests(TestCase): 
     def setUp(self):
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
 
@@ -1041,7 +1035,7 @@ class EnviosPanelTests(TestCase):  # HU-08 en el panel: estados según el tipo d
         self.assertContains(respuesta, 'Estado no válido.')
 
 
-class ListoParaRetiroTests(TestCase):  # HU-08: el cliente sabe cuándo puede ir a buscar su pedido
+class ListoParaRetiroTests(TestCase):
     def setUp(self):
         self.cliente = crear_cliente()
         self.admin = crear_cliente('jefe@example.com', is_staff=True)
@@ -1080,7 +1074,6 @@ class ListoParaRetiroTests(TestCase):  # HU-08: el cliente sabe cuándo puede ir
         self.assertNotContains(self.detalle_cliente(), 'Tu pedido está listo para retiro')
 
     def test_el_cliente_no_puede_marcarlo_como_recibido(self):
-        # el retiro lo confirma la tienda al entregarlo en el local
         self.cambiar_estado('Listo para retiro')
         self.client.force_login(self.cliente)
         self.client.post(f'/marcar-recibido/{self.venta.id}/')
@@ -1109,7 +1102,7 @@ class ListoParaRetiroTests(TestCase):  # HU-08: el cliente sabe cuándo puede ir
         self.assertEqual(self.client.get('/api/dashboard-counts/').json()['por_retirar'], 1)
 
     def test_filtro_por_tipo_de_entrega(self):
-        crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro'))  # metodo 'tienda' por defecto
+        crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro')) 
         self.client.force_login(self.admin)
         respuesta = self.client.get('/admin-panel/ventas/?entrega=delivery')
         self.assertEqual(list(respuesta.context['ventas']), [])
