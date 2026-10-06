@@ -1,4 +1,4 @@
-// Navbar lateral del panel de administración (templates/admin_panel/partials/sidebar.html).
+// Navbar lateral del panel de administración
 document.addEventListener("DOMContentLoaded", function () {
   const toggle = document.getElementById("header-toggle");
   const nav = document.getElementById("nav-bar");

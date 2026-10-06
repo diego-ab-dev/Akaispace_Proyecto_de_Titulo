@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="fondo" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#1b2a6b"/>
+      <stop offset="45%" stop-color="#0f1638"/>
+      <stop offset="100%" stop-color="#05070f"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4f5dff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4f5dff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="desvanecer" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0.1"/>
+    </radialGradient>
+    <mask id="mascara">
+      <rect width="800" height="1000" fill="url(#desvanecer)"/>
+    </mask>
+    <pattern id="hex" width="48.5" height="84" patternUnits="userSpaceOnUse">
+      <path d="M24.25 0L48.5 14V42L24.25 56L0 42V14Z M24.25 56V84" fill="none" stroke="#5a6cff" stroke-opacity="0.3" stroke-width="1.2"/>
+    </pattern>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#fondo)"/>
+  <rect width="800" height="1000" fill="url(#hex)" mask="url(#mascara)"/>
+  <circle cx="400" cy="500" r="360" fill="url(#halo)"/>
+
+  <g fill="#9aa6ff">
+    <circle cx="250" cy="240" r="2.5" opacity="0.8"/>
+    <circle cx="580" cy="300" r="2" opacity="0.6"/>
+    <circle cx="630" cy="760" r="3" opacity="0.7"/>
+    <circle cx="170" cy="740" r="2" opacity="0.5"/>
+    <circle cx="430" cy="160" r="2" opacity="0.6"/>
+    <circle cx="350" cy="860" r="2.5" opacity="0.6"/>
+    <circle cx="720" cy="560" r="2" opacity="0.5"/>
+    <circle cx="80" cy="520" r="2" opacity="0.5"/>
+  </g>
+</svg>

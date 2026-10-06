@@ -33,7 +33,6 @@ def crear_destacado(request):
             form.save()
             return redirect('admin_portada')
     else:
-        # desde el botón "Agregar" de cada sección la sección viene elegida
         form = DestacadoForm(initial={'seccion': request.GET.get('seccion')})
     return render(request, 'admin_panel/portada_form.html', {'form': form})
 

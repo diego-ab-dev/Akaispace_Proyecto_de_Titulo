@@ -35,7 +35,6 @@ def admin_usuarios(request):
 def eliminar_usuario(request, usuario_id):
     usuario = get_object_or_404(Usuario, id=usuario_id)
     if usuario != request.user:
-        # eliminación lógica: queda inactivo y ya no puede iniciar sesión
         usuario.delete()
     return redirect('admin_usuarios')
 
@@ -137,7 +136,6 @@ def crear_usuario(request):
             return JsonResponse({'success': False, 'message': error_msg})
             
         except Exception:
-            # el detalle queda en el log; al navegador solo va un mensaje genérico
             logger.exception("Error al crear un usuario desde el panel")
             return JsonResponse({'success': False, 'message': 'Ocurrió un error inesperado. Inténtalo de nuevo.'}, status=500)
 

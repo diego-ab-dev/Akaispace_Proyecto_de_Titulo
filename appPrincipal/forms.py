@@ -7,7 +7,7 @@ from .models import Destacado, Opinion, Producto, Usuario, youtube_embed_url
 import os
 
 
-# validacion de rut chileno (modulo 11)
+# validacion de rut
 def calcular_dv(cuerpo):
     suma = 0
     multiplicador = 2
@@ -24,7 +24,6 @@ def calcular_dv(cuerpo):
 
 
 def normalizar_rut(rut):
-    """Devuelve el rut con formato 12.345.678-9, o lanza ValidationError si no es válido."""
     limpio = (rut or '').strip().upper().replace('.', '').replace('-', '')
     cuerpo, dv = limpio[:-1], limpio[-1:]
 
@@ -85,9 +84,7 @@ class UsuarioCustomForm(forms.Form):
     region = forms.ChoiceField(choices=REGIONES, widget=forms.Select(attrs={'id': 'id_region', 'class': 'form-control'}))
     ciudad = forms.ChoiceField(choices=[], widget=forms.Select(attrs={'id': 'id_ciudad', 'class': 'form-control'}))
 
-    # HU-01: dos consentimientos separados que no vienen marcados de antemano. La política es
-    # obligatoria y en la misma casilla declara su edad (mayor de 18 o con autorización de su
-    # padre, madre o tutor); los datos de navegación son opcionales (solo activan las recomendaciones)
+
     acepta_privacidad = forms.BooleanField(error_messages={
         'required': 'Debes declarar tu edad y aceptar la Política de Privacidad para crear tu cuenta.',
     })
@@ -113,7 +110,6 @@ class UsuarioCustomForm(forms.Form):
             self.add_error('confirmar_contraseña', 'Las contraseñas no coinciden.')
             return cleaned_data
 
-        # reglas de AUTH_PASSWORD_VALIDATORS (largo mínimo, no muy común, no parecida al nombre o correo)
         usuario = Usuario(email=cleaned_data.get('email', ''), nombre=cleaned_data.get('nombre', ''))
         try:
             validate_password(contraseña, user=usuario)
@@ -139,7 +135,6 @@ class SolicitudDevolucionForm(forms.Form):
     imagen3 = forms.ImageField(required=False, error_messages=mensaje_error)
 
     def __init__(self, *args, cantidad_maxima, **kwargs):
-        # no se puede devolver más de lo que se compró (menos lo ya solicitado)
         super().__init__(*args, **kwargs)
         self.fields['cantidad'].validators.append(validators.MaxValueValidator(
             cantidad_maxima, message=f"Solo puedes devolver hasta {cantidad_maxima} unidad(es)."
@@ -230,7 +225,6 @@ class ProductoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # desabilita el editar el codigo de barra
         if self.instance and self.instance.pk:
             self.fields['codigo_de_barra'].disabled = True
 
@@ -251,7 +245,6 @@ class ProductoForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             return codigo
         
-        # Producto.objects ya excluye los eliminados
         if Producto.objects.filter(codigo_de_barra=codigo).exists():
             raise forms.ValidationError(
                 "Ya existe un producto activo con este código de barras."
@@ -318,11 +311,8 @@ class DestacadoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # solo productos a la venta, ordenados para encontrarlos fácil
         self.fields['producto'].queryset = Producto.objects.order_by('nombre')
         self.fields['producto'].empty_label = 'Sin producto'
-        # categoría y código de barra para distinguir juegos con el mismo nombre en distintas consolas
-        # (el buscador del formulario también busca por este texto)
         self.fields['producto'].label_from_instance = lambda p: (
             f"{p.nombre} · {p.get_categoria_display()} · Cód. {p.codigo_de_barra}"
         )
@@ -339,11 +329,9 @@ class DestacadoForm(forms.ModelForm):
         producto = cleaned_data.get('producto')
         imagen = cleaned_data.get('imagen')
         if seccion == Destacado.SECCION_LANZAMIENTOS:
-            # un lanzamiento puede no estar a la venta aún, pero necesita algo que mostrar
             if not cleaned_data.get('video_url') and not imagen and not producto:
                 self.add_error('video_url', 'Agrega un video, una imagen o un producto para este lanzamiento.')
         elif seccion and not producto:
-            # el carrusel y las promos del navbar llevan al producto
             self.add_error('producto', 'Elige el producto al que lleva este destacado.')
 
         if seccion and cleaned_data.get('activo'):

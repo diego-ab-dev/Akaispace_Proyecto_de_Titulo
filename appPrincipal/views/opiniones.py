@@ -18,7 +18,6 @@ def enviar_opinion(request, producto_id):
     usuario_actual = request.user
     producto = get_object_or_404(Producto, id=producto_id)
 
-    # HU-04: solo se puede opinar sobre un producto comprado y ya recibido
     lo_recibio = ProductoVenta.objects.filter(
         venta__usuario=usuario_actual, producto=producto, venta__datos_envio__estado='Entregado'
     ).exists()

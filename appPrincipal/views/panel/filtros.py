@@ -8,7 +8,7 @@ from django.utils.dateparse import parse_date
 def _leer_fecha(valor):
     try:
         return parse_date(valor) if valor else None
-    except ValueError:  # formato correcto pero fecha imposible, ej. 2026-02-31
+    except ValueError:  
         return None
 
 
@@ -17,11 +17,6 @@ def _inicio_del_dia(dia):
 
 
 def filtrar_por_fechas(request, queryset, campo):
-    """Filtra el queryset por ?fecha_inicio y ?fecha_fin (AAAA-MM-DD) sobre `campo`.
-
-    Devuelve (queryset, errores). Una fecha futura o un rango invertido no se aplica
-    y queda explicado en `errores` para mostrarlo en la plantilla.
-    """
     hoy = timezone.localdate()
     errores = []
     inicio = _leer_fecha(request.GET.get('fecha_inicio'))
@@ -39,8 +34,6 @@ def filtrar_por_fechas(request, queryset, campo):
         errores.append("La fecha de inicio no puede ser mayor que la fecha fin.")
         inicio = fin = None
 
-    # se compara contra el inicio del día siguiente: con campo__lte=fin quedaban fuera los
-    # registros del mismo día de fin (fin se interpretaba como las 00:00 de ese día)
     if inicio:
         queryset = queryset.filter(**{f'{campo}__gte': _inicio_del_dia(inicio)})
     if fin:

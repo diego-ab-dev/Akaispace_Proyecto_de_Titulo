@@ -425,10 +425,6 @@ class Boleta(models.Model):
         return f"Boleta #{self.id} - Venta {self.venta.id}"
 
 # clase PagoWebpay
-# Cada intento de pago con Webpay (HU-05). La Venta se crea solo cuando Transbank aprueba el pago:
-# así los pagos rechazados o abandonados no aparecen como ventas en el panel, reportes ni historial.
-# Guarda una copia del carrito al momento de pagar: lo cobrado es lo que se vende,
-# aunque el cliente cambie el carrito o los precios cambien mientras está en Webpay.
 class PagoWebpay(models.Model):
     PENDIENTE = 'pendiente'
     APROBADO = 'aprobado'
@@ -444,7 +440,6 @@ class PagoWebpay(models.Model):
         (REEMBOLSADO, 'Reembolsado (sin stock)'),
         (ERROR, 'Error'),
     ]
-    # tipos de pago que informa Transbank (payment_type_code)
     TIPOS_PAGO = {
         'VD': 'Débito',
         'VP': 'Prepago',
@@ -463,12 +458,10 @@ class PagoWebpay(models.Model):
     estado = models.CharField(max_length=12, choices=ESTADOS, default=PENDIENTE)
     detalle = models.CharField(max_length=255, blank=True, help_text="Motivo del estado, para el cliente y el panel.")
 
-    # copia de la compra: [{'producto_id': 1, 'cantidad': 2, 'precio_unitario': 10000}, ...]
     items = models.JSONField()
     metodo_envio = models.CharField(max_length=10, choices=Venta.ENVIO_CHOICES)
     direccion_envio = models.TextField(blank=True)
 
-    # datos que devuelve Transbank al confirmar (nunca se recibe el número completo de la tarjeta)
     codigo_autorizacion = models.CharField(max_length=10, blank=True)
     tipo_pago = models.CharField(max_length=2, blank=True)
     cuotas = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -493,11 +486,9 @@ class PagoWebpay(models.Model):
 
     @property
     def metodo_pago_texto(self):
-        """Lo que se guarda en Venta.metodo_pago, ej: 'Webpay - Débito'."""
         return f"Webpay - {self.tipo_pago_display}" if self.tipo_pago else "Webpay"
 
     def guardar_respuesta(self, respuesta):
-        """Copia los datos del comprobante que entrega Transbank al confirmar el pago."""
         self.respuesta = respuesta
         self.codigo_autorizacion = respuesta.get('authorization_code') or ''
         self.tipo_pago = respuesta.get('payment_type_code') or ''

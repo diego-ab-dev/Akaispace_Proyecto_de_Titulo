@@ -15,12 +15,9 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter=("categoria", "genero", "is_deleted")
     list_per_page = 20
 
-    # muestra también los productos eliminados (borrado lógico) para poder revisarlos o restaurarlos
     def get_queryset(self, request):
         return Producto.todos.all()
 
-    # el borrado de productos es lógico (no elimina filas), así que no hace falta revisar
-    # las relaciones protegidas (ventas, devoluciones) antes de confirmar
     def get_deleted_objects(self, objs, request):
         return [str(obj) for obj in objs], {}, set(), []
 
@@ -51,7 +48,6 @@ class UsuarioAdmin(UserAdmin):
     ordering = ("email",)
     list_per_page = 20
 
-    # UserAdmin usa "username"; este modelo inicia sesión con el email
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Datos personales", {"fields": ("nombre", "rut", "telefono", "direccion", "region", "ciudad")}),
@@ -96,7 +92,6 @@ admin.site.register(Venta, VentaAdmin)
 admin.site.register(Reclamo, ReclamoAdmin)
 admin.site.register(Opinion)
 
-# historial de intentos de pago con Webpay (HU-05), solo lectura: lo escribe el flujo de pago
 @admin.register(PagoWebpay)
 class PagoWebpayAdmin(admin.ModelAdmin):
     list_display = ("orden_compra", "usuario", "monto", "estado", "tipo_pago", "venta", "creado")

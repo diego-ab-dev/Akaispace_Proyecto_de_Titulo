@@ -1,5 +1,4 @@
 // Navbar de la tienda (templates/partials/navbar.html): buscador, menú lateral en móvil y submenús.
-// Cada elemento se revisa antes de usarlo porque no todas las variantes del navbar los tienen.
 (function () {
   const navbar = document.querySelector(".navbar");
   const searchBox = document.querySelector(".search-box .bx-search");
@@ -30,17 +29,14 @@
     };
   }
 
-  // en móvil, cerrar el menú lateral al ir a una sección de la misma página (#local, #redes...)
   if (navLinks) {
     navLinks.querySelectorAll('.links a[href^="#"]:not([href="#"])').forEach(function (link) {
       link.addEventListener("click", function () {
-        // solo si el menú lateral está abierto; en escritorio .nav-links es relative y moverlo lo escondería
         if (navLinks.style.left === "0px") navLinks.style.left = "-100%";
       });
     });
   }
 
-  // flechas de los submenús en móvil
   const flechas = { ".htmlcss-arrow": "show1", ".more-arrow": "show2", ".js-arrow": "show3" };
   for (const [selector, clase] of Object.entries(flechas)) {
     const flecha = document.querySelector(selector);

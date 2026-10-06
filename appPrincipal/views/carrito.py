@@ -11,7 +11,6 @@ from appPrincipal.models import Carrito, ItemCarritoProducto, Producto
 
 
 def _leer_entero(valor):
-    """Valor enviado por el cliente como entero, o None si no es un número."""
     try:
         return int(valor)
     except (TypeError, ValueError):
@@ -21,7 +20,6 @@ def _leer_entero(valor):
 @login_required_json
 @require_POST
 def agregar_al_carrito(request, producto_id):
-    # Producto.objects no incluye los productos eliminados: no se pueden agregar
     producto = get_object_or_404(Producto, id=producto_id)
     cantidad = _leer_entero(request.POST.get('cantidad', 1))
 
@@ -120,7 +118,6 @@ def ver_carrito(request):
     total = sum((item.producto.precio or 0) * item.cantidad for item in items)
     total_items = sum(item.cantidad for item in items)
 
-    # la opción de entrega elegida antes (si volvió desde el pago) queda marcada
     envio_elegido = request.session.get('metodo_envio')
     if not envios.disponible_para(envio_elegido, usuario.ciudad):
         envio_elegido = None

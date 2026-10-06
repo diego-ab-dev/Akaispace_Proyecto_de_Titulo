@@ -52,7 +52,6 @@ def cambiar_contraseña(request):
 
         usuario.set_password(nueva_contraseña)
         usuario.save()
-        # mantiene la sesión actual abierta (y cierra las de otros dispositivos)
         update_session_auth_hash(request, usuario)
 
         return redirect(f"{reverse('perfil')}?{urlencode({'notif': 'Contraseña actualizada correctamente.', 'type': 'success'})}")

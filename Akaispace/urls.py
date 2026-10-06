@@ -34,7 +34,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('logout/', views.logout, name='logout'),
     path('obtener_ciudades/', views.obtener_ciudades, name='obtener_ciudades'),
-    # recuperar contraseña (HU-11)
+    # recuperar contraseña
     path('recuperar-contrasena/', views.recuperar_contraseña, name='recuperar_contraseña'),
     path('recuperar-contrasena/enviado/', views.recuperar_contraseña_enviado, name='recuperar_contraseña_enviado'),
     path('recuperar-contrasena/listo/', views.restablecer_contraseña_listo, name='restablecer_contraseña_listo'),
@@ -76,7 +76,6 @@ urlpatterns = [
     path('pago/webpay/retorno/', views.webpay_retorno, name='webpay_retorno'),
     path('pago/<int:pago_id>/resultado/', views.resultado_pago, name='resultado_pago'),
     path('boleta/<int:venta_id>/', views.ver_boleta, name='ver_boleta'),
-
 
     # URLS ADMIN
 

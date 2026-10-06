@@ -48,7 +48,6 @@ def ver_detalle_compra(request, compra_id):
 
     total_cantidad = sum(item.cantidad for item in compra.producto_venta.all())
 
-    # producto_id puede ser null (el modelo lo permite): esas devoluciones no marcan ningún producto
     devoluciones_existentes = {
         producto_id: True
         for producto_id in Devolucion.objects.filter(venta=compra, producto__isnull=False).values_list('producto_id', flat=True)

@@ -10,15 +10,12 @@ from appPrincipal.models import Devolucion, Envio, Producto, Reclamo, Venta
 
 
 def ventas_por_mes(anio):
-    """Total vendido en cada mes del año (lista de 12 montos), sin contar las ventas anuladas."""
     inicio = timezone.make_aware(datetime(anio, 1, 1))
     fin = timezone.make_aware(datetime(anio + 1, 1, 1))
     ventas = Venta.objects.filter(fecha__gte=inicio, fecha__lt=fin).exclude(
         datos_envio__estado='Anulada'
     ).values_list('fecha', 'total')
 
-    # una sola consulta y se agrupa aquí: TruncMonth en MySQL depende de que el servidor
-    # tenga cargadas las tablas de zonas horarias, y si no las tiene devuelve vacío
     totales = [0] * 12
     for fecha, total in ventas:
         totales[timezone.localtime(fecha).month - 1] += total

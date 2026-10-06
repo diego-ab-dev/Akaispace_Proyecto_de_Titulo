@@ -10,14 +10,19 @@
 {% block content %}
 <div class="container-fluid ps-md-0">
     <div class="row g-0">
-      <div class="d-none d-md-flex col-md-4 col-lg-6 bg-image"></div>
+      <div class="d-none d-md-flex col-md-4 col-lg-6 bg-image">
+        <div class="marca-login">
+          <img src="{% static 'images/akaispace_logo.png' %}" alt="Akaispace">
+          <p>Tu próxima partida empieza aquí</p>
+        </div>
+      </div>
       <div class="col-md-8 col-lg-6">
         <div class="login d-flex align-items-center py-5">
           <div class="container">
             <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
             <div class="row">
               <div class="col-md-9 col-lg-8 mx-auto">
-                <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" style="width: 110px; display: block; margin-bottom: 1rem;">
+                <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" class="d-md-none" style="width: 110px; display: block; margin-bottom: 1rem;">
                 <h3 class="login-heading mb-4">Bienvenido/a!</h3>
                 <form method="POST" id="login-form">
                     {% csrf_token %}

@@ -81,12 +81,9 @@ def modificar_venta(request, venta_id):
 
         estados_con_tracking = ["Enviado", "En Tránsito", "En Reparto"]
 
-        # solo los estados de su tipo de entrega (HU-08); la anulación va por anular_venta,
-        # que además devuelve el stock
         if estado_post not in venta.estados_envio:
             error = "Estado no válido."
         elif not venta.lleva_seguimiento:
-            # retiro en tienda y delivery: sin transportista ni número de seguimiento
             tracking_post = ''
             transportista_post = None
         elif transportista_post not in TRANSPORTISTAS_ENCOMIENDA:
@@ -111,7 +108,6 @@ def modificar_venta(request, venta_id):
                 'transportistas': TRANSPORTISTAS_ENCOMIENDA,
             })
 
-        # el estado de la venta vive en Envio; si por algún motivo no existe, se crea
         if envio is None:
             envio = Envio.objects.create(venta=venta)
         envio.numero_seguimiento = tracking_post
@@ -136,8 +132,6 @@ def anular_venta(request, venta_id):
 
     with transaction.atomic():
         envio, _ = Envio.objects.get_or_create(venta=venta)
-        # se bloquea el envío y se revisa el estado dentro de la transacción:
-        # anular dos veces (o dos clics seguidos) no puede sumar el stock dos veces
         envio = Envio.objects.select_for_update().get(id=envio.id)
         if envio.estado != "Anulada":
             envio.estado = "Anulada"
@@ -148,7 +142,6 @@ def anular_venta(request, venta_id):
                 .values_list('producto_id').annotate(total=Sum('cantidad'))
             )
             for item in venta.producto_venta.all():
-                # las unidades de devoluciones ya aprobadas volvieron al stock en su momento
                 reponer = item.cantidad - devuelto.get(item.producto_id, 0)
                 if reponer > 0:
                     Producto.todos.filter(id=item.producto_id).update(stock=F('stock') + reponer)

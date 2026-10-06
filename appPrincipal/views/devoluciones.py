@@ -13,7 +13,6 @@ from appPrincipal.models import Devolucion, Producto, ProductoVenta, Venta
 
 
 def _cantidad_ya_solicitada(compra, producto):
-    # las devoluciones rechazadas no cuentan: esas unidades se pueden volver a pedir
     return Devolucion.objects.filter(venta=compra, producto=producto).exclude(
         estado='Rechazada'
     ).aggregate(total=Sum('cantidad'))['total'] or 0
@@ -23,7 +22,6 @@ def _cantidad_ya_solicitada(compra, producto):
 def crear_devolucion(request, compra_id, producto_id):
     usuario = request.user
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
-    # Producto.todos: se puede devolver un producto aunque ya no esté en el catálogo
     producto = get_object_or_404(Producto.todos, id=producto_id)
     item = get_object_or_404(compra.producto_venta, producto=producto)
     url_compra = reverse('ver_detalle', kwargs={'compra_id': compra.id})
@@ -45,7 +43,6 @@ def crear_devolucion(request, compra_id, producto_id):
 
         if form.is_valid():
             with transaction.atomic():
-                # bloquea la venta y vuelve a contar, por si llegaron dos solicitudes al mismo tiempo
                 Venta.objects.select_for_update().get(id=compra.id)
                 disponible = item.cantidad - _cantidad_ya_solicitada(compra, producto)
                 if form.cleaned_data['cantidad'] > disponible:

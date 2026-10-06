@@ -547,7 +547,7 @@ nav .navbar .links li .sub-menu li{
 
 /*Fondo de principal oscuro*/
 #fondo {
-  background-image: url("https://web-assets.esetstatic.com/wls/2021/08/por-qu%C3%A9-compa%C3%B1%C3%ADas-videojuegos-son-blanco-atractivo-cibercriminales.jpg");
+  background-image: url("../images/home_fondo.jpg");
   padding: 50vh 10vw;
   text-align: center;
   background-position: center center;

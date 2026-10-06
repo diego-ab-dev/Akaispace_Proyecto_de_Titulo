@@ -877,7 +877,7 @@ footer {
         border-right: none;
     }
 }
-/* cantidad de cada producto: [ - 1 + ] con botones, sin escribir (templates/carrito.html) */
+
 .cantidad-stepper {
     display: inline-flex;
     align-items: center;
@@ -896,7 +896,6 @@ footer {
     font-variant-numeric: tabular-nums;
 }
 
-/* con el id para ganarle a "#carrito-container button" (el estilo del botón "Proceder") */
 #carrito-container .btn-cantidad {
     width: 2.25rem;
     height: 2.25rem;
@@ -940,7 +939,7 @@ footer {
     display: none;
 }
 
-/* Opciones de entrega del carrito (HU-08) */
+
 .entrega-box {
   font-size: 0.95rem;
 }
@@ -969,14 +968,12 @@ footer {
   background: #ffffff;
 }
 
-/* radio, nombre y precio en una sola línea */
 .entrega-cabecera {
   display: flex;
   align-items: baseline;
   gap: 8px;
 }
 
-/* anula el estilo general de input de este archivo (ancho 100%, margen y relleno) */
 .entrega-opcion input[type="radio"] {
   width: auto;
   padding: 0;
@@ -987,7 +984,6 @@ footer {
 
 .entrega-nombre {
   flex: 1;
-  /* sin esto el nombre no se achica y empuja el precio fuera de la casilla */
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 600;
@@ -1001,7 +997,6 @@ footer {
   color: #333;
 }
 
-/* resumen y detalle quedan alineados con el nombre (ancho del radio + separación) */
 .entrega-resumen,
 .entrega-descripcion {
   display: block;

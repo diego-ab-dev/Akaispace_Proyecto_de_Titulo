@@ -669,7 +669,6 @@ footer {
     }
 }
 
-/* política de privacidad */
 .politica {
   color: #1C253B;
 }
@@ -710,7 +709,6 @@ footer {
   font-weight: 500;
 }
 
-/* índice lateral */
 .politica-indice {
   position: sticky;
   top: 110px;
@@ -766,7 +764,6 @@ footer {
   padding: 1.75rem;
   margin-bottom: 1.25rem;
   box-shadow: 0 2px 8px rgba(28, 37, 59, 0.06);
-  /* deja espacio bajo el navbar fijo al saltar desde el índice */
   scroll-margin-top: 110px;
 }
 

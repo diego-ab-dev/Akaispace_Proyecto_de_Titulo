@@ -3,8 +3,7 @@ import logging
 
 from axes.utils import reset as reset_axes
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
-from django.contrib.auth.views import (PasswordResetCompleteView, PasswordResetConfirmView,
-                                       PasswordResetDoneView, PasswordResetView)
+from django.contrib.auth.views import (PasswordResetCompleteView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetView)
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
@@ -44,13 +43,10 @@ def login(request):
             errors['contraseña'] = "Por favor, ingresa tu contraseña."
 
         if not errors:
-            # authenticate rechaza usuarios inactivos (eliminados) y django-axes cuenta los intentos fallidos
             usuario = authenticate(request, username=email, password=contraseña)
             if usuario is None:
-                # mismo mensaje si el correo no existe o la contraseña es incorrecta
                 errors['email'] = MENSAJE_LOGIN_INVALIDO
             else:
-                # auth_login cambia la llave de sesión (evita fijación de sesión)
                 auth_login(request, usuario)
                 logger.info("Inicio de sesión: usuario %s (admin=%s)", usuario.pk, usuario.is_staff)
                 return _redirigir_tras_login(request, usuario)
@@ -93,8 +89,6 @@ def register(request):
                     'success': False,
                     'message': 'El RUT ya está registrado.'
                 })
-            # se guarda cuándo y qué versión de la política aceptó (obligatoria para registrarse)
-            # y, si la marcó, cuándo autorizó el uso de sus datos de navegación (opcional)
             momento_consentimiento = timezone.now()
             autoriza_navegacion = form.cleaned_data['autoriza_datos_navegacion']
             try:
@@ -131,9 +125,6 @@ def logout(request):
     return redirect('login')
 
 
-# Recuperar contraseña (HU-11): se usan las vistas de Django. El enlace del correo lleva un token
-# que vence en PASSWORD_RESET_TIMEOUT (settings.py) y deja de servir apenas se usa.
-# Si el correo no está registrado se muestra el mismo mensaje, para no revelar qué cuentas existen.
 recuperar_contraseña = PasswordResetView.as_view(
     template_name='recuperar_contraseña.html',
     subject_template_name='correos/recuperar_contraseña_asunto.txt',
@@ -150,7 +141,6 @@ class RestablecerContraseñaView(PasswordResetConfirmView):
 
     def form_valid(self, form):
         respuesta = super().form_valid(form)
-        # si estaba bloqueado por intentos fallidos (django-axes), puede entrar de inmediato con la nueva
         reset_axes(username=form.user.email)
         logger.info("Contraseña restablecida por correo: usuario %s", form.user.pk)
         return respuesta

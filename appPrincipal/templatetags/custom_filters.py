@@ -2,13 +2,9 @@ from django import template
 
 register = template.Library()
 
+# Formatea un número al estilo chileno
 @register.filter
 def formato_chileno(valor):
-    """
-    Formatea un número al estilo chileno:
-    - Punto para los miles
-    - Coma para los decimales (si corresponde)
-    """
     if not isinstance(valor, (int, float)):
         return valor  
     return f"{valor:,.0f}".replace(",", ".")

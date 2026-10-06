@@ -21,7 +21,6 @@ def admin_required(view_func):
     return wrapper
 
 
-# para vistas llamadas con fetch: si no hay sesión responde JSON en vez de redirigir al login
 def login_required_json(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):

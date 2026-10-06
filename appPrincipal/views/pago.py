@@ -1,4 +1,4 @@
-"""Checkout: pago con Webpay Plus (HU-05), resultado del pago y boleta.
+"""Checkout: pago con Webpay Plus, resultado del pago y boleta.
 
 La lógica del pago está en appPrincipal/pagos.py; aquí solo están las páginas.
 """
@@ -29,8 +29,6 @@ def seleccionar_pago(request):
     if not carrito or not carrito.items.exists():
         return redirect('ver_carrito')
 
-    # la opción de entrega se elige en el carrito y llega como ?envio=; queda en la sesión
-    # para el POST que inicia el pago (que la vuelve a validar)
     if 'envio' in request.GET:
         request.session['metodo_envio'] = request.GET['envio']
     metodo_envio = request.session.get('metodo_envio')
@@ -38,8 +36,6 @@ def seleccionar_pago(request):
     if error_envio:
         return _volver_al_carrito(error_envio)
 
-    # se revisa antes de pagar (el stock pudo bajar desde que se agregó al carrito);
-    # al confirmar el pago se vuelve a revisar con las filas bloqueadas
     for item in carrito.items.select_related('producto'):
         if item.producto.is_deleted or item.cantidad > item.producto.stock:
             mensaje = (f"Solo hay {item.producto.stock} unidad(es) disponibles de {item.producto.nombre}. "
@@ -63,7 +59,6 @@ def seleccionar_pago(request):
             except webpay.ErrorWebpay:
                 error = "No pudimos conectarnos con Webpay. Inténtalo nuevamente en unos minutos."
             else:
-                # Webpay se abre enviando el token por POST a la url que entregó Transbank
                 return render(request, 'webpay_redirigir.html', {'url': url_webpay, 'token': pago.token})
 
     return render(request, 'seleccionar_pago.html', {
@@ -79,10 +74,6 @@ def seleccionar_pago(request):
     })
 
 
-# Transbank devuelve al cliente aquí (por GET o POST, según la versión de su API).
-# No pide sesión ni CSRF: si vuelve por POST desde el sitio de Transbank el navegador no
-# envía la cookie de sesión. El token es secreto y el pago se valida directo con Transbank;
-# después se redirige a resultado_pago, que sí exige que el cliente sea el dueño.
 @csrf_exempt
 @require_http_methods(['GET', 'POST'])
 def webpay_retorno(request):
@@ -93,14 +84,12 @@ def webpay_retorno(request):
 
     pago = None
     if token_anulado:
-        # canceló en el formulario de Webpay (o hubo un error ahí y volvió al comercio)
         pago = PagoWebpay.objects.filter(token=token_anulado).first()
         if pago:
             pago = pagos.anular_pago(pago, "Cancelaste el pago en Webpay.")
     elif token:
         pago = pagos.confirmar_pago(token)
     elif orden_compra:
-        # se acabó el tiempo para pagar en el formulario de Webpay
         pago = PagoWebpay.objects.filter(orden_compra=orden_compra).first()
         if pago:
             pago = pagos.anular_pago(pago, "Se acabó el tiempo para completar el pago.")
@@ -129,7 +118,6 @@ def resultado_pago(request, pago_id):
 
 @login_required
 def ver_boleta(request, venta_id):
-    # el cliente solo ve sus boletas; el administrador puede ver todas
     ventas = Venta.objects.all() if request.user.is_staff else Venta.objects.filter(usuario=request.user)
     venta = get_object_or_404(ventas, id=venta_id)
     Boleta.objects.get_or_create(venta=venta)

@@ -1,8 +1,4 @@
-"""Conexión con Webpay Plus de Transbank (HU-05).
-
-Envuelve el SDK oficial (transbank-sdk) para que el resto del proyecto no dependa de él:
-cualquier falla, ya sea de Transbank o de red, sale como ErrorWebpay.
-El ambiente y las credenciales se configuran en settings (WEBPAY_*, ver .env.example).
+"""Conexión con Webpay Plus de Transbank
 """
 import logging
 
@@ -51,16 +47,10 @@ def _llamar(accion, *args):
 
 
 def crear(orden_compra, id_sesion, monto, url_retorno):
-    """Inicia la transacción. Devuelve {'token': ..., 'url': ...} para enviar al cliente a Webpay."""
     return _llamar('create', orden_compra, id_sesion, monto, url_retorno)
 
 
 def confirmar(token):
-    """Confirma (commit) la transacción cuando el cliente vuelve de Webpay.
-
-    Si el commit falla, por ejemplo porque se cortó la conexión justo después de que
-    Transbank lo procesara, se consulta el estado para no perder un pago que sí se hizo.
-    """
     try:
         return _llamar('commit', token)
     except ErrorWebpay:
@@ -71,7 +61,6 @@ def confirmar(token):
 
 
 def reembolsar(token, monto):
-    """Reversa o anula el cargo completo (se usa si se agotó el stock mientras el cliente pagaba)."""
     return _llamar('refund', token, monto)
 
 

@@ -45,7 +45,6 @@ def admin_devoluciones(request):
 def responder_devolucion(request, devolucion_id):
     devolucion = get_object_or_404(Devolucion, id=devolucion_id)
 
-    # una devolución se resuelve una sola vez: si ya fue aprobada o rechazada solo se puede ver
     if devolucion.estado != 'Pendiente':
         return redirect('detalle_devolucion', devolucion_id=devolucion.id)
 
@@ -58,7 +57,6 @@ def responder_devolucion(request, devolucion_id):
             return redirect('responder_devolucion', devolucion_id=devolucion.id)
 
         with transaction.atomic():
-            # se bloquea la fila y se revisa de nuevo el estado: dos clics seguidos no reponen el stock dos veces
             devolucion = Devolucion.objects.select_for_update().get(id=devolucion.id)
             if devolucion.estado != 'Pendiente':
                 return redirect('detalle_devolucion', devolucion_id=devolucion.id)
@@ -66,7 +64,6 @@ def responder_devolucion(request, devolucion_id):
             if accion == 'aceptar':
                 envio = getattr(devolucion.venta, 'datos_envio', None)
                 venta_anulada = envio is not None and envio.estado == 'Anulada'
-                # si la venta se anuló, ese stock ya se repuso al anular
                 if devolucion.producto_id and not venta_anulada:
                     Producto.todos.filter(id=devolucion.producto_id).update(stock=F('stock') + devolucion.cantidad)
                 devolucion.estado = 'Aprobada'

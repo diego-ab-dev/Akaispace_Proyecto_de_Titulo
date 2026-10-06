@@ -213,7 +213,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/* Pago con Webpay (HU-05): resultado no exitoso y redirección */
+
 .success-header.header-fallido {
     background-color: #f1f3f5;
     color: #1C253B;

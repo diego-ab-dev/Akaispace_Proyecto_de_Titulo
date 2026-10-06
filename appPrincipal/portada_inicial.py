@@ -1,7 +1,4 @@
-"""Contenido inicial de la portada: el mismo que antes estaba escrito a mano en las plantillas.
-
-Lo cargan la migración 0004 (para que el sitio se vea igual al actualizar) y seed_demo.
-Después de eso, el contenido se administra desde el panel (Portada).
+"""Contenido inicial de la portada
 """
 from pathlib import Path
 
@@ -64,7 +61,6 @@ CONTENIDO_INICIAL = [
 
 
 def _copiar_imagen_static(nombre):
-    """Copia una imagen de static/images a media/destacados para que el admin pueda reemplazarla."""
     destino = f'destacados/{nombre}'
     if not default_storage.exists(destino):
         origen = Path(settings.BASE_DIR) / 'static' / 'images' / nombre
@@ -74,11 +70,6 @@ def _copiar_imagen_static(nombre):
 
 
 def cargar(Destacado, Producto):
-    """Crea el contenido inicial si la portada está vacía y enlaza los productos que existan.
-
-    Recibe los modelos como parámetro para poder usarse desde una migración. Se puede
-    ejecutar varias veces: no duplica nada ni vuelve a crear lo que el admin eliminó.
-    """
     if not Destacado.objects.exists():
         for datos in CONTENIDO_INICIAL:
             imagen = _copiar_imagen_static(datos['imagen_static']) if datos.get('imagen_static') else None

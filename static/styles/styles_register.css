@@ -11,39 +11,44 @@ body {
 
 /* imagen */
 .card-img-left {
-  /* ancho fijo: sin esto el texto largo de los consentimientos ensancha el formulario
-     y la imagen se encoge hasta quedar como una franja */
   flex: 0 0 42%;
   max-width: 42%;
-  background: scroll center url('https://images.pexels.com/photos/275033/pexels-photo-275033.jpeg?cs=srgb&dl=pexels-pixabay-275033.jpg&fm=jpg');
+  background-color: #0f1638;
+  background-image: url('../images/login_bg.svg');
   background-size: cover;
-  background-position: center center;
+  background-position: center;
   background-repeat: no-repeat;
-  position: relative;
+  align-items: center;
+  justify-content: center;
 }
 
-.card-img-left .image-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 2rem;
-  font-weight: bold;
-  font-style: italic;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  z-index: 1;
+.marca-registro {
+  padding: 2rem;
 }
 
-.card-img-left:before {
-  background-color: rgba(0, 0, 0, 0.6);
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 0;
+.marca-registro img {
+  width: clamp(150px, 17vw, 250px);
+  filter: drop-shadow(0 0 25px rgba(79, 93, 255, 0.7));
+  animation: flotar 6s ease-in-out infinite;
+}
+
+.marca-registro p {
+  margin: 2rem 0 0;
+  color: #c5ccff;
+  font-weight: 300;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+}
+
+@keyframes flotar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marca-registro img {
+    animation: none;
+  }
 }
 
 .btn-login {
@@ -124,7 +129,6 @@ body {
   box-shadow: 0 0 0 0.2rem rgba(78, 132, 168, 0.25);
 }
 
-/* el formulario ocupa el resto del ancho de la tarjeta, sin empujar a la imagen */
 .card.flex-row > .card-body {
   flex: 1 1 0;
   min-width: 0;

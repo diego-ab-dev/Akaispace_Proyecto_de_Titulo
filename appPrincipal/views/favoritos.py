@@ -69,10 +69,9 @@ def eliminar_favorito(request, item_id):
 @login_required_json
 @require_http_methods(["POST"])
 def eliminar_favoritos_seleccionados(request):
-    # la página envía los ids como texto (valor de los checkbox): se aceptan si son números
     try:
         item_ids = [int(i) for i in json.loads(request.body).get('ids', [])]
-    except (ValueError, TypeError, AttributeError):  # no es JSON, no es una lista o hay ids que no son números
+    except (ValueError, TypeError, AttributeError):  
         return JsonResponse({'success': False, 'error': 'Solicitud inválida.'}, status=400)
 
     if not item_ids:

@@ -40,14 +40,12 @@ REGIONES = [
     ('MAGALLANES', 'Región de Magallanes y de la Antártica Chilena'),
 ]
 
-# Política de privacidad (templates/politica_privacidad.html).
-# Si cambia el contenido de la política, sube la versión y la fecha: cada usuario guarda
-# la versión que aceptó al registrarse (Usuario.privacidad_version).
+# Política de privacidad
 POLITICA_PRIVACIDAD_VERSION = '1.0'
 POLITICA_PRIVACIDAD_FECHA = '5 de octubre de 2026'
 
 # Datos del responsable del tratamiento que aparecen en la política.
-# El RUT es ficticio (proyecto académico): reemplazarlo por el real antes de publicar el sitio.
+# El RUT es ficticio
 RESPONSABLE_DATOS = {
     'nombre_comercial': 'Akaispace',
     'razon_social': 'Carlos Fuentes Riquelme',
@@ -58,8 +56,8 @@ RESPONSABLE_DATOS = {
     'proveedor_hosting': 'Amazon Web Services (AWS), con servidores en São Paulo, Brasil',
 }
 
-# Condiciones y política de retracto que se envían en el correo de confirmación de compra (HU-06).
-# Siguen la Ley 19.496 del Consumidor; revisarlas con el propietario antes de publicar el sitio.
+# Condiciones y política de retracto que se envían en el correo de confirmación de compra
+# Siguen la Ley 19.496 del Consumidor
 CONDICIONES_COMPRA = [
     'Garantía legal de 6 meses desde que recibes el producto: si presenta una falla, puedes elegir '
     'entre su cambio, reparación o la devolución del dinero.',

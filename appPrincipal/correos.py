@@ -1,11 +1,7 @@
 """Correos que envía la tienda.
 
-- Confirmación de compra (HU-06): se envía al aprobarse el pago con Webpay (ver pagos.confirmar_pago).
-- Recuperación de contraseña (HU-11): la envía Django (PasswordResetView); sus plantillas están en
-  templates/correos/ y las URLs en Akaispace/urls.py.
-
-La configuración del servidor de correo está en settings.py (EMAIL_*). Sin configurar, los correos
-se muestran en la consola de runserver.
+- Confirmación de compra: se envía al aprobarse el pago con Webpay.
+- Recuperación de contraseña: la envía Django (PasswordResetView).
 """
 import logging
 
@@ -21,25 +17,19 @@ logger = logging.getLogger(__name__)
 
 
 def _enviar(asunto, plantilla, contexto, destinatario):
-    """Envía un correo con versión HTML y de texto. Devuelve False si no se pudo enviar.
-
-    Un error del servidor de correo nunca interrumpe lo que lo disparó (ej: un pago ya aprobado):
-    se registra en el log para revisarlo.
-    """
     texto = render_to_string(f'correos/{plantilla}.txt', contexto)
     html = render_to_string(f'correos/{plantilla}.html', contexto)
     mensaje = EmailMultiAlternatives(asunto, texto, to=[destinatario])
     mensaje.attach_alternative(html, 'text/html')
     try:
         mensaje.send()
-    except Exception:  # SMTP caído, credenciales incorrectas, timeout, etc.
+    except Exception:
         logger.exception("No se pudo enviar el correo '%s' a %s", asunto, destinatario)
         return False
     return True
 
 
 def enviar_confirmacion_compra(venta):
-    """HU-06: detalle de la compra, condiciones y política de retracto al correo del cliente."""
     contexto = {
         'venta': venta,
         'items': venta.producto_venta.select_related('producto'),

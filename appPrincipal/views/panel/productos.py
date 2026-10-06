@@ -90,7 +90,7 @@ def agregar_producto(request):
 @require_POST
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-    producto.delete()  # borrado lógico: guarda también deleted_at
+    producto.delete() 
     return redirect('admin_productos')
 
 
