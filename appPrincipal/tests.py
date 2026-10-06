@@ -384,7 +384,7 @@ class PlantillasTests(TestCase):  # 21: plantilla base y navbar compartido
         from pathlib import Path
         from django.conf import settings
         carpeta = Path(settings.BASE_DIR) / 'templates'
-        bases = {'base.html'}
+        bases = {'base.html', 'correos/base.html'}  # los correos tienen su propia base
         for ruta in carpeta.rglob('*.html'):
             nombre = ruta.relative_to(carpeta).as_posix()
             if nombre in bases or 'partials/' in nombre:
@@ -1385,3 +1385,132 @@ class WebpayConexionTests(TestCase):  # appPrincipal/webpay.py
         from . import webpay
         with self.assertRaises(ImproperlyConfigured):
             webpay.crear('AKA1', 's', 1000, 'http://testserver/')
+
+
+class CorreoCompraTests(TestCase):  # HU-06: correo de confirmación al aprobarse el pago
+    def setUp(self):
+        from .models import Carrito, ItemCarritoProducto
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+        self.producto = crear_producto(stock=5)  # $10.000 c/u
+        carrito = Carrito.objects.create(usuario=self.cliente)
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=self.producto, cantidad=2)
+        elegir_entrega(self.client)
+
+    def test_pago_aprobado_envia_el_detalle_las_condiciones_y_el_retracto(self):
+        from django.core import mail
+        _, pago = pagar(self.client)
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, ['cliente@example.com'])
+        self.assertIn(f'Nº {pago.venta.id}', correo.subject)
+        html = correo.alternatives[0][0]
+        datos = ['Juego', '$20.000', 'Retiro en tienda', pago.orden_compra, '**** 6623',
+                 'Garantía legal', '10 días corridos', f'http://localhost:8000/boleta/{pago.venta.id}/']
+        for texto in [correo.body, html]:  # versión de texto y HTML
+            for dato in datos:
+                self.assertIn(dato, texto)
+
+    def test_pago_rechazado_no_envia_correo(self):
+        from django.core import mail
+        pagar(self.client, aprobado=False)
+        self.assertEqual(mail.outbox, [])
+
+    def test_volver_dos_veces_no_repite_el_correo(self):
+        from django.core import mail
+        _, pago = pagar(self.client)
+        volver_de_webpay(self.client, pago)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_si_el_correo_falla_la_compra_igual_queda_aprobada(self):
+        import smtplib
+        from unittest import mock
+        from .models import PagoWebpay
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=smtplib.SMTPException('caído')), \
+                self.assertLogs('appPrincipal.correos', level='ERROR'):
+            respuesta, pago = pagar(self.client)
+        self.assertEqual(pago.estado, PagoWebpay.APROBADO)
+        self.assertEqual(self.producto.__class__.objects.get(pk=self.producto.pk).stock, 3)
+
+
+class RecuperarContraseñaTests(TestCase):  # HU-11
+    def setUp(self):
+        self.usuario = crear_cliente()
+
+    def pedir_enlace(self, email='cliente@example.com'):
+        return self.client.post('/recuperar-contrasena/', {'email': email})
+
+    def enlace_del_correo(self):
+        import re
+        from django.core import mail
+        return re.search(r'http://testserver(/recuperar-contrasena/\S+/\S+/)', mail.outbox[-1].body).group(1)
+
+    def test_el_login_enlaza_a_recuperar_contraseña(self):
+        self.assertContains(self.client.get('/login/'), 'href="/recuperar-contrasena/"')
+
+    def test_envia_un_enlace_al_correo_registrado(self):
+        from django.core import mail
+        respuesta = self.pedir_enlace('CLIENTE@example.com')
+        self.assertRedirects(respuesta, '/recuperar-contrasena/enviado/')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['cliente@example.com'])
+        self.assertIn('1 hora', mail.outbox[0].body)
+
+    def test_correo_no_registrado_muestra_lo_mismo_y_no_envia_nada(self):
+        from django.core import mail
+        respuesta = self.pedir_enlace('nadie@example.com')
+        self.assertRedirects(respuesta, '/recuperar-contrasena/enviado/')
+        self.assertEqual(mail.outbox, [])
+
+    def test_usuario_eliminado_no_recibe_enlace(self):
+        from django.core import mail
+        self.usuario.delete()
+        self.pedir_enlace()
+        self.assertEqual(mail.outbox, [])
+
+    def test_el_enlace_permite_crear_una_nueva_contraseña(self):
+        self.pedir_enlace()
+        formulario = self.client.get(self.enlace_del_correo(), follow=True)
+        self.assertContains(formulario, 'Crea tu nueva contraseña')
+        respuesta = self.client.post(formulario.redirect_chain[-1][0],
+                                     {'new_password1': 'NuevaClave-2027', 'new_password2': 'NuevaClave-2027'})
+        self.assertRedirects(respuesta, '/recuperar-contrasena/listo/')
+        self.usuario.refresh_from_db()
+        self.assertTrue(self.usuario.check_password('NuevaClave-2027'))
+
+    def test_el_enlace_solo_sirve_una_vez(self):
+        self.pedir_enlace()
+        enlace = self.enlace_del_correo()
+        formulario = self.client.get(enlace, follow=True)
+        self.client.post(formulario.redirect_chain[-1][0],
+                         {'new_password1': 'NuevaClave-2027', 'new_password2': 'NuevaClave-2027'})
+        self.assertContains(self.client.get(enlace, follow=True), 'El enlace ya no es válido')
+
+    def test_el_enlace_vence_en_una_hora(self):
+        from datetime import timedelta
+        from unittest import mock
+        from django.contrib.auth.tokens import PasswordResetTokenGenerator
+        self.pedir_enlace()
+        enlace = self.enlace_del_correo()
+        mas_tarde = PasswordResetTokenGenerator()._now() + timedelta(hours=1, minutes=1)
+        with mock.patch.object(PasswordResetTokenGenerator, '_now', return_value=mas_tarde):
+            self.assertContains(self.client.get(enlace, follow=True), 'El enlace ya no es válido')
+
+    def test_la_nueva_contraseña_cumple_las_reglas(self):  # RNF-01
+        self.pedir_enlace()
+        formulario = self.client.get(self.enlace_del_correo(), follow=True)
+        respuesta = self.client.post(formulario.redirect_chain[-1][0],
+                                     {'new_password1': 'abcdefgh', 'new_password2': 'abcdefgh'})
+        self.assertEqual(respuesta.status_code, 200)
+        self.usuario.refresh_from_db()
+        self.assertTrue(self.usuario.check_password('Akaispace-2026!'))
+
+    def test_desbloquea_el_login_tras_intentos_fallidos(self):
+        for _ in range(5):
+            self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'incorrecta'})
+        self.pedir_enlace()
+        formulario = self.client.get(self.enlace_del_correo(), follow=True)
+        self.client.post(formulario.redirect_chain[-1][0],
+                         {'new_password1': 'NuevaClave-2027', 'new_password2': 'NuevaClave-2027'})
+        respuesta = self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'NuevaClave-2027'})
+        self.assertRedirects(respuesta, '/', fetch_redirect_response=False)

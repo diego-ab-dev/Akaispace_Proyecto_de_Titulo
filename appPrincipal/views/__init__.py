@@ -8,7 +8,10 @@ from .carrito import (
 )
 from .catalogo import home, producto_detalle, productos_menu, productos_por_categoria
 from .compras import marcar_recibido, ver_compras, ver_detalle_compra
-from .cuentas import login, logout, obtener_ciudades, register
+from .cuentas import (
+    login, logout, obtener_ciudades, recuperar_contraseña, recuperar_contraseña_enviado, register,
+    restablecer_contraseña, restablecer_contraseña_listo,
+)
 from .devoluciones import crear_devolucion, listar_devoluciones, ver_detalle_devolucion
 from .favoritos import agregar_favorito, eliminar_favorito, eliminar_favoritos_seleccionados, lista_favoritos
 from .legal import politica_privacidad

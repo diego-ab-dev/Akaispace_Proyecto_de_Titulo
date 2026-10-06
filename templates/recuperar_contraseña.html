@@ -1,0 +1,23 @@
+{% extends "recuperar_contraseña_base.html" %}
+
+{% block tarjeta %}
+<h3 class="login-heading mb-3">¿Olvidaste tu contraseña?</h3>
+<p class="text-muted mb-4">
+  Ingresa el correo con el que te registraste y te enviaremos un enlace para crear una nueva contraseña.
+</p>
+<form method="POST" novalidate>
+  {% csrf_token %}
+  <div class="form-floating mb-3">
+    <input type="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+           id="email" name="email" placeholder="name@example.com" value="{{ form.email.value|default:'' }}"
+           autocomplete="email" required autofocus>
+    <label for="email">Correo Electrónico</label>
+    {% for error in form.email.errors %}
+      <div class="invalid-feedback">{{ error }}</div>
+    {% endfor %}
+  </div>
+  <div class="d-grid">
+    <button class="btn btn-lg btn-login text-uppercase fw-bold mb-2" type="submit">Enviar enlace</button>
+  </div>
+</form>
+{% endblock %}

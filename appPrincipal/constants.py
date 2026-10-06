@@ -57,3 +57,21 @@ RESPONSABLE_DATOS = {
     'telefono': '+56 9 6156 1944',
     'proveedor_hosting': 'Amazon Web Services (AWS), con servidores en São Paulo, Brasil',
 }
+
+# Condiciones y política de retracto que se envían en el correo de confirmación de compra (HU-06).
+# Siguen la Ley 19.496 del Consumidor; revisarlas con el propietario antes de publicar el sitio.
+CONDICIONES_COMPRA = [
+    'Garantía legal de 6 meses desde que recibes el producto: si presenta una falla, puedes elegir '
+    'entre su cambio, reparación o la devolución del dinero.',
+    'Para usar la garantía o hacer un reclamo, ingresa a "Mis compras" en tu perfil o escríbenos al '
+    f'correo {RESPONSABLE_DATOS["correo_privacidad"]}.',
+    'Los precios incluyen IVA. El costo de envío es el informado al momento de pagar.',
+]
+POLITICA_RETRACTO = [
+    'Tienes 10 días corridos desde que recibes o retiras tu pedido para retractarte de la compra, '
+    'sin necesidad de dar un motivo (artículo 3 bis de la Ley 19.496).',
+    'El producto debe estar sin uso y con su embalaje original, etiquetas, manuales y accesorios en buen estado.',
+    'Para ejercerlo, solicita la devolución desde "Mis compras" o escríbenos indicando el número de tu pedido.',
+    'Te devolveremos el monto pagado al mismo medio de pago, a la brevedad y como máximo dentro de 45 días '
+    'desde que nos informas el retracto.',
+]

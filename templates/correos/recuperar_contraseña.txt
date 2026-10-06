@@ -1,0 +1,13 @@
+{% autoescape off %}Hola {{ user.nombre }}:
+
+Recibimos una solicitud para cambiar la contraseña de tu cuenta de Akaispace.
+Para crear una nueva, abre este enlace:
+
+{{ protocol }}://{{ domain }}{% url 'restablecer_contraseña' uidb64=uid token=token %}
+
+El enlace vence en 1 hora y solo se puede usar una vez.
+Si no lo solicitaste tú, ignora este correo: tu contraseña no cambiará.
+
+--
+Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+{% endautoescape %}

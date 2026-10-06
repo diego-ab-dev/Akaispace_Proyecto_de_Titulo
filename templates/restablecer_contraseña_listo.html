@@ -1,0 +1,9 @@
+{% extends "recuperar_contraseña_base.html" %}
+
+{% block tarjeta %}
+<h3 class="login-heading mb-3">¡Contraseña actualizada!</h3>
+<p>Ya puedes iniciar sesión con tu nueva contraseña.</p>
+<div class="d-grid">
+  <a href="{% url 'login' %}" class="btn btn-lg btn-login text-uppercase fw-bold">Iniciar sesión</a>
+</div>
+{% endblock %}

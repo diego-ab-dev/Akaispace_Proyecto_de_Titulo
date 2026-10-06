@@ -1,0 +1,20 @@
+{% extends "correos/base.html" %}
+{% block contenido %}
+{% url 'restablecer_contraseña' uidb64=uid token=token as ruta %}
+<h1 style="font-size:20px; margin:0 0 12px;">Hola {{ user.nombre }}:</h1>
+<p style="margin:0 0 16px;">
+  Recibimos una solicitud para cambiar la contraseña de tu cuenta de Akaispace.
+  Para crear una nueva, presiona el botón:
+</p>
+<p style="margin:24px 0; text-align:center;">
+  <a href="{{ protocol }}://{{ domain }}{{ ruta }}" style="display:inline-block; background-color:#4E84A8; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:6px; font-weight:bold;">Crear nueva contraseña</a>
+</p>
+<p style="margin:0 0 16px; font-size:13px; color:#6B7280;">
+  Si el botón no funciona, copia este enlace en tu navegador:<br>
+  <span style="word-break:break-all;">{{ protocol }}://{{ domain }}{{ ruta }}</span>
+</p>
+<p style="margin:0;">
+  El enlace vence en 1 hora y solo se puede usar una vez.
+  Si no lo solicitaste tú, ignora este correo: tu contraseña no cambiará.
+</p>
+{% endblock %}

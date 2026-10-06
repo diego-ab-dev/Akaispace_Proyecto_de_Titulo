@@ -1,10 +1,14 @@
-"""Inicio de sesión, registro y cierre de sesión."""
+"""Inicio de sesión, registro, cierre de sesión y recuperación de contraseña."""
 import logging
 
+from axes.utils import reset as reset_axes
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.contrib.auth.views import (PasswordResetCompleteView, PasswordResetConfirmView,
+                                       PasswordResetDoneView, PasswordResetView)
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
@@ -125,6 +129,35 @@ def register(request):
 def logout(request):
     auth_logout(request)
     return redirect('login')
+
+
+# Recuperar contraseña (HU-11): se usan las vistas de Django. El enlace del correo lleva un token
+# que vence en PASSWORD_RESET_TIMEOUT (settings.py) y deja de servir apenas se usa.
+# Si el correo no está registrado se muestra el mismo mensaje, para no revelar qué cuentas existen.
+recuperar_contraseña = PasswordResetView.as_view(
+    template_name='recuperar_contraseña.html',
+    subject_template_name='correos/recuperar_contraseña_asunto.txt',
+    email_template_name='correos/recuperar_contraseña.txt',
+    html_email_template_name='correos/recuperar_contraseña.html',
+    success_url=reverse_lazy('recuperar_contraseña_enviado'),
+)
+recuperar_contraseña_enviado = PasswordResetDoneView.as_view(template_name='recuperar_contraseña_enviado.html')
+
+
+class RestablecerContraseñaView(PasswordResetConfirmView):
+    template_name = 'restablecer_contraseña.html'
+    success_url = reverse_lazy('restablecer_contraseña_listo')
+
+    def form_valid(self, form):
+        respuesta = super().form_valid(form)
+        # si estaba bloqueado por intentos fallidos (django-axes), puede entrar de inmediato con la nueva
+        reset_axes(username=form.user.email)
+        logger.info("Contraseña restablecida por correo: usuario %s", form.user.pk)
+        return respuesta
+
+
+restablecer_contraseña = RestablecerContraseñaView.as_view()
+restablecer_contraseña_listo = PasswordResetCompleteView.as_view(template_name='restablecer_contraseña_listo.html')
 
 def obtener_ciudades(request):
     region = request.GET.get('region')

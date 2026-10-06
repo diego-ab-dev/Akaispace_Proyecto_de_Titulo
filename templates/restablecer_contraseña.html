@@ -1,0 +1,39 @@
+{% extends "recuperar_contraseña_base.html" %}
+
+{% block tarjeta %}
+{% if validlink %}
+<h3 class="login-heading mb-3">Crea tu nueva contraseña</h3>
+<form method="POST" novalidate>
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endfor %}
+  <div class="form-floating mb-1">
+    <input type="password" class="form-control {% if form.new_password1.errors %}is-invalid{% endif %}"
+           id="new_password1" name="new_password1" placeholder="Nueva contraseña" autocomplete="new-password" required autofocus>
+    <label for="new_password1">Nueva contraseña</label>
+    {% for error in form.new_password1.errors %}
+      <div class="invalid-feedback">{{ error }}</div>
+    {% endfor %}
+  </div>
+  <div class="mb-4">{% include "partials/reglas_contraseña.html" %}</div>
+  <div class="form-floating mb-3">
+    <input type="password" class="form-control {% if form.new_password2.errors %}is-invalid{% endif %}"
+           id="new_password2" name="new_password2" placeholder="Confirmar contraseña" autocomplete="new-password" required>
+    <label for="new_password2">Confirmar nueva contraseña</label>
+    {% for error in form.new_password2.errors %}
+      <div class="invalid-feedback">{{ error }}</div>
+    {% endfor %}
+  </div>
+  <div class="d-grid">
+    <button class="btn btn-lg btn-login text-uppercase fw-bold mb-2" type="submit">Guardar contraseña</button>
+  </div>
+</form>
+{% else %}
+<h3 class="login-heading mb-3">El enlace ya no es válido</h3>
+<p>
+  Este enlace para recuperar la contraseña venció o ya fue utilizado.
+  Puedes <a href="{% url 'recuperar_contraseña' %}">solicitar uno nuevo</a>.
+</p>
+{% endif %}
+{% endblock %}

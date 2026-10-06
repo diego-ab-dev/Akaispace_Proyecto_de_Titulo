@@ -1,0 +1,13 @@
+{% extends "recuperar_contraseña_base.html" %}
+
+{% block tarjeta %}
+<h3 class="login-heading mb-3">Revisa tu correo</h3>
+<p>
+  Si el correo que ingresaste corresponde a una cuenta de Akaispace, te enviamos un enlace para crear
+  una nueva contraseña. El enlace vence en 1 hora.
+</p>
+<p class="text-muted small">
+  ¿No te llegó? Revisa la carpeta de spam o correo no deseado, o
+  <a href="{% url 'recuperar_contraseña' %}">vuelve a solicitarlo</a>.
+</p>
+{% endblock %}

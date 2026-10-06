@@ -1,0 +1,32 @@
+{% load custom_filters %}{% autoescape off %}¡Gracias por tu compra, {{ venta.usuario.nombre }}!
+
+Confirmamos el pago de tu pedido Nº {{ venta.id }} del {{ venta.fecha|date:"d/m/Y" }} a las {{ venta.fecha|date:"H:i" }}.
+
+DETALLE
+{% for item in items %}- {{ item.cantidad }} x {{ item.producto.nombre }}: ${{ item.total_producto|formato_chileno }}
+{% endfor %}
+Subtotal: ${{ venta.subtotal|formato_chileno }}
+Envío ({{ venta.get_metodo_envio_display }}): {% include "partials/costo_envio.html" with metodo=venta.metodo_envio monto=venta.envio %}
+Total pagado: ${{ venta.total|formato_chileno }}
+{% if pago %}
+Pagado con {{ venta.metodo_pago }}{% if pago.tarjeta_ultimos_digitos %} (tarjeta **** {{ pago.tarjeta_ultimos_digitos }}){% endif %}{% if pago.cuotas and pago.cuotas > 1 %} en {{ pago.cuotas }} cuotas{% endif %}.
+Orden {{ pago.orden_compra }} · Código de autorización {{ pago.codigo_autorizacion }}.
+{% endif %}
+ENTREGA
+{{ venta.get_metodo_envio_display }}
+{% if venta.direccion_envio and not venta.es_retiro_en_tienda %}Dirección: {{ venta.direccion_envio }}
+{% endif %}{% if opcion_envio %}{{ opcion_envio.descripcion }}
+{% endif %}
+Ver tu boleta: {{ url_boleta }}
+Seguir tu pedido: {{ url_compra }}
+
+CONDICIONES DE LA COMPRA
+{% for condicion in condiciones %}- {{ condicion }}
+{% endfor %}
+DERECHO A RETRACTO
+{% for punto in retracto %}- {{ punto }}
+{% endfor %}
+--
+Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
+{% endautoescape %}

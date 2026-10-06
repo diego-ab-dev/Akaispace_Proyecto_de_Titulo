@@ -5,13 +5,14 @@
 2. El cliente paga en Webpay y Transbank lo devuelve a webpay_retorno con un token.
 3. confirmar_pago: confirma con Transbank y, solo si el pago fue aprobado, crea la venta
    (descuenta el stock y emite la boleta). Si el stock se agotó mientras pagaba, reversa el cargo.
+4. Con la venta ya guardada, envía al cliente el correo de confirmación de compra (HU-06).
 """
 import logging
 import secrets
 
 from django.db import transaction
 
-from appPrincipal import envios, webpay
+from appPrincipal import correos, envios, webpay
 from appPrincipal.models import (Boleta, Envio, ItemCarritoProducto, PagoWebpay, Producto,
                                  ProductoVenta, Venta)
 
@@ -176,6 +177,8 @@ def confirmar_pago(token):
         pago.save()
         _sacar_del_carrito(pago)
     logger.info("Pago %s aprobado: venta %s", pago.orden_compra, pago.venta_id)
+    # fuera de la transacción: la venta ya quedó guardada aunque el correo falle o tarde
+    correos.enviar_confirmacion_compra(pago.venta)
     return pago
 
 
