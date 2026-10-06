@@ -14,7 +14,7 @@ from .cuentas import (
 )
 from .devoluciones import crear_devolucion, listar_devoluciones, ver_detalle_devolucion
 from .favoritos import agregar_favorito, eliminar_favorito, eliminar_favoritos_seleccionados, lista_favoritos
-from .legal import politica_privacidad
+from .legal import politica_privacidad, terminos_condiciones
 from .opiniones import enviar_opinion, lista_opiniones
 from .pago import resultado_pago, seleccionar_pago, ver_boleta, webpay_retorno
 from .perfil import cambiar_contraseña, editar_perfil, perfil

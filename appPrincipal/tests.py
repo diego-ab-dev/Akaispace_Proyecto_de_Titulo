@@ -807,7 +807,7 @@ class PortadaSitioTests(TestCase):
                    video_url='https://youtu.be/wFGEMfyAQtI')
         respuesta = self.client.get('/')
         self.assertContains(respuesta, 'Nuevos Lanzamientos')
-        self.assertContains(respuesta, 'https://www.youtube.com/embed/wFGEMfyAQtI')
+        self.assertContains(respuesta, 'https://www.youtube-nocookie.com/embed/wFGEMfyAQtI')
 
     def test_lanzamientos_alternan_el_lado_del_video(self):
         for i in range(2):
@@ -826,7 +826,7 @@ class PortadaSitioTests(TestCase):
 
     def test_links_de_youtube_aceptados(self):
         from .models import youtube_embed_url
-        esperado = 'https://www.youtube.com/embed/wFGEMfyAQtI'
+        esperado = 'https://www.youtube-nocookie.com/embed/wFGEMfyAQtI'
         for url in ['https://www.youtube.com/watch?v=wFGEMfyAQtI', 'https://youtu.be/wFGEMfyAQtI?si=abc',
                     'https://www.youtube.com/embed/wFGEMfyAQtI', 'https://www.youtube.com/watch?t=5&v=wFGEMfyAQtI']:
             self.assertEqual(youtube_embed_url(url), esperado, url)

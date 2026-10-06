@@ -44,6 +44,10 @@ REGIONES = [
 POLITICA_PRIVACIDAD_VERSION = '1.0'
 POLITICA_PRIVACIDAD_FECHA = '5 de octubre de 2026'
 
+# Términos y condiciones
+TERMINOS_VERSION = '1.0'
+TERMINOS_FECHA = '6 de octubre de 2026'
+
 # Datos del responsable del tratamiento que aparecen en la política.
 # El RUT es ficticio
 RESPONSABLE_DATOS = {

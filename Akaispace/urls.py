@@ -41,6 +41,7 @@ urlpatterns = [
     path('recuperar-contrasena/<uidb64>/<token>/', views.restablecer_contraseña, name='restablecer_contraseña'),
     # legal
     path('politica-de-privacidad/', views.politica_privacidad, name='politica_privacidad'),
+    path('terminos-y-condiciones/', views.terminos_condiciones, name='terminos_condiciones'),
     # perfil cliente
     path('perfil/', views.perfil, name='perfil'),
     path('editar/', views.editar_perfil, name='editar'),

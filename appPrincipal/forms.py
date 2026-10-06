@@ -86,7 +86,7 @@ class UsuarioCustomForm(forms.Form):
 
 
     acepta_privacidad = forms.BooleanField(error_messages={
-        'required': 'Debes declarar tu edad y aceptar la Política de Privacidad para crear tu cuenta.',
+        'required': 'Debes declarar tu edad y aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta.',
     })
     autoriza_datos_navegacion = forms.BooleanField(required=False)
 

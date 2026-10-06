@@ -172,7 +172,7 @@
                             <tbody>
                                 <tr>
                                     <td>Crear y administrar tu cuenta, e identificarte al iniciar sesión.</td>
-                                    <td>Ejecución del contrato (los términos de uso de la tienda).</td>
+                                    <td>Ejecución del contrato (los <a href="{% url 'terminos_condiciones' %}">Términos y Condiciones</a> de la tienda).</td>
                                 </tr>
                                 <tr>
                                     <td>Procesar tus compras, pagos, despachos o retiros en tienda, y emitir boletas.</td>
@@ -211,7 +211,7 @@
                     </p>
                     <ul>
                         <li><strong>Pasarela de pago</strong> (Transbank, Webpay Plus): para procesar los pagos con tarjeta.</li>
-                        <li><strong>Empresas de transporte</strong> (por ejemplo, Starken): tu nombre, dirección y teléfono, solo para entregar tus pedidos.</li>
+                        <li><strong>Empresas de transporte</strong> ({{ transportistas|join:", " }}): tu nombre, dirección y teléfono, solo para entregar tus pedidos.</li>
                         <li><strong>Proveedor de alojamiento del sitio</strong>: {{ responsable.proveedor_hosting }}, que guarda la información por cuenta nuestra y bajo obligaciones de confidencialidad y seguridad.</li>
                         <li><strong>Autoridades</strong>: cuando una ley o una resolución judicial o administrativa nos lo exija.</li>
                     </ul>
@@ -319,7 +319,12 @@
                             </tbody>
                         </table>
                     </div>
-                    <p>No usamos cookies de publicidad ni de seguimiento de terceros.</p>
+                    <p>No usamos cookies de publicidad ni de analítica.</p>
+                    <p>
+                        La página de inicio muestra contenido de terceros: el mapa de ubicación de la tienda (Google Maps) y
+                        videos de lanzamientos (YouTube, en su modo de privacidad mejorada). Al cargarse, estos servicios pueden
+                        guardar sus propias cookies, que se rigen por la política de privacidad de Google.
+                    </p>
                 </section>
 
                 <section class="politica-seccion" id="menores">
@@ -352,7 +357,7 @@
                     <div class="politica-contacto">
                         <p><strong>{{ responsable.nombre_comercial }}</strong> · {{ responsable.razon_social }}</p>
                         <p><i class="fas fa-envelope me-2"></i><a href="mailto:{{ responsable.correo_privacidad }}">{{ responsable.correo_privacidad }}</a></p>
-                        <p><i class="fas fa-phone me-2"></i>{{ responsable.telefono }}</p>
+                        <p><i class="fab fa-whatsapp me-2"></i>{{ responsable.telefono }} (teléfono y WhatsApp)</p>
                         <p class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>{{ responsable.domicilio }}</p>
                     </div>
                 </section>

@@ -106,7 +106,6 @@ a{text-decoration: none}
     font-size: 1.25rem
 }
 
-/* .l-navbar.show y no solo .show: Bootstrap también usa .show en modales y desplegables */
 .l-navbar.show{
     left: 0
 }

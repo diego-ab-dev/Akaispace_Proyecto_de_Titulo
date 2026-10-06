@@ -571,4 +571,4 @@ class Destacado(models.Model):
 
 def youtube_embed_url(url):
     m = re.search(r'(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{11})', url or '')
-    return f"https://www.youtube.com/embed/{m.group(1)}" if m else ''
+    return f"https://www.youtube-nocookie.com/embed/{m.group(1)}" if m else ''

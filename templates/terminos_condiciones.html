@@ -1,0 +1,198 @@
+{% extends "base_tienda.html" %}
+{% load static custom_filters %}
+
+{% block title %}Términos y Condiciones - Akaispace{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="Términos y Condiciones de Akaispace: precios, pagos, despachos, garantía legal y derecho a retracto.">
+<link rel="stylesheet" href="{% static 'styles/styles_politica_privacidad.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="py-5">
+    <div class="container politica">
+
+        <header class="politica-encabezado">
+            <h1>Términos y Condiciones</h1>
+            <p>
+                Estas condiciones regulan las compras que realizas en el sitio de {{ responsable.nombre_comercial }}.
+                Al crear tu cuenta o hacer una compra, declaras haberlas leído y aceptado.
+            </p>
+            <div class="politica-meta">
+                <span>Versión {{ version }}</span>
+                <span>Última actualización: {{ fecha_actualizacion }}</span>
+            </div>
+        </header>
+
+        <div class="row">
+            <aside class="col-lg-3">
+                <nav class="politica-indice" aria-label="Índice de los términos">
+                    <h2>Contenido</h2>
+                    <ol>
+                        <li><a href="#generales">Aspectos generales</a></li>
+                        <li><a href="#cuenta">Tu cuenta</a></li>
+                        <li><a href="#precios">Precios, stock y pagos</a></li>
+                        <li><a href="#despachos">Despachos y retiro</a></li>
+                        <li><a href="#garantia">Garantía legal</a></li>
+                        <li><a href="#retracto">Derecho a retracto</a></li>
+                        <li><a href="#usados">Juegos usados en parte de pago</a></li>
+                        <li><a href="#datos">Datos personales</a></li>
+                        <li><a href="#cambios">Cambios a estos términos</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                    </ol>
+                </nav>
+            </aside>
+
+            <div class="col-lg-9">
+
+                <section class="politica-seccion" id="generales">
+                    <h2><span class="numero">1.</span>Aspectos generales</h2>
+                    <p>
+                        Este sitio es operado por <strong>{{ responsable.razon_social }}</strong>, RUT {{ responsable.rut }},
+                        a cargo de la tienda {{ responsable.nombre_comercial }}, ubicada en {{ responsable.domicilio }}.
+                    </p>
+                    <p>
+                        Las compras se rigen por la legislación chilena, en especial la
+                        <strong>Ley N° 19.496 sobre Protección de los Derechos de los Consumidores</strong>. Nada de lo
+                        indicado en estos términos limita los derechos que esa ley te otorga.
+                    </p>
+                </section>
+
+                <section class="politica-seccion" id="cuenta">
+                    <h2><span class="numero">2.</span>Tu cuenta</h2>
+                    <ul>
+                        <li>Para comprar necesitas una cuenta con datos verdaderos y actualizados, especialmente tu dirección de despacho.</li>
+                        <li>Debes ser mayor de 18 años o contar con la autorización de tu padre, madre o tutor legal.</li>
+                        <li>Eres responsable de mantener en reserva tu contraseña. Si sospechas un uso no autorizado, cámbiala y avísanos.</li>
+                    </ul>
+                </section>
+
+                <section class="politica-seccion" id="precios">
+                    <h2><span class="numero">3.</span>Precios, stock y pagos</h2>
+                    <ul>
+                        <li>Todos los precios están en pesos chilenos e <strong>incluyen IVA</strong>.</li>
+                        <li>El precio y el costo de envío que pagas son los informados al momento de confirmar la compra.</li>
+                        <li>Las compras están sujetas al stock disponible. Si un producto se agota después de tu pago, te contactaremos para ofrecerte un cambio o la devolución total del dinero.</li>
+                        <li>
+                            Los pagos se realizan a través de <strong>Webpay Plus de Transbank</strong>, con tarjetas de crédito,
+                            débito o prepago. {{ responsable.nombre_comercial }} no recibe ni almacena los datos de tus tarjetas.
+                        </li>
+                        <li>Una vez confirmado el pago, recibirás un correo con el detalle de tu compra y tu boleta.</li>
+                    </ul>
+                </section>
+
+                <section class="politica-seccion" id="despachos">
+                    <h2><span class="numero">4.</span>Despachos y retiro</h2>
+                    <p>Al pagar puedes elegir entre las siguientes opciones de entrega, según tu ciudad:</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered politica-tabla">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Opción</th>
+                                    <th scope="col">Disponible para</th>
+                                    <th scope="col">Costo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for opcion in opciones_envio %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ opcion.nombre }}</strong><br>
+                                        <span class="text-muted">{{ opcion.descripcion }}</span>
+                                    </td>
+                                    <td>
+                                        {% if opcion.disponible_en == 'valdivia' %}Radio urbano de Valdivia
+                                        {% elif opcion.disponible_en == 'regiones' %}Fuera de Valdivia
+                                        {% else %}Todos los clientes{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if opcion.precio is None %}Lo pagas al recibir
+                                        {% elif opcion.precio == 0 %}Gratis
+                                        {% else %}${{ opcion.precio|formato_chileno }}{% if opcion.gratis_desde %}<br>Gratis desde ${{ opcion.gratis_desde|formato_chileno }}{% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <ul>
+                        <li>El envío por pagar se realiza por {{ transportistas_por_pagar|join:", " }}, según la encomienda que prefieras.</li>
+                        <li>El horario de retiro en tienda es de {{ horario_tienda|lower }}.</li>
+                        <li>Los plazos se cuentan desde que se confirma el pago. Puedes seguir el estado de tu pedido en "Mis compras".</li>
+                        <li>Revisa que tu dirección esté correcta antes de pagar: los retrasos por datos de despacho incorrectos no son responsabilidad de la tienda.</li>
+                    </ul>
+                </section>
+
+                <section class="politica-seccion" id="garantia">
+                    <h2><span class="numero">5.</span>Garantía legal</h2>
+                    <p>Todos nuestros videojuegos, consolas y accesorios nuevos cuentan con garantía legal:</p>
+                    <ul>
+                        {% for condicion in garantia %}
+                        <li>{{ condicion }}</li>
+                        {% endfor %}
+                    </ul>
+                    <p>
+                        Para hacerla efectiva necesitas tu boleta o el comprobante de compra, que siempre está disponible en
+                        tu perfil. La garantía no cubre daños causados por golpes, humedad o mal uso del producto.
+                    </p>
+                </section>
+
+                <section class="politica-seccion" id="retracto">
+                    <h2><span class="numero">6.</span>Derecho a retracto</h2>
+                    <ul>
+                        {% for condicion in retracto %}
+                        <li>{{ condicion }}</li>
+                        {% endfor %}
+                    </ul>
+                    <div class="politica-destacado">
+                        Los videojuegos y otros productos sellados deben devolverse con su sello intacto, ya que una vez
+                        abiertos no pueden volver a venderse como nuevos.
+                    </div>
+                </section>
+
+                <section class="politica-seccion" id="usados">
+                    <h2><span class="numero">7.</span>Juegos usados en parte de pago</h2>
+                    <p>
+                        En nuestra tienda física recibimos juegos usados en parte de pago. Este servicio
+                        <strong>no está disponible en el sitio web</strong>:
+                    </p>
+                    <ul>
+                        <li>El juego debe presentarse en el local para revisar su estado: disco sin rayas, carátula original y correcto funcionamiento.</li>
+                        <li>El valor lo determina el personal de la tienda según el mercado actual.</li>
+                        <li>El monto acordado queda como crédito a tu favor, para usarlo en compras en la tienda.</li>
+                    </ul>
+                </section>
+
+                <section class="politica-seccion" id="datos">
+                    <h2><span class="numero">8.</span>Datos personales</h2>
+                    <p>
+                        El uso de tus datos personales se rige por nuestra
+                        <a href="{% url 'politica_privacidad' %}">Política de Privacidad</a>.
+                    </p>
+                </section>
+
+                <section class="politica-seccion" id="cambios">
+                    <h2><span class="numero">9.</span>Cambios a estos términos</h2>
+                    <p>
+                        Podemos actualizar estos términos para reflejar cambios legales o en el funcionamiento de la tienda.
+                        La versión vigente y su fecha siempre aparecen al inicio de esta página, y cada compra se rige por la
+                        versión vigente al momento de realizarla.
+                    </p>
+                </section>
+
+                <section class="politica-seccion" id="contacto">
+                    <h2><span class="numero">10.</span>Contacto</h2>
+                    <div class="politica-contacto">
+                        <p><strong>{{ responsable.nombre_comercial }}</strong> · {{ responsable.razon_social }}</p>
+                        <p><i class="fas fa-envelope me-2"></i><a href="mailto:{{ responsable.correo_privacidad }}">{{ responsable.correo_privacidad }}</a></p>
+                        <p><i class="fab fa-whatsapp me-2"></i>{{ responsable.telefono }} (teléfono y WhatsApp)</p>
+                        <p class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>{{ responsable.domicilio }}</p>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
