@@ -174,6 +174,25 @@ Si quieres otra cuenta de administrador, ejecuta `python manage.py createsuperus
 
 ---
 
+## Pagos con Webpay Plus (ambiente de pruebas)
+
+El checkout paga con Webpay Plus de Transbank. Por defecto usa el **ambiente de integración**, con las credenciales públicas de prueba de Transbank: no hay que configurar nada y no se cobra dinero real (necesitas conexión a internet).
+
+En el formulario de Webpay usa estas tarjetas de prueba (lista completa en [Transbank Developers](https://www.transbankdevelopers.cl/documentacion/como_empezar#tarjetas-de-prueba)):
+
+| Tarjeta | Número | CVV | Resultado |
+|---|---|---|---|
+| VISA crédito | 4051 8856 0044 6623 | 123 | Aprobada |
+| Mastercard crédito | 5186 0595 5959 0568 | 123 | Rechazada |
+
+La fecha de vencimiento puede ser cualquiera futura. Si Webpay pide autenticarse, usa el RUT **11.111.111-1** y la clave **123**.
+
+Cada intento de pago queda registrado en el modelo `PagoWebpay` (visible en `/admin/` con `DEBUG=True`). La venta se crea solo cuando Transbank aprueba el pago.
+
+**Para cobrar de verdad** hay que contratar Webpay Plus con Transbank, pasar su proceso de validación y poner en el `.env` del servidor `WEBPAY_AMBIENTE=produccion`, `WEBPAY_CODIGO_COMERCIO` y `WEBPAY_API_KEY` (ver `.env.example`).
+
+---
+
 ## Si ya tenías el proyecto instalado
 
 El proyecto pasó al sistema de usuarios de Django y **las migraciones se reiniciaron desde cero**. La base de datos antigua (`db_sdgames`) ya no es compatible. Después de hacer `git pull`:

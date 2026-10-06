@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static custom_filters %}
 
-{% block title %}Selecciona el Método de Pago{% endblock %}
+{% block title %}Pago - Akaispace{% endblock %}
 
 {% block extra_head %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
@@ -15,56 +15,38 @@
                 <i class="bi bi-arrow-left"></i> Regresar
             </a>
 
-            <h2 class="mb-4 fw-bold text-dark">Selecciona Método de Pago</h2>
+            <h2 class="mb-4 fw-bold text-dark">Pago</h2>
 
-            <form method="post" action="{% url 'seleccionar_pago' %}">
+            {% if error %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endif %}
+
+            {# HU-05: el pago se hace en el sitio de Transbank; aquí nunca se piden datos de la tarjeta #}
+            <div class="webpay-box">
+                <p class="webpay-titulo">Webpay Plus · Transbank</p>
+                <p class="mb-2">Paga con tarjeta de crédito, débito o prepago.</p>
+                <p class="mb-0 text-muted small">
+                    Al continuar te llevaremos al sitio seguro de Transbank para completar el pago.
+                    Akaispace nunca ve ni guarda los datos de tu tarjeta.
+                </p>
+            </div>
+
+            {% if webpay_integracion %}
+            <p class="webpay-aviso-pruebas">
+                Ambiente de pruebas de Transbank: no se realizan cobros reales. Usa las
+                <a href="https://www.transbankdevelopers.cl/documentacion/como_empezar#tarjetas-de-prueba"
+                   target="_blank" rel="noopener">tarjetas de prueba</a>.
+            </p>
+            {% endif %}
+
+            <form method="post" action="{% url 'seleccionar_pago' %}" id="form-pagar">
                 {% csrf_token %}
-
-                <div class="mb-4">
-                    <select class="form-select py-3" name="metodo_pago" id="metodo_pago" onchange="mostrarFormulario()" style="border:none; box-shadow:none;">
-                        <option value="" selected disabled>Selecciona una opción</option>
-                        <option value="tarjeta" selected>Tarjeta de Crédito/Débito</option> <option value="transferencia">Transferencia bancaria</option>
-                    </select>
-                </div>
-
-                <div id="form-tarjeta" class="form-container bg-white p-4 rounded shadow-sm border-0">
-                    <h5 class="mb-3 fw-bold">Detalles de la Tarjeta</h5>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Número de Tarjeta</label>
-                        <input type="text" class="form-control bg-light border-0" id="numero_tarjeta" maxlength="19" 
-                               placeholder="XXXX XXXX XXXX XXXX" oninput="formatearNumeroTarjeta()" required>
-                        <img id="logo_tarjeta" class="tarjeta-logo hidden" src="" alt="Logo" style="width:40px; margin-top:5px;">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Fecha de Expiración</label>
-                        <input type="text" class="form-control bg-light border-0" id="expiracion" maxlength="5"
-                               placeholder="MM/AA" oninput="formatearFechaExpiracion()" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">CVV</label>
-                        <input type="password" class="form-control bg-light border-0" id="cvv" maxlength="3" 
-                               placeholder="XXX" required>
-                    </div>
-                </div>
-
-                <div id="form-transferencia" class="hidden form-container bg-white p-4 rounded shadow-sm border-0">
-                    <h5 class="mb-3 fw-bold">Datos de Transferencia</h5>
-                    <p class="mb-1"><strong>Banco:</strong> Banco Chile</p>
-                    <p class="mb-1"><strong>Cuenta:</strong> 12345678</p>
-                    <p class="mb-1"><strong>Rut:</strong> 76.999.888-K</p>
-                    <p class="mb-1"><strong>Email:</strong> akaispacevaldivia@gmail.com</p>
-                </div>
-
-                <button type="submit" class="Btn">
-                    Pagar
+                <button type="submit" class="Btn btn-webpay">
+                    Pagar con Webpay
                     <svg viewBox="0 0 576 512" class="svgIcon">
                         <path d="M512 80c8.8 0 16 7.2 16 16v32H48V96c0-8.8 7.2-16 16-16H512zm16 144V416c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16V224H528zM64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm56 304c-13.3 0-24 10.7-24 24s10.7 24 24 24h48c13.3 0 24-10.7 24-24s-10.7-24-24-24H120zm128 0c-13.3 0-24 10.7-24 24s10.7 24 24 24H360c13.3 0 24-10.7 24-24s-10.7-24-24-24H248z"></path>
                     </svg>
                 </button>
-
             </form>
         </div>
 
@@ -101,61 +83,11 @@
     </div>
 
 <script>
-    // manejar el valor seleccionado
-    document.addEventListener('DOMContentLoaded', function() {
-        mostrarFormulario();
+    // evita abrir dos transacciones con un doble clic
+    document.getElementById('form-pagar').addEventListener('submit', function () {
+        const boton = this.querySelector('button');
+        boton.disabled = true;
+        boton.firstChild.textContent = 'Conectando con Webpay... ';
     });
-
-    function mostrarFormulario() {
-        const metodo = document.getElementById("metodo_pago").value;
-        const formTarjeta = document.getElementById("form-tarjeta");
-        const formTransferencia = document.getElementById("form-transferencia");
-
-        formTarjeta.classList.add("hidden");
-        formTransferencia.classList.add("hidden");
-
-        Array.from(formTarjeta.querySelectorAll("input")).forEach(i => i.required = false);
-
-        if (metodo === "tarjeta") {
-            formTarjeta.classList.remove("hidden");
-            Array.from(formTarjeta.querySelectorAll("input")).forEach(i => i.required = true);
-        } else if (metodo === "transferencia") {
-            formTransferencia.classList.remove("hidden");
-        }
-    }
-
-    // validar numero de la tarjeta
-    function formatearNumeroTarjeta() {
-        const input = document.getElementById("numero_tarjeta");
-        let valor = input.value.replace(/\D/g, "");
-        const grupos = valor.match(/.{1,4}/g) || [];
-        input.value = grupos.join(" ");
-        detectarTarjeta(valor);
-    }
-
-    // validar fecha
-    function formatearFechaExpiracion() {
-        const input = document.getElementById("expiracion");
-        let valor = input.value.replace(/\D/g, "");
-        if (valor.length >= 2) {
-            input.value = valor.slice(0, 2) + "/" + valor.slice(2, 4);
-        } else {
-            input.value = valor;
-        }
-    }
-
-    // detectar tarjeta y mostrar foto
-    function detectarTarjeta(numero) {
-        const logo = document.getElementById("logo_tarjeta");
-        if (/^4/.test(numero)) {
-            logo.src = "https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg";
-            logo.classList.remove("hidden");
-        } else if (/^5[1-5]/.test(numero)) {
-            logo.src = "https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg";
-            logo.classList.remove("hidden");
-        } else {
-            logo.classList.add("hidden");
-        }
-    }
 </script>
 {% endblock %}

@@ -145,6 +145,16 @@ AXES_USERNAME_CALLABLE = 'appPrincipal.seguridad.email_para_axes'
 AXES_LOCKOUT_CALLABLE = 'appPrincipal.seguridad.login_bloqueado'
 
 
+# Webpay Plus de Transbank (HU-05). Ver appPrincipal/webpay.py.
+# En 'integracion' se usan las credenciales públicas de prueba que trae el SDK de Transbank;
+# en 'produccion' son obligatorios el código de comercio y la API key entregados por Transbank.
+WEBPAY_AMBIENTE = config('WEBPAY_AMBIENTE', default='integracion')
+WEBPAY_CODIGO_COMERCIO = config('WEBPAY_CODIGO_COMERCIO', default='')
+WEBPAY_API_KEY = config('WEBPAY_API_KEY', default='')
+# segundos máximos de espera a Transbank (el SDK trae 600 por defecto)
+WEBPAY_TIMEOUT = config('WEBPAY_TIMEOUT', default=30, cast=int)
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 

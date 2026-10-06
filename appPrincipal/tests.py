@@ -243,11 +243,10 @@ class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids 
         from .models import Venta
         self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 2})
         self.assertEqual(self.client.get('/seleccionar-pago/?envio=tienda').status_code, 200)
-        respuesta = self.client.post('/seleccionar-pago/', {'metodo_pago': 'tarjeta'})
-        self.assertRedirects(respuesta, '/compra-exitosa/', fetch_redirect_response=False)
-        self.assertEqual(self.client.get('/compra-exitosa/').status_code, 200)
+        _, pago = pagar(self.client)
 
         venta = Venta.objects.get(usuario=self.cliente)
+        self.assertEqual(pago.venta, venta)
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 1)
         self.assertTrue(hasattr(venta, 'boleta'))
@@ -257,9 +256,9 @@ class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids 
         from .models import ItemCarritoProducto, Carrito, Venta
         carrito = Carrito.objects.create(usuario=self.cliente)
         ItemCarritoProducto.objects.create(carrito=carrito, producto=self.producto, cantidad=5)
-        elegir_entrega(self.client)
-        respuesta = self.client.get('/compra-exitosa/')
+        respuesta, pago = iniciar_pago(self.client, 'tienda')
         self.assertTrue(respuesta.url.startswith('/ver_carrito/'))
+        self.assertIsNone(pago)
         self.assertFalse(Venta.objects.exists())
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 3)
@@ -416,6 +415,50 @@ class PlantillasTests(TestCase):  # 21: plantilla base y navbar compartido
             portada.no_existe
 
 
+URL_WEBPAY_PRUEBA = 'https://webpay3gint.transbank.cl/webpayserver/initTransaction'
+
+
+def respuesta_webpay(pago, aprobado=True, **cambios):
+    """Respuesta de commit como la que entrega Transbank (los tests no se conectan a Transbank)."""
+    return {
+        'vci': 'TSY', 'amount': pago.monto, 'status': 'AUTHORIZED' if aprobado else 'FAILED',
+        'buy_order': pago.orden_compra, 'session_id': f'usuario-{pago.usuario_id}',
+        'card_detail': {'card_number': '6623'}, 'accounting_date': '1006',
+        'transaction_date': '2026-10-06T13:45:10.123Z', 'authorization_code': '1213' if aprobado else '000000',
+        'payment_type_code': 'VD', 'response_code': 0 if aprobado else -1, 'installments_number': 0,
+        **cambios,
+    }
+
+
+def iniciar_pago(client, envio=None):
+    """Hace clic en "Pagar con Webpay". Devuelve (respuesta, PagoWebpay o None)."""
+    import secrets
+    from unittest import mock
+    from .models import PagoWebpay
+    token = secrets.token_hex(32)
+    url = '/seleccionar-pago/' + (f'?envio={envio}' if envio else '')
+    with mock.patch('appPrincipal.webpay.crear', return_value={'token': token, 'url': URL_WEBPAY_PRUEBA}):
+        respuesta = client.post(url)
+    return respuesta, PagoWebpay.objects.filter(token=token).first()
+
+
+def volver_de_webpay(client, pago, aprobado=True, **cambios):
+    """Transbank devuelve al cliente con token_ws (por GET) y el sitio confirma el pago."""
+    from unittest import mock
+    with mock.patch('appPrincipal.webpay.confirmar', return_value=respuesta_webpay(pago, aprobado, **cambios)):
+        return client.get('/pago/webpay/retorno/', {'token_ws': pago.token})
+
+
+def pagar(client, envio=None, aprobado=True):
+    """Compra completa con Webpay simulado. Devuelve (respuesta al iniciar, PagoWebpay o None)."""
+    respuesta, pago = iniciar_pago(client, envio)
+    if pago is None:
+        return respuesta, None
+    volver_de_webpay(client, pago, aprobado)
+    pago.refresh_from_db()
+    return respuesta, pago
+
+
 def elegir_entrega(client, metodo='tienda'):
     """Deja elegida la opción de entrega en la sesión, como al pasar del carrito al pago (HU-08)."""
     session = client.session
@@ -512,7 +555,7 @@ class CheckoutTests(TestCase):
     def test_producto_eliminado_en_el_carrito_no_deja_venta_ni_descuenta_stock(self):
         from .models import Venta
         self.eliminado.delete()
-        respuesta = self.client.get('/compra-exitosa/')
+        respuesta, _ = iniciar_pago(self.client)
         self.assertTrue(respuesta.url.startswith('/ver_carrito/'))
         self.assertFalse(Venta.objects.exists())
         self.con_stock.refresh_from_db()
@@ -520,7 +563,7 @@ class CheckoutTests(TestCase):
 
     def test_calcular_total_ya_no_toca_el_stock(self):
         from .models import Venta
-        self.assertEqual(self.client.get('/compra-exitosa/').status_code, 200)
+        pagar(self.client)
         venta = Venta.objects.get()
         venta.calcular_total()  
         self.con_stock.refresh_from_db()
@@ -897,13 +940,10 @@ class EnviosTests(TestCase):
         return cliente
 
     def comprar(self, metodo, cantidad=1):
-        from .models import ItemCarritoProducto, Venta
+        from .models import ItemCarritoProducto
         ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto, cantidad=cantidad)
-        respuesta = self.client.get(f'/seleccionar-pago/?envio={metodo}')
-        if respuesta.status_code != 200:
-            return respuesta, None
-        self.client.get('/compra-exitosa/')
-        return respuesta, Venta.objects.get()
+        respuesta, pago = pagar(self.client, metodo)
+        return respuesta, pago.venta if pago else None
 
     def test_costos_de_cada_opcion(self):
         from .envios import costo_envio
@@ -967,7 +1007,7 @@ class EnviosTests(TestCase):
         self.cliente_en('Valdivia')
         ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto)
         self.assertTrue(self.client.get('/seleccionar-pago/').url.startswith('/ver_carrito/?notif='))
-        self.assertTrue(self.client.get('/compra-exitosa/').url.startswith('/ver_carrito/?notif='))
+        self.assertTrue(iniciar_pago(self.client)[0].url.startswith('/ver_carrito/?notif='))
 
     def test_cambiar_de_ciudad_despues_de_elegir_invalida_la_entrega(self):
         from .models import ItemCarritoProducto, Venta
@@ -976,7 +1016,9 @@ class EnviosTests(TestCase):
         self.client.get('/seleccionar-pago/?envio=delivery')
         cliente.ciudad, cliente.region = 'Osorno', 'LOS LAGOS'
         cliente.save()
-        self.assertTrue(self.client.get('/compra-exitosa/').url.startswith('/ver_carrito/?notif='))
+        respuesta, pago = iniciar_pago(self.client)
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
+        self.assertIsNone(pago)
         self.assertFalse(Venta.objects.exists())
 
     def test_el_carrito_muestra_las_opciones(self):
@@ -1106,3 +1148,240 @@ class ListoParaRetiroTests(TestCase):
         self.client.force_login(self.admin)
         respuesta = self.client.get('/admin-panel/ventas/?entrega=delivery')
         self.assertEqual(list(respuesta.context['ventas']), [])
+
+
+class WebpayTests(TestCase):  # HU-05 y HU-06: pago con Webpay Plus (Transbank simulado con mock)
+    def setUp(self):
+        from .models import Carrito, ItemCarritoProducto
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+        self.producto = crear_producto(stock=5)  # $10.000 c/u
+        self.carrito = Carrito.objects.create(usuario=self.cliente)
+        self.item = ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto, cantidad=2)
+        elegir_entrega(self.client)
+
+    def stock(self):
+        self.producto.refresh_from_db()
+        return self.producto.stock
+
+    def test_pagina_de_pago_no_pide_datos_de_tarjeta(self):
+        respuesta = self.client.get('/seleccionar-pago/')
+        self.assertContains(respuesta, 'Pagar con Webpay')
+        self.assertNotContains(respuesta, 'numero_tarjeta')
+        self.assertNotContains(respuesta, 'Transferencia')
+        self.assertNotContains(respuesta, 'cvv')
+
+    def test_iniciar_crea_pago_pendiente_y_envia_a_webpay_sin_tocar_stock(self):
+        from .models import PagoWebpay, Venta
+        respuesta, pago = iniciar_pago(self.client)
+        self.assertContains(respuesta, URL_WEBPAY_PRUEBA)
+        self.assertContains(respuesta, f'name="token_ws" value="{pago.token}"')
+        self.assertEqual(pago.estado, PagoWebpay.PENDIENTE)
+        self.assertEqual(pago.monto, 20000)
+        self.assertEqual(pago.items, [{'producto_id': self.producto.id, 'cantidad': 2, 'precio_unitario': 10000}])
+        self.assertEqual(self.stock(), 5)
+        self.assertFalse(Venta.objects.exists())
+
+    def test_iniciar_envia_a_transbank_monto_orden_y_url_de_retorno(self):
+        from unittest import mock
+        with mock.patch('appPrincipal.webpay.crear', return_value={'token': 'a' * 64, 'url': URL_WEBPAY_PRUEBA}) as crear:
+            self.client.post('/seleccionar-pago/')
+        orden, sesion, monto, url_retorno = crear.call_args.args
+        self.assertTrue(orden.startswith('AKA') and len(orden) <= 26)
+        self.assertEqual(monto, 20000)
+        self.assertEqual(url_retorno, 'http://testserver/pago/webpay/retorno/')
+
+    def test_pago_aprobado_crea_venta_descuenta_stock_y_vacia_carrito(self):
+        from .models import PagoWebpay
+        _, pago = iniciar_pago(self.client)
+        respuesta = volver_de_webpay(self.client, pago)
+        self.assertRedirects(respuesta, f'/pago/{pago.id}/resultado/', fetch_redirect_response=False)
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.APROBADO)
+        venta = pago.venta
+        self.assertEqual((venta.total, venta.metodo_pago), (20000, 'Webpay - Débito'))
+        self.assertTrue(hasattr(venta, 'boleta'))
+        self.assertEqual(self.stock(), 3)
+        self.assertFalse(self.carrito.items.exists())
+        self.assertEqual((pago.codigo_autorizacion, pago.tarjeta_ultimos_digitos), ('1213', '6623'))
+
+    def test_comprobante_muestra_los_datos_de_transbank(self):
+        _, pago = pagar(self.client)
+        respuesta = self.client.get(f'/pago/{pago.id}/resultado/')
+        self.assertContains(respuesta, '¡Compra Exitosa!')
+        for dato in [pago.orden_compra, '1213', '**** 6623', 'Débito', '$20.000']:
+            self.assertContains(respuesta, dato)
+
+    def test_pago_rechazado_no_crea_venta_ni_toca_stock_ni_carrito(self):
+        from .models import PagoWebpay, Venta
+        _, pago = pagar(self.client, aprobado=False)
+        self.assertEqual(pago.estado, PagoWebpay.RECHAZADO)
+        self.assertFalse(Venta.objects.exists())
+        self.assertEqual(self.stock(), 5)
+        self.assertTrue(self.carrito.items.exists())
+        self.assertContains(self.client.get(f'/pago/{pago.id}/resultado/'), 'Pago rechazado')
+
+    def test_cliente_cancela_en_webpay(self):
+        from .models import PagoWebpay, Venta
+        _, pago = iniciar_pago(self.client)
+        # al anular, Transbank devuelve TBK_TOKEN (y no token_ws), por POST
+        respuesta = self.client.post('/pago/webpay/retorno/', {
+            'TBK_TOKEN': pago.token, 'TBK_ORDEN_COMPRA': pago.orden_compra, 'TBK_ID_SESION': 'x',
+        })
+        self.assertRedirects(respuesta, f'/pago/{pago.id}/resultado/', fetch_redirect_response=False)
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.ANULADO)
+        self.assertFalse(Venta.objects.exists())
+        self.assertContains(self.client.get(f'/pago/{pago.id}/resultado/'), 'Pago cancelado')
+
+    def test_error_en_el_formulario_y_volver_no_confirma(self):
+        # si hubo un error en Webpay y el cliente volvió, llegan token_ws y TBK_TOKEN: no se confirma
+        from unittest import mock
+        from .models import PagoWebpay
+        _, pago = iniciar_pago(self.client)
+        with mock.patch('appPrincipal.webpay.confirmar') as confirmar:
+            self.client.post('/pago/webpay/retorno/', {'token_ws': pago.token, 'TBK_TOKEN': pago.token})
+        confirmar.assert_not_called()
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.ANULADO)
+
+    def test_se_acaba_el_tiempo_en_webpay(self):
+        from .models import PagoWebpay
+        _, pago = iniciar_pago(self.client)
+        self.client.post('/pago/webpay/retorno/', {'TBK_ORDEN_COMPRA': pago.orden_compra, 'TBK_ID_SESION': 'x'})
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.ANULADO)
+        self.assertIn('tiempo', pago.detalle)
+
+    def test_volver_dos_veces_no_duplica_la_venta(self):
+        from unittest import mock
+        from .models import Venta
+        _, pago = iniciar_pago(self.client)
+        volver_de_webpay(self.client, pago)
+        with mock.patch('appPrincipal.webpay.confirmar') as confirmar:
+            respuesta = self.client.get('/pago/webpay/retorno/', {'token_ws': pago.token})
+        confirmar.assert_not_called()
+        self.assertRedirects(respuesta, f'/pago/{pago.id}/resultado/', fetch_redirect_response=False)
+        self.assertEqual(Venta.objects.count(), 1)
+        self.assertEqual(self.stock(), 3)
+
+    def test_retorno_por_post_sin_sesion_confirma_igual(self):
+        # si Transbank vuelve por POST el navegador no manda la cookie de sesión
+        from django.test import Client
+        from .models import PagoWebpay
+        _, pago = iniciar_pago(self.client)
+        anonimo = Client(enforce_csrf_checks=True)
+        from unittest import mock
+        with mock.patch('appPrincipal.webpay.confirmar', return_value=respuesta_webpay(pago)):
+            respuesta = anonimo.post('/pago/webpay/retorno/', {'token_ws': pago.token})
+        self.assertEqual(respuesta.status_code, 302)
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.APROBADO)
+
+    def test_sin_stock_al_volver_se_reembolsa(self):
+        # otro cliente compró la última unidad mientras este estaba en Webpay
+        from unittest import mock
+        from .models import PagoWebpay, Venta
+        _, pago = iniciar_pago(self.client)
+        self.producto.stock = 1
+        self.producto.save()
+        with mock.patch('appPrincipal.webpay.reembolsar', return_value={'type': 'REVERSED'}) as reembolsar:
+            volver_de_webpay(self.client, pago)
+        reembolsar.assert_called_once_with(pago.token, 20000)
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.REEMBOLSADO)
+        self.assertFalse(Venta.objects.exists())
+        self.assertEqual(self.stock(), 1)
+        self.assertContains(self.client.get(f'/pago/{pago.id}/resultado/'), 'Reversamos el cargo completo')
+
+    def test_si_el_reembolso_falla_queda_en_error_para_revisar(self):
+        from unittest import mock
+        from .models import PagoWebpay
+        from .webpay import ErrorWebpay
+        _, pago = iniciar_pago(self.client)
+        self.producto.stock = 0
+        self.producto.save()
+        with mock.patch('appPrincipal.webpay.reembolsar', side_effect=ErrorWebpay('caído')):
+            volver_de_webpay(self.client, pago)
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.ERROR)
+        self.assertIn('No se pudo reversar', pago.detalle)
+
+    def test_monto_distinto_al_cobrado_no_entrega_la_compra(self):
+        from unittest import mock
+        from .models import PagoWebpay, Venta
+        _, pago = iniciar_pago(self.client)
+        with mock.patch('appPrincipal.webpay.reembolsar', return_value={}):
+            volver_de_webpay(self.client, pago, amount=1)
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, PagoWebpay.REEMBOLSADO)
+        self.assertFalse(Venta.objects.exists())
+
+    def test_se_cobra_el_precio_del_momento_de_pagar(self):
+        _, pago = iniciar_pago(self.client)
+        self.producto.precio = 99990  # el admin cambió el precio mientras el cliente pagaba
+        self.producto.save()
+        volver_de_webpay(self.client, pago)
+        pago.refresh_from_db()
+        self.assertEqual(pago.venta.total, 20000)
+
+    def test_lo_agregado_al_carrito_mientras_pagaba_se_conserva(self):
+        from .models import ItemCarritoProducto
+        _, pago = iniciar_pago(self.client)
+        otro = crear_producto('Otro')
+        ItemCarritoProducto.objects.create(carrito=self.carrito, producto=otro)
+        self.item.cantidad = 3
+        self.item.save()
+        volver_de_webpay(self.client, pago)
+        quedan = {i.producto_id: i.cantidad for i in self.carrito.items.all()}
+        self.assertEqual(quedan, {otro.id: 1, self.producto.id: 1})
+
+    def test_transbank_caido_al_iniciar(self):
+        from unittest import mock
+        from .models import PagoWebpay
+        from .webpay import ErrorWebpay
+        with mock.patch('appPrincipal.webpay.crear', side_effect=ErrorWebpay('timeout')):
+            respuesta = self.client.post('/seleccionar-pago/')
+        self.assertContains(respuesta, 'No pudimos conectarnos con Webpay')
+        self.assertEqual(PagoWebpay.objects.get().estado, PagoWebpay.ERROR)
+
+    def test_no_se_puede_ver_el_resultado_de_otro_cliente(self):
+        _, pago = pagar(self.client)
+        self.client.force_login(crear_cliente('otro@example.com'))
+        self.assertEqual(self.client.get(f'/pago/{pago.id}/resultado/').status_code, 404)
+
+    def test_token_desconocido_vuelve_al_carrito(self):
+        respuesta = self.client.get('/pago/webpay/retorno/', {'token_ws': 'no-existe'})
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
+
+
+class WebpayConexionTests(TestCase):  # appPrincipal/webpay.py
+    def test_si_el_commit_falla_pero_transbank_lo_autorizo_no_se_pierde(self):
+        from unittest import mock
+        from . import webpay
+        autorizado = {'status': 'AUTHORIZED', 'response_code': 0}
+        with mock.patch.object(webpay, '_llamar', side_effect=[webpay.ErrorWebpay('corte'), autorizado]):
+            self.assertEqual(webpay.confirmar('t'), autorizado)
+
+    def test_si_el_commit_falla_y_no_esta_autorizado_es_error(self):
+        from unittest import mock
+        from . import webpay
+        with mock.patch.object(webpay, '_llamar', side_effect=[webpay.ErrorWebpay('corte'), {'status': 'FAILED'}]):
+            with self.assertRaises(webpay.ErrorWebpay):
+                webpay.confirmar('t')
+
+    def test_errores_de_red_salen_como_error_webpay(self):
+        import requests
+        from unittest import mock
+        from . import webpay
+        with mock.patch('transbank.webpay.webpay_plus.transaction.RequestService.post',
+                        side_effect=requests.ConnectionError('sin red')):
+            with self.assertRaises(webpay.ErrorWebpay):
+                webpay.crear('AKA1', 's', 1000, 'http://testserver/')
+
+    @override_settings(WEBPAY_AMBIENTE='produccion', WEBPAY_CODIGO_COMERCIO='', WEBPAY_API_KEY='')
+    def test_produccion_sin_credenciales_no_arranca(self):
+        from django.core.exceptions import ImproperlyConfigured
+        from . import webpay
+        with self.assertRaises(ImproperlyConfigured):
+            webpay.crear('AKA1', 's', 1000, 'http://testserver/')

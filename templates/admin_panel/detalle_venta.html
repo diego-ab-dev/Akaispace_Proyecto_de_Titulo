@@ -77,8 +77,15 @@
 
                 <div class="data-row mt-3">
                     <span class="data-label">Método de Pago:</span> 
-                    <span>{{ venta.metodo_pago|title }}</span> 
+                    <span>{{ venta.metodo_pago|capfirst }}</span>
                 </div>
+                {% with pago=venta.pago_webpay %}
+                {% if pago %}
+                <div class="data-row"><span class="data-label">Orden de compra:</span> <span>{{ pago.orden_compra }}</span></div>
+                <div class="data-row"><span class="data-label">Autorización:</span> <span>{{ pago.codigo_autorizacion }}</span></div>
+                <div class="data-row"><span class="data-label">Tarjeta:</span> <span>**** {{ pago.tarjeta_ultimos_digitos }}{% if pago.cuotas %} ({{ pago.cuotas }} cuotas){% endif %}</span></div>
+                {% endif %}
+                {% endwith %}
                 <div class="data-row"><span class="data-label">Fecha:</span> <span>{{ venta.fecha|date:"d/m/Y - H:i" }}</span></div>
 
                 <div class="mt-4 mb-2"><span class="data-label">Producto/s Comprado/s:</span></div>

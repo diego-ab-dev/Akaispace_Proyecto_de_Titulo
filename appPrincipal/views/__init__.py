@@ -13,7 +13,7 @@ from .devoluciones import crear_devolucion, listar_devoluciones, ver_detalle_dev
 from .favoritos import agregar_favorito, eliminar_favorito, eliminar_favoritos_seleccionados, lista_favoritos
 from .legal import politica_privacidad
 from .opiniones import enviar_opinion, lista_opiniones
-from .pago import compra_exitosa, seleccionar_pago, ver_boleta
+from .pago import resultado_pago, seleccionar_pago, ver_boleta, webpay_retorno
 from .perfil import cambiar_contraseña, editar_perfil, perfil
 from .reclamos import crear_reclamo, lista_reclamos, ver_detalle_reclamo
 from .panel import (

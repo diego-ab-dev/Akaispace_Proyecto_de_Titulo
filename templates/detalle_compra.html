@@ -196,7 +196,13 @@
         <div class="payment-box">
             <div class="payment-header">Método de Pago</div>
             <div class="payment-info">
-            <span>{{ compra.metodo_pago|title }}</span>
+            <span>{{ compra.metodo_pago|capfirst }}</span>
+            {% with pago=compra.pago_webpay %}
+            {% if pago %}
+            <span class="d-block small text-muted">Tarjeta **** {{ pago.tarjeta_ultimos_digitos }}{% if pago.cuotas %} · {{ pago.cuotas }} cuotas{% endif %}</span>
+            <span class="d-block small text-muted">Orden {{ pago.orden_compra }} · Autorización {{ pago.codigo_autorizacion }}</span>
+            {% endif %}
+            {% endwith %}
         </div>
         </div>
 

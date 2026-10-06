@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static custom_filters %}
+
+{% block title %}Pago no completado - Akaispace{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_compra_exitosa.css' %}">
+{% endblock %}
+
+{% block content %}
+{# Resultado de un pago con Webpay que no terminó en compra (HU-05) #}
+<div class="main-wrapper">
+    <div class="success-header header-fallido">
+        {% if pago.estado == 'reembolsado' %}
+            <h1 class="fw-bold mb-1">No pudimos completar tu compra</h1>
+            <p class="mb-0">{{ pago.detalle }}</p>
+        {% elif pago.estado == 'rechazado' %}
+            <h1 class="fw-bold mb-1">Pago rechazado</h1>
+            <p class="mb-0">Transbank rechazó el pago y no se realizó ningún cargo. Puedes intentarlo con otra tarjeta.</p>
+        {% elif pago.estado == 'anulado' %}
+            <h1 class="fw-bold mb-1">Pago cancelado</h1>
+            <p class="mb-0">{{ pago.detalle }} No se realizó ningún cargo.</p>
+        {% else %}
+            <h1 class="fw-bold mb-1">No pudimos confirmar tu pago</h1>
+            <p class="mb-0">
+                {% if pago.detalle %}{{ pago.detalle }} {% endif %}Si ves un cargo en tu tarjeta, escríbenos indicando
+                tu orden de compra y lo revisaremos.
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="content-container container">
+        <div class="info-card mx-auto mb-4" style="max-width: 520px;">
+            <div class="info-row">
+                <span>Orden de compra</span>
+                <span class="text-end fw-semibold">{{ pago.orden_compra }}</span>
+            </div>
+            <div class="info-row">
+                <span>Monto</span>
+                <span class="text-end">${{ pago.monto|formato_chileno }}</span>
+            </div>
+            <div class="info-row mb-0">
+                <span>Fecha</span>
+                <span class="text-end">{{ pago.creado|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+
+        <p class="text-center text-muted small mb-4">Los productos siguen en tu carrito.</p>
+
+        <div class="d-flex justify-content-center flex-wrap gap-3 mb-5">
+            <a href="{% url 'seleccionar_pago' %}" class="btn btn-compras px-4">Intentar de nuevo</a>
+            <a href="{% url 'ver_carrito' %}" class="btn btn-regresar px-4">Volver al carrito</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

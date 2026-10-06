@@ -68,7 +68,8 @@ urlpatterns = [
     path('eliminar_favoritos_seleccionados/', views.eliminar_favoritos_seleccionados, name='eliminar_favoritos_seleccionados'),
     # pago - compra
     path('seleccionar-pago/', views.seleccionar_pago, name='seleccionar_pago'),
-    path('compra-exitosa/', views.compra_exitosa, name='compra_exitosa'),
+    path('pago/webpay/retorno/', views.webpay_retorno, name='webpay_retorno'),
+    path('pago/<int:pago_id>/resultado/', views.resultado_pago, name='resultado_pago'),
     path('boleta/<int:venta_id>/', views.ver_boleta, name='ver_boleta'),
 
 

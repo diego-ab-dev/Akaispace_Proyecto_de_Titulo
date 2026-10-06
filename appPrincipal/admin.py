@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.html import format_html
-from .models import Usuario, Producto, Venta, Reclamo, Opinion
+from .models import Usuario, Producto, Venta, Reclamo, Opinion, PagoWebpay
 
 # Configuración del admin de Django (/admin/), disponible solo con DEBUG=True (ver Akaispace/urls.py).
 # No es el panel de la tienda: ese es /admin-panel/ (appPrincipal/views/panel/).
@@ -95,3 +95,17 @@ admin.site.register(Producto, ProductoAdmin)
 admin.site.register(Venta, VentaAdmin)
 admin.site.register(Reclamo, ReclamoAdmin)
 admin.site.register(Opinion)
+
+# historial de intentos de pago con Webpay (HU-05), solo lectura: lo escribe el flujo de pago
+@admin.register(PagoWebpay)
+class PagoWebpayAdmin(admin.ModelAdmin):
+    list_display = ("orden_compra", "usuario", "monto", "estado", "tipo_pago", "venta", "creado")
+    list_filter = ("estado", "tipo_pago")
+    search_fields = ("orden_compra", "usuario__email", "codigo_autorizacion")
+    readonly_fields = [campo.name for campo in PagoWebpay._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

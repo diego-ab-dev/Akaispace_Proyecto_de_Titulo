@@ -2,6 +2,7 @@ import re
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 
 from appPrincipal.envios import OPCIONES_ENVIO, costo_envio, estados_para, lleva_seguimiento
@@ -422,6 +423,89 @@ class Boleta(models.Model):
     
     def __str__(self):
         return f"Boleta #{self.id} - Venta {self.venta.id}"
+
+# clase PagoWebpay
+# Cada intento de pago con Webpay (HU-05). La Venta se crea solo cuando Transbank aprueba el pago:
+# así los pagos rechazados o abandonados no aparecen como ventas en el panel, reportes ni historial.
+# Guarda una copia del carrito al momento de pagar: lo cobrado es lo que se vende,
+# aunque el cliente cambie el carrito o los precios cambien mientras está en Webpay.
+class PagoWebpay(models.Model):
+    PENDIENTE = 'pendiente'
+    APROBADO = 'aprobado'
+    RECHAZADO = 'rechazado'
+    ANULADO = 'anulado'
+    REEMBOLSADO = 'reembolsado'
+    ERROR = 'error'
+    ESTADOS = [
+        (PENDIENTE, 'Pendiente'),
+        (APROBADO, 'Aprobado'),
+        (RECHAZADO, 'Rechazado'),
+        (ANULADO, 'Anulado por el cliente'),
+        (REEMBOLSADO, 'Reembolsado (sin stock)'),
+        (ERROR, 'Error'),
+    ]
+    # tipos de pago que informa Transbank (payment_type_code)
+    TIPOS_PAGO = {
+        'VD': 'Débito',
+        'VP': 'Prepago',
+        'VN': 'Crédito',
+        'VC': 'Crédito en cuotas',
+        'SI': '3 cuotas sin interés',
+        'S2': '2 cuotas sin interés',
+        'NC': 'Cuotas sin interés',
+    }
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='pagos_webpay')
+    venta = models.OneToOneField(Venta, on_delete=models.PROTECT, null=True, blank=True, related_name='pago_webpay')
+    orden_compra = models.CharField(max_length=26, unique=True)
+    token = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    monto = models.PositiveIntegerField()
+    estado = models.CharField(max_length=12, choices=ESTADOS, default=PENDIENTE)
+    detalle = models.CharField(max_length=255, blank=True, help_text="Motivo del estado, para el cliente y el panel.")
+
+    # copia de la compra: [{'producto_id': 1, 'cantidad': 2, 'precio_unitario': 10000}, ...]
+    items = models.JSONField()
+    metodo_envio = models.CharField(max_length=10, choices=Venta.ENVIO_CHOICES)
+    direccion_envio = models.TextField(blank=True)
+
+    # datos que devuelve Transbank al confirmar (nunca se recibe el número completo de la tarjeta)
+    codigo_autorizacion = models.CharField(max_length=10, blank=True)
+    tipo_pago = models.CharField(max_length=2, blank=True)
+    cuotas = models.PositiveSmallIntegerField(null=True, blank=True)
+    tarjeta_ultimos_digitos = models.CharField(max_length=4, blank=True)
+    fecha_transaccion = models.DateTimeField(null=True, blank=True)
+    respuesta = models.JSONField(null=True, blank=True, help_text="Respuesta completa de Transbank (auditoría).")
+
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-creado']
+        verbose_name = "Pago Webpay"
+        verbose_name_plural = "Pagos Webpay"
+
+    def __str__(self):
+        return f"{self.orden_compra} ({self.get_estado_display()})"
+
+    @property
+    def tipo_pago_display(self):
+        return self.TIPOS_PAGO.get(self.tipo_pago, self.tipo_pago)
+
+    @property
+    def metodo_pago_texto(self):
+        """Lo que se guarda en Venta.metodo_pago, ej: 'Webpay - Débito'."""
+        return f"Webpay - {self.tipo_pago_display}" if self.tipo_pago else "Webpay"
+
+    def guardar_respuesta(self, respuesta):
+        """Copia los datos del comprobante que entrega Transbank al confirmar el pago."""
+        self.respuesta = respuesta
+        self.codigo_autorizacion = respuesta.get('authorization_code') or ''
+        self.tipo_pago = respuesta.get('payment_type_code') or ''
+        self.cuotas = respuesta.get('installments_number') or None
+        self.tarjeta_ultimos_digitos = ((respuesta.get('card_detail') or {}).get('card_number') or '')[-4:]
+        fecha = respuesta.get('transaction_date')
+        self.fecha_transaccion = parse_datetime(fecha) if fecha else None
+
 
 # clase Favorito
 class Favorito(models.Model):

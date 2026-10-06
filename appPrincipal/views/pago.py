@@ -1,65 +1,24 @@
-"""Checkout: selección de pago, confirmación de la compra y boleta."""
+"""Checkout: pago con Webpay Plus (HU-05), resultado del pago y boleta.
+
+La lógica del pago está en appPrincipal/pagos.py; aquí solo están las páginas.
+"""
+import logging
 from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
-from appPrincipal import envios
-from appPrincipal.models import Boleta, Carrito, Envio, Producto, ProductoVenta, Venta
+from appPrincipal import envios, pagos, webpay
+from appPrincipal.models import Boleta, Carrito, PagoWebpay, Venta
+
+logger = logging.getLogger(__name__)
 
 
 def _volver_al_carrito(mensaje):
     return redirect(f"{reverse('ver_carrito')}?{urlencode({'notif': mensaje, 'type': 'error'})}")
-
-
-def crear_venta_desde_carrito(carrito, metodo_envio, direccion_envio, metodo_pago):
-    """Convierte el carrito en una venta: descuenta el stock, emite la boleta y vacía el carrito.
-
-    Es todo o nada: si un producto ya no está a la venta o no alcanza el stock, lanza
-    ValueError y no se guarda nada. Las filas de los productos quedan bloqueadas hasta
-    terminar, así dos compras al mismo tiempo no pueden vender la misma última unidad.
-    """
-    with transaction.atomic():
-        items = list(carrito.items.all())
-        if not items:
-            raise ValueError("Tu carrito está vacío.")
-        # se bloquean en orden de id para que dos compras simultáneas no se esperen mutuamente
-        bloqueados = Producto.todos.select_for_update().filter(
-            id__in=[item.producto_id for item in items]
-        ).order_by('id')
-        productos = {producto.id: producto for producto in bloqueados}
-
-        for item in items:
-            producto = productos[item.producto_id]
-            if producto.is_deleted:
-                raise ValueError(f"{producto.nombre} ya no está disponible.")
-            if item.cantidad > producto.stock:
-                raise ValueError(f"Stock insuficiente para el producto {producto.nombre}")
-
-        venta = Venta.objects.create(
-            usuario=carrito.usuario,
-            metodo_envio=metodo_envio,
-            direccion_envio=direccion_envio,
-            metodo_pago=metodo_pago,
-        )
-        for item in items:
-            producto = productos[item.producto_id]
-            ProductoVenta.objects.create(
-                venta=venta, producto=producto, cantidad=item.cantidad, precio_unitario=producto.precio,
-            )
-            producto.stock -= item.cantidad
-            producto.save(update_fields=['stock'])
-
-        venta.calcular_total()
-        carrito.items.all().delete()
-        Envio.objects.create(
-            venta=venta, estado='En Preparación',
-            transportista=envios.OPCIONES_ENVIO[metodo_envio]['transportista'],
-        )
-        Boleta.objects.create(venta=venta)
-    return venta
 
 
 @login_required
@@ -71,7 +30,7 @@ def seleccionar_pago(request):
         return redirect('ver_carrito')
 
     # la opción de entrega se elige en el carrito y llega como ?envio=; queda en la sesión
-    # para el POST del pago y para compra_exitosa (que la vuelve a validar)
+    # para el POST que inicia el pago (que la vuelve a validar)
     if 'envio' in request.GET:
         request.session['metodo_envio'] = request.GET['envio']
     metodo_envio = request.session.get('metodo_envio')
@@ -79,8 +38,8 @@ def seleccionar_pago(request):
     if error_envio:
         return _volver_al_carrito(error_envio)
 
-    # se revisa antes de mostrar el pago (el stock pudo bajar desde que se agregó al carrito);
-    # al confirmar la compra se vuelve a revisar con las filas bloqueadas
+    # se revisa antes de pagar (el stock pudo bajar desde que se agregó al carrito);
+    # al confirmar el pago se vuelve a revisar con las filas bloqueadas
     for item in carrito.items.select_related('producto'):
         if item.producto.is_deleted or item.cantidad > item.producto.stock:
             mensaje = (f"Solo hay {item.producto.stock} unidad(es) disponibles de {item.producto.nombre}. "
@@ -92,55 +51,80 @@ def seleccionar_pago(request):
     subtotal = sum(item.cantidad * item.producto.precio for item in carrito.items.all())
     costo_envio = envios.costo_envio(metodo_envio, subtotal)
     total = subtotal + costo_envio
-
-    total_items = sum(item.cantidad for item in carrito.items.all())
+    error = None
 
     if request.method == 'POST':
-        metodo_pago = request.POST.get('metodo_pago')
-        request.session['metodo_pago'] = metodo_pago
-
-        if metodo_pago in ["tarjeta", "transferencia"]:
-            return redirect('compra_exitosa')
+        if total <= 0:
+            error = "El total de la compra debe ser mayor a $0 para pagar con Webpay."
+        else:
+            url_retorno = request.build_absolute_uri(reverse('webpay_retorno'))
+            try:
+                pago, url_webpay = pagos.iniciar_pago(usuario, carrito, metodo_envio, url_retorno)
+            except webpay.ErrorWebpay:
+                error = "No pudimos conectarnos con Webpay. Inténtalo nuevamente en unos minutos."
+            else:
+                # Webpay se abre enviando el token por POST a la url que entregó Transbank
+                return render(request, 'webpay_redirigir.html', {'url': url_webpay, 'token': pago.token})
 
     return render(request, 'seleccionar_pago.html', {
         'total': total,
         'subtotal': subtotal,
         'costo_envio': costo_envio,
-        'total_items': total_items,
+        'total_items': sum(item.cantidad for item in carrito.items.all()),
         'metodo_envio': metodo_envio,
         'opcion_envio': envios.OPCIONES_ENVIO[metodo_envio],
         'direccion_entrega': envios.direccion_de_entrega(metodo_envio, usuario),
+        'error': error,
+        'webpay_integracion': webpay.es_integracion(),
     })
+
+
+# Transbank devuelve al cliente aquí (por GET o POST, según la versión de su API).
+# No pide sesión ni CSRF: si vuelve por POST desde el sitio de Transbank el navegador no
+# envía la cookie de sesión. El token es secreto y el pago se valida directo con Transbank;
+# después se redirige a resultado_pago, que sí exige que el cliente sea el dueño.
+@csrf_exempt
+@require_http_methods(['GET', 'POST'])
+def webpay_retorno(request):
+    datos = request.POST if request.method == 'POST' else request.GET
+    token = datos.get('token_ws')
+    token_anulado = datos.get('TBK_TOKEN')
+    orden_compra = datos.get('TBK_ORDEN_COMPRA')
+
+    pago = None
+    if token_anulado:
+        # canceló en el formulario de Webpay (o hubo un error ahí y volvió al comercio)
+        pago = PagoWebpay.objects.filter(token=token_anulado).first()
+        if pago:
+            pago = pagos.anular_pago(pago, "Cancelaste el pago en Webpay.")
+    elif token:
+        pago = pagos.confirmar_pago(token)
+    elif orden_compra:
+        # se acabó el tiempo para pagar en el formulario de Webpay
+        pago = PagoWebpay.objects.filter(orden_compra=orden_compra).first()
+        if pago:
+            pago = pagos.anular_pago(pago, "Se acabó el tiempo para completar el pago.")
+
+    if pago is None:
+        logger.warning("Retorno de Webpay sin un pago conocido: %s", dict(datos))
+        return _volver_al_carrito("No encontramos el pago. Si se realizó un cargo, contáctanos.")
+    return redirect('resultado_pago', pago_id=pago.id)
+
 
 @login_required
-def compra_exitosa(request):
-    usuario = request.user
-    carrito = Carrito.objects.filter(usuario=usuario).first()
+def resultado_pago(request, pago_id):
+    pago = get_object_or_404(PagoWebpay, id=pago_id, usuario=request.user)
 
-    if not carrito or not carrito.items.exists():
-        return redirect('ver_carrito')
+    if pago.estado == PagoWebpay.APROBADO:
+        request.session.pop('metodo_envio', None)
+        venta = pago.venta
+        return render(request, 'compra_exitosa.html', {
+            'venta': venta,
+            'pago': pago,
+            'total_cantidad': sum(item.cantidad for item in venta.producto_venta.all()),
+        })
 
-    # se vuelve a validar: la dirección del cliente pudo cambiar después de elegir la entrega
-    metodo_envio = request.session.get('metodo_envio')
-    error_envio = envios.validar_eleccion(metodo_envio, usuario)
-    if error_envio:
-        return _volver_al_carrito(error_envio)
-    direccion_envio = envios.direccion_de_entrega(metodo_envio, usuario)
-    metodo_pago = request.session.get('metodo_pago', 'tarjeta')
-
-    try:
-        venta = crear_venta_desde_carrito(carrito, metodo_envio, direccion_envio, metodo_pago)
-    except ValueError as e:
-        return _volver_al_carrito(str(e))
-    request.session.pop('metodo_envio', None)
-
-    total_cantidad = sum(item.cantidad for item in venta.producto_venta.all())
-
-    return render(request, 'compra_exitosa.html', {
-        'venta': venta,
-        'metodo_pago': metodo_pago,
-        'total_cantidad': total_cantidad,
-    })
+    return render(request, 'pago_fallido.html', {'pago': pago})
 
 
 @login_required

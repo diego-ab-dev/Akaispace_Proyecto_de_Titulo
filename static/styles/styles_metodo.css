@@ -193,3 +193,39 @@ body {
     font-size: 0.9rem;
     color: #1C253B;
 }
+
+
+/* Pago con Webpay (HU-05) */
+.webpay-box {
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #444;
+}
+
+.webpay-titulo {
+    font-weight: 700;
+    color: #1C253B;
+    margin-bottom: 6px;
+}
+
+.webpay-aviso-pruebas {
+    margin: 15px 0 0;
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.webpay-aviso-pruebas a {
+    color: #1C253B;
+}
+
+.Btn.btn-webpay {
+    width: auto;
+    padding: 15px 28px;
+}
+
+.Btn.btn-webpay:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
