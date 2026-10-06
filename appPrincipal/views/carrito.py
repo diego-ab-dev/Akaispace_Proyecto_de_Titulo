@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
+from appPrincipal import envios
 from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.decorators import login_required_json
 from appPrincipal.models import Carrito, ItemCarritoProducto, Producto
@@ -119,11 +120,19 @@ def ver_carrito(request):
     total = sum((item.producto.precio or 0) * item.cantidad for item in items)
     total_items = sum(item.cantidad for item in items)
 
+    # la opción de entrega elegida antes (si volvió desde el pago) queda marcada
+    envio_elegido = request.session.get('metodo_envio')
+    if not envios.disponible_para(envio_elegido, usuario.ciudad):
+        envio_elegido = None
+
     return render(request, "carrito.html", {
         "productos": items,
         "total": total,
         "total_items": total_items,
         "regiones_ciudades": REGIONES_CIUDADES,
+        "opciones_envio": envios.opciones_para_plantilla(),
+        "envio_elegido": envio_elegido,
+        "ciudad_tienda": envios.CIUDAD_TIENDA,
     })
 
 

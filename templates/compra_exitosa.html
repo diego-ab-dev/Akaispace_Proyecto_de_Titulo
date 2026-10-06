@@ -37,8 +37,12 @@
                         <span class="text-end">${{ venta.subtotal|formato_chileno }}</span>
                     </div>
                     <div class="info-row">
+                        <span>Entrega</span>
+                        <span class="text-end">{{ venta.get_metodo_envio_display }}</span>
+                    </div>
+                    <div class="info-row">
                         <span>Envío</span>
-                        <span class="text-end">${{ venta.envio|formato_chileno }}</span>
+                        <span class="text-end">{% include "partials/costo_envio.html" with metodo=venta.metodo_envio monto=venta.envio %}</span>
                     </div>
                     <div class="info-row">
                         <span>Método de Pago</span>
@@ -68,7 +72,7 @@
                         <span class="label">Teléfono</span>
                         <span class="value text-end">{{ venta.usuario.telefono }}</span>
 
-                        <span class="label">Dirección</span>
+                        <span class="label">{% if venta.es_retiro_en_tienda %}Retiro{% else %}Dirección{% endif %}</span>
                         <span class="value text-end address-value">{{ venta.direccion_envio|default:venta.usuario.direccion }}</span>                            
 
                         <span class="label">Región</span>

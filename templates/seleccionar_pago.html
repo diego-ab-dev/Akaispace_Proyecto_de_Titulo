@@ -83,12 +83,19 @@
 
             <div class="summary-row">
                 <span>Envío</span>
-                <span>${{ costo_envio|formato_chileno }}</span>
+                <span>{% include "partials/costo_envio.html" with metodo=metodo_envio monto=costo_envio %}</span>
             </div>
 
             <div class="summary-total">
                 <span>Total</span>
                 <span>${{ total|formato_chileno }}</span>
+            </div>
+
+            <div class="entrega-elegida">
+                <span class="entrega-elegida-titulo">Entrega</span>
+                <span class="fw-semibold text-dark">{{ opcion_envio.nombre }}</span>
+                <span class="text-muted small">{{ direccion_entrega }}</span>
+                <a href="{% url 'ver_carrito' %}" class="entrega-cambiar">Cambiar forma de entrega</a>
             </div>
         </div>
     </div>

@@ -71,12 +71,14 @@ def admin_dashboard(request):
 @admin_required
 def get_dashboard_counts(request):
     envios_pendientes = Envio.objects.filter(estado="En Preparación").count()
+    por_retirar = Envio.objects.filter(estado="Listo para retiro").count()
     ventas = Venta.objects.count()
     reclamos = Reclamo.objects.count()
     devoluciones = Devolucion.objects.count()
 
     return JsonResponse({
         "envios_pendientes": envios_pendientes,
+        "por_retirar": por_retirar,
         "ventas": ventas,
         "reclamos": reclamos,
         "devoluciones": devoluciones,

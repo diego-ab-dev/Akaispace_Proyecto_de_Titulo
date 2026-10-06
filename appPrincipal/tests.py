@@ -242,7 +242,7 @@ class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids 
     def test_compra_completa_descuenta_stock_y_genera_boleta(self):
         from .models import Venta
         self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 2})
-        self.assertEqual(self.client.get('/seleccionar-pago/').status_code, 200)
+        self.assertEqual(self.client.get('/seleccionar-pago/?envio=tienda').status_code, 200)
         respuesta = self.client.post('/seleccionar-pago/', {'metodo_pago': 'tarjeta'})
         self.assertRedirects(respuesta, '/compra-exitosa/', fetch_redirect_response=False)
         self.assertEqual(self.client.get('/compra-exitosa/').status_code, 200)
@@ -257,6 +257,7 @@ class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids 
         from .models import ItemCarritoProducto, Carrito, Venta
         carrito = Carrito.objects.create(usuario=self.cliente)
         ItemCarritoProducto.objects.create(carrito=carrito, producto=self.producto, cantidad=5)
+        elegir_entrega(self.client)
         respuesta = self.client.get('/compra-exitosa/')
         self.assertTrue(respuesta.url.startswith('/ver_carrito/'))
         self.assertFalse(Venta.objects.exists())
@@ -415,6 +416,13 @@ class PlantillasTests(TestCase):  # 21: plantilla base y navbar compartido
             portada.no_existe
 
 
+def elegir_entrega(client, metodo='tienda'):
+    """Deja elegida la opción de entrega en la sesión, como al pasar del carrito al pago (HU-08)."""
+    session = client.session
+    session['metodo_envio'] = metodo
+    session.save()
+
+
 def crear_producto(nombre='Juego', stock=5, **extra):
     datos = {'codigo_de_barra': nombre[:20], 'precio': 10000, 'categoria': 'Videojuegos PS5',
              'imagen_principal': 'productos/silent.png', **extra}
@@ -500,6 +508,7 @@ class CheckoutTests(TestCase):  # 9
         carrito = Carrito.objects.create(usuario=self.cliente)
         ItemCarritoProducto.objects.create(carrito=carrito, producto=self.con_stock, cantidad=2)
         ItemCarritoProducto.objects.create(carrito=carrito, producto=self.eliminado, cantidad=1)
+        elegir_entrega(self.client)
 
     def test_producto_eliminado_en_el_carrito_no_deja_venta_ni_descuenta_stock(self):
         from .models import Venta
@@ -878,3 +887,229 @@ class PortadaInicialTests(TestCase):  # la migración deja el sitio igual que an
         portada_inicial.cargar(Destacado, Producto)
         self.assertEqual(Destacado.objects.count(), 9)
         self.assertEqual(Destacado.objects.get(seccion='menu_consolas').producto, ps5)
+
+
+class EnviosTests(TestCase):  # HU-08: retiro en tienda o despacho, con los precios reales de la tienda
+    def setUp(self):
+        from .models import Carrito
+        self.producto = crear_producto(stock=10)  # $10.000 c/u
+        self.carrito = Carrito.objects.create(usuario=crear_cliente())
+
+    def cliente_en(self, ciudad, region='LOS RIOS', direccion='Picarte 123'):
+        cliente = self.carrito.usuario
+        cliente.ciudad, cliente.region, cliente.direccion = ciudad, region, direccion
+        cliente.save()
+        self.client.force_login(cliente)
+        return cliente
+
+    def comprar(self, metodo, cantidad=1):
+        from .models import ItemCarritoProducto, Venta
+        ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto, cantidad=cantidad)
+        respuesta = self.client.get(f'/seleccionar-pago/?envio={metodo}')
+        if respuesta.status_code != 200:
+            return respuesta, None
+        self.client.get('/compra-exitosa/')
+        return respuesta, Venta.objects.get()
+
+    def test_costos_de_cada_opcion(self):
+        from .envios import costo_envio
+        self.assertEqual(costo_envio('tienda', 10000), 0)
+        self.assertEqual(costo_envio('delivery', 24989), 2000)
+        self.assertEqual(costo_envio('delivery', 24990), 0)
+        self.assertEqual(costo_envio('bluexpress', 50000), 4500)
+        self.assertEqual(costo_envio('por_pagar', 10000), 0)
+
+    def test_delivery_en_valdivia_cobra_2000_bajo_el_minimo(self):
+        self.cliente_en('Valdivia')
+        _, venta = self.comprar('delivery', cantidad=2)
+        self.assertEqual((venta.subtotal, venta.envio, venta.total), (20000, 2000, 22000))
+        self.assertEqual(venta.datos_envio.transportista, 'Delivery Akaispace')
+        self.assertEqual(venta.direccion_envio, 'Picarte 123, Valdivia, Región de Los Ríos')
+
+    def test_delivery_gratis_desde_24990(self):
+        self.cliente_en('Valdivia')
+        _, venta = self.comprar('delivery', cantidad=3)
+        self.assertEqual((venta.envio, venta.total), (0, 30000))
+
+    def test_delivery_solo_para_valdivia(self):
+        from .models import Venta
+        self.cliente_en('Osorno', region='LOS LAGOS')
+        respuesta, _ = self.comprar('delivery')
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
+        self.assertFalse(Venta.objects.exists())
+
+    def test_envio_a_region_no_se_ofrece_en_valdivia(self):
+        self.cliente_en('Valdivia')
+        respuesta, _ = self.comprar('bluexpress')
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
+
+    def test_bluexpress_fuera_de_valdivia(self):
+        self.cliente_en('Osorno', region='LOS LAGOS')
+        _, venta = self.comprar('bluexpress')
+        self.assertEqual((venta.envio, venta.total), (4500, 14500))
+        self.assertTrue(venta.lleva_seguimiento)
+
+    def test_envio_por_pagar_no_se_cobra(self):
+        self.cliente_en('Osorno', region='LOS LAGOS')
+        _, venta = self.comprar('por_pagar')
+        self.assertEqual((venta.envio, venta.total), (0, 10000))
+        self.assertTrue(venta.envio_por_pagar)
+        self.assertContains(self.client.get(f'/compra/{venta.id}/detalle/'), 'Por pagar al recibir')
+
+    def test_retiro_en_tienda_es_gratis_y_no_pide_direccion(self):
+        self.cliente_en('', region='', direccion='')
+        _, venta = self.comprar('tienda')
+        self.assertEqual(venta.envio, 0)
+        self.assertTrue(venta.direccion_envio.startswith('Retiro en tienda: Galería Caupolicán 544'))
+        self.assertEqual(venta.estados_envio, ['En Preparación', 'Listo para retiro', 'Entregado'])
+
+    def test_despacho_sin_direccion_no_avanza(self):
+        self.cliente_en('Osorno', region='LOS LAGOS', direccion='')
+        respuesta, _ = self.comprar('bluexpress')
+        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
+
+    def test_sin_elegir_entrega_vuelve_al_carrito(self):
+        from .models import ItemCarritoProducto
+        self.cliente_en('Valdivia')
+        ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto)
+        self.assertTrue(self.client.get('/seleccionar-pago/').url.startswith('/ver_carrito/?notif='))
+        self.assertTrue(self.client.get('/compra-exitosa/').url.startswith('/ver_carrito/?notif='))
+
+    def test_cambiar_de_ciudad_despues_de_elegir_invalida_la_entrega(self):
+        from .models import ItemCarritoProducto, Venta
+        cliente = self.cliente_en('Valdivia')
+        ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto)
+        self.client.get('/seleccionar-pago/?envio=delivery')
+        cliente.ciudad, cliente.region = 'Osorno', 'LOS LAGOS'
+        cliente.save()
+        self.assertTrue(self.client.get('/compra-exitosa/').url.startswith('/ver_carrito/?notif='))
+        self.assertFalse(Venta.objects.exists())
+
+    def test_el_carrito_muestra_las_opciones(self):
+        from .models import ItemCarritoProducto
+        self.cliente_en('Valdivia')
+        ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto)
+        respuesta = self.client.get('/ver_carrito/')
+        self.assertContains(respuesta, 'Delivery Express en Valdivia')
+        self.assertContains(respuesta, 'Retiro en tienda')
+        self.assertNotContains(respuesta, '5990')
+
+    def test_venta_antigua_a_domicilio_conserva_su_envio(self):
+        from .models import Venta
+        venta = Venta.objects.create(usuario=self.carrito.usuario, metodo_envio='domicilio', envio=5990)
+        venta.calcular_total()
+        self.assertEqual(venta.envio, 5990)
+
+
+class EnviosPanelTests(TestCase):  # HU-08 en el panel: estados según el tipo de entrega
+    def setUp(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def venta_con(self, metodo):
+        venta = crear_venta(crear_cliente(), crear_producto(), estado='En Preparación')
+        venta.metodo_envio = metodo
+        venta.save()
+        return venta
+
+    def test_retiro_en_tienda_no_pasa_por_enviado(self):
+        venta = self.venta_con('tienda')
+        url = f'/admin-panel/ventas/modificar/{venta.id}/'
+        self.assertContains(self.client.post(url, {'estado': 'Enviado'}), 'Estado no válido.')
+        self.assertRedirects(self.client.post(url, {'estado': 'Entregado'}),
+                             f'/admin-panel/ventas/detalle/{venta.id}/', fetch_redirect_response=False)
+        venta.datos_envio.refresh_from_db()
+        self.assertEqual(venta.datos_envio.estado, 'Entregado')
+
+    def test_delivery_en_reparto_sin_numero_de_seguimiento(self):
+        venta = self.venta_con('delivery')
+        self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': 'En Reparto'})
+        venta.datos_envio.refresh_from_db()
+        self.assertEqual(venta.datos_envio.estado, 'En Reparto')
+
+    def test_encomienda_exige_transportista_valido(self):
+        venta = self.venta_con('bluexpress')
+        url = f'/admin-panel/ventas/modificar/{venta.id}/'
+        respuesta = self.client.post(url, {'estado': 'Enviado', 'transportista': 'Otro', 'numero_seguimiento': 'ABC12345'})
+        self.assertContains(respuesta, 'Selecciona un transportista válido.')
+        self.client.post(url, {'estado': 'Enviado', 'transportista': 'Bluexpress', 'numero_seguimiento': 'ABC12345'})
+        venta.datos_envio.refresh_from_db()
+        self.assertEqual((venta.datos_envio.estado, venta.datos_envio.transportista), ('Enviado', 'Bluexpress'))
+
+    def test_no_se_anula_desde_modificar(self):
+        venta = self.venta_con('bluexpress')
+        respuesta = self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': 'Anulada'})
+        self.assertContains(respuesta, 'Estado no válido.')
+
+
+class ListoParaRetiroTests(TestCase):  # HU-08: el cliente sabe cuándo puede ir a buscar su pedido
+    def setUp(self):
+        self.cliente = crear_cliente()
+        self.admin = crear_cliente('jefe@example.com', is_staff=True)
+        self.venta = crear_venta(self.cliente, crear_producto(), estado='En Preparación')
+        self.venta.metodo_envio = 'tienda'
+        self.venta.save()
+        self.envio = self.venta.datos_envio
+
+    def cambiar_estado(self, estado, venta=None):
+        venta = venta or self.venta
+        self.client.force_login(self.admin)
+        return self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': estado})
+
+    def detalle_cliente(self):
+        self.client.force_login(self.cliente)
+        return self.client.get(f'/compra/{self.venta.id}/detalle/')
+
+    def test_en_preparacion_avisa_que_se_le_notificara(self):
+        self.assertContains(self.detalle_cliente(), 'Cuando esté listo para retiro lo verás aquí')
+
+    def test_listo_para_retiro_marca_fecha_y_muestra_donde_retirar(self):
+        self.cambiar_estado('Listo para retiro')
+        self.envio.refresh_from_db()
+        self.assertEqual(self.envio.estado, 'Listo para retiro')
+        self.assertIsNotNone(self.envio.fecha_listo_retiro)
+        respuesta = self.detalle_cliente()
+        self.assertContains(respuesta, 'Tu pedido está listo para retiro')
+        self.assertContains(respuesta, 'Galería Caupolicán 544, Local 26')
+        self.assertContains(respuesta, f'#{self.venta.id}')
+
+    def test_al_entregarlo_se_muestra_como_retirado(self):
+        self.cambiar_estado('Listo para retiro')
+        self.cambiar_estado('Entregado')
+        self.client.force_login(self.cliente)
+        self.assertContains(self.client.get('/compras/'), 'Retirado')
+        self.assertNotContains(self.detalle_cliente(), 'Tu pedido está listo para retiro')
+
+    def test_el_cliente_no_puede_marcarlo_como_recibido(self):
+        # el retiro lo confirma la tienda al entregarlo en el local
+        self.cambiar_estado('Listo para retiro')
+        self.client.force_login(self.cliente)
+        self.client.post(f'/marcar-recibido/{self.venta.id}/')
+        self.envio.refresh_from_db()
+        self.assertEqual(self.envio.estado, 'Listo para retiro')
+        self.assertNotContains(self.detalle_cliente(), 'Marcar como recibido')
+
+    def test_guardar_el_mismo_estado_no_cambia_la_fecha(self):
+        self.envio.guardar_estado('Listo para retiro')
+        primera = self.envio.fecha_listo_retiro
+        self.envio.guardar_estado('Listo para retiro')
+        self.assertEqual(self.envio.fecha_listo_retiro, primera)
+
+    def test_delivery_no_puede_quedar_listo_para_retiro(self):
+        venta = crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro'), estado='En Preparación')
+        venta.metodo_envio = 'delivery'
+        venta.save()
+        self.assertContains(self.cambiar_estado('Listo para retiro', venta), 'Estado no válido.')
+
+    def test_panel_filtra_y_cuenta_los_pedidos_por_retirar(self):
+        otra = crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro'), estado='En Preparación')
+        self.cambiar_estado('Listo para retiro')
+        respuesta = self.client.get('/admin-panel/ventas/?estado=Listo+para+retiro')
+        self.assertEqual([v.id for v in respuesta.context['ventas']], [self.venta.id])
+        self.assertNotIn(otra.id, [v.id for v in respuesta.context['ventas']])
+        self.assertEqual(self.client.get('/api/dashboard-counts/').json()['por_retirar'], 1)
+
+    def test_filtro_por_tipo_de_entrega(self):
+        crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro'))  # metodo 'tienda' por defecto
+        self.client.force_login(self.admin)
+        respuesta = self.client.get('/admin-panel/ventas/?entrega=delivery')
+        self.assertEqual(list(respuesta.context['ventas']), [])

@@ -71,7 +71,8 @@
                 <h3 class="card-title">Detalles de la Venta</h3>
 
                 <div class="data-row"><span class="data-label">Subtotal:</span> <span>${{ venta.subtotal|formato_chileno }}</span></div>
-                <div class="data-row"><span class="data-label">Envío:</span> <span>${{ venta.envio|formato_chileno }}</span></div>
+                <div class="data-row"><span class="data-label">Entrega:</span> <span>{{ venta.get_metodo_envio_display }}</span></div>
+                <div class="data-row"><span class="data-label">Envío:</span> <span>{% include "partials/costo_envio.html" with metodo=venta.metodo_envio monto=venta.envio %}</span></div>
                 <div class="data-row" style="font-size: 1.1rem;"><span class="data-label">Total:</span> <span class="fw-bold text-dark">${{ venta.total|formato_chileno }}</span></div>
 
                 <div class="data-row mt-3">
@@ -100,27 +101,19 @@
 
                 <div class="data-row mt-4">
                     <span class="data-label">Estado:</span> 
-                    <span class="
-                            {% if venta.datos_envio.estado == 'En Preparación' %}estado-preparacion
-                            {% elif venta.datos_envio.estado == 'Enviado' %}estado-enviado
-                            {% elif venta.datos_envio.estado == 'En Tránsito' %}estado-transito
-                            {% elif venta.datos_envio.estado == 'En Reparto' %}estado-reparto
-                            {% elif venta.datos_envio.estado == 'Entregado' %}estado-entregado
-                            {% elif venta.datos_envio.estado == 'Anulada' %}estado-anulada
-                            {% endif %}
-                        ">
-                        {{ venta.datos_envio.estado }}
-                    </span>
+                    {% include "partials/estado_envio.html" with venta=venta %}
                 </div>
 
+                {% if venta.lleva_seguimiento %}
                 <div class="data-row">
                     <span class="data-label">Transportista:</span>
-                    <span class="fw-bold">{{ venta.datos_envio.transportista|default:"Starken" }}</span>
+                    <span class="fw-bold">{{ venta.datos_envio.transportista|default:"Por definir" }}</span>
                 </div>
                 <div class="data-row">
                     <span class="data-label">Número de Seguimiento:</span>
                     <span class="text-primary">{{ venta.datos_envio.numero_seguimiento|default:"No asignado" }}</span>
                 </div>
+                {% endif %}
             </div>
 
         </div>

@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.timezone import now
 
+from appPrincipal.envios import OPCIONES_ENVIO, costo_envio, estados_para, lleva_seguimiento
+
 
 class UsuarioManager(BaseUserManager):
     use_in_migrations = True
@@ -228,9 +230,14 @@ class ItemCarritoProducto(models.Model):
 # clase Venta
 # El estado de la venta (preparación, enviado, entregado, anulada...) vive en Envio.estado.
 class Venta(models.Model):
+    # opciones de entrega del checkout (precios y reglas en appPrincipal/envios.py).
+    # 'domicilio' es la opción antigua: ya no se ofrece, pero las ventas anteriores la conservan.
     ENVIO_CHOICES = [
-        ('domicilio', 'Envío a domicilio'),
         ('tienda', 'Retiro en tienda'),
+        ('delivery', 'Delivery Express en Valdivia'),
+        ('bluexpress', 'Envío a región por Bluexpress'),
+        ('por_pagar', 'Envío por pagar'),
+        ('domicilio', 'Envío a domicilio'),
     ]
     # PROTECT: un usuario con compras no se puede borrar de verdad (solo borrado lógico)
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='ventas')
@@ -246,9 +253,29 @@ class Venta(models.Model):
         self.subtotal = sum(
             producto_venta.total_producto for producto_venta in self.producto_venta.all()
         )
-        self.envio = 5990 if self.metodo_envio == 'domicilio' else 0
+        # las ventas con la opción antigua ('domicilio') conservan el envío que se cobró
+        if self.metodo_envio in OPCIONES_ENVIO:
+            self.envio = costo_envio(self.metodo_envio, self.subtotal)
         self.total = self.subtotal + self.envio
         self.save()
+
+    @property
+    def envio_por_pagar(self):
+        """El envío lo paga el cliente a la encomienda al recibir (no se cobró en la compra)."""
+        return self.metodo_envio == 'por_pagar'
+
+    @property
+    def es_retiro_en_tienda(self):
+        return self.metodo_envio == 'tienda'
+
+    @property
+    def estados_envio(self):
+        """Estados por los que pasa el envío de esta venta (dependen del tipo de entrega)."""
+        return estados_para(self.metodo_envio)
+
+    @property
+    def lleva_seguimiento(self):
+        return lleva_seguimiento(self.metodo_envio)
 
 # clase ProductoVenta
 class ProductoVenta(models.Model):
@@ -345,16 +372,37 @@ class Envio(models.Model):
         ('Enviado', 'Enviado'),
         ('En Tránsito', 'En Tránsito'),
         ("En Reparto", "En Reparto"),
+        ('Listo para retiro', 'Listo para retiro'),
         ('Entregado', 'Entregado'),
         ("Anulada", "Anulada"),
     ]
-    
+    # clase CSS de cada estado (colores en los CSS de compras, perfil y panel)
+    CLASES_ESTADO = {
+        'En Preparación': 'estado-preparacion',
+        'Enviado': 'estado-enviado',
+        'En Tránsito': 'estado-transito',
+        'En Reparto': 'estado-reparto',
+        'Listo para retiro': 'estado-listo-retiro',
+        'Entregado': 'estado-entregado',
+        'Anulada': 'estado-anulada',
+    }
+    # campo de fecha que se marca al llegar a cada estado
+    FECHAS_ESTADO = {
+        'En Preparación': 'fecha_preparacion',
+        'Enviado': 'fecha_envio',
+        'En Tránsito': 'fecha_transito',
+        'En Reparto': 'fecha_reparto',
+        'Listo para retiro': 'fecha_listo_retiro',
+        'Entregado': 'fecha_entrega',
+    }
+
     venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='datos_envio')
     numero_seguimiento = models.CharField(max_length=50, blank=True, null=True)
     fecha_preparacion = models.DateTimeField(null=True, blank=True)
     fecha_envio = models.DateTimeField(null=True, blank=True)
     fecha_transito = models.DateTimeField(null=True, blank=True)
     fecha_reparto = models.DateTimeField(null=True, blank=True)
+    fecha_listo_retiro = models.DateTimeField(null=True, blank=True, verbose_name="Listo para retiro desde")
     fecha_entrega = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='En Preparación')
     transportista = models.CharField(max_length=50, default='Starken')
@@ -363,20 +411,23 @@ class Envio(models.Model):
         return f"Envío #{self.id} para Venta {self.venta.id}"
     
     def guardar_estado(self, nuevo_estado):
+        # la fecha se marca solo al cambiar de estado: guardar de nuevo el mismo estado
+        # (por ejemplo, para corregir el número de seguimiento) no la reemplaza
+        if nuevo_estado != self.estado and nuevo_estado in self.FECHAS_ESTADO:
+            setattr(self, self.FECHAS_ESTADO[nuevo_estado], now())
         self.estado = nuevo_estado
-        
-        if nuevo_estado == "En Preparación":
-            self.fecha_preparacion = now()
-        elif nuevo_estado == "Enviado":
-            self.fecha_envio = now()
-        elif nuevo_estado == "En Tránsito":
-            self.fecha_transito = now()
-        elif nuevo_estado == "En Reparto":
-            self.fecha_reparto = now()
-        elif nuevo_estado == "Entregado":
-            self.fecha_entrega = now()
-
         self.save()
+
+    @property
+    def clase_estado(self):
+        return self.CLASES_ESTADO.get(self.estado, '')
+
+    @property
+    def estado_para_mostrar(self):
+        """Un retiro en tienda entregado se muestra como "Retirado"."""
+        if self.estado == 'Entregado' and self.venta.es_retiro_en_tienda:
+            return 'Retirado'
+        return self.estado
 
     def registrar_envio(self, tracking):
         self.numero_seguimiento = tracking

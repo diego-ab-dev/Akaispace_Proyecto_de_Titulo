@@ -95,7 +95,7 @@
             {% if productos %}
             <div class="row">
                 <div class="col">Envío</div>
-                <div class="col text-right">$5.990</div>
+                <div class="col text-right" id="envio-resumen">Por elegir</div>
             </div>
             {% endif %}
 
@@ -106,7 +106,7 @@
                 <div class="col"><b>Total</b></div>
                 <div class="col text-right">
                     <b id="total-final">
-                        ${{ total|add:5990|formato_chileno }}
+                        ${{ total|formato_chileno }}
                     </b>
                 </div>
             </div>
@@ -116,13 +116,34 @@
             {% if productos %}
             <div class="envio-box mt-3 p-3">
                 <div class="d-flex justify-content-between">
-                    <b>Entrega en</b>
+                    <b>Tu dirección</b>
                     <i class="fas fa-edit edit-icon" onclick="abrirModal()"></i>
                 </div>
 
                 <p><b>Región:</b> <span id="envio-region">{{ usuario.region }}</span></p>
                 <p><b>Ciudad:</b> <span id="envio-ciudad">{{ usuario.ciudad }}</span></p>
                 <p><b>Dirección:</b> <span id="envio-direccion">{{ usuario.direccion }}</span></p>
+            </div>
+            {% endif %}
+
+            {% if productos %}
+            {# HU-08: opciones de entrega; las que no aplican a la ciudad del cliente se ocultan (ver actualizarEntrega) #}
+            <div class="entrega-box mt-3">
+                <b>¿Cómo quieres recibir tu compra?</b>
+                {% for opcion in opciones_envio %}
+                <label class="entrega-opcion" data-clave="{{ opcion.clave }}">
+                    <span class="entrega-cabecera">
+                        <input type="radio" name="envio" value="{{ opcion.clave }}" form="form-proceder"
+                               {% if envio_elegido == opcion.clave %}checked{% endif %}>
+                        <span class="entrega-nombre">{{ opcion.nombre }}</span>
+                        <span class="entrega-precio"></span>
+                    </span>
+                    <span class="entrega-resumen">{{ opcion.resumen }}</span>
+                    {# el detalle solo se ve en la opción elegida, para que la lista no se alargue #}
+                    <span class="entrega-descripcion">{{ opcion.descripcion }}</span>
+                </label>
+                {% endfor %}
+                <p class="entrega-nota" id="entrega-nota"></p>
             </div>
             {% endif %}
 
@@ -168,6 +189,7 @@
 </div>
 
 {{ regiones_ciudades|json_script:"regiones-ciudades" }}
+{{ opciones_envio|json_script:"opciones-envio" }}
 <script>
     // lista de regiones y ciudades para el modal (viene de appPrincipal/constants.py)
     const regionesCiudades = JSON.parse(document.getElementById('regiones-ciudades').textContent);
@@ -200,6 +222,73 @@
             minimumFractionDigits: 0, 
         }).format(valor);
     }
+
+    // ---- opciones de entrega (HU-08) ----
+    // precios y reglas vienen de appPrincipal/envios.py; el servidor vuelve a calcular todo al pagar
+    const opcionesEnvio = JSON.parse(document.getElementById('opciones-envio').textContent);
+    const CIUDAD_TIENDA = "{{ ciudad_tienda|escapejs }}";
+    let subtotalActual = {{ total }};
+
+    function opcionEnvio(clave) {
+        return opcionesEnvio.find(opcion => opcion.clave === clave);
+    }
+
+    function costoEnvio(opcion, subtotal) {
+        if (opcion.precio === null) return 0;
+        if (opcion.gratis_desde !== null && subtotal >= opcion.gratis_desde) return 0;
+        return opcion.precio;
+    }
+
+    function textoPrecioEnvio(opcion, subtotal) {
+        if (opcion.precio === null) return 'Por pagar';
+        const costo = costoEnvio(opcion, subtotal);
+        return costo === 0 ? 'Gratis' : formatoChileno(costo);
+    }
+
+    function disponibleEn(opcion, ciudad) {
+        if (opcion.disponible_en === 'valdivia') return ciudad === CIUDAD_TIENDA;
+        if (opcion.disponible_en === 'regiones') return ciudad !== '' && ciudad !== CIUDAD_TIENDA;
+        return true;
+    }
+
+    // muestra solo las opciones que sirven para la ciudad del cliente y recalcula envío y total
+    function actualizarEntrega() {
+        const ciudadElem = document.getElementById('envio-ciudad');
+        if (!ciudadElem) return;  // carrito vacío
+        const ciudad = ciudadElem.innerText.trim();
+
+        document.querySelectorAll('.entrega-opcion').forEach(label => {
+            const opcion = opcionEnvio(label.dataset.clave);
+            const radio = label.querySelector('input');
+            const disponible = disponibleEn(opcion, ciudad);
+            label.hidden = !disponible;
+            if (!disponible) radio.checked = false;
+            label.classList.toggle('seleccionada', radio.checked);
+            label.querySelector('.entrega-precio').textContent = textoPrecioEnvio(opcion, subtotalActual);
+        });
+
+        const delivery = opcionEnvio('delivery');
+        const nota = document.getElementById('entrega-nota');
+        if (ciudad === CIUDAD_TIENDA && delivery && delivery.gratis_desde !== null && subtotalActual < delivery.gratis_desde) {
+            nota.textContent = `Te faltan ${formatoChileno(delivery.gratis_desde - subtotalActual)} para tener delivery gratis.`;
+        } else if (ciudad !== CIUDAD_TIENDA) {
+            nota.textContent = 'El Delivery Express es solo para Valdivia.';
+        } else {
+            nota.textContent = '';
+        }
+
+        const elegido = document.querySelector('input[name="envio"]:checked');
+        const opcion = elegido ? opcionEnvio(elegido.value) : null;
+        document.getElementById('envio-resumen').textContent = opcion ? textoPrecioEnvio(opcion, subtotalActual) : 'Por elegir';
+        const totalFinalElem = document.getElementById('total-final');
+        if (totalFinalElem) {
+            totalFinalElem.textContent = formatoChileno(subtotalActual + (opcion ? costoEnvio(opcion, subtotalActual) : 0));
+        }
+    }
+
+    document.querySelectorAll('input[name="envio"]').forEach(radio => {
+        radio.addEventListener('change', actualizarEntrega);
+    });
 
     function mostrarError(mensaje) {
     const errorBox = document.getElementById("mensaje-error");
@@ -257,9 +346,8 @@
                 const subtotalElem = document.getElementById('subtotal-resumen');
                 if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
 
-                const envio = 5990;
-                const totalFinalElem = document.getElementById('total-final');
-                if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
+                subtotalActual = data.total;
+                actualizarEntrega();
                 return true;
             }
             // el servidor la rechazó (por ejemplo el stock bajó mientras tanto): se vuelve a la guardada
@@ -320,6 +408,10 @@
     if (formProceder) {
         formProceder.addEventListener('submit', function (e) {
             e.preventDefault();
+            if (!document.querySelector('input[name="envio"]:checked')) {
+                mostrarError('Elige cómo quieres recibir tu compra.');
+                return;
+            }
             const inputs = Array.from(document.querySelectorAll('.input-cantidad'));
             Promise.all(inputs.map(guardarAhora)).then(resultados => {
                 if (resultados.every(Boolean)) {
@@ -350,8 +442,6 @@ function eliminarItem(itemId, element) {
             const subtotalElem = document.getElementById('subtotal-resumen');
             if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
 
-            const envio = 5990;
-
             if (data.total_items === 0) {
                 const container = document.querySelector('.cart');
                 if (container) container.innerHTML = '<div class="text-center py-5"> <h5 class="text-muted">Tu carrito está vacío.</h5> <a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a> </div>';
@@ -365,8 +455,8 @@ function eliminarItem(itemId, element) {
                     `;
                 }
             } else {
-                const totalFinalElem = document.getElementById('total-final');
-                if (totalFinalElem) totalFinalElem.textContent = formatoChileno(data.total + envio);
+                subtotalActual = data.total;
+                actualizarEntrega();
             }
         } else if (data.error) {
             mostrarError(data.error);
@@ -413,6 +503,8 @@ function eliminarItem(itemId, element) {
             direccionInput.oninput = actualizarContador;
         }
 
+        actualizarEntrega();
+
         // cerrar modal
         function cerrarModal() {
             document.getElementById("modal-envio").style.display = "none";
@@ -437,6 +529,7 @@ function eliminarItem(itemId, element) {
                     document.getElementById("envio-ciudad").innerText = data.ciudad;
                     document.getElementById("envio-direccion").innerText = data.direccion;
                     cerrarModal();
+                    actualizarEntrega();  // al cambiar de ciudad cambian las opciones de entrega
                 } else if (data.error) {
                     mostrarError(data.error);
                 }

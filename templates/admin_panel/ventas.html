@@ -65,6 +65,24 @@
             </select>
         </div>
 
+        <div class="col-md-3">
+            <select name="estado" class="form-select">
+                <option value="">Todos los estados</option>
+                {% for valor, nombre in estados %}
+                <option value="{{ valor }}" {% if request.GET.estado == valor %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <select name="entrega" class="form-select">
+                <option value="">Todas las entregas</option>
+                {% for valor, nombre in entregas %}
+                <option value="{{ valor }}" {% if request.GET.entrega == valor %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
         <div class="col-12 d-flex">
             <button type="submit" class="btn btn-buscar">Aplicar</button>
         </div>
@@ -105,17 +123,7 @@
                     </td>
                     <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
                     <td>
-                        <span class="
-                            {% if venta.datos_envio.estado == 'En Preparación' %}estado-preparacion
-                            {% elif venta.datos_envio.estado == 'Enviado' %}estado-enviado
-                            {% elif venta.datos_envio.estado == 'En Tránsito' %}estado-transito
-                            {% elif venta.datos_envio.estado == 'En Reparto' %}estado-reparto
-                            {% elif venta.datos_envio.estado == 'Entregado' %}estado-entregado
-                            {% elif venta.datos_envio.estado == 'Anulada' %}estado-anulada
-                            {% endif %}
-                        ">
-                            {{ venta.datos_envio.estado }}
-                        </span>
+                        {% include "partials/estado_envio.html" with venta=venta %}
                     </td>
 
                     <td>
@@ -132,7 +140,7 @@
 
             <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
                 {% if page_obj.has_previous %}
-                    <a class="page-link custom-page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                    <a class="page-link custom-page-link" href="?{% param_replace page=page_obj.previous_page_number %}" aria-label="Anterior">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 {% else %}
@@ -147,14 +155,14 @@
                     </li>
                 {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                     <li class="page-item">
-                        <a class="page-link custom-page-link" href="?page={{ num }}">{{ num }}</a>
+                        <a class="page-link custom-page-link" href="?{% param_replace page=num %}">{{ num }}</a>
                     </li>
                 {% endif %}
             {% endfor %}
 
             <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
                 {% if page_obj.has_next %}
-                    <a class="page-link custom-page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                    <a class="page-link custom-page-link" href="?{% param_replace page=page_obj.next_page_number %}" aria-label="Siguiente">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 {% else %}

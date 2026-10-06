@@ -939,3 +939,91 @@ footer {
 .cantidad-error:empty {
     display: none;
 }
+
+/* Opciones de entrega del carrito (HU-08) */
+.entrega-box {
+  font-size: 0.95rem;
+}
+
+.entrega-opcion {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 0.6rem;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.entrega-opcion[hidden] {
+  display: none;
+}
+
+.entrega-opcion:hover {
+  border-color: #999;
+}
+
+.entrega-opcion.seleccionada {
+  border-color: #1C253B;
+  background: #ffffff;
+}
+
+/* radio, nombre y precio en una sola línea */
+.entrega-cabecera {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* anula el estilo general de input de este archivo (ancho 100%, margen y relleno) */
+.entrega-opcion input[type="radio"] {
+  width: auto;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #1C253B;
+}
+
+.entrega-nombre {
+  flex: 1;
+  /* sin esto el nombre no se achica y empuja el precio fuera de la casilla */
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  color: #1C253B;
+  line-height: 1.3;
+}
+
+.entrega-precio {
+  font-weight: 600;
+  white-space: nowrap;
+  color: #333;
+}
+
+/* resumen y detalle quedan alineados con el nombre (ancho del radio + separación) */
+.entrega-resumen,
+.entrega-descripcion {
+  display: block;
+  padding-left: 21px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #777;
+}
+
+.entrega-descripcion {
+  display: none;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #eee;
+}
+
+.entrega-opcion.seleccionada .entrega-descripcion {
+  display: block;
+}
+
+.entrega-nota {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: #777;
+}

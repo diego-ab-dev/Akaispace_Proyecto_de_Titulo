@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django.views.decorators.http import require_POST
 
+from appPrincipal.envios import DIRECCION_TIENDA, HORARIO_TIENDA
 from appPrincipal.models import Devolucion, Venta
 
 
@@ -56,7 +57,9 @@ def ver_detalle_compra(request, compra_id):
     return render(request, 'detalle_compra.html', {
         'compra': compra,
         'total_cantidad': total_cantidad,
-        'devoluciones_existentes': devoluciones_existentes,   
+        'devoluciones_existentes': devoluciones_existentes,
+        'direccion_tienda': DIRECCION_TIENDA,
+        'horario_tienda': HORARIO_TIENDA,
     })
 
 

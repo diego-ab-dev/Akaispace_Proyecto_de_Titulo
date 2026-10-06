@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import admin_required
+from appPrincipal.envios import TRANSPORTISTAS_ENCOMIENDA
 from appPrincipal.models import Envio, Producto, Venta
 from appPrincipal.views.panel.filtros import filtrar_por_fechas
 
@@ -32,6 +33,13 @@ def admin_ventas(request):
 
     ventas_list, errores = filtrar_por_fechas(request, ventas_list, 'fecha')
 
+    estado = request.GET.get('estado', '')
+    if estado in dict(Envio.ESTADO_CHOICES):
+        ventas_list = ventas_list.filter(datos_envio__estado=estado)
+    entrega = request.GET.get('entrega', '')
+    if entrega in dict(Venta.ENVIO_CHOICES):
+        ventas_list = ventas_list.filter(metodo_envio=entrega)
+
     if ordenar == "antiguas":
         ventas_list = ventas_list.order_by("fecha")
     else:
@@ -46,6 +54,8 @@ def admin_ventas(request):
         'page_obj': page_obj,
         'hoy': timezone.localdate(),
         'errores': errores,
+        'estados': Envio.ESTADO_CHOICES,
+        'entregas': Venta.ENVIO_CHOICES,
     })
 
 
@@ -71,8 +81,16 @@ def modificar_venta(request, venta_id):
 
         estados_con_tracking = ["Enviado", "En Tránsito", "En Reparto"]
 
-        if estado_post not in dict(Envio.ESTADO_CHOICES):
+        # solo los estados de su tipo de entrega (HU-08); la anulación va por anular_venta,
+        # que además devuelve el stock
+        if estado_post not in venta.estados_envio:
             error = "Estado no válido."
+        elif not venta.lleva_seguimiento:
+            # retiro en tienda y delivery: sin transportista ni número de seguimiento
+            tracking_post = ''
+            transportista_post = None
+        elif transportista_post not in TRANSPORTISTAS_ENCOMIENDA:
+            error = "Selecciona un transportista válido."
         elif estado_post in estados_con_tracking and not tracking_post:
             error = "Debe ingresar un número de seguimiento para este estado."
 
@@ -89,7 +107,8 @@ def modificar_venta(request, venta_id):
                 'error': error,
                 'estado_post': estado_post,
                 'tracking_post': tracking_post,
-                'transportista_post': transportista_post, 
+                'transportista_post': transportista_post,
+                'transportistas': TRANSPORTISTAS_ENCOMIENDA,
             })
 
         # el estado de la venta vive en Envio; si por algún motivo no existe, se crea
@@ -106,6 +125,7 @@ def modificar_venta(request, venta_id):
         'venta': venta,
         'envio': envio,
         'error': error,
+        'transportistas': TRANSPORTISTAS_ENCOMIENDA,
     })
 
 

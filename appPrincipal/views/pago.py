@@ -6,7 +6,12 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from appPrincipal import envios
 from appPrincipal.models import Boleta, Carrito, Envio, Producto, ProductoVenta, Venta
+
+
+def _volver_al_carrito(mensaje):
+    return redirect(f"{reverse('ver_carrito')}?{urlencode({'notif': mensaje, 'type': 'error'})}")
 
 
 def crear_venta_desde_carrito(carrito, metodo_envio, direccion_envio, metodo_pago):
@@ -49,7 +54,10 @@ def crear_venta_desde_carrito(carrito, metodo_envio, direccion_envio, metodo_pag
 
         venta.calcular_total()
         carrito.items.all().delete()
-        Envio.objects.create(venta=venta, estado='En Preparación', transportista="Starken")
+        Envio.objects.create(
+            venta=venta, estado='En Preparación',
+            transportista=envios.OPCIONES_ENVIO[metodo_envio]['transportista'],
+        )
         Boleta.objects.create(venta=venta)
     return venta
 
@@ -62,6 +70,15 @@ def seleccionar_pago(request):
     if not carrito or not carrito.items.exists():
         return redirect('ver_carrito')
 
+    # la opción de entrega se elige en el carrito y llega como ?envio=; queda en la sesión
+    # para el POST del pago y para compra_exitosa (que la vuelve a validar)
+    if 'envio' in request.GET:
+        request.session['metodo_envio'] = request.GET['envio']
+    metodo_envio = request.session.get('metodo_envio')
+    error_envio = envios.validar_eleccion(metodo_envio, usuario)
+    if error_envio:
+        return _volver_al_carrito(error_envio)
+
     # se revisa antes de mostrar el pago (el stock pudo bajar desde que se agregó al carrito);
     # al confirmar la compra se vuelve a revisar con las filas bloqueadas
     for item in carrito.items.select_related('producto'):
@@ -70,16 +87,11 @@ def seleccionar_pago(request):
                        "Ajusta la cantidad para continuar.")
             if item.producto.is_deleted:
                 mensaje = f"{item.producto.nombre} ya no está disponible."
-            return redirect(f"{reverse('ver_carrito')}?{urlencode({'notif': mensaje, 'type': 'error'})}")
+            return _volver_al_carrito(mensaje)
 
     subtotal = sum(item.cantidad * item.producto.precio for item in carrito.items.all())
-
-    costo_envio = 5990
+    costo_envio = envios.costo_envio(metodo_envio, subtotal)
     total = subtotal + costo_envio
-
-    request.session['metodo_envio'] = "domicilio"
-    request.session['direccion_envio'] = usuario.direccion
-    request.session['costo_envio'] = costo_envio 
 
     total_items = sum(item.cantidad for item in carrito.items.all())
 
@@ -94,7 +106,10 @@ def seleccionar_pago(request):
         'total': total,
         'subtotal': subtotal,
         'costo_envio': costo_envio,
-        'total_items': total_items  
+        'total_items': total_items,
+        'metodo_envio': metodo_envio,
+        'opcion_envio': envios.OPCIONES_ENVIO[metodo_envio],
+        'direccion_entrega': envios.direccion_de_entrega(metodo_envio, usuario),
     })
 
 @login_required
@@ -105,14 +120,19 @@ def compra_exitosa(request):
     if not carrito or not carrito.items.exists():
         return redirect('ver_carrito')
 
-    metodo_envio = request.session.get('metodo_envio', 'tienda')
-    direccion_envio = request.session.get('direccion_envio')
+    # se vuelve a validar: la dirección del cliente pudo cambiar después de elegir la entrega
+    metodo_envio = request.session.get('metodo_envio')
+    error_envio = envios.validar_eleccion(metodo_envio, usuario)
+    if error_envio:
+        return _volver_al_carrito(error_envio)
+    direccion_envio = envios.direccion_de_entrega(metodo_envio, usuario)
     metodo_pago = request.session.get('metodo_pago', 'tarjeta')
 
     try:
         venta = crear_venta_desde_carrito(carrito, metodo_envio, direccion_envio, metodo_pago)
     except ValueError as e:
-        return redirect(f"{reverse('ver_carrito')}?{urlencode({'notif': str(e), 'type': 'error'})}")
+        return _volver_al_carrito(str(e))
+    request.session.pop('metodo_envio', None)
 
     total_cantidad = sum(item.cantidad for item in venta.producto_venta.all())
 

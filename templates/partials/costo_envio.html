@@ -1,0 +1,4 @@
+{% load custom_filters %}{% comment %}
+Costo de envío para mostrar al cliente o en el panel (HU-08).
+Uso: {% include "partials/costo_envio.html" with metodo=venta.metodo_envio monto=venta.envio %}
+{% endcomment %}{% if metodo == "por_pagar" %}Por pagar al recibir{% elif monto %}${{ monto|formato_chileno }}{% else %}Gratis{% endif %}

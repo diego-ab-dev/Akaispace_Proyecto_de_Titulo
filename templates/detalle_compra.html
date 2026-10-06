@@ -82,6 +82,7 @@
                             <div class="step-date">{{ compra.fecha|date:"d/m/Y H:i" }}</div>
                         </div>
 
+                        {% if 'Enviado' in compra.estados_envio %}
                         <div class="step-item {% if estado == 'Enviado' %}active{% endif %}">
                             <div class="step-icon"><i class="fa-solid fa-clipboard-check"></i></div>
                             <div class="step-label">Enviado</div>
@@ -90,6 +91,9 @@
                             </div>
                         </div>
 
+                        {% endif %}
+
+                        {% if 'En Tránsito' in compra.estados_envio %}
                         <div class="step-item {% if estado == 'En Tránsito' %}active{% endif %}">
                             <div class="step-icon"><i class="fa-solid fa-plane"></i></div>
                             <div class="step-label">En Tránsito</div>
@@ -98,6 +102,19 @@
                             </div>
                         </div>
 
+                        {% endif %}
+
+                        {% if 'Listo para retiro' in compra.estados_envio %}
+                        <div class="step-item {% if estado == 'Listo para retiro' %}active{% endif %}">
+                            <div class="step-icon"><i class="fa-solid fa-store"></i></div>
+                            <div class="step-label">Listo para retiro</div>
+                            <div class="step-date">
+                                {% if envio.fecha_listo_retiro %}{{ envio.fecha_listo_retiro|date:"d/m/Y H:i" }}{% else %}-{% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if 'En Reparto' in compra.estados_envio %}
                         <div class="step-item {% if estado == 'En Reparto' %}active{% endif %}">
                             <div class="step-icon"><i class="fa-solid fa-truck-fast"></i></div>
                             <div class="step-label">En Reparto</div>
@@ -106,9 +123,11 @@
                             </div>
                         </div>
 
+                        {% endif %}
+
                         <div class="step-item {% if estado == 'Entregado' %}active{% endif %}">
                             <div class="step-icon"><i class="fa-solid fa-check"></i></div>
-                            <div class="step-label">Entregado</div>
+                            <div class="step-label">{% if compra.es_retiro_en_tienda %}Retirado{% else %}Entregado{% endif %}</div>
                             <div class="step-date">
                                 {% if envio.fecha_entrega %}{{ envio.fecha_entrega|date:"d/m/Y H:i" }}{% else %}-{% endif %}
                             </div>
@@ -116,17 +135,34 @@
                     {% endwith %}
                 </div>
 
+                {# aviso para retiro en tienda: qué hacer según el estado del pedido #}
+                {% if compra.es_retiro_en_tienda %}
+                    {% if compra.datos_envio.estado == 'Listo para retiro' %}
+                    <div class="aviso-retiro aviso-retiro-listo mt-4">
+                        <p class="aviso-retiro-titulo">Tu pedido está listo para retiro</p>
+                        <p>Retíralo en <strong>{{ direccion_tienda }}</strong>.</p>
+                        <p>Horario: {{ horario_tienda }}.</p>
+                        <p>Indica tu número de pedido <strong>#{{ compra.id }}</strong> y presenta tu cédula de identidad.</p>
+                    </div>
+                    {% elif compra.datos_envio.estado == 'En Preparación' %}
+                    <div class="aviso-retiro mt-4">
+                        <p>Estamos preparando tu pedido. Cuando esté listo para retiro lo verás aquí y podrás pasar a buscarlo.</p>
+                    </div>
+                    {% endif %}
+                {% endif %}
+
                 <div class="address-details mt-4">
+                    <p><strong>Entrega:</strong> {{ compra.get_metodo_envio_display }}</p>
                     <div class="d-flex mb-1">
-                        <strong class="me-1">Dirección:</strong>
+                        <strong class="me-1">{% if compra.es_retiro_en_tienda %}Retiro en:{% else %}Dirección:{% endif %}</strong>
                         <span class="address-text-limit" title="{{ compra.direccion_envio }}">
                             {{ compra.direccion_envio }}
                         </span>
                     </div>
-                    <p><strong>Región:</strong> {{ compra.usuario.region }}</p>
-                    <p><strong>Ciudad:</strong> {{ compra.usuario.ciudad }}</p>
+                    {% if compra.lleva_seguimiento %}
                     <p><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
                     <p><strong>Transportista:</strong> {{ compra.datos_envio.transportista|default:"No asignado" }}</p>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
@@ -150,7 +186,7 @@
         </div>
         <div class="summary-row">
             <span>Envío</span>
-            <span>${{ compra.envio|formato_chileno }}</span>
+            <span>{% include "partials/costo_envio.html" with metodo=compra.metodo_envio monto=compra.envio %}</span>
         </div>
         <div class="summary-row total">
             <span>Total</span>
@@ -191,17 +227,13 @@
     </div>
 
 </div>
+{{ compra.estados_envio|json_script:"estados-envio" }}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const estado = "{{ compra.datos_envio.estado }}";
 
-    const estadosOrdenados = [
-        "En Preparación",
-        "Enviado",
-        "En Tránsito",
-        "En Reparto",
-        "Entregado"
-    ];
+    // pasos de la línea de tiempo según el tipo de entrega (Venta.estados_envio)
+    const estadosOrdenados = JSON.parse(document.getElementById("estados-envio").textContent);
 
     const index = estadosOrdenados.indexOf(estado);
 

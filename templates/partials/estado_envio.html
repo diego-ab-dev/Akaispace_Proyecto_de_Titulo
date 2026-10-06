@@ -1,0 +1,4 @@
+{% comment %}
+Estado del envío de una venta, con su color (Envio.clase_estado) y el texto para el cliente.
+Uso: {% include "partials/estado_envio.html" with venta=compra %}
+{% endcomment %}{% with envio=venta.datos_envio %}{% if envio %}<span class="{{ envio.clase_estado }}">{{ envio.estado_para_mostrar }}</span>{% endif %}{% endwith %}

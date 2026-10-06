@@ -43,8 +43,8 @@
             <span>${{ venta.subtotal|formato_chileno }}</span>
         </div>
         <div style="display:flex; justify-content:space-between;">
-            <span>Envío:</span>
-            <span>${{ venta.envio|formato_chileno }}</span>
+            <span>Envío ({{ venta.get_metodo_envio_display }}):</span>
+            <span>{% include "partials/costo_envio.html" with metodo=venta.metodo_envio monto=venta.envio %}</span>
         </div>
         <br>
         <div class="row-total">

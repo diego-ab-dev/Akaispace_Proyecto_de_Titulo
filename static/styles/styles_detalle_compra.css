@@ -455,3 +455,32 @@ body {
 }
 
 
+
+
+/* Aviso de retiro en tienda (HU-08) */
+.aviso-retiro {
+    padding: 14px 16px;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #1C253B;
+    border-radius: 6px;
+    background-color: #fafafa;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+.aviso-retiro p {
+    margin-bottom: 4px;
+}
+
+.aviso-retiro p:last-child {
+    margin-bottom: 0;
+}
+
+.aviso-retiro-listo {
+    border-left-color: #0a8fa8;
+}
+
+.aviso-retiro-titulo {
+    font-weight: 700;
+    color: #1C253B;
+}

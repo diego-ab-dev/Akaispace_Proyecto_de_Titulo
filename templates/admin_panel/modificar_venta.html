@@ -27,21 +27,22 @@
                 <label class="form-label">Estado</label>
                 <select name="estado" class="form-select">
                     {% with actual=estado_post|default:envio.estado %}
-                        <option value="En Preparación" {% if actual == 'En Preparación' %}selected{% endif %}>En Preparación</option>
-                        <option value="Enviado" {% if actual == 'Enviado' %}selected{% endif %}>Enviado</option>
-                        <option value="En Tránsito" {% if actual == 'En Tránsito' %}selected{% endif %}>En Tránsito</option>
-                        <option value="En Reparto" {% if actual == 'En Reparto' %}selected{% endif %}>En Reparto</option>
-                        <option value="Entregado" {% if actual == 'Entregado' %}selected{% endif %}>Entregado</option>
+                        {% for estado in venta.estados_envio %}
+                        <option value="{{ estado }}" {% if actual == estado %}selected{% endif %}>{{ estado }}</option>
+                        {% endfor %}
                     {% endwith %}
                 </select>
             </div>
 
+            {# el retiro en tienda y el delivery no llevan transportista ni seguimiento #}
+            {% if venta.lleva_seguimiento %}
             <div class="form-group">
                 <label class="form-label">Transportista</label>
                 <select name="transportista" class="form-select">
-                    {% with actual_trans=transportista_post|default:envio.transportista|default:"Starken" %}
-                        <option value="Starken" {% if actual_trans == 'Starken' %}selected{% endif %}>Starken</option>
-                        <option value="Chilexpress" {% if actual_trans == 'Chilexpress' %}selected{% endif %}>Chilexpress</option>
+                    {% with actual_trans=transportista_post|default:envio.transportista %}
+                        {% for transportista in transportistas %}
+                        <option value="{{ transportista }}" {% if actual_trans == transportista %}selected{% endif %}>{{ transportista }}</option>
+                        {% endfor %}
                     {% endwith %}
                 </select>
             </div>
@@ -51,6 +52,7 @@
                     value="{{ tracking_post|default:envio.numero_seguimiento|default_if_none:'' }}"
                     placeholder="Ej: 001200442">
             </div>
+            {% endif %}
 
             <div class="btn-row">
                 <button type="submit" class="btn-guardar">Guardar</button>
