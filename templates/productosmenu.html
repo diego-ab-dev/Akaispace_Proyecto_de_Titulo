@@ -5,6 +5,8 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_menu.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_filtros_catalogo.css' %}">
+<script src="{% static 'js/filtros_catalogo.js' %}" defer></script>
 {% endblock %}
 
 {% block navbar %}{% include "partials/navbar.html" with en_menu=True %}{% endblock %}
@@ -76,19 +78,18 @@
             </div>
 
             <div class="col-md-4 mt-3 mt-md-0 text-end">
-              <form method="get" class="d-inline-flex align-items-center form-ordenar">
+              <div class="d-inline-flex align-items-center form-ordenar">
                   <label for="ordenar" class="me-2 text-muted small fw-bold">Ordenar:</label>
-                  <select name="orden" id="ordenar" class="form-select form-select-sm custom-select" onchange="this.form.submit()">
+                  <select name="orden" id="ordenar" form="form-filtros" class="form-select form-select-sm custom-select">
                       <option value="relevancia" {% if orden_actual == 'relevancia' %}selected{% endif %}>Relevancia</option>
                       <option value="precio_asc" {% if orden_actual == 'precio_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
                       <option value="precio_desc" {% if orden_actual == 'precio_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
                   </select>
-                  {% if query %}
-                  <input type="hidden" name="buscar" value="{{ query }}">
-                  {% endif %}
-              </form>
+              </div>
             </div>
           </div>
+
+          {% include "partials/filtros_catalogo.html" %}
 
           <hr class="mb-5" style="color: #dee2e6;">
 
@@ -100,7 +101,7 @@
                     <div class="part-1">
                       {% if producto.stock <= 3 %}
                           <span class="badge-overlay badge-low-stock">¡Últimos!</span>
-                      {% elif forloop.counter <= 4 and page_obj.number == 1 and not query %}
+                      {% elif forloop.counter <= 4 and page_obj.number == 1 and not query and not filtros.activos %}
                           <span class="badge-overlay badge-new">Nuevo</span>
                       {% endif %}
 
@@ -158,7 +159,12 @@
               <div class="col-12 text-center py-5">
                   <i class="fas fa-search fa-3x text-muted mb-3"></i>
                   <h3>No encontramos productos</h3>
+                  {% if filtros.activos %}
+                  <p class="text-muted">Ningún producto coincide con los filtros elegidos.</p>
+                  <a href="?{{ filtros.url_limpiar }}" class="btn-filtrar d-inline-block text-decoration-none mt-2">Limpiar filtros</a>
+                  {% else %}
                   <p class="text-muted">Intenta con otra búsqueda o revisa nuestras categorías.</p>
+                  {% endif %}
               </div>
             {% endfor %}
           </div>

@@ -1,0 +1,74 @@
+{% comment %}
+Panel de filtros del catálogo (género, plataforma y precio).
+Uso: {% include "partials/filtros_catalogo.html" %} con `filtros` en el contexto (ver filtrar_catalogo).
+El selector "Ordenar" de cada página se une a este formulario con form="form-filtros".
+{% endcomment %}
+<form method="get" id="form-filtros" class="filtros-catalogo" novalidate>
+    {% if query %}<input type="hidden" name="buscar" value="{{ query }}">{% endif %}
+
+    <div class="filtros-campos">
+        <div class="filtro-campo">
+            <label for="filtro-genero">Género</label>
+            <select name="genero" id="filtro-genero" class="form-select form-select-sm custom-select">
+                <option value="">Todos</option>
+                {% for valor, nombre in filtros.generos %}
+                <option value="{{ valor }}" {% if filtros.genero == valor %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if filtros.con_plataforma %}
+        <div class="filtro-campo">
+            <label for="filtro-plataforma">Plataforma</label>
+            <select name="plataforma" id="filtro-plataforma" class="form-select form-select-sm custom-select">
+                <option value="">Todas</option>
+                {% for grupo, opciones in filtros.plataformas %}
+                <optgroup label="{{ grupo }}">
+                    {% for codigo, nombre, categorias in opciones %}
+                    <option value="{{ codigo }}" {% if filtros.plataforma == codigo %}selected{% endif %}>{{ nombre }}</option>
+                    {% endfor %}
+                </optgroup>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <div class="filtro-campo filtro-precio">
+            <label for="filtro-precio-min">Precio</label>
+            <div class="filtro-rango">
+                <div class="input-precio">
+                    <span>$</span>
+                    <input type="text" inputmode="numeric" name="precio_min" id="filtro-precio-min"
+                           placeholder="Mínimo" value="{{ filtros.precio_min }}" aria-label="Precio mínimo">
+                </div>
+                <span class="filtro-separador">-</span>
+                <div class="input-precio">
+                    <span>$</span>
+                    <input type="text" inputmode="numeric" name="precio_max" id="filtro-precio-max"
+                           placeholder="Máximo" value="{{ filtros.precio_max }}" aria-label="Precio máximo">
+                </div>
+            </div>
+        </div>
+
+        <div class="filtro-acciones">
+            <button type="submit" class="btn-filtrar"><i class="fas fa-filter"></i> Filtrar</button>
+            {% if filtros.activos or filtros.errores %}
+            <a href="?{{ filtros.url_limpiar }}" class="btn-limpiar-filtros">Limpiar</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% for error in filtros.errores %}
+    <p class="filtro-error"><i class="fas fa-circle-exclamation"></i> {{ error }}</p>
+    {% endfor %}
+
+    {% if filtros.aplicados %}
+    <div class="filtros-aplicados">
+        {% for filtro in filtros.aplicados %}
+        <a href="?{{ filtro.url }}" class="chip-filtro" title="Quitar este filtro">
+            {{ filtro.texto }} <i class="fas fa-xmark"></i>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</form>

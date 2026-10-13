@@ -155,6 +155,34 @@ class Producto(models.Model):
         ('ACCESORIOS', 'Accesorios'),
         ('OTRO', 'Otro'),
     ]
+
+    # plataformas para el filtro del catálogo: (código, nombre, categorías que la componen)
+    PLATAFORMAS = [
+        ('PlayStation', [
+            ('ps5', 'PlayStation 5', ['Videojuegos PS5', 'Ps5 Consolas', 'Accesorios PS5']),
+            ('ps4', 'PlayStation 4', ['Videojuegos PS4', 'Ps4 Consolas', 'Accesorios PS4']),
+            ('ps3', 'PlayStation 3', ['Videojuegos PS3', 'Accesorios PS3']),
+            ('ps2', 'PlayStation 2', ['Accesorios PS2']),
+            ('ps1', 'PlayStation 1', ['Accesorios PS1']),
+            ('psvita', 'PlayStation Vita', ['Accesorios Ps Vita']),
+            ('psp', 'PSP', ['Accesorios Psp']),
+        ]),
+        ('Xbox', [
+            ('xboxseries', 'Xbox Series', ['Videojuegos XBOX SERIES', 'Xbox Series Consolas', 'Accesorios XBOX SERIES']),
+            ('xboxone', 'Xbox One', ['Videojuegos XBOX ONE', 'Xbox One Consolas', 'Accesorios XBOX ONE']),
+            ('xbox360', 'Xbox 360', ['Videojuegos XBOX 360', 'Accesorios XBOX 360']),
+        ]),
+        ('Nintendo', [
+            ('switch', 'Nintendo Switch', ['Videojuegos Nintendo SWITCH', 'Switch Consolas', 'Accesorios Nintendo SWITCH']),
+            ('wiiu', 'Nintendo Wii U', ['Videojuegos WII U', 'Wii U Consolas', 'Accesorios WII U']),
+            ('wii', 'Nintendo Wii', ['Videojuegos WII']),
+            ('3ds', 'Nintendo 3DS', ['Videojuegos Nintendo 3DS', 'Accesorios Nintendo 3DS']),
+        ]),
+        ('PC', [
+            ('pc', 'PC', ['Videojuegos para PC']),
+        ]),
+    ]
+
     codigo_de_barra = models.CharField(max_length=20, verbose_name="Código de Barra")
     nombre = models.CharField(max_length=100)
     precio = models.PositiveIntegerField(default=0)  

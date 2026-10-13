@@ -1514,3 +1514,69 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
                          {'new_password1': 'NuevaClave-2027', 'new_password2': 'NuevaClave-2027'})
         respuesta = self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'NuevaClave-2027'})
         self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
+
+
+class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, plataforma y precio
+    def setUp(self):
+        crear_producto('Zelda Switch', categoria='Videojuegos Nintendo SWITCH', genero='AVENTURA', precio=45000)
+        crear_producto('FIFA PS5', categoria='Videojuegos PS5', genero='DEPORTES', precio=50000)
+        crear_producto('Control PS5', categoria='Accesorios PS5', genero='ACCESORIOS', precio=60000)
+        crear_producto('Gran Turismo PS4', categoria='Videojuegos PS4', genero='CARRERAS', precio=15000)
+
+    def nombres(self, respuesta):
+        return {p.nombre for p in respuesta.context['productos']}
+
+    def test_filtra_por_genero(self):
+        respuesta = self.client.get('/menu/', {'genero': 'DEPORTES'})
+        self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
+        self.assertContains(respuesta, 'Género: Deportes')
+
+    def test_filtra_por_plataforma_juntando_juegos_consolas_y_accesorios(self):
+        respuesta = self.client.get('/menu/', {'plataforma': 'ps5'})
+        self.assertEqual(self.nombres(respuesta), {'FIFA PS5', 'Control PS5'})
+
+    def test_filtra_por_rango_de_precio_con_formato_chileno(self):
+        respuesta = self.client.get('/menu/', {'precio_min': '20.000', 'precio_max': '$50.000'})
+        self.assertEqual(self.nombres(respuesta), {'Zelda Switch', 'FIFA PS5'})
+        self.assertContains(respuesta, 'Precio: $20.000 a $50.000')
+
+    def test_combina_busqueda_y_filtros(self):
+        respuesta = self.client.get('/menu/', {'buscar': 'PS5', 'precio_max': '55000'})
+        self.assertTemplateUsed(respuesta, 'resultado_busqueda.html')
+        self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
+
+    def test_filtros_en_categoria_sin_selector_de_plataforma(self):
+        respuesta = self.client.get('/productos/Videojuegos PS5/', {'genero': 'DEPORTES', 'plataforma': 'switch'})
+        self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
+        self.assertNotContains(respuesta, 'name="plataforma"')
+
+    def test_precio_minimo_mayor_al_maximo_avisa_y_no_filtra(self):
+        respuesta = self.client.get('/menu/', {'precio_min': '50000', 'precio_max': '10000'})
+        self.assertContains(respuesta, 'El precio mínimo no puede ser mayor que el máximo.')
+        self.assertEqual(len(self.nombres(respuesta)), 4)
+
+    def test_precio_invalido_avisa_y_no_filtra(self):
+        respuesta = self.client.get('/menu/', {'precio_min': 'abc'})
+        self.assertContains(respuesta, 'El precio debe ser un número entero')
+        self.assertEqual(len(self.nombres(respuesta)), 4)
+
+    def test_valores_desconocidos_se_ignoran(self):
+        respuesta = self.client.get('/menu/', {'genero': 'NOEXISTE', 'plataforma': 'gameboy'})
+        self.assertEqual(len(self.nombres(respuesta)), 4)
+        self.assertFalse(respuesta.context['filtros']['activos'])
+
+    def test_el_orden_se_combina_con_los_filtros(self):
+        respuesta = self.client.get('/menu/', {'plataforma': 'ps5', 'orden': 'precio_asc'})
+        self.assertEqual([p.nombre for p in respuesta.context['productos']], ['FIFA PS5', 'Control PS5'])
+
+    def test_quitar_un_filtro_conserva_los_demas(self):
+        respuesta = self.client.get('/menu/', {'genero': 'DEPORTES', 'plataforma': 'ps5', 'page': '1'})
+        enlaces = {f['texto']: f['url'] for f in respuesta.context['filtros']['aplicados']}
+        self.assertEqual(enlaces['Género: Deportes'], 'plataforma=ps5')
+        self.assertEqual(respuesta.context['filtros']['url_limpiar'], '')
+
+    def test_toda_categoria_con_plataforma_pertenece_a_una(self):
+        con_plataforma = {c for _, ops in Producto.PLATAFORMAS for _, _, cats in ops for c in cats}
+        todas = {c for _, grupo in Producto.CATEGORIAS for c, _ in grupo}
+        self.assertTrue(con_plataforma <= todas)
+        self.assertEqual(todas - con_plataforma, {'Figuras Funko', 'Figuras Amiibo'})

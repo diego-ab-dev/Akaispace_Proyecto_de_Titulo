@@ -1,9 +1,92 @@
 """Home, menú de productos, ficha de producto y categorías."""
+import re
+
 from django.core.paginator import Paginator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404, render
 
 from appPrincipal.models import Favorito, Producto
+
+PLATAFORMAS = {
+    codigo: (nombre, categorias)
+    for _, opciones in Producto.PLATAFORMAS
+    for codigo, nombre, categorias in opciones
+}
+
+
+def _leer_precio(valor):
+    """Acepta "15000", "15.000" o "$15.000". Devuelve (precio, es_valido)."""
+    valor = valor.replace('$', '').replace('.', '').strip()
+    if not valor:
+        return None, True
+    if not re.fullmatch(r'\d{1,9}', valor):
+        return None, False
+    return int(valor), True
+
+
+def filtrar_catalogo(request, productos, con_plataforma=True):
+    """Aplica los filtros de género, plataforma y rango de precio que vienen en la URL."""
+    genero = request.GET.get('genero', '')
+    plataforma = request.GET.get('plataforma', '') if con_plataforma else ''
+    texto_min = request.GET.get('precio_min', '').strip()
+    texto_max = request.GET.get('precio_max', '').strip()
+    errores = []
+
+    if genero not in dict(Producto.GENEROS):
+        genero = ''
+    if plataforma not in PLATAFORMAS:
+        plataforma = ''
+
+    precio_min, min_valido = _leer_precio(texto_min)
+    precio_max, max_valido = _leer_precio(texto_max)
+    if not (min_valido and max_valido):
+        errores.append("El precio debe ser un número entero, por ejemplo 15000.")
+        precio_min = precio_max = None
+    elif precio_min is not None and precio_max is not None and precio_min > precio_max:
+        errores.append("El precio mínimo no puede ser mayor que el máximo.")
+        precio_min = precio_max = None
+
+    if genero:
+        productos = productos.filter(genero=genero)
+    if plataforma:
+        productos = productos.filter(categoria__in=PLATAFORMAS[plataforma][1])
+    if precio_min is not None:
+        productos = productos.filter(precio__gte=precio_min)
+    if precio_max is not None:
+        productos = productos.filter(precio__lte=precio_max)
+
+    # etiquetas de los filtros aplicados, cada una con el enlace para quitarla
+    aplicados = []
+    if genero:
+        aplicados.append((f"Género: {dict(Producto.GENEROS)[genero]}", ['genero']))
+    if plataforma:
+        aplicados.append((f"Plataforma: {PLATAFORMAS[plataforma][0]}", ['plataforma']))
+    if precio_min is not None and precio_max is not None:
+        aplicados.append((f"Precio: ${precio_min:,} a ${precio_max:,}".replace(',', '.'), ['precio_min', 'precio_max']))
+    elif precio_min is not None:
+        aplicados.append((f"Precio desde ${precio_min:,}".replace(',', '.'), ['precio_min']))
+    elif precio_max is not None:
+        aplicados.append((f"Precio hasta ${precio_max:,}".replace(',', '.'), ['precio_max']))
+
+    def url_sin(*parametros):
+        params = request.GET.copy()
+        for parametro in ('page', *parametros):
+            params.pop(parametro, None)
+        return params.urlencode()
+
+    return productos, {
+        'genero': genero,
+        'plataforma': plataforma,
+        'precio_min': texto_min,
+        'precio_max': texto_max,
+        'generos': Producto.GENEROS,
+        'plataformas': Producto.PLATAFORMAS,
+        'con_plataforma': con_plataforma,
+        'errores': errores,
+        'activos': bool(aplicados),
+        'aplicados': [{'texto': texto, 'url': url_sin(*params)} for texto, params in aplicados],
+        'url_limpiar': url_sin('genero', 'plataforma', 'precio_min', 'precio_max'),
+    }
 
 
 def home(request):
@@ -22,6 +105,8 @@ def productos_menu(request):
         productos = Producto.objects.filter(
             stock__gt=0,
         )
+
+    productos, filtros = filtrar_catalogo(request, productos)
 
     if orden == 'precio_asc':
         productos = productos.order_by('precio')
@@ -44,8 +129,9 @@ def productos_menu(request):
         'page_obj': page_obj,
         'productos': page_obj.object_list,
         'favoritos_ids': favoritos_ids,
-        'query': query, 
-        'orden_actual': orden, 
+        'query': query,
+        'orden_actual': orden,
+        'filtros': filtros,
     })
 
 
@@ -108,6 +194,8 @@ def productos_por_categoria(request, categoria):
         categoria=categoria,
         stock__gt=0
     )
+    # la categoría ya define la plataforma, así que aquí no se muestra ese filtro
+    productos, filtros = filtrar_catalogo(request, productos, con_plataforma=False)
 
     orden = request.GET.get('orden')
     
@@ -137,5 +225,6 @@ def productos_por_categoria(request, categoria):
         'page_obj': page_obj,
         'productos': page_obj.object_list,
         'orden_actual': orden,
+        'filtros': filtros,
     }
     return render(request, 'productos_por_categoria.html', context)
