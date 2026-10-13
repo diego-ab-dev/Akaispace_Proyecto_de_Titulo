@@ -13,6 +13,11 @@
 
     <div class="response-card">
 
+        {% if error %}
+        <div class="alert alert-danger" style="font-weight:600; font-size:0.95rem;">
+            {{ error }}
+        </div>
+        {% endif %}
         <form method="post">
             {% csrf_token %}
 
@@ -96,16 +101,19 @@
             <hr style="opacity: 0.1; margin: 20px 0;">
 
             <label class="mb-2 fw-bold">Tu Respuesta:</label>
-            <textarea name="respuesta" rows="4" placeholder="Indica al cliente la resolución del caso..." required></textarea>
+            <textarea name="respuesta" rows="4" maxlength="{{ largo_maximo_respuesta }}" placeholder="Indica al cliente la resolución del caso..." required>{{ respuesta }}</textarea>
+            <small class="text-muted d-block mb-3" style="margin-top: -8px;">
+                <i class="fas fa-envelope"></i> El cliente recibirá esta respuesta por correo en {{ devolucion.usuario.email }}.
+            </small>
 
             <div class="mb-2" style="font-weight: 600; font-size: 0.95rem;">Decisión Administrativa:</div>
             <div class="radio-group">
                 <label class="radio-option accept-option">
-                    <input class="form-check-input" type="radio" name="accion" value="aceptar" required>
+                    <input class="form-check-input" type="radio" name="accion" value="aceptar" required {% if accion == 'aceptar' %}checked{% endif %}>
                     <i class="fas fa-check-circle text-success"></i> Aprobar
                 </label>
                 <label class="radio-option reject-option">
-                    <input class="form-check-input" type="radio" name="accion" value="rechazar">
+                    <input class="form-check-input" type="radio" name="accion" value="rechazar" {% if accion == 'rechazar' %}checked{% endif %}>
                     <i class="fas fa-times-circle text-danger"></i> Rechazar
                 </label>
             </div>

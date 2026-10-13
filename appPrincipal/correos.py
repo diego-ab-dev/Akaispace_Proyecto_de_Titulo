@@ -1,6 +1,7 @@
 """Correos que envía la tienda.
 
 - Confirmación de compra: se envía al aprobarse el pago con Webpay.
+- Resolución de devolución: se envía cuando el administrador aprueba o rechaza una solicitud.
 - Recuperación de contraseña: la envía Django (PasswordResetView).
 """
 import logging
@@ -45,4 +46,21 @@ def enviar_confirmacion_compra(venta):
                       contexto, venta.usuario.email)
     if enviado:
         logger.info("Correo de confirmación enviado: venta %s", venta.id)
+    return enviado
+
+
+def enviar_resolucion_devolucion(devolucion):
+    item = devolucion.venta.producto_venta.filter(producto=devolucion.producto).first() if devolucion.venta else None
+    contexto = {
+        'devolucion': devolucion,
+        'aprobada': devolucion.estado == 'Aprobada',
+        'monto_reembolso': item.precio_unitario * devolucion.cantidad if item else 0,
+        'url_devolucion': settings.SITIO_URL + reverse('ver_detalle_devolucion', args=[devolucion.id]),
+        'tienda': RESPONSABLE_DATOS,
+    }
+    resultado = 'aprobada' if contexto['aprobada'] else 'rechazada'
+    enviado = _enviar(f"Tu solicitud de devolución Nº {devolucion.id} fue {resultado} - Akaispace",
+                      'resolucion_devolucion', contexto, devolucion.usuario.email)
+    if enviado:
+        logger.info("Correo de resolución de devolución enviado: devolución %s", devolucion.id)
     return enviado

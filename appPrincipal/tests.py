@@ -1580,3 +1580,135 @@ class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, pl
         todas = {c for _, grupo in Producto.CATEGORIAS for c, _ in grupo}
         self.assertTrue(con_plataforma <= todas)
         self.assertEqual(todas - con_plataforma, {'Figuras Funko', 'Figuras Amiibo'})
+
+
+class CarritoEliminarVariosTests(TestCase):  # HU-11: eliminar algunos o todos los productos del carrito
+    def setUp(self):
+        from .models import Carrito, ItemCarritoProducto
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+        carrito = Carrito.objects.create(usuario=self.cliente)
+        self.items = [
+            ItemCarritoProducto.objects.create(carrito=carrito, producto=crear_producto(f'Juego {i}'), cantidad=i)
+            for i in (1, 2, 3)
+        ]
+
+    def ids_en_carrito(self):
+        from .models import ItemCarritoProducto
+        return set(ItemCarritoProducto.objects.filter(carrito__usuario=self.cliente).values_list('id', flat=True))
+
+    def test_elimina_solo_los_seleccionados_y_devuelve_el_resumen(self):
+        uno, dos, tres = self.items
+        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [uno.id, tres.id]}).json()
+        self.assertTrue(respuesta['success'])
+        self.assertEqual(set(respuesta['eliminados']), {uno.id, tres.id})
+        self.assertEqual(respuesta['total_items'], 2)
+        self.assertEqual(respuesta['total'], 20000)
+        self.assertEqual(self.ids_en_carrito(), {dos.id})
+
+    def test_vaciar_elimina_todo(self):
+        respuesta = self.client.post('/carrito/vaciar/').json()
+        self.assertTrue(respuesta['success'])
+        self.assertEqual(respuesta['total_items'], 0)
+        self.assertEqual(respuesta['total'], 0)
+        self.assertEqual(self.ids_en_carrito(), set())
+
+    def test_no_se_pueden_borrar_items_de_otro_cliente(self):
+        from .models import Carrito, ItemCarritoProducto
+        otro = crear_cliente('otro@example.com')
+        ajeno = ItemCarritoProducto.objects.create(carrito=Carrito.objects.create(usuario=otro),
+                                                   producto=self.items[0].producto)
+        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [ajeno.id]})
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertTrue(ItemCarritoProducto.objects.filter(id=ajeno.id).exists())
+        # mezclado con uno propio: se borra solo el propio
+        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [ajeno.id, self.items[0].id]}).json()
+        self.assertEqual(respuesta['eliminados'], [self.items[0].id])
+        self.assertTrue(ItemCarritoProducto.objects.filter(id=ajeno.id).exists())
+        # y vaciar el carrito propio no toca el ajeno
+        self.client.post('/carrito/vaciar/')
+        self.assertTrue(ItemCarritoProducto.objects.filter(id=ajeno.id).exists())
+
+    def test_seleccion_vacia_o_invalida_se_rechaza(self):
+        for datos in [{}, {'ids': ['abc']}, {'ids': [self.items[0].id, 'x']}]:
+            respuesta = self.client.post('/carrito/eliminar-seleccionados/', datos)
+            self.assertEqual(respuesta.status_code, 400, datos)
+        self.assertEqual(len(self.ids_en_carrito()), 3)
+
+    def test_solo_por_post_y_con_sesion(self):
+        self.assertEqual(self.client.get('/carrito/vaciar/').status_code, 405)
+        self.assertEqual(self.client.get('/carrito/eliminar-seleccionados/').status_code, 405)
+        self.client.logout()
+        self.assertEqual(self.client.post('/carrito/vaciar/').status_code, 401)
+        self.assertEqual(len(self.ids_en_carrito()), 3)
+
+    def test_el_carrito_muestra_la_seleccion_y_los_botones(self):
+        respuesta = self.client.get('/ver_carrito/')
+        self.assertContains(respuesta, 'class="form-check-input check-carrito check-item"', count=3)
+        self.assertContains(respuesta, 'Vaciar carrito')
+        self.assertContains(respuesta, 'Eliminar seleccionados')
+
+
+class DevolucionCorreoTests(TestCase):  # HU-21: se notifica al cliente la resolución de su devolución
+    def setUp(self):
+        from .models import Devolucion
+        self.producto = crear_producto(stock=5)
+        self.cliente = crear_cliente()
+        venta = crear_venta(self.cliente, self.producto, cantidad=2)
+        self.devolucion = Devolucion.objects.create(usuario=self.cliente, venta=venta, producto=self.producto,
+                                                    cantidad=1, motivo='Llegó roto')
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.url = f'/admin-panel/devoluciones/responder/{self.devolucion.id}/'
+
+    def responder(self, accion='aceptar', respuesta='Puedes traerlo a la tienda.'):
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(self.url, {'accion': accion, 'respuesta': respuesta})
+
+    def test_aprobar_envia_correo_al_cliente_con_la_respuesta(self):
+        from django.core import mail
+        self.responder()
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, ['cliente@example.com'])
+        self.assertIn(f'Nº {self.devolucion.id} fue aprobada', correo.subject)
+        html = correo.alternatives[0][0]
+        for texto in [correo.body, html]:
+            for dato in ['Puedes traerlo a la tienda.', 'Juego', '$10.000',
+                         f'http://localhost:8000/devoluciones/{self.devolucion.id}/detalle/']:
+                self.assertIn(dato, texto)
+
+    def test_rechazar_envia_correo_de_rechazo_sin_monto(self):
+        from django.core import mail
+        self.responder('rechazar', 'El producto tiene daño por mal uso.')
+        correo = mail.outbox[0]
+        self.assertIn('fue rechazada', correo.subject)
+        self.assertIn('SOLICITUD RECHAZADA', correo.body)
+        self.assertNotIn('Monto a reembolsar', correo.body)
+
+    def test_respuesta_vacia_o_accion_invalida_no_resuelve_ni_envia(self):
+        from django.core import mail
+        casos = [('aceptar', '   ', 'Escribe una respuesta'), ('borrar', 'ok', 'Elige si apruebas'),
+                 ('aceptar', 'x' * 1001, 'no puede superar')]
+        for accion, respuesta, error in casos:
+            self.assertContains(self.responder(accion, respuesta), error)
+        self.devolucion.refresh_from_db()
+        self.assertEqual(self.devolucion.estado, 'Pendiente')
+        self.assertEqual(mail.outbox, [])
+
+    def test_el_formulario_conserva_lo_escrito_si_hay_error(self):
+        respuesta = self.responder('', 'Texto a medio escribir')
+        self.assertContains(respuesta, 'Texto a medio escribir</textarea>')
+
+    def test_una_devolucion_ya_resuelta_no_reenvia_el_correo(self):
+        from django.core import mail
+        self.responder()
+        self.responder('rechazar')
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_si_el_correo_falla_la_resolucion_igual_queda_guardada(self):
+        from unittest import mock
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=OSError('SMTP caído')):
+            respuesta = self.responder()
+        self.assertRedirects(respuesta, '/admin-panel/devoluciones/', fetch_redirect_response=False)
+        self.devolucion.refresh_from_db()
+        self.assertEqual(self.devolucion.estado, 'Aprobada')

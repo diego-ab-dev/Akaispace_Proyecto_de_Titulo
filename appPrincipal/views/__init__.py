@@ -4,7 +4,8 @@ Las del cliente están en este paquete y las del panel de administración en vie
 Todas se reexportan aquí para que urls.py pueda usarlas como views.<nombre>.
 """
 from .carrito import (
-    actualizar_cantidad_carrito, agregar_al_carrito, eliminar_del_carrito, guardar_datos_envio, ver_carrito,
+    actualizar_cantidad_carrito, agregar_al_carrito, eliminar_del_carrito, eliminar_seleccionados_carrito,
+    guardar_datos_envio, vaciar_carrito, ver_carrito,
 )
 from .catalogo import home, producto_detalle, productos_menu, productos_por_categoria
 from .compras import marcar_recibido, ver_compras, ver_detalle_compra

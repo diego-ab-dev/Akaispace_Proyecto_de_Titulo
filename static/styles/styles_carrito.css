@@ -1022,3 +1022,148 @@ footer {
   font-size: 0.8rem;
   color: #777;
 }
+
+/* ---- selección múltiple y vaciar carrito ---- */
+.acciones-carrito {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: -3vh;
+    margin-bottom: 1.5vh;
+}
+
+.seleccionar-todo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+}
+
+#carrito-container .check-carrito {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #1C253B;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+#carrito-container .check-carrito:checked,
+#carrito-container .check-carrito:indeterminate {
+    background-color: #4E84A8;
+    border-color: #4E84A8;
+}
+
+#carrito-container .check-carrito:focus {
+    border-color: #4E84A8;
+    box-shadow: 0 0 0 0.2rem rgba(78, 132, 168, 0.25);
+}
+
+.col-check {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5vh 0 0;
+}
+
+.acciones-carrito-botones {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* basurero de "eliminar seleccionados": solo el ícono, sin fondo ni borde en ningún estado */
+#carrito-container .btn-icono-carrito,
+#carrito-container .btn-icono-carrito:hover,
+#carrito-container .btn-icono-carrito:focus,
+#carrito-container .btn-icono-carrito:active,
+#carrito-container .btn-icono-carrito:disabled {
+    background: none;
+    border: none;
+    box-shadow: none;
+    outline: none;
+}
+
+#carrito-container .btn-icono-carrito {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    font-size: 1.35rem;
+    color: #b10000;
+    overflow: visible;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: color 0.2s, transform 0.2s;
+}
+
+#carrito-container .btn-icono-carrito:hover:not(:disabled) {
+    color: #ff0000;
+    transform: scale(1.12);
+}
+
+#carrito-container .btn-icono-carrito:focus-visible i {
+    outline: 2px solid rgba(177, 0, 0, 0.4);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+#carrito-container .btn-icono-carrito:disabled {
+    color: #b5bdc6;
+    cursor: not-allowed;
+}
+
+/* "Vaciar carrito": botón chico, no compite con "Proceder a la compra" */
+#carrito-container .btn-vaciar-carrito {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.4em 1em;
+    background: #ffffff;
+    color: #b10000;
+    border: 1px solid #b10000;
+    border-radius: 0.6em;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+#carrito-container .btn-vaciar-carrito:hover {
+    background: #b10000;
+    color: #ffffff;
+}
+
+#carrito-container .btn-vaciar-carrito:active {
+    transform: scale(0.97);
+}
+
+/* burbuja con la cantidad de productos seleccionados */
+.contador-seleccionados {
+    position: absolute;
+    top: -4px;
+    right: 0;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #b10000;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: bold;
+    line-height: 1.1rem;
+    text-align: center;
+}
+
+.btn-icono-carrito:disabled .contador-seleccionados {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .acciones-carrito {
+        margin-top: 0;
+    }
+}

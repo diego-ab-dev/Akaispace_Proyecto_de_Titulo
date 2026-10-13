@@ -66,6 +66,42 @@ def eliminar_del_carrito(request, item_id):
     })
 
 
+def _resumen_carrito(carrito, eliminados):
+    return JsonResponse({
+        'success': True,
+        'eliminados': eliminados,
+        'total_items': sum(i.cantidad for i in carrito.items.all()),
+        'total': carrito.total_carrito(),
+    })
+
+
+@login_required_json
+@require_POST
+def eliminar_seleccionados_carrito(request):
+    ids = [_leer_entero(valor) for valor in request.POST.getlist('ids')]
+    if not ids or None in ids:
+        return JsonResponse({'success': False, 'error': 'Selecciona al menos un producto.'}, status=400)
+
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    # solo se borran los ítems de este carrito; ids ajenos o ya eliminados se ignoran
+    items = carrito.items.filter(id__in=ids)
+    eliminados = list(items.values_list('id', flat=True))
+    if not eliminados:
+        return JsonResponse({'success': False, 'error': 'Los productos seleccionados ya no están en tu carrito.'}, status=404)
+    items.delete()
+
+    return _resumen_carrito(carrito, eliminados)
+
+
+@login_required_json
+@require_POST
+def vaciar_carrito(request):
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    eliminados = list(carrito.items.values_list('id', flat=True))
+    carrito.items.all().delete()
+    return _resumen_carrito(carrito, eliminados)
+
+
 @login_required_json
 def actualizar_cantidad_carrito(request):
     if request.method == 'POST':

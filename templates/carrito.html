@@ -32,10 +32,33 @@
                     </div>
                 </div>
 
+                {% if productos %}
+                <div class="acciones-carrito">
+                    <label class="seleccionar-todo" for="check-todos">
+                        <input type="checkbox" id="check-todos" class="form-check-input check-carrito">
+                        Seleccionar todo
+                    </label>
+                    <div class="acciones-carrito-botones">
+                        <button type="button" class="btn-icono-carrito" id="btn-eliminar-seleccionados" disabled
+                                title="Eliminar seleccionados" aria-label="Eliminar seleccionados" data-bs-toggle="tooltip">
+                            <i class="far fa-trash-alt"></i>
+                            <span class="contador-seleccionados" id="contador-seleccionados">0</span>
+                        </button>
+                        <button type="button" class="btn-vaciar-carrito" id="btn-vaciar-carrito">
+                            Vaciar carrito
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="row border-top border-bottom products-scroll-container">
                     {% if productos %}
                         {% for item in productos %}
                             <div id="item-{{ item.id }}" class="row main align-items-center">
+                                <div class="col-auto col-check">
+                                    <input type="checkbox" class="form-check-input check-carrito check-item" value="{{ item.id }}"
+                                           aria-label="Seleccionar {{ item.producto.nombre }}">
+                                </div>
                                 <div class="col-2">
                                     <img class="img-fluid" src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}">
                                 </div>
@@ -64,7 +87,7 @@
                                 <div class="col">${{ item.producto.precio|formato_chileno }}</div>
                                 <a href="#" class="btn-eliminar-item" 
                                 data-url="{% url 'eliminar_del_carrito' item.id %}" 
-                                onclick="eliminarItem('{{ item.id }}', this)">✖</a>
+                                onclick="eliminarItem('{{ item.id }}', this); return false;">✖</a>
                             </div>
                         {% endfor %}
                     {% else %}
@@ -184,6 +207,25 @@
                 <button onclick="cerrarModal()" class="btn-cancel" style="background-color: #1c253b;">Cancelar</button>
             </div>
         </div>
+        </div>
+    </div>
+</div>
+
+<!--modal para confirmar la eliminación de varios productos-->
+<div class="modal fade" id="modal-confirmar-eliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4 text-danger">
+                    <i class="fas fa-exclamation-circle fa-4x"></i>
+                </div>
+                <h4 class="fw-bold mb-3">¿Estás seguro?</h4>
+                <p class="text-muted mb-4" id="texto-confirmar-eliminar"></p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger px-4 rounded-pill" id="btn-confirmar-eliminar">Eliminar</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -320,7 +362,8 @@
     }
 
     function marcarError(input, mensaje) {
-        document.getElementById(`error-${input.dataset.item}`).textContent = mensaje;
+        const elem = document.getElementById(`error-${input.dataset.item}`);
+        if (elem) elem.textContent = mensaje;  // la fila pudo haberse eliminado mientras tanto
     }
 
     function actualizarCantidad(input) {
@@ -423,47 +466,153 @@
         });
     }
 
-// eliminar un item del carrito y que se actualice en tiempo real
-function eliminarItem(itemId, element) {
-    const url = element.getAttribute('data-url');
+    // ---- eliminar productos: de a uno (✖), los seleccionados o vaciar el carrito ----
+    // el token se lee antes de borrar filas, porque cada fila trae su propio csrfmiddlewaretoken
+    const csrfCarrito = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
 
-    fetch(url, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const row = document.getElementById(`item-${itemId}`);
-            if (row) row.remove();
+    function mostrarCarritoVacio() {
+        const container = document.querySelector('.cart');
+        if (container) container.innerHTML = '<div class="text-center py-5"> <h5 class="text-muted">Tu carrito está vacío.</h5> <a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a> </div>';
 
-            document.querySelectorAll('#total-items-count').forEach(el => el.textContent = data.total_items);
-
-            const subtotalElem = document.getElementById('subtotal-resumen');
-            if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
-
-            if (data.total_items === 0) {
-                const container = document.querySelector('.cart');
-                if (container) container.innerHTML = '<div class="text-center py-5"> <h5 class="text-muted">Tu carrito está vacío.</h5> <a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a> </div>';
-
-                const resumen = document.querySelector('.summary');
-                if (resumen) {
-                    resumen.innerHTML = `
-                        <div><h5><b>Resumen</b></h5></div>
-                        <hr>
-                        <p class="text-muted text-center">Tu carrito está vacío.</p>
-                    `;
-                }
-            } else {
-                subtotalActual = data.total;
-                actualizarEntrega();
-            }
-        } else if (data.error) {
-            mostrarError(data.error);
+        const resumen = document.querySelector('.summary');
+        if (resumen) {
+            resumen.innerHTML = `
+                <div><h5><b>Resumen</b></h5></div>
+                <hr>
+                <p class="text-muted text-center">Tu carrito está vacío.</p>
+            `;
         }
-    })
-    .catch(error => console.error('Error:', error));
-}
+    }
+
+    // saca del carrito (en pantalla) los ítems que el servidor confirmó como eliminados
+    function quitarItems(ids, data) {
+        ids.forEach(id => {
+            // si había un cambio de cantidad esperando para guardarse, ya no se envía
+            clearTimeout(temporizadores.get(String(id)));
+            temporizadores.delete(String(id));
+            const row = document.getElementById(`item-${id}`);
+            if (row) row.remove();
+        });
+
+        ['total-items-count', 'total-items-count-summary'].forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) elem.textContent = data.total_items;
+        });
+
+        if (data.total_items === 0) {
+            mostrarCarritoVacio();
+            return;
+        }
+        const subtotalElem = document.getElementById('subtotal-resumen');
+        if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
+        subtotalActual = data.total;
+        actualizarEntrega();
+        actualizarSeleccion();
+    }
+
+    function enviarEliminacion(url, ids) {
+        const datos = new FormData();
+        ids.forEach(id => datos.append('ids', id));
+
+        return fetch(url, {
+            method: 'POST',
+            body: datos,
+            headers: { 'X-CSRFToken': csrfCarrito },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                quitarItems(data.eliminados || ids, data);
+            } else {
+                mostrarError(data.error || 'No se pudieron eliminar los productos.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarError('No se pudieron eliminar los productos. Inténtalo de nuevo.');
+        });
+    }
+
+    // eliminar un item del carrito y que se actualice en tiempo real
+    function eliminarItem(itemId, element) {
+        enviarEliminacion(element.getAttribute('data-url'), [itemId]);
+    }
+
+    // selección múltiple
+    function actualizarSeleccion() {
+        const checks = document.querySelectorAll('.check-item');
+        const marcados = document.querySelectorAll('.check-item:checked').length;
+
+        const todos = document.getElementById('check-todos');
+        if (todos) {
+            todos.checked = checks.length > 0 && marcados === checks.length;
+            todos.indeterminate = marcados > 0 && marcados < checks.length;
+        }
+        const contador = document.getElementById('contador-seleccionados');
+        if (contador) contador.textContent = marcados;
+        const btnEliminar = document.getElementById('btn-eliminar-seleccionados');
+        if (btnEliminar) {
+            btnEliminar.disabled = marcados === 0;
+            if (marcados === 0) bootstrap.Tooltip.getInstance(btnEliminar)?.hide();
+        }
+    }
+
+    document.querySelectorAll('.btn-icono-carrito').forEach(boton => new bootstrap.Tooltip(boton));
+
+    document.getElementById('check-todos')?.addEventListener('change', function () {
+        document.querySelectorAll('.check-item').forEach(check => check.checked = this.checked);
+        actualizarSeleccion();
+    });
+
+    document.querySelectorAll('.check-item').forEach(check => {
+        check.addEventListener('change', actualizarSeleccion);
+    });
+
+    // confirmación antes de borrar varios productos
+    const modalConfirmarElem = document.getElementById('modal-confirmar-eliminar');
+    const modalConfirmar = modalConfirmarElem ? new bootstrap.Modal(modalConfirmarElem) : null;
+    let accionPendiente = null;
+
+    function confirmarEliminacion(texto, accion) {
+        if (!modalConfirmar) {
+            if (confirm(texto)) accion();
+            return;
+        }
+        document.getElementById('texto-confirmar-eliminar').textContent = texto;
+        accionPendiente = accion;
+        modalConfirmar.show();
+    }
+
+    // al abrir el modal se esconde el tooltip del ícono, para que no quede flotando
+    modalConfirmarElem?.addEventListener('show.bs.modal', () => {
+        document.querySelectorAll('.btn-icono-carrito').forEach(boton => bootstrap.Tooltip.getInstance(boton)?.hide());
+    });
+
+    document.getElementById('btn-confirmar-eliminar')?.addEventListener('click', function () {
+        modalConfirmar.hide();
+        const accion = accionPendiente;
+        accionPendiente = null;
+        if (accion) accion();
+    });
+
+    document.getElementById('btn-eliminar-seleccionados')?.addEventListener('click', function () {
+        const ids = Array.from(document.querySelectorAll('.check-item:checked')).map(check => check.value);
+        if (ids.length === 0) {
+            mostrarError('Selecciona al menos un producto.');
+            return;
+        }
+        const texto = ids.length === 1
+            ? 'Se eliminará 1 producto de tu carrito.'
+            : `Se eliminarán ${ids.length} productos de tu carrito.`;
+        confirmarEliminacion(texto, () => enviarEliminacion("{% url 'eliminar_seleccionados_carrito' %}", ids));
+    });
+
+    document.getElementById('btn-vaciar-carrito')?.addEventListener('click', function () {
+        confirmarEliminacion('Se eliminarán todos los productos de tu carrito.',
+            () => enviarEliminacion("{% url 'vaciar_carrito' %}", []));
+    });
+
+    actualizarSeleccion();
 
         function abrirModal() {
             const modal = document.getElementById("modal-envio");

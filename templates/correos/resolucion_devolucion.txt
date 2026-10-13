@@ -1,0 +1,22 @@
+{% load custom_filters %}{% autoescape off %}Hola, {{ devolucion.usuario.nombre }}
+
+Revisamos tu solicitud de devolución Nº {{ devolucion.id }} del {{ devolucion.fecha_solicitud|date:"d/m/Y" }}.
+
+RESULTADO: SOLICITUD {% if aprobada %}APROBADA{% else %}RECHAZADA{% endif %}
+
+Producto: {{ devolucion.producto.nombre|default:"No especificado" }}
+Cantidad: {{ devolucion.cantidad }}
+{% if devolucion.venta %}Pedido: Nº {{ devolucion.venta.id }}
+{% endif %}{% if aprobada and monto_reembolso %}Monto a reembolsar: ${{ monto_reembolso|formato_chileno }}
+{% endif %}
+RESPUESTA DE AKAISPACE
+{{ devolucion.respuesta_admin }}
+
+{% if aprobada %}Sigue las indicaciones de la respuesta para completar la devolución del producto.{% else %}Si tienes dudas sobre esta decisión, puedes ingresar un reclamo desde el detalle de tu compra o escribirnos a {{ tienda.correo_privacidad }}.{% endif %}
+
+Ver tu solicitud: {{ url_devolucion }}
+
+--
+Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
+{% endautoescape %}

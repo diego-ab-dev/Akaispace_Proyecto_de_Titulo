@@ -1,0 +1,59 @@
+{% extends "correos/base.html" %}
+{% load custom_filters %}
+{% block contenido %}
+<h1 style="font-size:20px; margin:0 0 12px;">Hola, {{ devolucion.usuario.nombre }}</h1>
+<p style="margin:0 0 16px;">
+  Revisamos tu solicitud de devolución <strong>Nº {{ devolucion.id }}</strong>
+  del {{ devolucion.fecha_solicitud|date:"d/m/Y" }}.
+</p>
+
+<p style="margin:0 0 20px; text-align:center;">
+  {% if aprobada %}
+  <span style="display:inline-block; background-color:#E8F5EC; color:#1E7B3A; border:1px solid #1E7B3A; padding:8px 18px; border-radius:20px; font-weight:bold;">
+    Solicitud aprobada
+  </span>
+  {% else %}
+  <span style="display:inline-block; background-color:#FDECEC; color:#B10000; border:1px solid #B10000; padding:8px 18px; border-radius:20px; font-weight:bold;">
+    Solicitud rechazada
+  </span>
+  {% endif %}
+</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse; font-size:14px;">
+  <tr>
+    <td style="padding:8px 0; border-bottom:1px solid #E5E7EB; color:#6B7280;">Producto</td>
+    <td align="right" style="padding:8px 0; border-bottom:1px solid #E5E7EB;">{{ devolucion.producto.nombre|default:"No especificado" }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px 0; border-bottom:1px solid #E5E7EB; color:#6B7280;">Cantidad</td>
+    <td align="right" style="padding:8px 0; border-bottom:1px solid #E5E7EB;">{{ devolucion.cantidad }}</td>
+  </tr>
+  {% if devolucion.venta %}
+  <tr>
+    <td style="padding:8px 0; border-bottom:1px solid #E5E7EB; color:#6B7280;">Pedido</td>
+    <td align="right" style="padding:8px 0; border-bottom:1px solid #E5E7EB;">Nº {{ devolucion.venta.id }}</td>
+  </tr>
+  {% endif %}
+  {% if aprobada and monto_reembolso %}
+  <tr>
+    <td style="padding:8px 0; font-weight:bold;">Monto a reembolsar</td>
+    <td align="right" style="padding:8px 0; font-weight:bold;">${{ monto_reembolso|formato_chileno }}</td>
+  </tr>
+  {% endif %}
+</table>
+
+<h2 style="font-size:16px; margin:24px 0 8px;">Respuesta de Akaispace</h2>
+<p style="margin:0; padding:12px 16px; background-color:#F5F7F9; border-left:4px solid #4E84A8; border-radius:4px; white-space:pre-line;">{{ devolucion.respuesta_admin }}</p>
+
+<p style="margin:16px 0 0; font-size:14px; color:#374151;">
+  {% if aprobada %}
+  Sigue las indicaciones de la respuesta para completar la devolución del producto.
+  {% else %}
+  Si tienes dudas sobre esta decisión, puedes ingresar un reclamo desde el detalle de tu compra o escribirnos a {{ tienda.correo_privacidad }}.
+  {% endif %}
+</p>
+
+<p style="margin:24px 0; text-align:center;">
+  <a href="{{ url_devolucion }}" style="display:inline-block; background-color:#4E84A8; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:6px; font-weight:bold;">Ver mi solicitud</a>
+</p>
+{% endblock %}
