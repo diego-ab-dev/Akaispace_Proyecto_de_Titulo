@@ -77,3 +77,57 @@ POLITICA_RETRACTO = [
     'Te devolveremos el monto pagado al mismo medio de pago, a la brevedad y como máximo dentro de 45 días '
     'desde que nos informas el retracto.',
 ]
+
+
+# Menús de categorías del navbar. Cada categoría se puede ocultar desde el panel
+# (Configuración); una categoría oculta sigue existiendo y sus productos siguen a la venta.
+# clase_flecha / clase_submenu: las usa static/js/navbar.js para abrir el menú en celulares.
+MENU_NAVBAR = [
+    {
+        'nombre': 'Videojuegos', 'promo': 'menu_videojuegos',
+        'clase_flecha': 'htmlcss-arrow', 'clase_submenu': 'htmlCss-sub-menu',
+        'texto_link': 'Ver detalles', 'color_etiqueta': '', 'vacio': 'Próximamente',
+        'grupos': [
+            ('PlayStation', [('Videojuegos PS3', 'PlayStation 3'), ('Videojuegos PS4', 'PlayStation 4'),
+                             ('Videojuegos PS5', 'PlayStation 5')]),
+            ('Microsoft', [('Videojuegos XBOX 360', 'XBOX 360'), ('Videojuegos XBOX ONE', 'XBOX ONE'),
+                           ('Videojuegos XBOX SERIES', 'XBOX SERIES')]),
+            ('Nintendo', [('Videojuegos Nintendo SWITCH', 'SWITCH'), ('Videojuegos Nintendo 3DS', '3DS'),
+                          ('Videojuegos WII', 'WII'), ('Videojuegos WII U', 'WII U')]),
+            ('PC', [('Videojuegos para PC', 'Videojuegos PC')]),
+        ],
+    },
+    {
+        'nombre': 'Consolas', 'promo': 'menu_consolas',
+        'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
+        'texto_link': 'Ver consola', 'color_etiqueta': '', 'vacio': 'Próximamente',
+        'grupos': [
+            ('PlayStation', [('Ps4 Consolas', 'PlayStation 4'), ('Ps5 Consolas', 'PlayStation 5')]),
+            ('Microsoft', [('Xbox One Consolas', 'XBOX ONE'), ('Xbox Series Consolas', 'XBOX SERIES')]),
+            ('Nintendo', [('Wii U Consolas', 'WII U'), ('Switch Consolas', 'SWITCH')]),
+        ],
+    },
+    {
+        'nombre': 'Accesorios', 'promo': 'menu_accesorios',
+        'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
+        'texto_link': 'Ver accesorio', 'color_etiqueta': '#8e44ad', 'vacio': 'Sin stock destacado',
+        'grupos': [
+            ('PlayStation', [('Accesorios Psp', 'PSP'), ('Accesorios Ps Vita', 'VITA'),
+                             ('Accesorios PS1', 'PLAY STATION 1'), ('Accesorios PS2', 'PLAY STATION 2'),
+                             ('Accesorios PS3', 'PLAY STATION 3'), ('Accesorios PS4', 'PLAY STATION 4'),
+                             ('Accesorios PS5', 'PLAY STATION 5')]),
+            ('Microsoft', [('Accesorios XBOX 360', 'XBOX 360'), ('Accesorios XBOX ONE', 'XBOX ONE'),
+                           ('Accesorios XBOX SERIES', 'XBOX SERIES')]),
+            ('Nintendo', [('Accesorios Nintendo 3DS', '3DS'), ('Accesorios WII U', 'WII U'),
+                          ('Accesorios Nintendo SWITCH', 'SWITCH')]),
+        ],
+    },
+    {
+        'nombre': 'Figuras', 'promo': 'menu_figuras',
+        'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
+        'texto_link': 'Lo quiero', 'color_etiqueta': '#f39c12', 'vacio': 'Próximamente',
+        'grupos': [
+            ('Coleccionables', [('Figuras Funko', 'FUNKO POP'), ('Figuras Amiibo', 'AMIIBO')]),
+        ],
+    },
+]

@@ -90,11 +90,11 @@
                     <div class="single-product">
 
                       <div class="part-1">
-                        {% if producto.stock <= 3 %}
+                        {% if config_sitio.mostrar_etiquetas %}{% if producto.stock <= 3 %}
                             <span class="badge-overlay badge-low-stock">¡Últimos!</span>
                         {% elif forloop.counter <= 4 and page_obj.number == 1 and not filtros.activos %}
                             <span class="badge-overlay badge-new">Destacado</span>
-                        {% endif %}
+                        {% endif %}{% endif %}
 
                         <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
 

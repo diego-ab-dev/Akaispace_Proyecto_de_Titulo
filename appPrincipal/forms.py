@@ -2,8 +2,8 @@ from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
-from .constants import REGIONES, REGIONES_CIUDADES
-from .models import Destacado, Opinion, Producto, Usuario, youtube_embed_url
+from .constants import MENU_NAVBAR, REGIONES, REGIONES_CIUDADES
+from .models import ConfiguracionSitio, Destacado, Opinion, Producto, Usuario, youtube_embed_url
 import os
 
 
@@ -346,3 +346,36 @@ def mensaje_maximo_visibles(seccion):
     maximo = Destacado.MAXIMO_VISIBLES[seccion]
     return (f'"{nombre}" ya tiene {maximo} elementos visibles (el máximo). '
             'Oculta o elimina alguno, o guarda este como oculto.')
+
+
+CATEGORIAS_NAVBAR = [codigo for menu in MENU_NAVBAR for _, categorias in menu['grupos'] for codigo, _ in categorias]
+
+
+class ConfiguracionSitioForm(forms.ModelForm):
+    # en el panel se marcan las categorías que SÍ se ven; al guardar se convierten en categorias_ocultas
+    categorias_visibles = forms.MultipleChoiceField(
+        choices=[(codigo, codigo) for codigo in CATEGORIAS_NAVBAR],
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = ConfiguracionSitio
+        fields = ['productos_relacionados', 'mostrar_opiniones', 'mostrar_etiquetas', 'mostrar_stock']
+        widgets = {
+            'productos_relacionados': forms.RadioSelect,
+            'mostrar_opiniones': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'mostrar_etiquetas': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'mostrar_stock': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound:
+            ocultas = set(self.instance.categorias_ocultas or [])
+            self.initial['categorias_visibles'] = [c for c in CATEGORIAS_NAVBAR if c not in ocultas]
+
+    def save(self, commit=True):
+        visibles = set(self.cleaned_data['categorias_visibles'])
+        self.instance.categorias_ocultas = [c for c in CATEGORIAS_NAVBAR if c not in visibles]
+        return super().save(commit)

@@ -600,3 +600,42 @@ class Destacado(models.Model):
 def youtube_embed_url(url):
     m = re.search(r'(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{11})', url or '')
     return f"https://www.youtube-nocookie.com/embed/{m.group(1)}" if m else ''
+
+
+# clase ConfiguracionSitio: opciones de visualización de la tienda que el admin cambia desde el panel
+class ConfiguracionSitio(models.Model):
+    RELACIONADOS_CATEGORIA = 'categoria'
+    RELACIONADOS_ALEATORIOS = 'aleatorios'
+    RELACIONADOS_NINGUNO = 'ninguno'
+    OPCIONES_RELACIONADOS = [
+        (RELACIONADOS_CATEGORIA, 'De la misma categoría'),
+        (RELACIONADOS_ALEATORIOS, 'Aleatorios de toda la tienda'),
+        (RELACIONADOS_NINGUNO, 'No mostrar'),
+    ]
+
+    productos_relacionados = models.CharField(
+        max_length=12, choices=OPCIONES_RELACIONADOS, default=RELACIONADOS_CATEGORIA,
+        verbose_name="Productos relacionados en la ficha",
+    )
+    mostrar_opiniones = models.BooleanField(default=True, verbose_name="Mostrar opiniones en la ficha")
+    mostrar_etiquetas = models.BooleanField(default=True, verbose_name='Mostrar etiquetas "Nuevo" y "¡Últimos!"')
+    mostrar_stock = models.BooleanField(default=True, verbose_name="Mostrar el stock disponible en la ficha")
+    categorias_ocultas = models.JSONField(default=list, blank=True, verbose_name="Categorías ocultas del navbar")
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuración del sitio"
+        verbose_name_plural = "Configuración del sitio"
+
+    def __str__(self):
+        return "Configuración del sitio"
+
+    @classmethod
+    def actual(cls):
+        """La configuración es un único registro; si no existe se crea con los valores por defecto."""
+        configuracion, _ = cls.objects.get_or_create(pk=1)
+        return configuracion
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)

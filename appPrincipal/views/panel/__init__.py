@@ -1,4 +1,5 @@
 """Vistas del panel de administración propio de Akaispace (no confundir con el admin de Django)."""
+from .configuracion import admin_configuracion
 from .dashboard import admin_dashboard, get_dashboard_counts
 from .portada import (
     admin_portada, cambiar_estado_destacado, crear_destacado, editar_destacado, eliminar_destacado,

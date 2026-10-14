@@ -38,6 +38,10 @@
                     <i class='bx bx-images nav_icon'></i>
                     <span class="nav_name">Portada</span>
                 </a>
+                <a href="{% url 'admin_configuracion' %}" class="nav_link{% if n == 'admin_configuracion' %} active{% endif %}">
+                    <i class='bx bx-cog nav_icon'></i>
+                    <span class="nav_name">Configuración</span>
+                </a>
             </div>
         </div>
         <a href="{% url 'logout' %}" class="nav_link">

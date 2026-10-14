@@ -1,0 +1,137 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_portada.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_configuracion.css' %}">
+{% endblock %}
+
+{% block encabezado %}
+<h1>Configuración</h1>
+{% endblock %}
+
+{% block content %}
+<div class="portada">
+    <p class="portada-intro">
+        Aquí decides qué ven los clientes en la tienda en línea. Los cambios se ven en el sitio de inmediato.
+    </p>
+
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">{{ message }}</div>
+    {% endfor %}
+    {% if form.errors %}
+    <div class="alert alert-danger">No se pudo guardar: revisa las opciones marcadas.</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <section class="portada-seccion">
+            <header class="portada-seccion__header">
+                <div>
+                    <h2>Ficha del producto</h2>
+                    <p class="portada-seccion__nota">La página que se abre al hacer clic en un producto.</p>
+                </div>
+            </header>
+
+            <div class="config-campo">
+                <span class="config-campo__titulo">Productos relacionados</span>
+                <span class="config-campo__ayuda">Se muestran al final de la ficha, en "También te podría interesar".</span>
+                <div class="config-opciones">
+                    {% for opcion in form.productos_relacionados %}
+                    <label class="config-opcion">
+                        {{ opcion.tag }}
+                        <span>{{ opcion.choice_label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="config-campo">
+                <div class="form-check form-switch">
+                    {{ form.mostrar_opiniones }}
+                    <label class="form-check-label" for="{{ form.mostrar_opiniones.id_for_label }}">Mostrar opiniones y calificaciones</label>
+                </div>
+                <span class="config-campo__ayuda">Si las ocultas, los clientes igual pueden dejar su opinión: se guardan y vuelven a verse al activarlas.</span>
+            </div>
+
+            <div class="config-campo">
+                <div class="form-check form-switch">
+                    {{ form.mostrar_stock }}
+                    <label class="form-check-label" for="{{ form.mostrar_stock.id_for_label }}">Mostrar las unidades disponibles</label>
+                </div>
+                <span class="config-campo__ayuda">El "Stock: X unidades" de la ficha. Aunque se oculte, nadie puede comprar más de lo que hay.</span>
+            </div>
+        </section>
+
+        <section class="portada-seccion">
+            <header class="portada-seccion__header">
+                <div>
+                    <h2>Catálogo</h2>
+                    <p class="portada-seccion__nota">El menú de productos, la búsqueda y las categorías.</p>
+                </div>
+            </header>
+
+            <div class="config-campo">
+                <div class="form-check form-switch">
+                    {{ form.mostrar_etiquetas }}
+                    <label class="form-check-label" for="{{ form.mostrar_etiquetas.id_for_label }}">Mostrar etiquetas "Nuevo" y "¡Últimos!"</label>
+                </div>
+                <span class="config-campo__ayuda">Las etiquetas sobre la imagen de cada producto.</span>
+            </div>
+        </section>
+
+        <section class="portada-seccion">
+            <header class="portada-seccion__header">
+                <div>
+                    <h2>Categorías del navbar</h2>
+                    <p class="portada-seccion__nota">
+                        Desmarca las categorías que no quieras mostrar en los menús. Una categoría oculta no se borra:
+                        sus productos siguen a la venta y aparecen en el catálogo y en la búsqueda.
+                    </p>
+                </div>
+            </header>
+
+            <div class="config-menus">
+                {% for menu in menus %}
+                <fieldset class="config-menu">
+                    <legend>
+                        {{ menu.nombre }}
+                        <button type="button" class="config-menu__todas" data-menu="{{ forloop.counter }}">Marcar todas</button>
+                    </legend>
+                    {% for grupo, categorias in menu.grupos %}
+                    <div class="config-grupo">
+                        <span class="config-grupo__nombre">{{ grupo }}</span>
+                        {% for codigo, etiqueta in categorias %}
+                        <label class="form-check config-categoria">
+                            <input type="checkbox" class="form-check-input" name="categorias_visibles" value="{{ codigo }}"
+                                   data-menu="{{ forloop.parentloop.parentloop.counter }}" {% if codigo in visibles %}checked{% endif %}>
+                            <span class="form-check-label">{{ etiqueta }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </fieldset>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="portada-form__acciones">
+            <button type="submit" class="btn-portada btn-portada--primario">Guardar cambios</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // "Marcar todas" vuelve a mostrar todas las categorías de ese menú
+    document.querySelectorAll('.config-menu__todas').forEach(function (boton) {
+        boton.addEventListener('click', function () {
+            document.querySelectorAll('input[data-menu="' + boton.dataset.menu + '"]').forEach(function (check) {
+                check.checked = true;
+            });
+        });
+    });
+</script>
+{% endblock %}

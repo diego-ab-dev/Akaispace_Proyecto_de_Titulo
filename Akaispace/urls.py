@@ -116,6 +116,8 @@ urlpatterns = [
     path('admin-panel/portada/<int:destacado_id>/editar/', views.editar_destacado, name='editar_destacado'),
     path('admin-panel/portada/<int:destacado_id>/estado/', views.cambiar_estado_destacado, name='cambiar_estado_destacado'),
     path('admin-panel/portada/<int:destacado_id>/eliminar/', views.eliminar_destacado, name='eliminar_destacado'),
+    # configuración: opciones de visualización de la tienda
+    path('admin-panel/configuracion/', views.admin_configuracion, name='admin_configuracion'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # El panel de administración de la tienda es el propio (/admin-panel/). El admin de Django

@@ -1712,3 +1712,127 @@ class DevolucionCorreoTests(TestCase):  # HU-21: se notifica al cliente la resol
         self.assertRedirects(respuesta, '/admin-panel/devoluciones/', fetch_redirect_response=False)
         self.devolucion.refresh_from_db()
         self.assertEqual(self.devolucion.estado, 'Aprobada')
+
+
+class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar funcionalidades de visualización
+    def setUp(self):
+        self.ps5 = crear_producto('Juego PS5', stock=2)
+        self.otro_ps5 = crear_producto('Otro PS5')
+        self.switch = crear_producto('Juego Switch', categoria='Videojuegos Nintendo SWITCH')
+
+    def configurar(self, **opciones):
+        from .models import ConfiguracionSitio
+        configuracion = ConfiguracionSitio.actual()
+        for campo, valor in opciones.items():
+            setattr(configuracion, campo, valor)
+        configuracion.save()
+
+    def ficha(self):
+        return self.client.get(f'/producto/{self.ps5.id}/')
+
+    def test_por_defecto_el_navbar_muestra_todas_las_categorias(self):
+        from django.urls import reverse
+        from .forms import CATEGORIAS_NAVBAR
+        html = self.client.get('/menu/').content.decode()
+        for categoria in CATEGORIAS_NAVBAR:
+            self.assertIn(f'href="{reverse("productos_por_categoria", args=[categoria])}"', html, categoria)
+        for menu in ['Videojuegos', 'Consolas', 'Accesorios', 'Figuras']:
+            self.assertIn(f'<a href="#">{menu}</a>', html)
+
+    def test_una_categoria_oculta_sale_del_navbar_pero_su_pagina_sigue(self):
+        from django.urls import reverse
+        self.configurar(categorias_ocultas=['Videojuegos PS5'])
+        url = reverse('productos_por_categoria', args=['Videojuegos PS5'])
+        self.assertNotContains(self.client.get('/menu/'), f'href="{url}"')
+        self.assertContains(self.client.get(url), 'Juego PS5')
+
+    def test_si_se_ocultan_todas_las_de_un_menu_el_menu_desaparece(self):
+        self.configurar(categorias_ocultas=['Figuras Funko', 'Figuras Amiibo'])
+        respuesta = self.client.get('/menu/')
+        self.assertNotContains(respuesta, '<a href="#">Figuras</a>')
+        self.assertContains(respuesta, '<a href="#">Consolas</a>')
+
+    def test_relacionados_de_la_misma_categoria_por_defecto(self):
+        relacionados = list(self.ficha().context['productos_relacionados'])
+        self.assertEqual(relacionados, [self.otro_ps5])
+
+    def test_relacionados_aleatorios_incluyen_otras_categorias(self):
+        self.configurar(productos_relacionados='aleatorios')
+        relacionados = set(self.ficha().context['productos_relacionados'])
+        self.assertEqual(relacionados, {self.otro_ps5, self.switch})
+
+    def test_relacionados_se_pueden_desactivar(self):
+        self.configurar(productos_relacionados='ninguno')
+        self.assertNotContains(self.ficha(), 'También te podría interesar')
+
+    def test_ocultar_opiniones_y_stock_en_la_ficha(self):
+        self.assertContains(self.ficha(), 'Opiniones del Producto')
+        self.assertContains(self.ficha(), '<strong>Stock:</strong>')
+        self.configurar(mostrar_opiniones=False, mostrar_stock=False)
+        respuesta = self.ficha()
+        self.assertNotContains(respuesta, 'Opiniones del Producto')
+        self.assertNotContains(respuesta, '<strong>Stock:</strong>')
+
+    def test_ocultar_etiquetas_del_catalogo(self):
+        self.assertContains(self.client.get('/menu/'), '¡Últimos!')
+        self.configurar(mostrar_etiquetas=False)
+        for url in ['/menu/', '/menu/?buscar=Juego', '/productos/Videojuegos PS5/']:
+            self.assertNotContains(self.client.get(url), 'badge-overlay', msg_prefix=url)
+
+    def test_hay_un_solo_registro_de_configuracion(self):
+        from .models import ConfiguracionSitio
+        ConfiguracionSitio.actual()
+        ConfiguracionSitio().save()
+        self.assertEqual(ConfiguracionSitio.objects.count(), 1)
+
+
+class ConfiguracionPanelTests(TestCase):  # HU-09: pantalla del panel
+    url = '/admin-panel/configuracion/'
+
+    def setUp(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def datos(self, **cambios):
+        from .forms import CATEGORIAS_NAVBAR
+        datos = {'productos_relacionados': 'categoria', 'mostrar_opiniones': 'on', 'mostrar_etiquetas': 'on',
+                 'mostrar_stock': 'on', 'categorias_visibles': CATEGORIAS_NAVBAR}
+        datos.update(cambios)
+        return {clave: valor for clave, valor in datos.items() if valor is not None}
+
+    def test_guarda_las_opciones(self):
+        from .forms import CATEGORIAS_NAVBAR
+        from .models import ConfiguracionSitio
+        visibles = [c for c in CATEGORIAS_NAVBAR if c != 'Accesorios Psp']
+        respuesta = self.client.post(self.url, self.datos(productos_relacionados='ninguno', mostrar_stock=None,
+                                                          categorias_visibles=visibles), follow=True)
+        self.assertContains(respuesta, 'Configuración guardada')
+        configuracion = ConfiguracionSitio.actual()
+        self.assertEqual(configuracion.productos_relacionados, 'ninguno')
+        self.assertFalse(configuracion.mostrar_stock)
+        self.assertTrue(configuracion.mostrar_opiniones)
+        self.assertEqual(configuracion.categorias_ocultas, ['Accesorios Psp'])
+
+    def test_el_formulario_muestra_lo_guardado(self):
+        from .models import ConfiguracionSitio
+        configuracion = ConfiguracionSitio.actual()
+        configuracion.categorias_ocultas = ['Figuras Amiibo']
+        configuracion.save()
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('value="Figuras Funko"\n                                   data-menu="4" checked', html)
+        self.assertNotIn('value="Figuras Amiibo"\n                                   data-menu="4" checked', html)
+
+    def test_valores_invalidos_no_se_guardan(self):
+        from .models import ConfiguracionSitio
+        for cambio in [{'productos_relacionados': 'todos'}, {'categorias_visibles': ['Categoria Inventada']}]:
+            respuesta = self.client.post(self.url, self.datos(**cambio))
+            self.assertContains(respuesta, 'No se pudo guardar', msg_prefix=str(cambio))
+        configuracion = ConfiguracionSitio.actual()
+        self.assertEqual(configuracion.productos_relacionados, 'categoria')
+        self.assertEqual(configuracion.categorias_ocultas, [])
+
+    def test_solo_el_administrador_puede_entrar(self):
+        from .models import ConfiguracionSitio
+        self.client.force_login(crear_cliente())
+        self.assertNotEqual(self.client.get(self.url).status_code, 200)
+        self.client.post(self.url, self.datos(productos_relacionados='ninguno'))
+        self.assertEqual(ConfiguracionSitio.actual().productos_relacionados, 'categoria')

@@ -1,0 +1,134 @@
+/* Panel > Configuración (usa la base visual de styles_portada.css) */
+
+.config-campo {
+    padding: 0.85rem 0;
+    border-top: 1px solid #eef1f4;
+}
+
+.config-campo:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.config-campo__titulo {
+    display: block;
+    font-weight: 600;
+    color: #1c253b;
+}
+
+.config-campo__ayuda {
+    display: block;
+    font-size: 0.85rem;
+    color: #7a828c;
+    margin-top: 0.2rem;
+}
+
+.config-campo .form-switch .form-check-label {
+    font-weight: 600;
+    color: #1c253b;
+}
+
+.config-campo .form-check-input:checked {
+    background-color: #4e84a8;
+    border-color: #4e84a8;
+}
+
+.config-opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+
+.config-opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid #c9d3dc;
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    color: #1c253b;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.config-opcion:hover {
+    background: #eef1f4;
+}
+
+.config-opcion:has(input:checked) {
+    border-color: #4e84a8;
+    background: #eef5fa;
+    font-weight: 600;
+}
+
+.config-opcion input {
+    accent-color: #4e84a8;
+}
+
+.config-menus {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.config-menu {
+    border: 1px solid #e3e8ed;
+    border-radius: 10px;
+    padding: 0.75rem 1rem 1rem;
+    margin: 0;
+}
+
+.config-menu legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    float: none;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1c253b;
+    margin-bottom: 0.5rem;
+}
+
+.config-menu__todas {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4e84a8;
+    cursor: pointer;
+}
+
+.config-menu__todas:hover {
+    text-decoration: underline;
+}
+
+.config-grupo {
+    margin-top: 0.5rem;
+}
+
+.config-grupo__nombre {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #7a828c;
+    margin-bottom: 0.2rem;
+}
+
+.config-categoria {
+    margin-bottom: 0.15rem;
+    font-size: 0.9rem;
+    color: #1c253b;
+    cursor: pointer;
+}
+
+.config-categoria .form-check-input:checked {
+    background-color: #4e84a8;
+    border-color: #4e84a8;
+}

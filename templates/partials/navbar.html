@@ -5,7 +5,8 @@ Navbar de la tienda. Variantes (se pasan con {% include ... with %}):
   en_menu: oculta el link "Productos" (la página del menú)
   carrito: agrupa login, iconos y buscador en .nav-extras (styles_carrito.css)
   nav_clase: clase para el <nav> (producto_detalle usa "navbar-main", ver styles_prod_detalle.css)
-Las tarjetas promocionales de cada menú vienen de `portada` (context_processors.py) y se editan en el panel.
+Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales de `portada`
+(context_processors.py); ambos se editan en el panel (Configuración y Portada).
 {% endcomment %}
 <nav{% if nav_clase %} class="{{ nav_clase }}"{% endif %}>
   <div class="navbar">
@@ -25,125 +26,33 @@ Las tarjetas promocionales de cada menú vienen de `portada` (context_processors
         <li><a href="#redes">Redes</a></li>
         {% else %}
         {% if not en_menu %}<li><a href="/menu">Productos</a></li>{% endif %}
+        {# las categorías vienen de MENU_NAVBAR (constants.py); las ocultas se quitan en Configuración del panel #}
+        {% for menu in menu_navbar %}
         <li>
-          <a href="#">Videojuegos</a>
-          <i class='bx bxs-chevron-down htmlcss-arrow arrow'></i>
-          
-          <div class="htmlCss-sub-menu sub-menu mega-menu-box">
+          <a href="#">{{ menu.nombre }}</a>
+          <i class='bx bxs-chevron-down {{ menu.clase_flecha }} arrow'></i>
+
+          <div class="{{ menu.clase_submenu }} sub-menu mega-menu-box">
             <div class="d-flex">
-              
               <div class="menu-links-col">
-                <ul class="list-unstyled mb-0"> <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PlayStation</span></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos PS3' %}">PlayStation 3</a></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos PS4' %}">PlayStation 4</a></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos PS5' %}">PlayStation 5</a></li>
-                  <hr class="my-2">
-                  <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft</span></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX 360' %}">XBOX 360</a></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX ONE' %}">XBOX ONE</a></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos XBOX SERIES' %}">XBOX SERIES</a></li>
-                  <hr class="my-2">
-                  <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos Nintendo SWITCH' %}">SWITCH</a></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos Nintendo 3DS' %}">3DS</a></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos WII' %}">WII</a></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos WII U' %}">WII U</a></li>
-                  <hr class="my-2">
-                  <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PC</span></li>
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Videojuegos para PC' %}">Videojuegos PC</a></li>
+                <ul class="list-unstyled mb-0">
+                  {% for grupo in menu.grupos %}
+                  {% if not forloop.first %}<hr class="my-2">{% endif %}
+                  <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">{{ grupo.nombre }}</span></li>
+                  {% for codigo, etiqueta in grupo.categorias %}
+                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' codigo %}">{{ etiqueta }}</a></li>
+                  {% endfor %}
+                  {% endfor %}
                 </ul>
               </div>
 
               <div class="menu-image-col">
-                {% include "partials/promo_menu.html" with destacado=portada.menu_videojuegos texto_link="Ver detalles" vacio="Próximamente" %}
+                {% include "partials/promo_menu.html" with destacado=menu.destacado texto_link=menu.texto_link color_etiqueta=menu.color_etiqueta vacio=menu.vacio %}
               </div>
-
             </div>
           </div>
         </li>
-        <li>
-            <a href="#">Consolas</a>
-            <i class='bx bxs-chevron-down js-arrow arrow'></i>
-            
-            <div class="js-sub-menu sub-menu mega-menu-box">
-                <div class="d-flex">
-                    <div class="menu-links-col">
-                        <ul class="list-unstyled mb-0">
-                            <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PlayStation</span></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Ps4 Consolas' %}">PlayStation 4</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Ps5 Consolas' %}">PlayStation 5</a></li>
-                            <hr class="my-2">
-                            <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft</span></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Xbox One Consolas' %}">XBOX ONE</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Xbox Series Consolas' %}">XBOX SERIES</a></li>
-                            <hr class="my-2">
-                            <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Wii U Consolas' %}">WII U</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Switch Consolas' %}">SWITCH</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="menu-image-col">
-                        {% include "partials/promo_menu.html" with destacado=portada.menu_consolas texto_link="Ver consola" vacio="Próximamente" %}
-                    </div>
-                </div>
-            </div>
-        </li>
-        <li>
-            <a href="#">Accesorios</a>
-            <i class='bx bxs-chevron-down js-arrow arrow'></i>
-            
-            <div class="js-sub-menu sub-menu mega-menu-box">
-                <div class="d-flex">
-                    <div class="menu-links-col">
-                        <ul class="list-unstyled mb-0">
-                            <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">PlayStation</span></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Psp' %}">PSP</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Ps Vita' %}">VITA</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS1' %}">PLAY STATION 1</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS2' %}">PLAY STATION 2</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS3' %}">PLAY STATION 3</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS4' %}">PLAY STATION 4</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios PS5' %}">PLAY STATION 5</a></li>
-                            <hr class="my-2">
-                            <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Microsoft</span></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX 360' %}">XBOX 360</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX ONE' %}">XBOX ONE</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios XBOX SERIES' %}">XBOX SERIES</a></li>
-                            <hr class="my-2">
-                            <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Nintendo</span></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Nintendo 3DS' %}">3DS</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios WII U' %}">WII U</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Accesorios Nintendo SWITCH' %}">SWITCH</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="menu-image-col">
-                        {% include "partials/promo_menu.html" with destacado=portada.menu_accesorios texto_link="Ver accesorio" color_etiqueta="#8e44ad" vacio="Sin stock destacado" %}
-                    </div>
-                </div>
-            </div>
-        </li>
-        <li>
-            <a href="#">Figuras</a>
-            <i class='bx bxs-chevron-down js-arrow arrow'></i>
-            
-            <div class="js-sub-menu sub-menu mega-menu-box">
-                <div class="d-flex">
-                    <div class="menu-links-col">
-                        <ul class="list-unstyled mb-0">
-                            <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">Coleccionables</span></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Figuras Funko' %}">FUNKO POP</a></li>
-                            <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' 'Figuras Amiibo' %}">AMIIBO</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="menu-image-col">
-                        {% include "partials/promo_menu.html" with destacado=portada.menu_figuras texto_link="Lo quiero" color_etiqueta="#f39c12" vacio="Próximamente" %}
-                    </div>
-                </div>
-            </div>
-        </li>
+        {% endfor %}
         {% endif %}
       </ul>
       <div class="sidebar-login">

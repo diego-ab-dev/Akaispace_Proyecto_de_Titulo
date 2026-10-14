@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404, render
 
-from appPrincipal.models import Favorito, Producto
+from appPrincipal.models import ConfiguracionSitio, Favorito, Producto
 
 PLATAFORMAS = {
     codigo: (nombre, categorias)
@@ -165,10 +165,14 @@ def producto_detalle(request, producto_id):
             "percent": round(percent, 1)
         })
 
-    productos_relacionados = Producto.objects.filter(
-        categoria=producto.categoria, 
-        stock__gt=0,
-    ).exclude(id=producto.id).order_by('?')[:4]
+    # qué relacionados se muestran lo decide el admin en Configuración del panel
+    configuracion = ConfiguracionSitio.actual()
+    productos_relacionados = Producto.objects.none()
+    if configuracion.productos_relacionados != ConfiguracionSitio.RELACIONADOS_NINGUNO:
+        productos_relacionados = Producto.objects.filter(stock__gt=0).exclude(id=producto.id)
+        if configuracion.productos_relacionados == ConfiguracionSitio.RELACIONADOS_CATEGORIA:
+            productos_relacionados = productos_relacionados.filter(categoria=producto.categoria)
+        productos_relacionados = productos_relacionados.order_by('?')[:4]
 
     es_favorito = False
     if request.user.is_authenticated:
