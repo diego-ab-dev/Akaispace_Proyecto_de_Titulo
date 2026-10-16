@@ -39,7 +39,7 @@
 
 {% if pago %}
 <p style="margin:16px 0 0; font-size:13px; color:#6B7280;">
-  Pagado con {{ venta.metodo_pago }}{% if pago.tarjeta_ultimos_digitos %} (tarjeta **** {{ pago.tarjeta_ultimos_digitos }}){% endif %}{% if pago.cuotas and pago.cuotas > 1 %} en {{ pago.cuotas }} cuotas{% endif %}.
+  Pagado con {{ venta.metodo_pago_texto }}{% if pago.tarjeta_ultimos_digitos %} (tarjeta **** {{ pago.tarjeta_ultimos_digitos }}){% endif %}{% if pago.cuotas and pago.cuotas > 1 %} en {{ pago.cuotas }} cuotas{% endif %}.
   Orden {{ pago.orden_compra }} · Código de autorización {{ pago.codigo_autorizacion }}.
 </p>
 {% endif %}

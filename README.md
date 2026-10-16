@@ -134,6 +134,21 @@ DB_PORT=3306
 
 `DEBUG=True` es solo para desarrollo. En un servidor real va `DEBUG=False`, con una `SECRET_KEY` distinta y el dominio en `ALLOWED_HOSTS`.
 
+### (Opcional) Envío real de correos
+
+Sin esta configuración el proyecto funciona igual, pero los correos (confirmación de compra y recuperación de contraseña) **no se envían**: solo se muestran en la terminal donde corre `runserver`.
+
+Para enviarlos de verdad, en el `.env` quita el `#` del inicio de estas líneas de la sección "Correo":
+
+```
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST_USER=akaispacepruebas13@gmail.com
+EMAIL_HOST_PASSWORD=la-contraseña-de-aplicación-de-16-letras
+DEFAULT_FROM_EMAIL=Akaispace <akaispacepruebas13@gmail.com>
+```
+
+La contraseña de aplicación de la cuenta de pruebas **no está en el repositorio**: pídesela al encargado del proyecto y pégala en `EMAIL_HOST_PASSWORD=`. Después reinicia `runserver`.
+
 ## Paso 7: Ejecutar el proyecto
 
 Con el entorno virtual activo:
@@ -285,6 +300,8 @@ El navbar está en `templates/partials/navbar.html`, el footer en `templates/par
 | `Unknown database 'db_akaispace'` | No se creó la base de datos | Repetir el Paso 5 |
 | `SECRET_KEY not found` | Falta `SECRET_KEY` en el archivo `.env` | Agregarla como se indica en el Paso 6 |
 | La página carga sin estilos ni imágenes | `DEBUG` no está en `True` en el `.env` | Agregar `DEBUG=True` al `.env` |
+| Los correos no llegan (aparecen en la terminal) | Falta la configuración de correo en el `.env` | Seguir "(Opcional) Envío real de correos" en el Paso 6 |
+| `SMTPAuthenticationError` al enviar un correo | `EMAIL_HOST_PASSWORD` incorrecta o se usó la contraseña normal de Gmail | Usar la contraseña de aplicación de la cuenta de pruebas |
 | `Table '...' doesn't exist` | Faltan las tablas | Ejecutar `python manage.py migrate` |
 | `InconsistentMigrationHistory` | El `.env` apunta a la base de datos antigua | Seguir la sección "Si ya tenías el proyecto instalado" |
 | `No module named 'axes'` | Faltan librerías nuevas | Ejecutar `pip install -r requirements.txt` |

@@ -6,7 +6,7 @@ import secrets
 from django.db import transaction
 
 from appPrincipal import correos, envios, webpay
-from appPrincipal.models import (Boleta, Envio, ItemCarritoProducto, PagoWebpay, Producto,
+from appPrincipal.models import (Boleta, Carrito, Envio, ItemCarritoProducto, PagoWebpay, Producto,
                                  ProductoVenta, Venta)
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ def crear_venta(usuario, items, metodo_envio, direccion_envio, metodo_pago):
             producto = productos[item['producto_id']]
             ProductoVenta.objects.create(
                 venta=venta, producto=producto, cantidad=item['cantidad'], precio_unitario=item['precio_unitario'],
+                costo_unitario=producto.costo,
             )
             producto.stock -= item['cantidad']
             producto.save(update_fields=['stock'])
@@ -63,6 +64,7 @@ def iniciar_pago(usuario, carrito, metodo_envio, url_retorno):
     subtotal = sum(item['cantidad'] * item['precio_unitario'] for item in items)
     pago = PagoWebpay.objects.create(
         usuario=usuario,
+        carrito=carrito,
         orden_compra=_nueva_orden_compra(),
         monto=subtotal + envios.costo_envio(metodo_envio, subtotal),
         items=items,
@@ -93,6 +95,18 @@ def _sacar_del_carrito(pago):
             en_carrito.save(update_fields=['cantidad'])
         else:
             en_carrito.delete()
+
+
+# Saca lo comprado del carrito y lo deja en el historial como pagado (KPI-04).
+# Lo que el cliente agregó mientras pagaba pasa a un carrito vigente nuevo.
+def _cerrar_carrito(pago):
+    _sacar_del_carrito(pago)
+    carrito = pago.carrito
+    if carrito is None or not carrito.vigente:
+        return
+    carrito.cerrar()
+    if carrito.items.exists():
+        carrito.items.update(carrito=Carrito.objects.create(usuario=pago.usuario))
 
 
 def _reembolsar(pago, motivo):
@@ -135,7 +149,7 @@ def confirmar_pago(token):
 
         try:
             venta = crear_venta(pago.usuario, pago.items, pago.metodo_envio, pago.direccion_envio,
-                                pago.metodo_pago_texto)
+                                Venta.PAGO_WEBPAY)
         except ValueError as error:
             _reembolsar(pago, f"{error}. Reversamos el cargo completo.")
             pago.save()
@@ -145,7 +159,7 @@ def confirmar_pago(token):
         pago.estado = PagoWebpay.APROBADO
         pago.detalle = ''
         pago.save()
-        _sacar_del_carrito(pago)
+        _cerrar_carrito(pago)
     logger.info("Pago %s aprobado: venta %s", pago.orden_compra, pago.venta_id)
     correos.enviar_confirmacion_compra(pago.venta)
     return pago

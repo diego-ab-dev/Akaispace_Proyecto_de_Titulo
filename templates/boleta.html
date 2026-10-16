@@ -51,10 +51,10 @@
             <span>TOTAL:</span>
             <span>${{ venta.total|formato_chileno }}</span>
         </div>
-        {% if venta.metodo_pago %}
+        {% if venta.metodo_pago_texto %}
         <div style="display:flex; justify-content:space-between; margin-top: 8px;">
             <span>Pago:</span>
-            <span>{{ venta.metodo_pago|capfirst }}</span>
+            <span>{{ venta.metodo_pago_texto|capfirst }}</span>
         </div>
         {% endif %}
         {% with pago=venta.pago_webpay %}
