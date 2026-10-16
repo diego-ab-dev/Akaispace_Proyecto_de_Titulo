@@ -3,7 +3,7 @@ import re
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.dateparse import parse_datetime
-from django.utils.timezone import now
+from django.utils.timezone import localdate, now
 
 from appPrincipal.envios import OPCIONES_ENVIO, costo_envio, estados_para, lleva_seguimiento
 
@@ -183,10 +183,13 @@ class Producto(models.Model):
         ]),
     ]
 
-    codigo_de_barra = models.CharField(max_length=20, verbose_name="Código de Barra")
+    codigo_de_barra = models.CharField(max_length=20, db_index=True, verbose_name="Código de Barra")
     nombre = models.CharField(max_length=100)
-    precio = models.PositiveIntegerField(default=0)  
-    stock = models.PositiveIntegerField(default=0)  
+    precio = models.PositiveIntegerField(default=0)
+    costo = models.PositiveIntegerField(default=0, help_text="Costo unitario con IVA, para calcular la ganancia.")
+    stock = models.PositiveIntegerField(default=0)
+    stock_critico = models.PositiveIntegerField(default=5, verbose_name="Stock crítico",
+                                                help_text="Con esta cantidad o menos, el producto aparece en el reporte de stock crítico.")
     descripcion = models.TextField(blank=True, null=True, default='', verbose_name="Descripción")
     imagen_principal = models.ImageField(upload_to='productos/', verbose_name="Imagen Principal", default='') 
     imagen_2 = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name="Imagen Opcional 2")
@@ -223,9 +226,33 @@ class Producto(models.Model):
             return 0
         return round(sum(opinion.puntuacion for opinion in opiniones) / len(opiniones), 1)
 
-# clase Carrito
+class CarritoVigenteManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(vigente=True)
+
+
+# clase Carrito: cada usuario tiene un carrito vigente; al pagarse queda en el historial (KPI-04)
 class Carrito(models.Model):
-    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='carrito')
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='carritos')
+    # True = carrito en uso; NULL = ya se pagó. La restricción única ignora los NULL,
+    # así la BD permite un solo carrito vigente por usuario y muchos en el historial.
+    vigente = models.BooleanField(null=True, default=True)
+    creado_en = models.DateTimeField(default=now)
+    convertido_en = models.DateTimeField(null=True, blank=True, verbose_name="Pagado en")
+
+    objects = CarritoVigenteManager()
+    todos = models.Manager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['usuario', 'vigente'], name='un_carrito_vigente_por_usuario'),
+        ]
+
+    def cerrar(self):
+        """Deja el carrito en el historial como convertido en compra."""
+        self.vigente = None
+        self.convertido_en = now()
+        self.save(update_fields=['vigente', 'convertido_en'])
 
     def total_carrito(self):
         return sum(
@@ -252,14 +279,46 @@ class Venta(models.Model):
         ('por_pagar', 'Envío por pagar'),
         ('domicilio', 'Envío a domicilio'),
     ]
-    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='ventas')
+    CANAL_WEB = 'web'
+    CANAL_TIENDA = 'tienda'
+    CANAL_WHATSAPP = 'whatsapp'
+    CANALES = [
+        (CANAL_WEB, 'Tienda en línea'),
+        (CANAL_TIENDA, 'Tienda física'),
+        (CANAL_WHATSAPP, 'WhatsApp'),
+    ]
+    PAGO_WEBPAY = 'webpay'
+    PAGO_TARJETA = 'tarjeta'
+    PAGO_EFECTIVO = 'efectivo'
+    PAGO_TRANSFERENCIA = 'transferencia'
+    METODOS_PAGO = [
+        (PAGO_WEBPAY, 'Webpay'),
+        (PAGO_TARJETA, 'Tarjeta en terminal'),
+        (PAGO_EFECTIVO, 'Efectivo'),
+        (PAGO_TRANSFERENCIA, 'Transferencia'),
+    ]
+    # las ventas presenciales (HU-12) pueden no tener un cliente con cuenta
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, null=True, blank=True, related_name='ventas')
+    canal = models.CharField(max_length=10, choices=CANALES, default=CANAL_WEB)
     envio = models.PositiveIntegerField(default=0)
     subtotal = models.PositiveIntegerField(default=0)
     total = models.PositiveIntegerField(default=0)
-    metodo_pago = models.CharField(max_length=30, null=True, blank=True) 
-    fecha = models.DateTimeField(auto_now_add=True)
-    metodo_envio = models.CharField(max_length=10, choices=ENVIO_CHOICES, default='')
+    metodo_pago = models.CharField(max_length=15, choices=METODOS_PAGO, blank=True, default='')
+    fecha = models.DateTimeField(auto_now_add=True, db_index=True)
+    metodo_envio = models.CharField(max_length=10, choices=ENVIO_CHOICES, blank=True, default='')
     direccion_envio = models.TextField(blank=True, null=True)
+    anulada_en = models.DateTimeField(null=True, blank=True, verbose_name="Anulada en")
+
+    @property
+    def anulada(self):
+        return self.anulada_en is not None
+
+    @property
+    def metodo_pago_texto(self):
+        pago = getattr(self, 'pago_webpay', None)
+        if pago is not None:
+            return pago.metodo_pago_texto
+        return self.get_metodo_pago_display()
 
     def calcular_total(self):
         self.subtotal = sum(
@@ -291,7 +350,8 @@ class ProductoVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='producto_venta')
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.PositiveIntegerField(default=1)
-    precio_unitario = models.PositiveIntegerField() 
+    precio_unitario = models.PositiveIntegerField()
+    costo_unitario = models.PositiveIntegerField(default=0, help_text="Costo del producto al momento de la venta.")
 
     @property
     def total_producto(self):
@@ -326,7 +386,17 @@ class Reclamo(models.Model):
         ('Abierto', 'Abierto'),
         ('Respondido', 'Respondido'),
     ]
-    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='reclamos')
+    CANALES = [
+        ('web', 'Plataforma'),
+        ('whatsapp', 'WhatsApp'),
+        ('tienda', 'Tienda física'),
+    ]
+    # KPI-08: el admin registra también los reclamos recibidos por WhatsApp o en tienda,
+    # que pueden venir de personas sin cuenta (se guardan su nombre y contacto)
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, null=True, blank=True, related_name='reclamos')
+    canal = models.CharField(max_length=10, choices=CANALES, default='web')
+    nombre_contacto = models.CharField(max_length=100, blank=True, verbose_name="Nombre de quien reclama")
+    contacto = models.CharField(max_length=100, blank=True, verbose_name="Teléfono o correo de contacto")
     venta = models.ForeignKey(Venta, on_delete=models.PROTECT, null=True, blank=True, related_name='reclamos')
     estado = models.CharField(max_length=20,choices=ESTADO_CHOICES, default='Abierto')
     asunto = models.CharField(max_length=255, default='No especificado')
@@ -480,6 +550,7 @@ class PagoWebpay(models.Model):
 
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='pagos_webpay')
     venta = models.OneToOneField(Venta, on_delete=models.PROTECT, null=True, blank=True, related_name='pago_webpay')
+    carrito = models.ForeignKey(Carrito, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos_webpay')
     orden_compra = models.CharField(max_length=26, unique=True)
     token = models.CharField(max_length=64, unique=True, null=True, blank=True)
     monto = models.PositiveIntegerField()
@@ -621,6 +692,8 @@ class ConfiguracionSitio(models.Model):
     mostrar_etiquetas = models.BooleanField(default=True, verbose_name='Mostrar etiquetas "Nuevo" y "¡Últimos!"')
     mostrar_stock = models.BooleanField(default=True, verbose_name="Mostrar el stock disponible en la ficha")
     categorias_ocultas = models.JSONField(default=list, blank=True, verbose_name="Categorías ocultas del navbar")
+    # HU-07: se habilita cuando el catálogo tiene sus atributos completos (KPI-10)
+    mostrar_recomendaciones = models.BooleanField(default=False, verbose_name="Mostrar recomendaciones personalizadas")
     actualizado = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -639,3 +712,124 @@ class ConfiguracionSitio(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1
         super().save(*args, **kwargs)
+
+
+# clase Proveedor: a quién le compra mercadería la tienda (reporte de compras, HU-10)
+class Proveedor(models.Model):
+    nombre = models.CharField(max_length=100)
+    rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
+    telefono = models.CharField(max_length=20, blank=True, verbose_name="Teléfono")
+    email = models.EmailField(blank=True)
+
+    class Meta:
+        ordering = ['nombre']
+        verbose_name_plural = "Proveedores"
+
+    def __str__(self):
+        return self.nombre
+
+
+# clase Compra: ingreso de mercadería al inventario (HU-10)
+class Compra(models.Model):
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, related_name='compras')
+    numero_documento = models.CharField(max_length=30, blank=True, verbose_name="N.º de factura o documento")
+    fecha = models.DateField(default=localdate, db_index=True)
+    total = models.PositiveIntegerField(default=0, help_text="Total con IVA.")
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"Compra #{self.id} - {self.proveedor}"
+
+    def calcular_total(self):
+        self.total = sum(detalle.total_producto for detalle in self.detalles.all())
+        self.save(update_fields=['total'])
+
+
+# clase DetalleCompra
+class DetalleCompra(models.Model):
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='detalles')
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name='compras')
+    cantidad = models.PositiveIntegerField(default=1)
+    costo_unitario = models.PositiveIntegerField(help_text="Costo unitario con IVA.")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['compra', 'producto'], name='detalle_compra_unico'),
+        ]
+
+    @property
+    def total_producto(self):
+        return self.cantidad * self.costo_unitario
+
+    def __str__(self):
+        return f"{self.producto.nombre} (Cantidad: {self.cantidad})"
+
+
+# clase MovimientoCaja: dinero que se saca o ingresa a la caja de la tienda física (reportes de caja y retiros, HU-10)
+class MovimientoCaja(models.Model):
+    RETIRO = 'retiro'
+    INGRESO = 'ingreso'
+    TIPOS = [
+        (RETIRO, 'Retiro de dinero'),
+        (INGRESO, 'Ingreso de dinero'),
+    ]
+    tipo = models.CharField(max_length=10, choices=TIPOS)
+    monto = models.PositiveIntegerField()
+    motivo = models.CharField(max_length=255)
+    fecha = models.DateTimeField(default=now, db_index=True)
+
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = "Movimiento de caja"
+        verbose_name_plural = "Movimientos de caja"
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} de ${self.monto}"
+
+
+# clase InteraccionProducto: navegación del cliente que alimenta las recomendaciones (HU-07).
+# Solo se registra si el cliente autorizó el uso de sus datos de navegación.
+class InteraccionProducto(models.Model):
+    VISTA = 'vista'
+    CARRITO = 'carrito'
+    TIPOS = [
+        (VISTA, 'Vio la ficha del producto'),
+        (CARRITO, 'Agregó el producto al carrito'),
+    ]
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='interacciones')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='interacciones')
+    tipo = models.CharField(max_length=10, choices=TIPOS)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['usuario', 'fecha'], name='interaccion_usuario_fecha')]
+        verbose_name = "Interacción con producto"
+        verbose_name_plural = "Interacciones con productos"
+
+    def __str__(self):
+        return f"{self.usuario} - {self.producto} ({self.tipo})"
+
+
+# clase Recomendacion: cada producto recomendado que se le mostró a un cliente y si hizo clic (KPI-05)
+class Recomendacion(models.Model):
+    UBICACIONES = [
+        ('home', 'Página principal'),
+        ('ficha', 'Ficha de producto'),
+    ]
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='recomendaciones')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='recomendaciones')
+    ubicacion = models.CharField(max_length=10, choices=UBICACIONES, verbose_name="Ubicación")
+    posicion = models.PositiveSmallIntegerField(default=1, verbose_name="Posición")
+    version_modelo = models.CharField(max_length=20, blank=True, help_text="Versión del modelo que generó la recomendación.")
+    mostrada_en = models.DateTimeField(auto_now_add=True, db_index=True)
+    clic_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Recomendación"
+        verbose_name_plural = "Recomendaciones"
+
+    def __str__(self):
+        return f"{self.producto} para {self.usuario} ({self.get_ubicacion_display()})"

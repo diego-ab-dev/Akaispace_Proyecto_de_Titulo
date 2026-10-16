@@ -125,7 +125,15 @@ def logout(request):
     return redirect('login')
 
 
-recuperar_contraseña = PasswordResetView.as_view(
+class RecuperarContraseñaView(PasswordResetView):
+    # con django.contrib.sites (lo usa allauth) Django tomaría el dominio del Site para el
+    # enlace del correo; se usa el dominio con que el cliente entró al sitio
+    def form_valid(self, form):
+        self.extra_email_context = {'domain': self.request.get_host()}
+        return super().form_valid(form)
+
+
+recuperar_contraseña = RecuperarContraseñaView.as_view(
     template_name='recuperar_contraseña.html',
     subject_template_name='correos/recuperar_contraseña_asunto.txt',
     email_template_name='correos/recuperar_contraseña.txt',

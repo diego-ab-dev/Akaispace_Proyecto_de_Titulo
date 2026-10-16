@@ -77,7 +77,7 @@
 
                 <div class="data-row mt-3">
                     <span class="data-label">Método de Pago:</span> 
-                    <span>{{ venta.metodo_pago|capfirst }}</span>
+                    <span>{{ venta.metodo_pago_texto|capfirst }}</span>
                 </div>
                 {% with pago=venta.pago_webpay %}
                 {% if pago %}

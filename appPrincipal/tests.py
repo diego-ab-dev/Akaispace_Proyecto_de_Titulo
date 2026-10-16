@@ -336,6 +336,8 @@ class ModeloTests(TestCase):  # 17, 25, 26 y 28
         self.client.post(f'/ventas/anular/{self.venta.id}/')
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 7)  # 5 + 2 devueltos una sola vez
+        self.venta.refresh_from_db()
+        self.assertTrue(self.venta.anulada)
 
     @override_settings(ROOT_URLCONF='appPrincipal.tests')
     def test_admin_de_django_elimina_productos_de_forma_logica(self):
@@ -1199,11 +1201,21 @@ class WebpayTests(TestCase):  # HU-05 y HU-06: pago con Webpay Plus (Transbank s
         pago.refresh_from_db()
         self.assertEqual(pago.estado, PagoWebpay.APROBADO)
         venta = pago.venta
-        self.assertEqual((venta.total, venta.metodo_pago), (20000, 'Webpay - Débito'))
+        self.assertEqual((venta.total, venta.metodo_pago, venta.metodo_pago_texto), (20000, 'webpay', 'Webpay - Débito'))
         self.assertTrue(hasattr(venta, 'boleta'))
         self.assertEqual(self.stock(), 3)
         self.assertFalse(self.carrito.items.exists())
         self.assertEqual((pago.codigo_autorizacion, pago.tarjeta_ultimos_digitos), ('1213', '6623'))
+
+    def test_pago_aprobado_deja_el_carrito_en_el_historial(self):  # KPI-04
+        from .models import Carrito
+        _, pago = pagar(self.client)
+        self.carrito.refresh_from_db()
+        self.assertEqual(pago.carrito, self.carrito)
+        self.assertIsNone(self.carrito.vigente)
+        self.assertIsNotNone(self.carrito.convertido_en)
+        self.assertFalse(Carrito.objects.filter(usuario=self.cliente).exists())
+        self.assertEqual(Carrito.todos.filter(usuario=self.cliente).count(), 1)
 
     def test_comprobante_muestra_los_datos_de_transbank(self):
         _, pago = pagar(self.client)
@@ -1326,14 +1338,16 @@ class WebpayTests(TestCase):  # HU-05 y HU-06: pago con Webpay Plus (Transbank s
         self.assertEqual(pago.venta.total, 20000)
 
     def test_lo_agregado_al_carrito_mientras_pagaba_se_conserva(self):
-        from .models import ItemCarritoProducto
+        from .models import Carrito, ItemCarritoProducto
         _, pago = iniciar_pago(self.client)
         otro = crear_producto('Otro')
         ItemCarritoProducto.objects.create(carrito=self.carrito, producto=otro)
         self.item.cantidad = 3
         self.item.save()
         volver_de_webpay(self.client, pago)
-        quedan = {i.producto_id: i.cantidad for i in self.carrito.items.all()}
+        vigente = Carrito.objects.get(usuario=self.cliente)
+        self.assertNotEqual(vigente, self.carrito)
+        quedan = {i.producto_id: i.cantidad for i in vigente.items.all()}
         self.assertEqual(quedan, {otro.id: 1, self.producto.id: 1})
 
     def test_transbank_caido_al_iniciar(self):

@@ -136,6 +136,8 @@ def anular_venta(request, venta_id):
         if envio.estado != "Anulada":
             envio.estado = "Anulada"
             envio.save()
+            venta.anulada_en = timezone.now()
+            venta.save(update_fields=['anulada_en'])
 
             devuelto = dict(
                 venta.devoluciones.filter(estado='Aprobada', producto__isnull=False)
