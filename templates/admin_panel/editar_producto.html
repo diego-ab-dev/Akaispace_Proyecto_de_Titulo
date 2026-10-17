@@ -44,9 +44,21 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label">{{ form.costo.label }} (opcional, para el reporte de ganancia)</label>
+                    {{ form.costo }}
+                    <div class="text-danger small">{{ form.costo.errors }}</div>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">Stock</label>
                     {{ form.stock }}
                     <div class="text-danger small">{{ form.stock.errors }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ form.stock_critico.label }}</label>
+                    {{ form.stock_critico }}
+                    <div class="text-danger small">{{ form.stock_critico.errors }}</div>
                 </div>
 
                 <div class="mb-3">
@@ -55,50 +67,7 @@
                     <div class="text-danger small">{{ form.descripcion.errors }}</div>
                 </div>
 
-                <div class="images-section mt-4 mb-4">
-                    <h6 class="mb-3" style="color: #4f81a1; font-weight: bold;">Imágenes</h6>
-
-                    {% for field in form %}
-                        {% if 'imagen' in field.name %}
-                        <div class="mb-3 p-3 bg-light rounded border-start border-4 border-secondary">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label fw-bold mb-0">{{ field.label }}</label>
-
-                                {% if field.value %}
-                                    <button type="button" class="badge text-white border-0 text-decoration-none" style="background-color: #4e84a8;" data-bs-toggle="modal" data-bs-target="#modal-{{ field.name }}">
-                                        Ver imagen actual
-                                    </button>
-
-                                    <div class="modal fade" id="modal-{{ field.name }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h1 class="modal-title fs-5">{{ field.label }}</h1>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                                                </div>
-                                                <div class="modal-body text-center bg-dark">
-                                                    <img src="{{ field.value.url }}" class="img-fluid rounded" style="max-height: 500px;" alt="Vista previa">
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn" style="background-color: #1c253b; color: #FFFFFF;" data-bs-dismiss="modal">Cerrar</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% else %}
-                                    <span class="badge border" style="background-color: #4a6f8a; color: #FFFFFF;">Sin imagen</span>
-                                {% endif %}
-                            </div>
-
-                            <div class="input-group">
-                                {{ field }}
-                            </div>
-
-                            <div class="text-danger small mt-1">{{ field.errors }}</div>
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                {% include "admin_panel/partials/imagenes_producto.html" %}
 
                 <div class="mb-3">
                     <label class="form-label">Categoría</label>
@@ -106,8 +75,14 @@
                     <div class="text-danger small">{{ form.categoria.errors }}</div>
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label">Plataforma (obligatoria en Videojuegos, Consolas y Accesorios)</label>
+                    {{ form.plataforma }}
+                    <div class="text-danger small">{{ form.plataforma.errors }}</div>
+                </div>
+
                 <div class="mb-4">
-                    <label class="form-label">Género</label>
+                    <label class="form-label">Género (obligatorio en Videojuegos)</label>
                     {{ form.genero }}
                     <div class="text-danger small">{{ form.genero.errors }}</div>
                 </div>

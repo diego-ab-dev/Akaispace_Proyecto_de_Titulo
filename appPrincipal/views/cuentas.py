@@ -2,6 +2,7 @@
 import logging
 
 from axes.utils import reset as reset_axes
+from django.conf import settings
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.views import (PasswordResetCompleteView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetView)
 from django.db import IntegrityError
@@ -51,7 +52,10 @@ def login(request):
                 logger.info("Inicio de sesión: usuario %s (admin=%s)", usuario.pk, usuario.is_staff)
                 return _redirigir_tras_login(request, usuario)
 
-    return render(request, 'login.html', {'errors': errors})
+    return render(request, 'login.html', {
+        'errors': errors,
+        'google_habilitado': bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
+    })
 
 
 def register(request):
@@ -101,6 +105,7 @@ def register(request):
                     direccion=form.cleaned_data['direccion'],
                     ciudad=form.cleaned_data['ciudad'],
                     region=form.cleaned_data['region'],
+                    declaracion_edad=form.cleaned_data['declaracion_edad'],
                     privacidad_aceptada_en=momento_consentimiento,
                     privacidad_version=POLITICA_PRIVACIDAD_VERSION,
                     datos_navegacion_autorizados_en=momento_consentimiento if autoriza_navegacion else None,

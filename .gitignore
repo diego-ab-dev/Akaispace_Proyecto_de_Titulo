@@ -15,3 +15,6 @@ staticfiles/
 # Archivos del sistema
 .DS_Store
 Thumbs.db
+
+# Respaldos locales de la base de datos (mysqldump)
+respaldos/

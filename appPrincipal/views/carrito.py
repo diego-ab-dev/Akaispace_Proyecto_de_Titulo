@@ -49,10 +49,12 @@ def agregar_al_carrito(request, producto_id):
     })
 
 
+# los ítems del carrito se identifican por el producto: la clave primaria es (carrito, producto)
 @login_required_json
 @require_POST
-def eliminar_del_carrito(request, item_id):
-    item = ItemCarritoProducto.objects.filter(id=item_id, carrito__usuario=request.user).first()
+def eliminar_del_carrito(request, producto_id):
+    item = ItemCarritoProducto.objects.filter(producto_id=producto_id, carrito__vigente=True,
+                                              carrito__usuario=request.user).first()
     if item is None:
         return JsonResponse({'success': False, 'error': 'El producto ya no está en tu carrito.'}, status=404)
 
@@ -83,9 +85,9 @@ def eliminar_seleccionados_carrito(request):
         return JsonResponse({'success': False, 'error': 'Selecciona al menos un producto.'}, status=400)
 
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
-    # solo se borran los ítems de este carrito; ids ajenos o ya eliminados se ignoran
-    items = carrito.items.filter(id__in=ids)
-    eliminados = list(items.values_list('id', flat=True))
+    # los ids son de productos; solo se borran los de este carrito, los demás se ignoran
+    items = carrito.items.filter(producto_id__in=ids)
+    eliminados = list(items.values_list('producto_id', flat=True))
     if not eliminados:
         return JsonResponse({'success': False, 'error': 'Los productos seleccionados ya no están en tu carrito.'}, status=404)
     items.delete()
@@ -97,7 +99,7 @@ def eliminar_seleccionados_carrito(request):
 @require_POST
 def vaciar_carrito(request):
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
-    eliminados = list(carrito.items.values_list('id', flat=True))
+    eliminados = list(carrito.items.values_list('producto_id', flat=True))
     carrito.items.all().delete()
     return _resumen_carrito(carrito, eliminados)
 
@@ -105,12 +107,13 @@ def vaciar_carrito(request):
 @login_required_json
 def actualizar_cantidad_carrito(request):
     if request.method == 'POST':
-        item_id = _leer_entero(request.POST.get('item_id'))
+        producto_id = _leer_entero(request.POST.get('producto_id'))
         nueva_cantidad = _leer_entero(request.POST.get('cantidad', 1))
-        if item_id is None or nueva_cantidad is None:
+        if producto_id is None or nueva_cantidad is None:
             return JsonResponse({'success': False, 'error': 'La cantidad no es válida.'}, status=400)
 
-        item = get_object_or_404(ItemCarritoProducto, id=item_id, carrito__usuario=request.user)
+        item = get_object_or_404(ItemCarritoProducto, producto_id=producto_id, carrito__vigente=True,
+                                 carrito__usuario=request.user)
         producto = item.producto
 
         if nueva_cantidad > producto.stock:
@@ -143,13 +146,10 @@ def ver_carrito(request):
 
     carrito, creado = Carrito.objects.get_or_create(usuario=usuario)
 
-    items = carrito.items.all()
+    carrito.items.filter(producto__is_deleted=True).delete()
 
-    for item in items:
-        if item.producto.is_deleted:
-            item.delete()
-
-    items = carrito.items.all()
+    items = carrito.items.select_related('producto__categoria', 'producto__plataforma').prefetch_related(
+        'producto__imagenes_producto')
 
     total = sum((item.producto.precio or 0) * item.cantidad for item in items)
     total_items = sum(item.cantidad for item in items)

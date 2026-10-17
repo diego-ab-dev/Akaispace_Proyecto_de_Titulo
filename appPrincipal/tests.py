@@ -53,7 +53,7 @@ class RegisterTests(TestCase):
     datos = {
         'rut': '12343455-2', 'nombre': 'Juan Perez', 'telefono': '+56 9 12345678',
         'email': 'juan@example.com', 'contraseña': 'Akaispace-2026!', 'confirmar_contraseña': 'Akaispace-2026!', 'direccion': 'Calle 123',
-        'region': 'LOS RIOS', 'ciudad': 'Valdivia',
+        'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'declaracion_edad': 'mayor_18',
         'acepta_privacidad': 'on', 'autoriza_datos_navegacion': 'on',
     }
 
@@ -61,6 +61,7 @@ class RegisterTests(TestCase):
         from .constants import POLITICA_PRIVACIDAD_VERSION
         self.assertTrue(self.client.post('/register/', self.datos).json()['success'])
         usuario = Usuario.objects.get(email='juan@example.com')
+        self.assertEqual(usuario.declaracion_edad, Usuario.MAYOR_18)
         self.assertIsNotNone(usuario.privacidad_aceptada_en)
         self.assertIsNotNone(usuario.datos_navegacion_autorizados_en)
         self.assertEqual(usuario.privacidad_version, POLITICA_PRIVACIDAD_VERSION)
@@ -71,6 +72,18 @@ class RegisterTests(TestCase):
         self.assertFalse(respuesta['success'])
         self.assertIn('Política de Privacidad', respuesta['message'])
         self.assertFalse(Usuario.objects.exists())
+
+    def test_la_declaracion_de_edad_es_obligatoria(self):  # HU-01
+        for valor in [None, 'menor_sin_permiso']:
+            datos = {k: v for k, v in self.datos.items() if k != 'declaracion_edad'}
+            if valor:
+                datos['declaracion_edad'] = valor
+            respuesta = self.client.post('/register/', datos).json()
+            self.assertFalse(respuesta['success'], valor)
+        self.assertFalse(Usuario.objects.exists())
+        datos = {**self.datos, 'declaracion_edad': 'autorizacion_tutor'}
+        self.assertTrue(self.client.post('/register/', datos).json()['success'])
+        self.assertEqual(Usuario.objects.get().declaracion_edad, Usuario.AUTORIZACION_TUTOR)
 
     def test_autorizar_datos_de_navegacion_es_opcional(self):  # HU-01
         datos = {k: v for k, v in self.datos.items() if k != 'autoriza_datos_navegacion'}
@@ -84,7 +97,8 @@ class RegisterTests(TestCase):
         self.assertContains(respuesta, 'Política de Privacidad')
         registro = self.client.get('/register/')
         self.assertContains(registro, 'href="/politica-de-privacidad/"')
-        self.assertContains(registro, 'Declaro ser mayor de 18 años')
+        self.assertContains(registro, 'Mayor de 18 años')
+        self.assertContains(registro, 'Menor de 18 años con autorización de su padre, madre o tutor')
         self.assertContains(self.client.get('/'), 'href="/politica-de-privacidad/"')
 
     def test_registro_valido_guarda_rut_normalizado(self):
@@ -203,7 +217,7 @@ class AccesoTests(TestCase):  # 1 y 20
         self.venta = Venta.objects.create(usuario=self.dueño, metodo_envio='tienda')
 
     def test_paginas_privadas_piden_login(self):
-        for url in ['/perfil/', '/compras/', '/ver_carrito/', '/favorites/', '/seleccionar-pago/', f'/boleta/{self.venta.id}/']:
+        for url in ['/perfil/', '/compras/', '/ver_carrito/', '/favorites/', '/seleccionar-pago/', f'/comprobante/{self.venta.id}/']:
             respuesta = self.client.get(url)
             self.assertRedirects(respuesta, f'/login/?next={url}', fetch_redirect_response=False, msg_prefix=url)
 
@@ -212,14 +226,14 @@ class AccesoTests(TestCase):  # 1 y 20
         self.assertEqual(respuesta.status_code, 401)
         self.assertEqual(respuesta.json()['error'], 'not_logged_in')
 
-    def test_no_se_puede_ver_la_compra_ni_la_boleta_de_otro_usuario(self):
+    def test_no_se_puede_ver_la_compra_ni_el_comprobante_de_otro_usuario(self):
         self.client.force_login(self.otro)
         self.assertEqual(self.client.get(f'/compra/{self.venta.id}/detalle/').status_code, 404)
-        self.assertEqual(self.client.get(f'/boleta/{self.venta.id}/').status_code, 404)
+        self.assertEqual(self.client.get(f'/comprobante/{self.venta.id}/').status_code, 404)
 
     def test_el_dueño_si_ve_su_compra(self):
         self.client.force_login(self.dueño)
-        self.assertEqual(self.client.get(f'/boleta/{self.venta.id}/').status_code, 200)
+        self.assertEqual(self.client.get(f'/comprobante/{self.venta.id}/').status_code, 200)
 
     def test_cliente_no_entra_al_panel_admin(self):
         self.client.force_login(self.otro)
@@ -232,14 +246,11 @@ class AccesoTests(TestCase):  # 1 y 20
 
 class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids en la URL
     def setUp(self):
-        self.producto = Producto.objects.create(
-            codigo_de_barra='111', nombre='Juego', precio=10000, stock=3, categoria='Videojuegos PS5',
-            imagen_principal='productos/silent.png'
-        )
+        self.producto = crear_producto('Juego', stock=3, codigo_de_barra='111')
         self.cliente = crear_cliente()
         self.client.force_login(self.cliente)
 
-    def test_compra_completa_descuenta_stock_y_genera_boleta(self):
+    def test_compra_completa_descuenta_stock_y_genera_comprobante(self):
         from .models import Venta
         self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 2})
         self.assertEqual(self.client.get('/seleccionar-pago/?envio=tienda').status_code, 200)
@@ -249,8 +260,8 @@ class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids 
         self.assertEqual(pago.venta, venta)
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 1)
-        self.assertTrue(hasattr(venta, 'boleta'))
-        self.assertEqual(self.client.get(f'/boleta/{venta.id}/').status_code, 200)
+        self.assertTrue(hasattr(venta, 'comprobante'))
+        self.assertEqual(self.client.get(f'/comprobante/{venta.id}/').status_code, 200)
 
     def test_sin_stock_no_queda_venta_a_medias(self):
         from .models import ItemCarritoProducto, Carrito, Venta
@@ -267,18 +278,15 @@ class CompraTests(TestCase):  # 1: el flujo de compra usa request.user, sin ids 
         from .models import ItemCarritoProducto, Carrito
         otro = crear_cliente('otro@example.com')
         item = ItemCarritoProducto.objects.create(carrito=Carrito.objects.create(usuario=otro), producto=self.producto)
-        self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 2}).status_code, 404)
-        self.assertFalse(self.client.post(f'/eliminar/{item.id}/').json()['success'])
-        self.assertTrue(ItemCarritoProducto.objects.filter(id=item.id).exists())
+        self.assertEqual(self.client.post('/actualizar-cantidad/', {'producto_id': item.producto_id, 'cantidad': 2}).status_code, 404)
+        self.assertFalse(self.client.post(f'/eliminar/{item.producto_id}/').json()['success'])
+        self.assertTrue(ItemCarritoProducto.objects.filter(pk=item.pk).exists())
 
 
 class ModeloTests(TestCase):  # 17, 25, 26 y 28
     def setUp(self):
         from .models import Venta, ProductoVenta
-        self.producto = Producto.objects.create(
-            codigo_de_barra='222', nombre='Consola', precio=1000, stock=5, categoria='Ps5 Consolas',
-            imagen_principal='productos/silent.png'
-        )
+        self.producto = crear_producto('Consola', stock=5, categoria='Consolas', codigo_de_barra='222', precio=1000)
         self.cliente = crear_cliente()
         self.venta = Venta.objects.create(usuario=self.cliente, metodo_envio='tienda')
         ProductoVenta.objects.create(venta=self.venta, producto=self.producto, cantidad=2, precio_unitario=1000)
@@ -395,10 +403,7 @@ class PlantillasTests(TestCase):  # 21: plantilla base y navbar compartido
 
     def test_promos_del_navbar_vienen_de_la_portada(self):
         from .models import Destacado
-        producto = Producto.objects.create(
-            codigo_de_barra='333', nombre='Consola X', precio=1, stock=1, categoria='Ps5 Consolas',
-            imagen_principal='productos/silent.png'
-        )
+        producto = crear_producto('Consola X', stock=1, categoria='Consolas', codigo_de_barra='333', precio=1)
         Destacado.objects.create(seccion='menu_consolas', titulo='Consola X', producto=producto, etiqueta='¡TOP!')
         respuesta = self.client.get('/menu/')
         self.assertContains(respuesta, f'href="/producto/{producto.id}/"')
@@ -468,10 +473,19 @@ def elegir_entrega(client, metodo='tienda'):
     session.save()
 
 
-def crear_producto(nombre='Juego', stock=5, **extra):
-    datos = {'codigo_de_barra': nombre[:20], 'precio': 10000, 'categoria': 'Videojuegos PS5',
-             'imagen_principal': 'productos/silent.png', **extra}
-    return Producto.objects.create(nombre=nombre, stock=stock, **datos)
+def crear_producto(nombre='Juego', stock=5, categoria='Videojuegos', plataforma='ps5', genero=None,
+                   imagen='productos/silent.png', **extra):
+    """categoria y genero van por nombre (ej. 'Videojuegos', 'Deportes'); plataforma por código (ej. 'ps5')."""
+    from .models import Categoria, Genero, ImagenProducto, Plataforma
+    datos = {'codigo_de_barra': nombre[:20], 'precio': 10000, **extra}
+    producto = Producto.objects.create(
+        nombre=nombre, stock=stock, categoria=Categoria.objects.get(nombre=categoria),
+        plataforma=Plataforma.objects.get(codigo=plataforma) if plataforma else None,
+        genero=Genero.objects.get(nombre=genero) if genero else None, **datos,
+    )
+    if imagen:
+        ImagenProducto.objects.create(producto=producto, imagen=imagen, es_principal=True)
+    return producto
 
 
 def crear_venta(cliente, producto, cantidad=2, estado='Entregado'):
@@ -522,14 +536,14 @@ class CarritoTests(TestCase):
         from .models import ItemCarritoProducto
         self.agregar(1)
         item = ItemCarritoProducto.objects.get()
-        self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 'x'}).status_code, 400)
+        self.assertEqual(self.client.post('/actualizar-cantidad/', {'producto_id': item.producto_id, 'cantidad': 'x'}).status_code, 400)
         self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': 'x', 'cantidad': 1}).status_code, 400)
 
     def test_actualizar_sobre_el_stock_no_cambia_la_cantidad(self):
         from .models import ItemCarritoProducto
         self.agregar(1)
         item = ItemCarritoProducto.objects.get()
-        respuesta = self.client.post('/actualizar-cantidad/', {'item_id': item.id, 'cantidad': 500}).json()
+        respuesta = self.client.post('/actualizar-cantidad/', {'producto_id': item.producto_id, 'cantidad': 500}).json()
         self.assertFalse(respuesta['success'])
         self.assertEqual(self.items(), [1])
 
@@ -581,8 +595,10 @@ class DevolucionesTests(TestCase):
         self.url = f'/devolucion/crear/{self.venta.id}/{self.producto.id}/'
         self.client.force_login(self.cliente)
 
-    def pedir(self, cantidad):
-        return self.client.post(self.url, {'cantidad': cantidad, 'descripcion': 'Llegó roto'})
+    def pedir(self, cantidad, **fotos):
+        datos = {'cantidad': cantidad, 'descripcion': 'Llegó roto',
+                 'imagenes-TOTAL_FORMS': '3', 'imagenes-INITIAL_FORMS': '0', **fotos}
+        return self.client.post(self.url, datos)
 
     def responder_como_admin(self, devolucion, accion):
         jefe = Usuario.objects.filter(email='jefe@example.com').first() or crear_cliente('jefe@example.com', is_staff=True)
@@ -631,10 +647,34 @@ class DevolucionesTests(TestCase):
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 7) 
 
-    def test_detalle_de_compra_con_devolucion_sin_producto_no_se_cae(self):  
+    def test_la_devolucion_exige_venta_y_producto(self):
+        from django.db import IntegrityError, transaction
         from .models import Devolucion
-        Devolucion.objects.create(usuario=self.cliente, venta=self.venta, producto=None, motivo='x')
-        self.assertEqual(self.client.get(f'/compra/{self.venta.id}/detalle/').status_code, 200)
+        for faltante in [{'venta': None}, {'producto': None}]:
+            datos = {'usuario': self.cliente, 'venta': self.venta, 'producto': self.producto, 'motivo': 'x', **faltante}
+            with self.assertRaises(IntegrityError), transaction.atomic():
+                Devolucion.objects.create(**datos)
+
+    def test_las_fotos_de_evidencia_quedan_en_imagen_devolucion(self):
+        import shutil, tempfile
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import Devolucion
+        gif = (b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,'
+               b'\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;')
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        with self.settings(MEDIA_ROOT=media):
+            self.pedir(1, **{'imagenes-0-imagen': SimpleUploadedFile('foto1.png', gif, 'image/png'),
+                             'imagenes-2-imagen': SimpleUploadedFile('foto3.png', gif, 'image/png')})
+            devolucion = Devolucion.objects.get()
+            self.assertEqual(devolucion.imagenes.count(), 2)
+            self.assertContains(self.client.get(f'/devoluciones/{devolucion.id}/detalle/'), 'Evidencia 2')
+
+    def test_foto_con_formato_no_permitido_no_crea_la_devolucion(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .models import Devolucion
+        self.pedir(1, **{'imagenes-0-imagen': SimpleUploadedFile('foto.txt', b'hola', 'text/plain')})
+        self.assertFalse(Devolucion.objects.exists())
 
 
 class AccionesPorPostTests(TestCase): 
@@ -774,7 +814,7 @@ class ErroresInternosTests(TestCase):
         cliente = crear_cliente()
         favorito = Favorito.objects.create(usuario=cliente, producto=crear_producto())
         self.client.force_login(cliente)
-        self.client.post('/eliminar_favoritos_seleccionados/', {'ids': [str(favorito.id)]}, content_type='application/json')
+        self.client.post('/eliminar_favoritos_seleccionados/', {'ids': [str(favorito.producto_id)]}, content_type='application/json')
         self.assertFalse(Favorito.objects.exists())
 
 
@@ -1180,7 +1220,8 @@ class WebpayTests(TestCase):  # HU-05 y HU-06: pago con Webpay Plus (Transbank s
         self.assertContains(respuesta, f'name="token_ws" value="{pago.token}"')
         self.assertEqual(pago.estado, PagoWebpay.PENDIENTE)
         self.assertEqual(pago.monto, 20000)
-        self.assertEqual(pago.items, [{'producto_id': self.producto.id, 'cantidad': 2, 'precio_unitario': 10000}])
+        self.assertEqual(list(pago.detalles.values('producto_id', 'cantidad', 'precio_unitario')),
+                         [{'producto_id': self.producto.id, 'cantidad': 2, 'precio_unitario': 10000}])
         self.assertEqual(self.stock(), 5)
         self.assertFalse(Venta.objects.exists())
 
@@ -1202,7 +1243,7 @@ class WebpayTests(TestCase):  # HU-05 y HU-06: pago con Webpay Plus (Transbank s
         self.assertEqual(pago.estado, PagoWebpay.APROBADO)
         venta = pago.venta
         self.assertEqual((venta.total, venta.metodo_pago, venta.metodo_pago_texto), (20000, 'webpay', 'Webpay - Débito'))
-        self.assertTrue(hasattr(venta, 'boleta'))
+        self.assertTrue(hasattr(venta, 'comprobante'))
         self.assertEqual(self.stock(), 3)
         self.assertFalse(self.carrito.items.exists())
         self.assertEqual((pago.codigo_autorizacion, pago.tarjeta_ultimos_digitos), ('1213', '6623'))
@@ -1420,7 +1461,7 @@ class CorreoCompraTests(TestCase):  # HU-06: correo de confirmación al aprobars
         self.assertIn(f'Nº {pago.venta.id}', correo.subject)
         html = correo.alternatives[0][0]
         datos = ['Juego', '$20.000', 'Retiro en tienda', pago.orden_compra, '**** 6623',
-                 'Garantía legal', '10 días corridos', f'http://localhost:8000/boleta/{pago.venta.id}/']
+                 'Garantía legal', '10 días corridos', f'http://localhost:8000/comprobante/{pago.venta.id}/']
         for texto in [correo.body, html]:  # versión de texto y HTML
             for dato in datos:
                 self.assertIn(dato, texto)
@@ -1532,16 +1573,19 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
 
 class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, plataforma y precio
     def setUp(self):
-        crear_producto('Zelda Switch', categoria='Videojuegos Nintendo SWITCH', genero='AVENTURA', precio=45000)
-        crear_producto('FIFA PS5', categoria='Videojuegos PS5', genero='DEPORTES', precio=50000)
-        crear_producto('Control PS5', categoria='Accesorios PS5', genero='ACCESORIOS', precio=60000)
-        crear_producto('Gran Turismo PS4', categoria='Videojuegos PS4', genero='CARRERAS', precio=15000)
+        from .models import Categoria, Genero
+        crear_producto('Zelda Switch', plataforma='switch', genero='Aventura', precio=45000)
+        crear_producto('FIFA PS5', plataforma='ps5', genero='Deportes', precio=50000)
+        crear_producto('Control PS5', categoria='Accesorios', plataforma='ps5', precio=60000)
+        crear_producto('Gran Turismo PS4', plataforma='ps4', genero='Carreras', precio=15000)
+        self.deportes = str(Genero.objects.get(nombre='Deportes').id)
+        self.videojuegos = Categoria.objects.get(nombre='Videojuegos')
 
     def nombres(self, respuesta):
         return {p.nombre for p in respuesta.context['productos']}
 
     def test_filtra_por_genero(self):
-        respuesta = self.client.get('/menu/', {'genero': 'DEPORTES'})
+        respuesta = self.client.get('/menu/', {'genero': self.deportes})
         self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
         self.assertContains(respuesta, 'Género: Deportes')
 
@@ -1559,10 +1603,21 @@ class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, pl
         self.assertTemplateUsed(respuesta, 'resultado_busqueda.html')
         self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
 
-    def test_filtros_en_categoria_sin_selector_de_plataforma(self):
-        respuesta = self.client.get('/productos/Videojuegos PS5/', {'genero': 'DEPORTES', 'plataforma': 'switch'})
+    def test_filtros_en_categoria_y_plataforma_sin_selector_de_plataforma(self):
+        url = f'/productos/{self.videojuegos.id}/ps5/'
+        respuesta = self.client.get(url, {'genero': self.deportes, 'plataforma': 'switch'})
         self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
         self.assertNotContains(respuesta, 'name="plataforma"')
+        self.assertContains(respuesta, 'Videojuegos PlayStation 5')
+
+    def test_categoria_sin_plataforma_en_la_url_muestra_el_selector(self):
+        respuesta = self.client.get(f'/productos/{self.videojuegos.id}/', {'plataforma': 'ps4'})
+        self.assertEqual(self.nombres(respuesta), {'Gran Turismo PS4'})
+        self.assertContains(respuesta, 'name="plataforma"')
+
+    def test_categoria_o_plataforma_inexistente_da_404(self):
+        self.assertEqual(self.client.get('/productos/9999/').status_code, 404)
+        self.assertEqual(self.client.get(f'/productos/{self.videojuegos.id}/gameboy/').status_code, 404)
 
     def test_precio_minimo_mayor_al_maximo_avisa_y_no_filtra(self):
         respuesta = self.client.get('/menu/', {'precio_min': '50000', 'precio_max': '10000'})
@@ -1575,7 +1630,7 @@ class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, pl
         self.assertEqual(len(self.nombres(respuesta)), 4)
 
     def test_valores_desconocidos_se_ignoran(self):
-        respuesta = self.client.get('/menu/', {'genero': 'NOEXISTE', 'plataforma': 'gameboy'})
+        respuesta = self.client.get('/menu/', {'genero': '9999', 'plataforma': 'gameboy'})
         self.assertEqual(len(self.nombres(respuesta)), 4)
         self.assertFalse(respuesta.context['filtros']['activos'])
 
@@ -1584,16 +1639,22 @@ class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, pl
         self.assertEqual([p.nombre for p in respuesta.context['productos']], ['FIFA PS5', 'Control PS5'])
 
     def test_quitar_un_filtro_conserva_los_demas(self):
-        respuesta = self.client.get('/menu/', {'genero': 'DEPORTES', 'plataforma': 'ps5', 'page': '1'})
+        respuesta = self.client.get('/menu/', {'genero': self.deportes, 'plataforma': 'ps5', 'page': '1'})
         enlaces = {f['texto']: f['url'] for f in respuesta.context['filtros']['aplicados']}
         self.assertEqual(enlaces['Género: Deportes'], 'plataforma=ps5')
         self.assertEqual(respuesta.context['filtros']['url_limpiar'], '')
 
-    def test_toda_categoria_con_plataforma_pertenece_a_una(self):
-        con_plataforma = {c for _, ops in Producto.PLATAFORMAS for _, _, cats in ops for c in cats}
-        todas = {c for _, grupo in Producto.CATEGORIAS for c, _ in grupo}
-        self.assertTrue(con_plataforma <= todas)
-        self.assertEqual(todas - con_plataforma, {'Figuras Funko', 'Figuras Amiibo'})
+    def test_el_navbar_solo_usa_categorias_y_plataformas_existentes(self):
+        from .constants import MENU_NAVBAR
+        from .models import Categoria, Plataforma
+        categorias = set(Categoria.objects.values_list('nombre', flat=True))
+        plataformas = set(Plataforma.objects.values_list('codigo', flat=True))
+        for menu in MENU_NAVBAR:
+            for _, entradas in menu['grupos']:
+                for categoria, plataforma, _ in entradas:
+                    self.assertIn(categoria, categorias)
+                    if plataforma:
+                        self.assertIn(plataforma, plataformas)
 
 
 class CarritoEliminarVariosTests(TestCase):  # HU-11: eliminar algunos o todos los productos del carrito
@@ -1609,16 +1670,16 @@ class CarritoEliminarVariosTests(TestCase):  # HU-11: eliminar algunos o todos l
 
     def ids_en_carrito(self):
         from .models import ItemCarritoProducto
-        return set(ItemCarritoProducto.objects.filter(carrito__usuario=self.cliente).values_list('id', flat=True))
+        return set(ItemCarritoProducto.objects.filter(carrito__usuario=self.cliente).values_list('producto_id', flat=True))
 
     def test_elimina_solo_los_seleccionados_y_devuelve_el_resumen(self):
         uno, dos, tres = self.items
-        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [uno.id, tres.id]}).json()
+        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [uno.producto_id, tres.producto_id]}).json()
         self.assertTrue(respuesta['success'])
-        self.assertEqual(set(respuesta['eliminados']), {uno.id, tres.id})
+        self.assertEqual(set(respuesta['eliminados']), {uno.producto_id, tres.producto_id})
         self.assertEqual(respuesta['total_items'], 2)
         self.assertEqual(respuesta['total'], 20000)
-        self.assertEqual(self.ids_en_carrito(), {dos.id})
+        self.assertEqual(self.ids_en_carrito(), {dos.producto_id})
 
     def test_vaciar_elimina_todo(self):
         respuesta = self.client.post('/carrito/vaciar/').json()
@@ -1630,21 +1691,24 @@ class CarritoEliminarVariosTests(TestCase):  # HU-11: eliminar algunos o todos l
     def test_no_se_pueden_borrar_items_de_otro_cliente(self):
         from .models import Carrito, ItemCarritoProducto
         otro = crear_cliente('otro@example.com')
-        ajeno = ItemCarritoProducto.objects.create(carrito=Carrito.objects.create(usuario=otro),
-                                                   producto=self.items[0].producto)
-        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [ajeno.id]})
+        carrito_ajeno = Carrito.objects.create(usuario=otro)
+        ajeno = ItemCarritoProducto.objects.create(carrito=carrito_ajeno, producto=crear_producto('Ajeno'))
+        compartido = ItemCarritoProducto.objects.create(carrito=carrito_ajeno, producto=self.items[0].producto)
+        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [ajeno.producto_id]})
         self.assertEqual(respuesta.status_code, 404)
-        self.assertTrue(ItemCarritoProducto.objects.filter(id=ajeno.id).exists())
-        # mezclado con uno propio: se borra solo el propio
-        respuesta = self.client.post('/carrito/eliminar-seleccionados/', {'ids': [ajeno.id, self.items[0].id]}).json()
-        self.assertEqual(respuesta['eliminados'], [self.items[0].id])
-        self.assertTrue(ItemCarritoProducto.objects.filter(id=ajeno.id).exists())
+        self.assertTrue(ItemCarritoProducto.objects.filter(pk=ajeno.pk).exists())
+        # mezclado con uno propio: se borra solo el propio, aunque el otro cliente tenga el mismo producto
+        respuesta = self.client.post('/carrito/eliminar-seleccionados/',
+                                     {'ids': [ajeno.producto_id, self.items[0].producto_id]}).json()
+        self.assertEqual(respuesta['eliminados'], [self.items[0].producto_id])
+        self.assertTrue(ItemCarritoProducto.objects.filter(pk=ajeno.pk).exists())
+        self.assertTrue(ItemCarritoProducto.objects.filter(pk=compartido.pk).exists())
         # y vaciar el carrito propio no toca el ajeno
         self.client.post('/carrito/vaciar/')
-        self.assertTrue(ItemCarritoProducto.objects.filter(id=ajeno.id).exists())
+        self.assertTrue(ItemCarritoProducto.objects.filter(pk=ajeno.pk).exists())
 
     def test_seleccion_vacia_o_invalida_se_rechaza(self):
-        for datos in [{}, {'ids': ['abc']}, {'ids': [self.items[0].id, 'x']}]:
+        for datos in [{}, {'ids': ['abc']}, {'ids': [self.items[0].producto_id, 'x']}]:
             respuesta = self.client.post('/carrito/eliminar-seleccionados/', datos)
             self.assertEqual(respuesta.status_code, 400, datos)
         self.assertEqual(len(self.ids_en_carrito()), 3)
@@ -1732,7 +1796,7 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
     def setUp(self):
         self.ps5 = crear_producto('Juego PS5', stock=2)
         self.otro_ps5 = crear_producto('Otro PS5')
-        self.switch = crear_producto('Juego Switch', categoria='Videojuegos Nintendo SWITCH')
+        self.switch = crear_producto('Juego Switch', plataforma='switch')
 
     def configurar(self, **opciones):
         from .models import ConfiguracionSitio
@@ -1744,24 +1808,36 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
     def ficha(self):
         return self.client.get(f'/producto/{self.ps5.id}/')
 
+    def ocultar(self, *nombres):
+        from .models import Categoria
+        Categoria.objects.filter(nombre__in=nombres).update(visible_en_menu=False)
+
     def test_por_defecto_el_navbar_muestra_todas_las_categorias(self):
-        from django.urls import reverse
-        from .forms import CATEGORIAS_NAVBAR
+        from .constants import MENU_NAVBAR
+        from .context_processors import url_categoria
+        from .models import Categoria
+        ids = dict(Categoria.objects.values_list('nombre', 'id'))
         html = self.client.get('/menu/').content.decode()
-        for categoria in CATEGORIAS_NAVBAR:
-            self.assertIn(f'href="{reverse("productos_por_categoria", args=[categoria])}"', html, categoria)
+        for menu in MENU_NAVBAR:
+            for _, entradas in menu['grupos']:
+                for categoria, plataforma, _ in entradas:
+                    self.assertIn(f'href="{url_categoria(ids[categoria], plataforma)}"', html, (categoria, plataforma))
         for menu in ['Videojuegos', 'Consolas', 'Accesorios', 'Figuras']:
             self.assertIn(f'<a href="#">{menu}</a>', html)
 
     def test_una_categoria_oculta_sale_del_navbar_pero_su_pagina_sigue(self):
-        from django.urls import reverse
-        self.configurar(categorias_ocultas=['Videojuegos PS5'])
-        url = reverse('productos_por_categoria', args=['Videojuegos PS5'])
-        self.assertNotContains(self.client.get('/menu/'), f'href="{url}"')
+        from .models import Categoria
+        self.ocultar('Videojuegos')
+        url = f'/productos/{Categoria.objects.get(nombre="Videojuegos").id}/ps5/'
+        respuesta = self.client.get('/menu/')
+        self.assertNotContains(respuesta, f'href="{url}"')
+        self.assertNotContains(respuesta, '<a href="#">Videojuegos</a>')
         self.assertContains(self.client.get(url), 'Juego PS5')
 
     def test_si_se_ocultan_todas_las_de_un_menu_el_menu_desaparece(self):
-        self.configurar(categorias_ocultas=['Figuras Funko', 'Figuras Amiibo'])
+        self.ocultar('Funko Pop')
+        self.assertContains(self.client.get('/menu/'), '<a href="#">Figuras</a>')
+        self.ocultar('Amiibo')
         respuesta = self.client.get('/menu/')
         self.assertNotContains(respuesta, '<a href="#">Figuras</a>')
         self.assertContains(respuesta, '<a href="#">Consolas</a>')
@@ -1790,7 +1866,7 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
     def test_ocultar_etiquetas_del_catalogo(self):
         self.assertContains(self.client.get('/menu/'), '¡Últimos!')
         self.configurar(mostrar_etiquetas=False)
-        for url in ['/menu/', '/menu/?buscar=Juego', '/productos/Videojuegos PS5/']:
+        for url in ['/menu/', '/menu/?buscar=Juego', f'/productos/{self.ps5.categoria_id}/ps5/']:
             self.assertNotContains(self.client.get(url), 'badge-overlay', msg_prefix=url)
 
     def test_hay_un_solo_registro_de_configuracion(self):
@@ -1806,17 +1882,23 @@ class ConfiguracionPanelTests(TestCase):  # HU-09: pantalla del panel
     def setUp(self):
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
 
+    def categorias(self):
+        from .models import Categoria
+        return dict(Categoria.objects.values_list('nombre', 'id'))
+
     def datos(self, **cambios):
-        from .forms import CATEGORIAS_NAVBAR
         datos = {'productos_relacionados': 'categoria', 'mostrar_opiniones': 'on', 'mostrar_etiquetas': 'on',
-                 'mostrar_stock': 'on', 'categorias_visibles': CATEGORIAS_NAVBAR}
+                 'mostrar_stock': 'on', 'categorias_visibles': list(self.categorias().values())}
         datos.update(cambios)
         return {clave: valor for clave, valor in datos.items() if valor is not None}
 
+    def visibles(self):
+        from .models import Categoria
+        return set(Categoria.objects.filter(visible_en_menu=True).values_list('nombre', flat=True))
+
     def test_guarda_las_opciones(self):
-        from .forms import CATEGORIAS_NAVBAR
         from .models import ConfiguracionSitio
-        visibles = [c for c in CATEGORIAS_NAVBAR if c != 'Accesorios Psp']
+        visibles = [id_ for nombre, id_ in self.categorias().items() if nombre != 'Accesorios']
         respuesta = self.client.post(self.url, self.datos(productos_relacionados='ninguno', mostrar_stock=None,
                                                           categorias_visibles=visibles), follow=True)
         self.assertContains(respuesta, 'Configuración guardada')
@@ -1824,25 +1906,24 @@ class ConfiguracionPanelTests(TestCase):  # HU-09: pantalla del panel
         self.assertEqual(configuracion.productos_relacionados, 'ninguno')
         self.assertFalse(configuracion.mostrar_stock)
         self.assertTrue(configuracion.mostrar_opiniones)
-        self.assertEqual(configuracion.categorias_ocultas, ['Accesorios Psp'])
+        self.assertEqual(self.visibles(), {'Videojuegos', 'Consolas', 'Funko Pop', 'Amiibo'})
 
     def test_el_formulario_muestra_lo_guardado(self):
-        from .models import ConfiguracionSitio
-        configuracion = ConfiguracionSitio.actual()
-        configuracion.categorias_ocultas = ['Figuras Amiibo']
-        configuracion.save()
+        from .models import Categoria
+        Categoria.objects.filter(nombre='Amiibo').update(visible_en_menu=False)
+        ids = self.categorias()
         html = self.client.get(self.url).content.decode()
-        self.assertIn('value="Figuras Funko"\n                                   data-menu="4" checked', html)
-        self.assertNotIn('value="Figuras Amiibo"\n                                   data-menu="4" checked', html)
+        self.assertIn(f'value="{ids["Funko Pop"]}"\n                                   data-menu="categorias" checked', html)
+        self.assertNotIn(f'value="{ids["Amiibo"]}"\n                                   data-menu="categorias" checked', html)
 
     def test_valores_invalidos_no_se_guardan(self):
         from .models import ConfiguracionSitio
-        for cambio in [{'productos_relacionados': 'todos'}, {'categorias_visibles': ['Categoria Inventada']}]:
+        for cambio in [{'productos_relacionados': 'todos'}, {'categorias_visibles': ['9999']}]:
             respuesta = self.client.post(self.url, self.datos(**cambio))
             self.assertContains(respuesta, 'No se pudo guardar', msg_prefix=str(cambio))
         configuracion = ConfiguracionSitio.actual()
         self.assertEqual(configuracion.productos_relacionados, 'categoria')
-        self.assertEqual(configuracion.categorias_ocultas, [])
+        self.assertEqual(len(self.visibles()), 5)
 
     def test_solo_el_administrador_puede_entrar(self):
         from .models import ConfiguracionSitio
@@ -1850,3 +1931,236 @@ class ConfiguracionPanelTests(TestCase):  # HU-09: pantalla del panel
         self.assertNotEqual(self.client.get(self.url).status_code, 200)
         self.client.post(self.url, self.datos(productos_relacionados='ninguno'))
         self.assertEqual(ConfiguracionSitio.actual().productos_relacionados, 'categoria')
+
+
+GIF_1X1 = (b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,'
+           b'\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;')
+
+
+class ModeloDeDatosTests(TestCase):  # restricciones del modelo de datos definitivo (3FN, claves compuestas)
+    def setUp(self):
+        self.cliente = crear_cliente()
+        self.producto = crear_producto('Juego', genero='Acción')
+
+    def test_un_producto_no_se_repite_en_la_misma_venta(self):
+        from django.db import IntegrityError, transaction
+        from .models import ProductoVenta, Venta
+        venta = Venta.objects.create(usuario=self.cliente)
+        ProductoVenta.objects.create(venta=venta, producto=self.producto, cantidad=1, precio_unitario=10000)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ProductoVenta.objects.create(venta=venta, producto=self.producto, cantidad=1, precio_unitario=10000)
+        self.assertEqual(venta.producto_venta.get().pk, (venta.id, self.producto.id))
+
+    def test_tablas_de_detalle_con_clave_primaria_compuesta(self):
+        from .models import (DetalleCompra, DetallePagoWebpay, Favorito, ItemCarritoProducto, ProductoVenta,
+                             SimilitudProducto)
+        esperadas = {
+            ProductoVenta: ['venta', 'producto'], ItemCarritoProducto: ['carrito', 'producto'],
+            DetalleCompra: ['compra', 'producto'], Favorito: ['usuario', 'producto'],
+            DetallePagoWebpay: ['pago', 'producto'], SimilitudProducto: ['producto', 'producto_similar'],
+        }
+        for modelo, campos in esperadas.items():
+            self.assertEqual([campo.name for campo in modelo._meta.pk_fields], campos, modelo.__name__)
+            self.assertFalse(any(campo.name == 'id' for campo in modelo._meta.fields), modelo.__name__)
+
+    def test_la_categoria_exige_plataforma_y_genero_cuando_corresponde(self):
+        from django.core.exceptions import ValidationError
+        from .models import Categoria, Producto
+        juego = Producto(nombre='Sin datos', categoria=Categoria.objects.get(nombre='Videojuegos'))
+        with self.assertRaises(ValidationError) as error:
+            juego.clean()
+        self.assertEqual(set(error.exception.message_dict), {'plataforma', 'genero'})
+        consola = Producto(nombre='Consola', categoria=Categoria.objects.get(nombre='Consolas'))
+        with self.assertRaises(ValidationError) as error:
+            consola.clean()
+        self.assertEqual(set(error.exception.message_dict), {'plataforma'})
+        Producto(nombre='Funko', categoria=Categoria.objects.get(nombre='Funko Pop')).clean()
+
+    def test_codigo_de_barra_vacio_queda_nulo_y_es_unico(self):
+        from django.db import IntegrityError, transaction
+        a = crear_producto('A', codigo_de_barra='')
+        b = crear_producto('B', codigo_de_barra='')
+        self.assertIsNone(a.codigo_de_barra)
+        self.assertIsNone(b.codigo_de_barra)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            crear_producto('C', codigo_de_barra=self.producto.codigo_de_barra)
+
+    def test_rut_vacio_queda_nulo(self):
+        otro = crear_cliente('otro@example.com', rut='')
+        self.assertIsNone(otro.rut)
+        crear_cliente('tercero@example.com', rut='')
+
+    def test_la_puntuacion_de_la_opinion_va_de_1_a_5(self):
+        from django.db import IntegrityError, transaction
+        from .models import Opinion
+        for puntuacion in [0, 6]:
+            with self.assertRaises(IntegrityError), transaction.atomic():
+                Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='x', puntuacion=puntuacion)
+        Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='x', puntuacion=5)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='y', puntuacion=4)
+
+    def test_similitud_entre_0_y_1_y_entre_productos_distintos(self):
+        from decimal import Decimal
+        from django.db import IntegrityError, transaction
+        from django.utils.timezone import now
+        from .models import SimilitudProducto
+        otro = crear_producto('Otro')
+        SimilitudProducto.objects.create(producto=self.producto, producto_similar=otro, puntaje=Decimal('0.8123'),
+                                         fecha_calculo=now())
+        tercero = crear_producto('Tercero')
+        for similar, puntaje in [(tercero, Decimal('1.5')), (self.producto, Decimal('0.5'))]:  # fuera de rango; consigo mismo
+            with self.assertRaises(IntegrityError), transaction.atomic():
+                SimilitudProducto.objects.create(producto=self.producto, producto_similar=similar, puntaje=puntaje,
+                                                 fecha_calculo=now())
+        self.assertEqual(self.producto.similitudes.get().producto_similar, otro)
+
+    def test_una_sola_imagen_principal_por_producto(self):
+        from django.db import IntegrityError, transaction
+        from .models import ImagenProducto
+        ImagenProducto.objects.create(producto=self.producto, imagen='productos/b.png', orden=2)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            ImagenProducto.objects.create(producto=self.producto, imagen='productos/c.png', es_principal=True)
+        self.assertEqual(self.producto.imagen_principal.name, 'productos/silent.png')
+        self.assertEqual([i.name for i in self.producto.imagenes()], ['productos/silent.png', 'productos/b.png'])
+
+    def test_sin_imagen_principal_marcada_se_usa_la_primera(self):
+        from .models import ImagenProducto
+        producto = crear_producto('Sin principal', imagen=None)
+        self.assertIsNone(producto.imagen_principal)
+        ImagenProducto.objects.create(producto=producto, imagen='productos/x.png', orden=1)
+        self.assertEqual(producto.imagen_principal.name, 'productos/x.png')
+
+    def test_el_detalle_copia_el_costo_y_la_ganancia_excluye_los_sin_costo(self):  # HU-10
+        from .models import ProductoVenta, Venta
+        from .reportes import ganancia
+        self.producto.costo = 6000
+        self.producto.save()
+        sin_costo = crear_producto('Sin costo')
+        venta = Venta.objects.create(usuario=self.cliente)
+        ProductoVenta.objects.create(venta=venta, producto=self.producto, cantidad=2, precio_unitario=10000)
+        ProductoVenta.objects.create(venta=venta, producto=sin_costo, cantidad=1, precio_unitario=10000)
+        self.assertEqual(venta.producto_venta.get(producto=self.producto).costo_unitario, 6000)
+        self.assertIsNone(venta.producto_venta.get(producto=sin_costo).costo_unitario)
+        reporte = ganancia(Venta.objects.all())
+        self.assertEqual((reporte['ventas'], reporte['costos'], reporte['ganancia']), (20000, 12000, 8000))
+        self.assertEqual((reporte['detalles_sin_costo'], reporte['productos_sin_costo']), (1, ['Sin costo']))
+
+    def test_la_compra_suma_stock_solo_al_marcarse_recibida(self):  # HU-10
+        from .models import Compra, DetalleCompra, Proveedor
+        compra = Compra.objects.create(proveedor=Proveedor.objects.create(nombre='Distribuidora'))
+        DetalleCompra.objects.create(compra=compra, producto=self.producto, cantidad=4, costo_unitario=5000)
+        self.producto.refresh_from_db()
+        self.assertEqual((compra.estado, self.producto.stock), (Compra.PENDIENTE, 5))
+        self.assertTrue(compra.marcar_recibida())
+        self.assertFalse(compra.marcar_recibida())
+        self.producto.refresh_from_db()
+        compra.refresh_from_db()
+        self.assertEqual((compra.estado, self.producto.stock), (Compra.RECIBIDA, 9))
+        self.assertIsNotNone(compra.fecha_recepcion)
+
+    def test_el_comprobante_no_es_tributario(self):
+        from .models import Comprobante, Venta
+        venta = Venta.objects.create(usuario=self.cliente)
+        self.client.force_login(self.cliente)
+        respuesta = self.client.get(f'/comprobante/{venta.id}/')
+        self.assertContains(respuesta, f'Comprobante de compra Nº {venta.id}')
+        self.assertContains(respuesta, 'Documento no tributario')
+        self.assertNotContains(respuesta, 'Timbre Electrónico SII')
+        self.assertTrue(Comprobante.objects.filter(venta=venta).exists())
+        self.assertEqual(venta.comprobante.archivo_pdf.field.upload_to, 'comprobantes/')
+
+    def test_tablas_en_minuscula_sin_prefijo_y_columnas_comentadas(self):
+        from django.apps import apps
+        for modelo in apps.get_app_config('appPrincipal').get_models():
+            self.assertEqual(modelo._meta.db_table, modelo._meta.db_table.lower(), modelo.__name__)
+            self.assertFalse(modelo._meta.db_table.startswith('appPrincipal'), modelo.__name__)
+            self.assertTrue(modelo._meta.db_table_comment, modelo.__name__)
+            for campo in modelo._meta.local_concrete_fields:
+                self.assertTrue(campo.db_comment, f'{modelo.__name__}.{campo.name}')
+
+
+@override_settings(MEDIA_ROOT=__import__('tempfile').mkdtemp())
+class ImagenesProductoPanelTests(TestCase):  # HU-09: formulario de producto con hasta 6 imágenes
+    def setUp(self):
+        from .models import Categoria, Genero, Plataforma
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.base = {
+            'codigo_de_barra': '7800001', 'nombre': 'Juego Nuevo', 'precio': '20000', 'stock': '5', 'stock_critico': '2',
+            'descripcion': '', 'categoria': Categoria.objects.get(nombre='Videojuegos').id,
+            'plataforma': Plataforma.objects.get(codigo='ps5').id, 'genero': Genero.objects.get(nombre='RPG').id,
+            'imagenes-TOTAL_FORMS': '6', 'imagenes-INITIAL_FORMS': '0',
+        }
+
+    def foto(self, nombre):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return SimpleUploadedFile(nombre, GIF_1X1, 'image/gif')
+
+    def test_crea_el_producto_con_sus_imagenes_y_la_principal_elegida(self):
+        from .models import Producto
+        datos = {**self.base, 'imagenes-0-imagen': self.foto('a.gif'), 'imagenes-2-imagen': self.foto('b.gif'),
+                 'principal': '2'}
+        respuesta = self.client.post('/admin-panel/productos/agregar/', datos, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertTrue(respuesta.json()['success'], respuesta.content)
+        producto = Producto.objects.get(nombre='Juego Nuevo')
+        imagenes = list(producto.imagenes_producto.order_by('orden'))
+        self.assertEqual([(i.orden, i.es_principal) for i in imagenes], [(1, None), (2, True)])
+        self.assertTrue(producto.imagen_principal.name.endswith('b.gif'))
+
+    def test_exige_al_menos_una_imagen_y_plataforma_en_videojuegos(self):
+        from .models import Producto
+        respuesta = self.client.post('/admin-panel/productos/agregar/', {**self.base, 'plataforma': ''},
+                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        errores = respuesta.json()['errors']
+        self.assertIn('plataforma', errores)
+        respuesta = self.client.post('/admin-panel/productos/agregar/', self.base, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertIn('imagenes-TOTAL_FORMS', respuesta.json()['errors'])
+        self.assertFalse(Producto.objects.filter(nombre='Juego Nuevo').exists())
+
+    def test_editar_cambia_la_principal_y_quita_imagenes(self):
+        from .models import ImagenProducto
+        producto = crear_producto('Editable', genero='RPG')
+        segunda = ImagenProducto.objects.create(producto=producto, imagen='productos/otra.png', orden=2)
+        primera = producto.imagenes_producto.get(es_principal=True)
+        datos = {**self.base, 'codigo_de_barra': producto.codigo_de_barra, 'imagenes-TOTAL_FORMS': '6',
+                 'imagenes-INITIAL_FORMS': '2', 'imagenes-0-id': primera.id, 'imagenes-0-producto': producto.id,
+                 'imagenes-1-id': segunda.id, 'imagenes-1-producto': producto.id, 'principal': '1'}
+        respuesta = self.client.post(f'/admin-panel/productos/editar/{producto.id}/', datos,
+                                     HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertTrue(respuesta.json()['success'], respuesta.content)
+        self.assertEqual(producto.imagen_principal.name, 'productos/otra.png')
+        datos.update({'imagenes-1-DELETE': 'on', 'principal': '0'})
+        self.client.post(f'/admin-panel/productos/editar/{producto.id}/', datos, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual([(i.imagen.name, i.es_principal) for i in producto.imagenes_producto.all()],
+                         [('productos/silent.png', True)])
+
+    def test_no_admite_mas_de_6_imagenes(self):
+        datos = {**self.base, 'imagenes-TOTAL_FORMS': '7'}
+        datos.update({f'imagenes-{i}-imagen': self.foto(f'{i}.gif') for i in range(7)})
+        respuesta = self.client.post('/admin-panel/productos/agregar/', datos, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertFalse(respuesta.json()['success'])
+
+
+class LoginGoogleTests(TestCase):  # HU-02: django-allauth
+    def test_el_boton_de_google_solo_aparece_con_credenciales(self):
+        self.assertNotContains(self.client.get('/login/'), 'Continuar con Google')
+        with self.settings(GOOGLE_CLIENT_ID='id-de-prueba', GOOGLE_CLIENT_SECRET='secreto-de-prueba'):
+            respuesta = self.client.get('/login/')
+        self.assertContains(respuesta, 'Continuar con Google')
+        self.assertContains(respuesta, 'action="/accounts/google/login/')
+
+    def test_el_registro_de_allauth_esta_cerrado(self):
+        self.client.post('/accounts/signup/', {'email': 'x@example.com', 'password1': 'Akaispace-2026!',
+                                               'password2': 'Akaispace-2026!'})
+        self.assertFalse(Usuario.objects.exists())
+
+    def test_la_cuenta_de_google_toma_el_nombre_del_perfil(self):
+        from unittest import mock
+        from .cuentas_google import AdaptadorCuentaGoogle
+        sociallogin = mock.Mock()
+        sociallogin.account.extra_data = {'name': 'Ana Pérez'}
+        sociallogin.user = Usuario(email='ana@gmail.com')
+        with mock.patch('allauth.socialaccount.adapter.DefaultSocialAccountAdapter.populate_user',
+                        return_value=sociallogin.user):
+            usuario = AdaptadorCuentaGoogle().populate_user(None, sociallogin, {'email': 'ana@gmail.com'})
+        self.assertEqual(usuario.nombre, 'Ana Pérez')

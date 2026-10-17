@@ -2,10 +2,9 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
 
-from appPrincipal.constants import MENU_NAVBAR
 from appPrincipal.decorators import admin_required
 from appPrincipal.forms import ConfiguracionSitioForm
-from appPrincipal.models import ConfiguracionSitio
+from appPrincipal.models import Categoria, ConfiguracionSitio
 
 
 @admin_required
@@ -20,6 +19,6 @@ def admin_configuracion(request):
 
     return render(request, 'admin_panel/configuracion.html', {
         'form': form,
-        'menus': MENU_NAVBAR,
-        'visibles': set(form['categorias_visibles'].value() or []),
+        'categorias': Categoria.objects.all(),
+        'visibles': {int(valor) for valor in form['categorias_visibles'].value() or [] if str(valor).isdigit()},
     })

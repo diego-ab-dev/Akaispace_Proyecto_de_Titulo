@@ -1,4 +1,4 @@
-"""Checkout: pago con Webpay Plus, resultado del pago y boleta.
+"""Checkout: pago con Webpay Plus, resultado del pago y comprobante de compra.
 
 La lógica del pago está en appPrincipal/pagos.py; aquí solo están las páginas.
 """
@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from appPrincipal import envios, pagos, webpay
-from appPrincipal.models import Boleta, Carrito, PagoWebpay, Venta
+from appPrincipal.models import Carrito, Comprobante, PagoWebpay, Venta
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ def resultado_pago(request, pago_id):
 
     if pago.estado == PagoWebpay.APROBADO:
         request.session.pop('metodo_envio', None)
-        venta = pago.venta
+        venta = Venta.objects.prefetch_related('producto_venta__producto__imagenes_producto').get(pk=pago.venta_id)
         return render(request, 'compra_exitosa.html', {
             'venta': venta,
             'pago': pago,
@@ -116,10 +116,11 @@ def resultado_pago(request, pago_id):
     return render(request, 'pago_fallido.html', {'pago': pago})
 
 
+# comprobante de compra NO tributario: no reemplaza a la boleta electrónica del SII
 @login_required
-def ver_boleta(request, venta_id):
+def ver_comprobante(request, venta_id):
     ventas = Venta.objects.all() if request.user.is_staff else Venta.objects.filter(usuario=request.user)
     venta = get_object_or_404(ventas, id=venta_id)
-    Boleta.objects.get_or_create(venta=venta)
+    comprobante, _ = Comprobante.objects.get_or_create(venta=venta)
 
-    return render(request, 'boleta.html', {'venta': venta})
+    return render(request, 'comprobante.html', {'venta': venta, 'comprobante': comprobante})

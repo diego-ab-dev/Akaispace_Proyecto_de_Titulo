@@ -2,21 +2,24 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.html import format_html
-from .models import Usuario, Producto, Venta, Reclamo, Opinion, PagoWebpay
+from .models import Categoria, Genero, Opinion, PagoWebpay, Plataforma, Producto, Reclamo, Usuario, Venta
 
 # Configuración del admin de Django (/admin/), disponible solo con DEBUG=True (ver Akaispace/urls.py).
 # No es el panel de la tienda: ese es /admin-panel/ (appPrincipal/views/panel/).
-# Las tablas "ItemCarritoProducto" y "Carrito" no aparecen en el panel de admin ya que no tiene mucho sentido que las pueda ver
+# Las tablas "ItemCarritoProducto" y "Carrito" no aparecen en el panel de admin ya que no tiene mucho sentido que las pueda ver.
+# Las tablas con clave primaria compuesta (detalle_venta, item_carrito, detalle_compra, favorito, detalle_pago_webpay y
+# similitud_producto) no se registran: el admin de Django no las admite.
 
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ("codigo_de_barra", "nombre", "precio", "stock", "imagen_display", "categoria", "genero", "is_deleted")
+    list_display = ("codigo_de_barra", "nombre", "precio", "stock", "imagen_display", "categoria", "plataforma", "genero",
+                    "is_deleted")
     search_fields = ("nombre", "codigo_de_barra")
-    list_editable = ("stock", "categoria", "genero")
-    list_filter=("categoria", "genero", "is_deleted")
+    list_editable = ("stock", "categoria", "plataforma", "genero")
+    list_filter=("categoria", "plataforma", "genero", "is_deleted")
     list_per_page = 20
 
     def get_queryset(self, request):
-        return Producto.todos.all()
+        return Producto.todos.select_related('categoria', 'plataforma', 'genero').prefetch_related('imagenes_producto')
 
     def get_deleted_objects(self, objs, request):
         return [str(obj) for obj in objs], {}, set(), []
@@ -91,6 +94,20 @@ admin.site.register(Producto, ProductoAdmin)
 admin.site.register(Venta, VentaAdmin)
 admin.site.register(Reclamo, ReclamoAdmin)
 admin.site.register(Opinion)
+
+
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "visible_en_menu", "requiere_plataforma", "requiere_genero")
+
+
+@admin.register(Plataforma)
+class PlataformaAdmin(admin.ModelAdmin):
+    list_display = ("codigo", "nombre", "familia")
+    list_filter = ("familia",)
+
+
+admin.site.register(Genero)
 
 @admin.register(PagoWebpay)
 class PagoWebpayAdmin(admin.ModelAdmin):

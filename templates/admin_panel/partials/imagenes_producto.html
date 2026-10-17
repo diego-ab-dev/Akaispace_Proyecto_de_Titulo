@@ -1,0 +1,62 @@
+{% comment %}
+Imágenes del producto (formset de ImagenProducto, hasta 6). Se incluye con `formset` en el contexto.
+El radio "principal" indica qué espacio es la imagen principal; si se deja vacío, la principal es la primera.
+{% endcomment %}
+<div class="images-section mt-4 mb-4">
+    <h6 class="mb-3" style="color: #4f81a1; font-weight: bold;">Imágenes (hasta 6)</h6>
+
+    <div>
+        {{ formset.management_form }}
+        <div class="text-danger small mb-2">{{ formset.non_form_errors }}</div>
+    </div>
+
+    {% for form_imagen in formset %}
+    <div class="mb-3 p-3 bg-light rounded border-start border-4 border-secondary">
+        {% for oculto in form_imagen.hidden_fields %}{{ oculto }}{% endfor %}
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <label class="form-label fw-bold mb-0" for="{{ form_imagen.imagen.id_for_label }}">Imagen {{ forloop.counter }}</label>
+
+            <div class="d-flex align-items-center gap-3">
+                <label class="form-check-label small">
+                    <input type="radio" class="form-check-input" name="principal" value="{{ forloop.counter0 }}"
+                           {% if form_imagen.instance.es_principal or not form_imagen.instance.pk and forloop.first and not formset.initial_forms %}checked{% endif %}>
+                    Principal
+                </label>
+
+                {% if form_imagen.instance.pk %}
+                    <button type="button" class="badge text-white border-0 text-decoration-none" style="background-color: #4e84a8;" data-bs-toggle="modal" data-bs-target="#modal-imagen-{{ forloop.counter0 }}">
+                        Ver imagen actual
+                    </button>
+                    <label class="form-check-label small text-danger">
+                        {{ form_imagen.DELETE }} Quitar
+                    </label>
+
+                    <div class="modal fade" id="modal-imagen-{{ forloop.counter0 }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5">Imagen {{ forloop.counter }}</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                </div>
+                                <div class="modal-body text-center bg-dark">
+                                    <img src="{{ form_imagen.instance.imagen.url }}" class="img-fluid rounded" style="max-height: 500px;" alt="Vista previa">
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn" style="background-color: #1c253b; color: #FFFFFF;" data-bs-dismiss="modal">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <span class="badge border" style="background-color: #4a6f8a; color: #FFFFFF;">Sin imagen</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="input-group custom-file-input">
+            {{ form_imagen.imagen }}
+        </div>
+        <div class="text-danger small mt-1">{{ form_imagen.imagen.errors }}</div>
+    </div>
+    {% endfor %}
+</div>

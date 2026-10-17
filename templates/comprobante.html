@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static custom_filters %}
 
-{% block title %}Boleta Nº {{ venta.id }} - Akaispace{% endblock %}
+{% block title %}Comprobante de compra Nº {{ venta.id }} - Akaispace{% endblock %}
 
 {% block librerias %}{% endblock %}
 
@@ -16,9 +16,9 @@
         <h2>AKAISPACE</h2>
         <div class="info-empresa">
             <p>R.U.T.: 76.999.888-K</p>
-            <p>Boleta Electrónica Nº {{ venta.id }}</p>
+            <p>Comprobante de compra Nº {{ venta.id }}</p>
             <p>Galería Caupolicán 544, Local 26, Valdivia</p>
-            <p>Fecha Emisión: {{ venta.fecha|date:"d/m/Y H:i" }}</p> </div>
+            <p>Fecha de compra: {{ venta.fecha|date:"d/m/Y H:i" }}</p> </div>
     </div>
 
     <div class="info-cliente">
@@ -67,11 +67,10 @@
     </div>
 
     <div class="footer">
-        <p style="font-size: 10px; margin-top: 20px;">Timbre Electrónico SII<br>Res. 80 de 2025</p>
-        <div class="barcode">||| |||| || | |||| ||</div>
+        <p style="font-size: 10px; margin-top: 20px;">Documento no tributario: respalda tu compra en Akaispace,<br>pero no reemplaza a la boleta electrónica del SII.</p>
         <p style="font-size: 12px;">¡Gracias por preferirnos!</p>
     </div>
 
-    <button onclick="window.print()" class="btn-print">Imprimir Boleta</button>
+    <button onclick="window.print()" class="btn-print">Imprimir comprobante</button>
 </div>
 {% endblock %}

@@ -2,8 +2,9 @@ from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
-from .constants import MENU_NAVBAR, REGIONES, REGIONES_CIUDADES
-from .models import ConfiguracionSitio, Destacado, Opinion, Producto, Usuario, youtube_embed_url
+from .constants import REGIONES, REGIONES_CIUDADES
+from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto, Opinion,
+                     Producto, Usuario, youtube_embed_url)
 import os
 
 
@@ -85,8 +86,13 @@ class UsuarioCustomForm(forms.Form):
     ciudad = forms.ChoiceField(choices=[], widget=forms.Select(attrs={'id': 'id_ciudad', 'class': 'form-control'}))
 
 
+    # HU-01: declaración de edad obligatoria al registrarse
+    declaracion_edad = forms.ChoiceField(
+        choices=Usuario.DECLARACIONES_EDAD, widget=forms.RadioSelect,
+        error_messages={'required': 'Debes declarar tu edad para crear tu cuenta.'},
+    )
     acepta_privacidad = forms.BooleanField(error_messages={
-        'required': 'Debes declarar tu edad y aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta.',
+        'required': 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta.',
     })
     autoriza_datos_navegacion = forms.BooleanField(required=False)
 
@@ -127,12 +133,6 @@ class OpinionForm(forms.ModelForm):
 class SolicitudDevolucionForm(forms.Form):
     cantidad = forms.IntegerField(min_value=1)
     descripcion = forms.CharField(widget=forms.Textarea, required=True)
-    
-    mensaje_error = {'invalid_image': 'Archivo no válido. Solo imágenes (JPG, PNG).'}
-
-    imagen1 = forms.ImageField(required=False, error_messages=mensaje_error)
-    imagen2 = forms.ImageField(required=False, error_messages=mensaje_error)
-    imagen3 = forms.ImageField(required=False, error_messages=mensaje_error)
 
     def __init__(self, *args, cantidad_maxima, **kwargs):
         super().__init__(*args, **kwargs)
@@ -140,21 +140,25 @@ class SolicitudDevolucionForm(forms.Form):
             cantidad_maxima, message=f"Solo puedes devolver hasta {cantidad_maxima} unidad(es)."
         ))
 
-    def clean(self):
-        cleaned_data = super().clean()
-        campos_imagen = ['imagen1', 'imagen2', 'imagen3']
-        extensiones_validas = ['.jpg', '.jpeg', '.png', '.webp']
 
-        for campo in campos_imagen:
-            imagen = cleaned_data.get(campo)
-            
-            if imagen:
-                ext = os.path.splitext(imagen.name)[1].lower()
-                if ext not in extensiones_validas:
-                    self.add_error(campo, "Formato no permitido.")
+# fotos de evidencia de la devolución: hasta 3, todas opcionales
+class ImagenDevolucionForm(forms.ModelForm):
+    class Meta:
+        model = ImagenDevolucion
+        fields = ['imagen']
+        error_messages = {'imagen': {'invalid_image': 'Archivo no válido. Solo imágenes (JPG, PNG).'}}
 
-        return cleaned_data
-        
+    def clean_imagen(self):
+        imagen = self.cleaned_data.get('imagen')
+        if imagen and os.path.splitext(imagen.name)[1].lower() not in ['.jpg', '.jpeg', '.png', '.webp']:
+            raise forms.ValidationError("Formato no permitido.")
+        return imagen
+
+
+ImagenDevolucionFormSet = forms.inlineformset_factory(
+    Devolucion, ImagenDevolucion, form=ImagenDevolucionForm,
+    extra=Devolucion.MAXIMO_IMAGENES, max_num=Devolucion.MAXIMO_IMAGENES, validate_max=True, can_delete=False,
+)
 
 
 
@@ -194,43 +198,32 @@ class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
         fields = [
-            'codigo_de_barra', 'nombre', 'precio', 'stock', 'descripcion', 
-            'imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4', 'imagen_5', 'imagen_6',
-            'categoria', 'genero'
+            'codigo_de_barra', 'nombre', 'precio', 'costo', 'stock', 'stock_critico', 'descripcion',
+            'categoria', 'plataforma', 'genero',
         ]
 
         widgets = {
             'codigo_de_barra': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 780123456'}),
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '60', 'placeholder': 'Nombre del producto'}),
             'precio': forms.NumberInput(attrs={'class': 'form-control'}),
+            'costo': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Opcional'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control'}),
+            'stock_critico': forms.NumberInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'categoria': forms.Select(attrs={'class': 'form-select'}),
+            'plataforma': forms.Select(attrs={'class': 'form-select'}),
             'genero': forms.Select(attrs={'class': 'form-select'}),
-            'imagen_principal': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'imagen_2': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'imagen_3': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'imagen_4': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'imagen_5': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'imagen_6': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
         labels = {
-            'imagen_principal': 'Imagen 1 - Principal',
-            'imagen_2': 'Imagen 2 - (Opcional)',
-            'imagen_3': 'Imagen 3 - (Opcional)',
-            'imagen_4': 'Imagen 4 - (Opcional)',
-            'imagen_5': 'Imagen 5 - (Opcional)',
-            'imagen_6': 'Imagen 6 - (Opcional)',
+            'costo': 'Costo unitario con IVA',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['plataforma'].empty_label = 'Sin plataforma'
+        self.fields['genero'].empty_label = 'Sin género'
         if self.instance and self.instance.pk:
             self.fields['codigo_de_barra'].disabled = True
-
-
-            for field_name in ['imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4', 'imagen_5', 'imagen_6']:
-                self.fields[field_name].widget.attrs.update({'class': 'form-control'})
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
@@ -238,17 +231,18 @@ class ProductoForm(forms.ModelForm):
             raise forms.ValidationError("El nombre es demasiado largo (máximo 60 caracteres).")
         return nombre
 
-    # valida codigo de barra
+    # valida codigo de barra: es único también entre los productos eliminados
     def clean_codigo_de_barra(self):
-        codigo = self.cleaned_data.get('codigo_de_barra')
+        codigo = (self.cleaned_data.get('codigo_de_barra') or '').strip() or None
 
         if self.instance and self.instance.pk:
-            return codigo
-        
-        if Producto.objects.filter(codigo_de_barra=codigo).exists():
-            raise forms.ValidationError(
-                "Ya existe un producto activo con este código de barras."
-            )
+            return self.instance.codigo_de_barra
+
+        existente = Producto.todos.filter(codigo_de_barra=codigo).first() if codigo else None
+        if existente and existente.is_deleted:
+            raise forms.ValidationError("Este código de barras pertenece a un producto eliminado.")
+        if existente:
+            raise forms.ValidationError("Ya existe un producto activo con este código de barras.")
 
         return codigo
 
@@ -258,7 +252,7 @@ class ProductoForm(forms.ModelForm):
 
         if stock is None:
             return stock
-        
+
         if stock < 0:
             raise forms.ValidationError("El stock no puede ser negativo.")
 
@@ -267,29 +261,65 @@ class ProductoForm(forms.ModelForm):
 
         return stock
 
+
+# imágenes del producto: hasta 6; una se marca como principal con el radio "principal" del formulario
+class ImagenProductoForm(forms.ModelForm):
+    class Meta:
+        model = ImagenProducto
+        fields = ['imagen']
+        widgets = {'imagen': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})}
+
+    def clean_imagen(self):
+        imagen = self.cleaned_data.get('imagen')
+        if imagen and hasattr(imagen, 'content_type'):
+            if not imagen.content_type.startswith('image/'):
+                raise forms.ValidationError("El archivo subido no es una imagen válida.")
+            extensiones_validas = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+            ext = os.path.splitext(imagen.name)[1].lower()
+            if ext not in extensiones_validas:
+                raise forms.ValidationError(
+                    f"Formato no permitido ({ext}). Solo se aceptan: {', '.join(extensiones_validas)}")
+        return imagen
+
+
+class BaseImagenProductoFormSet(forms.BaseInlineFormSet):
+    def imagenes_conservadas(self):
+        """[(posición en el formulario, ImagenProducto)] de los espacios que quedan con imagen."""
+        conservadas = []
+        for posicion, form in enumerate(self.forms):
+            if form.cleaned_data.get('DELETE') or not form.instance.imagen:
+                continue
+            conservadas.append((posicion, form.instance))
+        return conservadas
+
     def clean(self):
-        cleaned_data = super().clean()
-        
-        campos_imagen = ['imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4', 'imagen_5', 'imagen_6']
-        
-        extensiones_validas = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+        super().clean()
+        if not any(self.errors) and not self.imagenes_conservadas():
+            raise forms.ValidationError("Sube al menos una imagen del producto.")
 
-        for campo in campos_imagen:
-            imagen = cleaned_data.get(campo)
-            
-            if imagen and hasattr(imagen, 'content_type'):
-                
-                if not imagen.content_type.startswith('image/'):
-                    self.add_error(campo, "El archivo subido no es una imagen válida.")
-                    continue 
-                
-                ext = os.path.splitext(imagen.name)[1].lower()
-                if ext not in extensiones_validas:
-                    self.add_error(campo, f"Formato no permitido ({ext}). Solo se aceptan: {', '.join(extensiones_validas)}")
+    def guardar(self, principal):
+        """Guarda las imágenes en el orden de los espacios del formulario. `principal` es la posición
+        elegida como imagen principal; si esa posición quedó vacía, la principal es la primera."""
+        producto = self.instance
+        conservadas = self.imagenes_conservadas()
+        posiciones = [posicion for posicion, _ in conservadas]
+        elegida = principal if principal in posiciones else posiciones[0]
+        # se quita la marca de principal antes de asignarla, para no chocar con la restricción única
+        producto.imagenes_producto.update(es_principal=None)
+        for form in self.forms:
+            if form.cleaned_data.get('DELETE') and form.instance.pk:
+                form.instance.delete()
+        for orden, (posicion, imagen) in enumerate(conservadas, 1):
+            imagen.producto = producto
+            imagen.orden = orden
+            imagen.es_principal = True if posicion == elegida else None
+            imagen.save()
 
-        return cleaned_data
- 
 
+ImagenProductoFormSet = forms.inlineformset_factory(
+    Producto, ImagenProducto, form=ImagenProductoForm, formset=BaseImagenProductoFormSet,
+    extra=Producto.MAXIMO_IMAGENES, max_num=Producto.MAXIMO_IMAGENES, validate_max=True, can_delete=True,
+)
 
 
 # form de la portada (carrusel, nuevos lanzamientos y promos del navbar) en el panel
@@ -311,10 +341,10 @@ class DestacadoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['producto'].queryset = Producto.objects.order_by('nombre')
+        self.fields['producto'].queryset = Producto.objects.select_related('categoria', 'plataforma').order_by('nombre')
         self.fields['producto'].empty_label = 'Sin producto'
         self.fields['producto'].label_from_instance = lambda p: (
-            f"{p.nombre} · {p.get_categoria_display()} · Cód. {p.codigo_de_barra}"
+            f"{p.nombre} · {p.categoria_texto} · Cód. {p.codigo_de_barra or 'sin código'}"
         )
 
     def clean_video_url(self):
@@ -348,13 +378,10 @@ def mensaje_maximo_visibles(seccion):
             'Oculta o elimina alguno, o guarda este como oculto.')
 
 
-CATEGORIAS_NAVBAR = [codigo for menu in MENU_NAVBAR for _, categorias in menu['grupos'] for codigo, _ in categorias]
-
-
 class ConfiguracionSitioForm(forms.ModelForm):
-    # en el panel se marcan las categorías que SÍ se ven; al guardar se convierten en categorias_ocultas
-    categorias_visibles = forms.MultipleChoiceField(
-        choices=[(codigo, codigo) for codigo in CATEGORIAS_NAVBAR],
+    # en el panel se marcan las categorías que SÍ se ven en el navbar (Categoria.visible_en_menu)
+    categorias_visibles = forms.ModelMultipleChoiceField(
+        queryset=Categoria.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
     )
@@ -372,10 +399,13 @@ class ConfiguracionSitioForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.is_bound:
-            ocultas = set(self.instance.categorias_ocultas or [])
-            self.initial['categorias_visibles'] = [c for c in CATEGORIAS_NAVBAR if c not in ocultas]
+            self.initial['categorias_visibles'] = list(
+                Categoria.objects.filter(visible_en_menu=True).values_list('id', flat=True))
 
     def save(self, commit=True):
-        visibles = set(self.cleaned_data['categorias_visibles'])
-        self.instance.categorias_ocultas = [c for c in CATEGORIAS_NAVBAR if c not in visibles]
-        return super().save(commit)
+        configuracion = super().save(commit)
+        # lista de ids y no queryset: MySQL no permite un UPDATE con subconsulta sobre la misma tabla
+        visibles = [categoria.id for categoria in self.cleaned_data['categorias_visibles']]
+        Categoria.objects.filter(id__in=visibles).update(visible_en_menu=True)
+        Categoria.objects.exclude(id__in=visibles).update(visible_en_menu=False)
+        return configuracion

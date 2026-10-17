@@ -47,8 +47,18 @@
             </div>
 
             <div class="info-group">
+                <span class="info-label">Plataforma:</span>
+                <span class="info-value">{{ producto.plataforma|default:"Sin plataforma" }}</span>
+            </div>
+
+            <div class="info-group">
                 <span class="info-label">Género:</span>
-                <span class="info-value">{{ producto.genero }}</span>
+                <span class="info-value">{{ producto.genero|default:"Sin género" }}</span>
+            </div>
+
+            <div class="info-group">
+                <span class="info-label">Costo unitario:</span>
+                <span class="info-value">{% if producto.costo is not None %}${{ producto.costo|formato_chileno }}{% else %}No registrado{% endif %}</span>
             </div>
 
             <div class="product-images mb-4">

@@ -18,7 +18,7 @@ def lista_favoritos(request):
     favoritos = Favorito.objects.filter(
         usuario=usuario,
         producto__is_deleted=False
-    )
+    ).select_related('producto').prefetch_related('producto__imagenes_producto').order_by('producto__nombre')
 
     Favorito.objects.filter(
         usuario=usuario,
@@ -59,10 +59,11 @@ def agregar_favorito(request, producto_id):
         'agregado': agregado  
     })
 
+# los favoritos se identifican por el producto: la clave primaria es (usuario, producto)
 @login_required_json
 @require_http_methods(["DELETE"])
-def eliminar_favorito(request, item_id):
-    favorito = get_object_or_404(Favorito, id=item_id, usuario=request.user)
+def eliminar_favorito(request, producto_id):
+    favorito = get_object_or_404(Favorito, producto_id=producto_id, usuario=request.user)
     favorito.delete()
     return JsonResponse({'message': 'Artículo eliminado correctamente'}, status=200)
 
@@ -77,5 +78,5 @@ def eliminar_favoritos_seleccionados(request):
     if not item_ids:
         return JsonResponse({'success': False, 'error': 'No se seleccionaron items'})
 
-    Favorito.objects.filter(id__in=item_ids, usuario=request.user).delete()
+    Favorito.objects.filter(producto_id__in=item_ids, usuario=request.user).delete()
     return JsonResponse({'success': True})

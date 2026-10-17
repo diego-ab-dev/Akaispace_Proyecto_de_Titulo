@@ -73,51 +73,58 @@
                         <div class="mb-4">
                             <label class="form-label">Adjuntar fotos (opcional, máximo 3):</label>
 
+                            {{ formset.management_form }}
                             <div class="evidencia-container">
 
                                 <div class="d-flex flex-column align-items-center" style="width: 100px;">
-                                    <input type="file" name="imagen1" id="input_imagen1" accept="image/*" hidden>
+                                    {% with form_imagen=formset.forms.0 %}
+                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen1" accept="image/*" hidden>
                                     <div class="evidencia-box" id="box_imagen1">
                                         <div class="box-content">
                                             <i class="fas fa-camera"></i>
                                             <span>Foto 1</span>
                                         </div>
                                     </div>
-                                    {% if form.imagen1.errors %}
+                                    {% if form_imagen.imagen.errors %}
                                         <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
-                                            {{ form.imagen1.errors.0 }}
+                                            {{ form_imagen.imagen.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% endwith %}
                                 </div>
 
                                 <div class="d-flex flex-column align-items-center" style="width: 100px;">
-                                    <input type="file" name="imagen2" id="input_imagen2" accept="image/*" hidden>
+                                    {% with form_imagen=formset.forms.1 %}
+                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen2" accept="image/*" hidden>
                                     <div class="evidencia-box" id="box_imagen2">
                                         <div class="box-content">
                                             <i class="fas fa-camera"></i>
                                             <span>Foto 2</span>
                                         </div>
                                     </div>
-                                    {% if form.imagen2.errors %}
+                                    {% if form_imagen.imagen.errors %}
                                         <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
-                                            {{ form.imagen2.errors.0 }}
+                                            {{ form_imagen.imagen.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% endwith %}
                                 </div>
 
                                 <div class="d-flex flex-column align-items-center" style="width: 100px;">
-                                    <input type="file" name="imagen3" id="input_imagen3" accept="image/*" hidden>
+                                    {% with form_imagen=formset.forms.2 %}
+                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen3" accept="image/*" hidden>
                                     <div class="evidencia-box" id="box_imagen3">
                                         <div class="box-content">
                                             <i class="fas fa-camera"></i>
                                             <span>Foto 3</span>
                                         </div>
                                     </div>
-                                    {% if form.imagen3.errors %}
+                                    {% if form_imagen.imagen.errors %}
                                         <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
-                                            {{ form.imagen3.errors.0 }}
+                                            {{ form_imagen.imagen.errors.0 }}
                                         </div>
                                     {% endif %}
+                                    {% endwith %}
                                 </div>
 
                             </div>

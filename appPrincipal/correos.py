@@ -36,7 +36,7 @@ def enviar_confirmacion_compra(venta):
         'items': venta.producto_venta.select_related('producto'),
         'pago': getattr(venta, 'pago_webpay', None),
         'opcion_envio': envios.OPCIONES_ENVIO.get(venta.metodo_envio),
-        'url_boleta': settings.SITIO_URL + reverse('ver_boleta', args=[venta.id]),
+        'url_comprobante': settings.SITIO_URL + reverse('ver_comprobante', args=[venta.id]),
         'url_compra': settings.SITIO_URL + reverse('ver_detalle', args=[venta.id]),
         'condiciones': CONDICIONES_COMPRA,
         'retracto': POLITICA_RETRACTO,
@@ -50,7 +50,7 @@ def enviar_confirmacion_compra(venta):
 
 
 def enviar_resolucion_devolucion(devolucion):
-    item = devolucion.venta.producto_venta.filter(producto=devolucion.producto).first() if devolucion.venta else None
+    item = devolucion.venta.producto_venta.filter(producto=devolucion.producto).first()
     contexto = {
         'devolucion': devolucion,
         'aprobada': devolucion.estado == 'Aprobada',

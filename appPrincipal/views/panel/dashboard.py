@@ -1,6 +1,7 @@
 """Panel de administración: dashboard principal."""
 from datetime import datetime
 
+from django.db.models import F
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -27,7 +28,7 @@ def admin_dashboard(request):
     ultimas_ventas = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').order_by('-fecha')[:4]
     ventas_info = [
         {
-            "usuario": venta.usuario.nombre,
+            "usuario": venta.usuario.nombre if venta.usuario else venta.get_canal_display(),
             "productos": [
                 f"{pv.producto.nombre} (x{pv.cantidad})" for pv in venta.producto_venta.all()
             ],
@@ -38,14 +39,14 @@ def admin_dashboard(request):
     ultimos_reclamos = Reclamo.objects.select_related('usuario').order_by('-fecha')[:4]
     reclamos_info = [
         {
-            "usuario": reclamo.usuario.nombre,
+            "usuario": reclamo.usuario.nombre if reclamo.usuario else reclamo.nombre_contacto or reclamo.get_canal_display(),
             "asunto": reclamo.asunto,
             "fecha": reclamo.fecha,
         }
         for reclamo in ultimos_reclamos
     ]
     
-    productos_bajo_stock = Producto.objects.filter(stock__lt=5).order_by('stock')[:4]
+    productos_bajo_stock = Producto.objects.filter(stock__lte=F('stock_critico')).order_by('stock')[:4]
     productos_info = [
         {
             "nombre": producto.nombre,
