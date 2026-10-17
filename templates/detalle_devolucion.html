@@ -69,37 +69,19 @@
                 <div class="mt-4">
                     <span class="label-bold d-block mb-3">Imágenes Adjuntadas</span>
 
-                    <div class="row g-2"> 
-                        {% if devolucion.imagen1 %}
-                            <div class="col-4"> 
-                                <div class="img-thumbnail-wrapper">
-                                    <img src="{{ devolucion.imagen1.url }}" class="gallery-img" alt="Evidencia 1" onclick="abrirModal(this.src)">
-                                </div>
-                            </div>
-                        {% endif %}
-
-                        {% if devolucion.imagen2 %}
+                    <div class="row g-2">
+                        {% for foto in devolucion.imagenes.all %}
                             <div class="col-4">
                                 <div class="img-thumbnail-wrapper">
-                                    <img src="{{ devolucion.imagen2.url }}" class="gallery-img" alt="Evidencia 2" onclick="abrirModal(this.src)">
+                                    <img src="{{ foto.imagen.url }}" class="gallery-img" alt="Evidencia {{ forloop.counter }}" onclick="abrirModal(this.src)">
                                 </div>
                             </div>
-                        {% endif %}
-
-                        {% if devolucion.imagen3 %}
-                            <div class="col-4">
-                                <div class="img-thumbnail-wrapper">
-                                    <img src="{{ devolucion.imagen3.url }}" class="gallery-img" alt="Evidencia 3" onclick="abrirModal(this.src)">
-                                </div>
-                            </div>
-                        {% endif %}
+                        {% empty %}
+                            <p class="text-muted fst-italic mt-2" style="font-size: 0.9rem;">
+                                No adjuntaste imágenes.
+                            </p>
+                        {% endfor %}
                     </div>
-
-                    {% if not devolucion.imagen1 and not devolucion.imagen2 and not devolucion.imagen3 %}
-                        <p class="text-muted fst-italic mt-2" style="font-size: 0.9rem;">
-                            No adjuntaste imágenes.
-                        </p>
-                    {% endif %}
                 </div>
             </div>
         </div>

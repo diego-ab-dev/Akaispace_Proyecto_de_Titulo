@@ -78,7 +78,7 @@ def responder_devolucion(request, devolucion_id):
             if accion == 'aceptar':
                 envio = getattr(devolucion.venta, 'datos_envio', None)
                 venta_anulada = envio is not None and envio.estado == 'Anulada'
-                if devolucion.producto_id and not venta_anulada:
+                if not venta_anulada:
                     Producto.todos.filter(id=devolucion.producto_id).update(stock=F('stock') + devolucion.cantidad)
                 devolucion.estado = 'Aprobada'
             else:

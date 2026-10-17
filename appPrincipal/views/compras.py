@@ -23,7 +23,7 @@ def ver_compras(request):
         orden_query = '-fecha'
 
     compras_list = Venta.objects.filter(usuario=usuario).prefetch_related(
-        'producto_venta__producto'
+        'producto_venta__producto__imagenes_producto'
     ).order_by(orden_query)
 
     paginator = Paginator(compras_list, 10) 
@@ -44,13 +44,15 @@ def ver_compras(request):
 
 @login_required
 def ver_detalle_compra(request, compra_id):
-    compra = get_object_or_404(Venta, id=compra_id, usuario=request.user)
+    compra = get_object_or_404(
+        Venta.objects.prefetch_related('producto_venta__producto__imagenes_producto'), id=compra_id, usuario=request.user
+    )
 
     total_cantidad = sum(item.cantidad for item in compra.producto_venta.all())
 
     devoluciones_existentes = {
         producto_id: True
-        for producto_id in Devolucion.objects.filter(venta=compra, producto__isnull=False).values_list('producto_id', flat=True)
+        for producto_id in Devolucion.objects.filter(venta=compra).values_list('producto_id', flat=True)
     }
 
     return render(request, 'detalle_compra.html', {

@@ -26,7 +26,7 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
         <li><a href="#redes">Redes</a></li>
         {% else %}
         {% if not en_menu %}<li><a href="/menu">Productos</a></li>{% endif %}
-        {# las categorías vienen de MENU_NAVBAR (constants.py); las ocultas se quitan en Configuración del panel #}
+        {# las entradas vienen de MENU_NAVBAR (constants.py); las categorías ocultas se quitan en Configuración del panel #}
         {% for menu in menu_navbar %}
         <li>
           <a href="#">{{ menu.nombre }}</a>
@@ -39,8 +39,8 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
                   {% for grupo in menu.grupos %}
                   {% if not forloop.first %}<hr class="my-2">{% endif %}
                   <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">{{ grupo.nombre }}</span></li>
-                  {% for codigo, etiqueta in grupo.categorias %}
-                  <li><a class="dropdown-item ps-0" href="{% url 'productos_por_categoria' codigo %}">{{ etiqueta }}</a></li>
+                  {% for url, etiqueta in grupo.enlaces %}
+                  <li><a class="dropdown-item ps-0" href="{{ url }}">{{ etiqueta }}</a></li>
                   {% endfor %}
                   {% endfor %}
                 </ul>

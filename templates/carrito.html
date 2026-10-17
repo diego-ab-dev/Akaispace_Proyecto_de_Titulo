@@ -54,9 +54,9 @@
                 <div class="row border-top border-bottom products-scroll-container">
                     {% if productos %}
                         {% for item in productos %}
-                            <div id="item-{{ item.id }}" class="row main align-items-center">
+                            <div id="item-{{ item.producto_id }}" class="row main align-items-center">
                                 <div class="col-auto col-check">
-                                    <input type="checkbox" class="form-check-input check-carrito check-item" value="{{ item.id }}"
+                                    <input type="checkbox" class="form-check-input check-carrito check-item" value="{{ item.producto_id }}"
                                            aria-label="Seleccionar {{ item.producto.nombre }}">
                                 </div>
                                 <div class="col-2">
@@ -66,15 +66,15 @@
                                     <div class="row text-muted cart-item-title" title="{{ item.producto.nombre }}">
                                         {{ item.producto.nombre }}
                                     </div>
-                                    <div class="row text-muted">{{ item.producto.categoria|default:"N/A" }}</div>
+                                    <div class="row text-muted">{{ item.producto.categoria_texto }}</div>
                                 </div>
                                 <div class="col">
-                                    <form class="d-inline" method="POST" action="{% url 'actualizar_cantidad_carrito' %}" id="form-{{ item.id }}">
+                                    <form class="d-inline" method="POST" action="{% url 'actualizar_cantidad_carrito' %}" id="form-{{ item.producto_id }}">
                                         {% csrf_token %}
-                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                        <input type="hidden" name="producto_id" value="{{ item.producto_id }}">
                                         {# la cantidad solo cambia con los botones (no se escribe), así nunca pasa del stock #}
                                         <input type="hidden" name="cantidad" class="input-cantidad" value="{{ item.cantidad }}"
-                                               data-item="{{ item.id }}" data-confirmada="{{ item.cantidad }}" data-stock="{{ item.producto.stock }}">
+                                               data-item="{{ item.producto_id }}" data-confirmada="{{ item.cantidad }}" data-stock="{{ item.producto.stock }}">
                                         <div class="cantidad-stepper">
                                             <button type="button" class="btn-cantidad" data-paso="-1" aria-label="Quitar una unidad">&minus;</button>
                                             <span class="cantidad-valor" aria-live="polite">{{ item.cantidad }}</span>
@@ -82,12 +82,12 @@
                                         </div>
                                     </form>
                                     <div class="cantidad-stock">{{ item.producto.stock }} disponible{{ item.producto.stock|pluralize }}</div>
-                                    <div class="cantidad-error" id="error-{{ item.id }}" aria-live="polite"></div>
+                                    <div class="cantidad-error" id="error-{{ item.producto_id }}" aria-live="polite"></div>
                                 </div>
                                 <div class="col">${{ item.producto.precio|formato_chileno }}</div>
                                 <a href="#" class="btn-eliminar-item" 
-                                data-url="{% url 'eliminar_del_carrito' item.id %}" 
-                                onclick="eliminarItem('{{ item.id }}', this); return false;">✖</a>
+                                data-url="{% url 'eliminar_del_carrito' item.producto_id %}" 
+                                onclick="eliminarItem('{{ item.producto_id }}', this); return false;">✖</a>
                             </div>
                         {% endfor %}
                     {% else %}
@@ -345,7 +345,7 @@
     // ---- cantidades del carrito ----
     // La cantidad cambia solo con los botones - / + (no se escribe), así que nunca pasa del stock.
     // Se guarda en el servidor medio segundo después del último clic: varios clics seguidos son un solo guardado.
-    const guardadosPendientes = new Map();  // item_id -> promesa del guardado en curso
+    const guardadosPendientes = new Map();  // producto_id -> promesa del guardado en curso
     const temporizadores = new Map();
 
     function stepperDe(input) {

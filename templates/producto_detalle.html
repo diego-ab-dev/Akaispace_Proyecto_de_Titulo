@@ -50,7 +50,7 @@
                                 <li class="breadcrumb-item active small" aria-current="page" style="color: #4E84A8; font-weight: 600;">{{ producto.nombre }}</li>
                             </ol>
                         </nav>
-                        <p class="text-muted mb-2">{{ producto.categoria }}</p>
+                        <p class="text-muted mb-2">{{ producto.categoria_texto }}</p>
                     </div>
 
                     <form method="POST" action="{% url 'agregar_favorito' producto.id %}" class="form-favorito">
@@ -95,7 +95,7 @@
                         </span>
                     </p>
                     {% endif %}
-                    <p class="mb-1"><strong>Género:</strong> {{ producto.genero }}</p>
+                    {% if producto.genero %}<p class="mb-1"><strong>Género:</strong> {{ producto.genero }}</p>{% endif %}
                 </div>
 
                 <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar">
@@ -294,7 +294,7 @@
                     </div>
                     <div class="card-rel-body">
                         <h6 class="text-truncate fw-bold text-dark" title="{{ rel.nombre }}">{{ rel.nombre }}</h6>
-                        <p class="text-muted small mb-1">{{ rel.categoria }}</p>
+                        <p class="text-muted small mb-1">{{ rel.categoria_texto }}</p>
                         <span class="fw-bold text-primary">${{ rel.precio|formato_chileno }}</span>
                     </div>
                 </a>

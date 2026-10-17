@@ -11,8 +11,8 @@ El selector "Ordenar" de cada página se une a este formulario con form="form-fi
             <label for="filtro-genero">Género</label>
             <select name="genero" id="filtro-genero" class="form-select form-select-sm custom-select">
                 <option value="">Todos</option>
-                {% for valor, nombre in filtros.generos %}
-                <option value="{{ valor }}" {% if filtros.genero == valor %}selected{% endif %}>{{ nombre }}</option>
+                {% for genero in filtros.generos %}
+                <option value="{{ genero.id }}" {% if filtros.genero == genero.id %}selected{% endif %}>{{ genero.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -24,8 +24,8 @@ El selector "Ordenar" de cada página se une a este formulario con form="form-fi
                 <option value="">Todas</option>
                 {% for grupo, opciones in filtros.plataformas %}
                 <optgroup label="{{ grupo }}">
-                    {% for codigo, nombre, categorias in opciones %}
-                    <option value="{{ codigo }}" {% if filtros.plataforma == codigo %}selected{% endif %}>{{ nombre }}</option>
+                    {% for plataforma in opciones %}
+                    <option value="{{ plataforma.codigo }}" {% if filtros.plataforma == plataforma.codigo %}selected{% endif %}>{{ plataforma.nombre }}</option>
                     {% endfor %}
                 </optgroup>
                 {% endfor %}

@@ -86,28 +86,20 @@
                     </div>
                 </div>
 
-                {% if devolucion.imagen1 or devolucion.imagen2 or devolucion.imagen3 %}
+                {% with fotos=devolucion.imagenes.all %}
+                {% if fotos %}
                 <div class="mt-4 border-top pt-3">
                     <label class="label-bold mb-3"><i class="far fa-images me-2"></i>Evidencia Adjunta:</label>
                     <div class="evidence-gallery d-flex gap-2 flex-wrap">
-                        {% if devolucion.imagen1 %}
+                        {% for foto in fotos %}
                             <div class="thumb-box">
-                                <img src="{{ devolucion.imagen1.url }}" onclick="abrirModal(this.src)" alt="Evidencia 1">
+                                <img src="{{ foto.imagen.url }}" onclick="abrirModal(this.src)" alt="Evidencia {{ forloop.counter }}">
                             </div>
-                        {% endif %}
-                        {% if devolucion.imagen2 %}
-                            <div class="thumb-box">
-                                <img src="{{ devolucion.imagen2.url }}" onclick="abrirModal(this.src)" alt="Evidencia 2">
-                            </div>
-                        {% endif %}
-                        {% if devolucion.imagen3 %}
-                            <div class="thumb-box">
-                                <img src="{{ devolucion.imagen3.url }}" onclick="abrirModal(this.src)" alt="Evidencia 3">
-                            </div>
-                        {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
                 {% endif %}
+                {% endwith %}
 
             </div>
         </div>

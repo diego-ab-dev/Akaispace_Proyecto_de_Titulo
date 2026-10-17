@@ -30,7 +30,7 @@
 
             {% if page_obj %}
                 {% for item in page_obj %}
-                <div id="item-{{ item.id }}" class="wishlist-item d-flex align-items-center py-4 border-bottom position-relative">
+                <div id="item-{{ item.producto_id }}" class="wishlist-item d-flex align-items-center py-4 border-bottom position-relative">
 
                     <div class="item-image me-4 bg-light rounded d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
                         <img src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}" class="img-fluid" style="max-height: 80px;">
@@ -59,7 +59,7 @@
                     </div>
 
                     <div class="item-check position-absolute top-0 end-0 mt-3 me-3">
-                        <input class="form-check-input border-dark check-item" type="checkbox" value="{{ item.id }}" id="check{{ item.id }}">
+                        <input class="form-check-input border-dark check-item" type="checkbox" value="{{ item.producto_id }}" id="check{{ item.producto_id }}">
                     </div>
 
                 </div>

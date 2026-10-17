@@ -208,7 +208,53 @@ Cada intento de pago queda registrado en el modelo `PagoWebpay` (visible en `/ad
 
 ---
 
+## (Opcional) Inicio de sesión con Google
+
+Sin esta configuración el login con correo y contraseña funciona igual; solo no aparece el botón **Continuar con Google**.
+
+1. En [Google Cloud Console](https://console.cloud.google.com/) crea un proyecto y, en **APIs y servicios > Credenciales**, un **ID de cliente de OAuth** de tipo *Aplicación web*.
+2. En **URI de redireccionamiento autorizados** agrega `http://localhost:8000/accounts/google/login/callback/`.
+3. Copia el ID y el secreto en tu `.env` (las líneas están en `.env.example`), nunca en el código:
+
+   ```
+   GOOGLE_CLIENT_ID=el-id-de-cliente.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=el-secreto
+   ```
+
+4. Reinicia `runserver`. El botón aparece en `/login/`.
+
+Si el correo de Google ya tiene una cuenta en la tienda, se inicia sesión en esa cuenta; si no, se crea una con el nombre del perfil de Google. El registro con contraseña sigue siendo solo el de `/register/` (el de allauth, `/accounts/signup/`, está cerrado).
+
+---
+
 ## Si ya tenías el proyecto instalado
+
+### Modelo de datos definitivo (migraciones 0010 a 0015)
+
+Estas migraciones normalizan la base: categoría, plataforma y género pasan a tablas propias, las imágenes a `imagen_producto` e `imagen_devolucion`, las tablas de detalle tienen clave primaria compuesta, `Boleta` pasa a llamarse `Comprobante` (no tributario) y todas las tablas quedan con nombre en minúscula y sin el prefijo `appPrincipal_`. Tus datos se conservan. Después de hacer `git pull`, con el entorno virtual activo:
+
+1. (Recomendado) Respalda tu base antes de migrar, con el `mysqldump` de MySQL 8.4:
+
+   ```powershell
+   & "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqldump.exe" -u root -p --databases db_akaispace > respaldo_db_akaispace.sql
+   ```
+
+2. Instala las librerías y migra:
+
+   ```powershell
+   pip install -r requirements.txt
+   python manage.py migrate
+   ```
+
+3. Si usas los datos de ejemplo, vuelve a cargarlos: `python manage.py seed_demo`.
+
+Ten en cuenta:
+
+- Las URL de categorías cambiaron a `/productos/<id de categoría>/` y `/productos/<id de categoría>/<plataforma>/` (ej. `/productos/1/ps5/`). La boleta ahora es `/comprobante/<n.º de venta>/`.
+- Si tienes consultas SQL o diagramas propios, los nombres de tabla cambiaron (`appPrincipal_producto` ahora es `producto`, `appPrincipal_productoventa` ahora es `detalle_venta`, etc.).
+- Ningún producto existente tiene costo registrado: el reporte de ganancia los excluye hasta que se ingrese su costo en el panel (Editar producto).
+
+### Si venías de la base antigua `db_sdgames`
 
 El proyecto pasó al sistema de usuarios de Django y **las migraciones se reiniciaron desde cero**. La base de datos antigua (`db_sdgames`) ya no es compatible. Después de hacer `git pull`:
 
@@ -285,6 +331,8 @@ Una página nueva solo define sus bloques:
 
 El navbar está en `templates/partials/navbar.html`, el footer en `templates/partials/footer.html` y el menú lateral del panel en `templates/admin_panel/partials/sidebar.html`. Para cambiarlos se edita solo ese archivo.
 
+**Catálogo**: la categoría, la plataforma y el género de cada producto son tablas propias (`Categoria`, `Plataforma` y `Genero`), cargadas por la migración `0011_catalogo_normalizado`. Las entradas de los menús del navbar están en `MENU_NAVBAR` (`appPrincipal/constants.py`) y cada categoría se oculta o muestra desde el panel, en **Configuración**. Las imágenes de un producto están en `ImagenProducto` (hasta 6, una principal); en las plantillas se usan `producto.imagen_principal` y `producto.imagenes`.
+
 **Portada editable** (carrusel del menú, nuevos lanzamientos del home y la tarjeta promocional de cada menú del navbar): se administra desde el panel, en **Portada**. Se guarda en el modelo `Destacado` y llega a las plantillas como `portada` (`appPrincipal/context_processors.py`). El contenido inicial lo crea la migración `0004_portada_inicial`, y `python manage.py seed_demo` lo enlaza con los productos de ejemplo.
 
 ---
@@ -305,6 +353,8 @@ El navbar está en `templates/partials/navbar.html`, el footer en `templates/par
 | `Table '...' doesn't exist` | Faltan las tablas | Ejecutar `python manage.py migrate` |
 | `InconsistentMigrationHistory` | El `.env` apunta a la base de datos antigua | Seguir la sección "Si ya tenías el proyecto instalado" |
 | `No module named 'axes'` | Faltan librerías nuevas | Ejecutar `pip install -r requirements.txt` |
+| `No module named 'allauth'` | Faltan librerías nuevas | Ejecutar `pip install -r requirements.txt` |
+| Un enlace antiguo de categoría da error 404 | Las URL de categorías cambiaron con el modelo de datos definitivo | Usar los enlaces del navbar (`/productos/<id>/<plataforma>/`) |
 | "Demasiados intentos fallidos" en el login | Se superó el límite de intentos | Esperar 15 minutos o ejecutar `python manage.py axes_reset` |
 | `Unknown command` al usar manage.py | Comando mal escrito | Los comandos van en minúscula y separados: `python manage.py runserver` |
 

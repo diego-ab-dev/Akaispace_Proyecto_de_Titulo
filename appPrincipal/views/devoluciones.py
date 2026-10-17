@@ -8,7 +8,7 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from appPrincipal.forms import SolicitudDevolucionForm
+from appPrincipal.forms import ImagenDevolucionFormSet, SolicitudDevolucionForm
 from appPrincipal.models import Devolucion, Producto, ProductoVenta, Venta
 
 
@@ -37,11 +37,13 @@ def crear_devolucion(request, compra_id, producto_id):
         return redirect(f"{url_compra}?{aviso}")
 
     form = SolicitudDevolucionForm(cantidad_maxima=disponible)
+    formset = ImagenDevolucionFormSet(instance=Devolucion(), prefix='imagenes')
 
     if request.method == 'POST':
-        form = SolicitudDevolucionForm(request.POST, request.FILES, cantidad_maxima=disponible)
+        form = SolicitudDevolucionForm(request.POST, cantidad_maxima=disponible)
+        formset = ImagenDevolucionFormSet(request.POST, request.FILES, instance=Devolucion(), prefix='imagenes')
 
-        if form.is_valid():
+        if form.is_valid() and formset.is_valid():
             with transaction.atomic():
                 Venta.objects.select_for_update().get(id=compra.id)
                 disponible = item.cantidad - _cantidad_ya_solicitada(compra, producto)
@@ -49,17 +51,16 @@ def crear_devolucion(request, compra_id, producto_id):
                     aviso = urlencode({'notif': 'La cantidad supera lo que aún puedes devolver.', 'type': 'error'})
                     return redirect(f"{url_compra}?{aviso}")
 
-                Devolucion.objects.create(
+                devolucion = Devolucion.objects.create(
                     usuario=usuario,
                     venta=compra,
                     producto=producto,
                     cantidad=form.cleaned_data['cantidad'],
                     motivo=form.cleaned_data['descripcion'],
-                    imagen1=form.cleaned_data['imagen1'],
-                    imagen2=form.cleaned_data['imagen2'],
-                    imagen3=form.cleaned_data['imagen3'],
                     estado='Pendiente'
                 )
+                formset.instance = devolucion
+                formset.save()
             return redirect('/perfil?notif=Solicitud+de+devolución+enviada+con+éxito&type=success')
 
     return render(request, 'crear_devolucion.html', {
@@ -67,14 +68,16 @@ def crear_devolucion(request, compra_id, producto_id):
         'producto': producto,
         'cantidad_comprada': item.cantidad,
         'cantidad_disponible': disponible,
-        'form': form
+        'form': form,
+        'formset': formset,
     })
 
 
 @login_required
 def listar_devoluciones(request):
     usuario = request.user
-    todos_devoluciones = Devolucion.objects.filter(usuario=usuario).order_by('-id')
+    todos_devoluciones = Devolucion.objects.filter(usuario=usuario).select_related('producto').prefetch_related(
+        'producto__imagenes_producto').order_by('-id')
 
     paginator = Paginator(todos_devoluciones, 5) 
     page_number = request.GET.get('page')

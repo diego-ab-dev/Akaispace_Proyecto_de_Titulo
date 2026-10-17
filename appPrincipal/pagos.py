@@ -6,12 +6,12 @@ import secrets
 from django.db import transaction
 
 from appPrincipal import correos, envios, webpay
-from appPrincipal.models import (Boleta, Carrito, Envio, ItemCarritoProducto, PagoWebpay, Producto,
-                                 ProductoVenta, Venta)
+from appPrincipal.models import (Carrito, Comprobante, DetallePagoWebpay, Envio, ItemCarritoProducto, PagoWebpay,
+                                 Producto, ProductoVenta, Venta)
 
 logger = logging.getLogger(__name__)
 
-# Registra la venta: descuenta el stock, crea el envío y emite la boleta
+# Registra la venta: descuenta el stock, crea el envío y emite el comprobante (no tributario)
 def crear_venta(usuario, items, metodo_envio, direccion_envio, metodo_pago):
     if not items:
         raise ValueError("Tu carrito está vacío.")
@@ -48,7 +48,7 @@ def crear_venta(usuario, items, metodo_envio, direccion_envio, metodo_pago):
             venta=venta, estado='En Preparación',
             transportista=envios.OPCIONES_ENVIO[metodo_envio]['transportista'],
         )
-        Boleta.objects.create(venta=venta)
+        Comprobante.objects.create(venta=venta)
     return venta
 
 
@@ -57,20 +57,23 @@ def _nueva_orden_compra():
 
 # Crea el PagoWebpay pendiente y la transacción en Transbank
 def iniciar_pago(usuario, carrito, metodo_envio, url_retorno):
-    items = [
-        {'producto_id': item.producto_id, 'cantidad': item.cantidad, 'precio_unitario': item.producto.precio}
-        for item in carrito.items.select_related('producto')
-    ]
-    subtotal = sum(item['cantidad'] * item['precio_unitario'] for item in items)
-    pago = PagoWebpay.objects.create(
-        usuario=usuario,
-        carrito=carrito,
-        orden_compra=_nueva_orden_compra(),
-        monto=subtotal + envios.costo_envio(metodo_envio, subtotal),
-        items=items,
-        metodo_envio=metodo_envio,
-        direccion_envio=envios.direccion_de_entrega(metodo_envio, usuario),
-    )
+    items = list(carrito.items.select_related('producto'))
+    subtotal = sum(item.cantidad * item.producto.precio for item in items)
+    with transaction.atomic():
+        pago = PagoWebpay.objects.create(
+            usuario=usuario,
+            carrito=carrito,
+            orden_compra=_nueva_orden_compra(),
+            monto=subtotal + envios.costo_envio(metodo_envio, subtotal),
+            metodo_envio=metodo_envio,
+            direccion_envio=envios.direccion_de_entrega(metodo_envio, usuario),
+        )
+        # lo que se paga queda fijado aquí: el cliente puede seguir cambiando su carrito mientras paga
+        DetallePagoWebpay.objects.bulk_create([
+            DetallePagoWebpay(pago=pago, producto_id=item.producto_id, cantidad=item.cantidad,
+                              precio_unitario=item.producto.precio)
+            for item in items
+        ])
     try:
         respuesta = webpay.crear(pago.orden_compra, f"usuario-{usuario.pk}", pago.monto, url_retorno)
     except webpay.ErrorWebpay:
@@ -83,15 +86,22 @@ def iniciar_pago(usuario, carrito, metodo_envio, url_retorno):
     return pago, respuesta['url']
 
 
+def items_del_pago(pago):
+    return [
+        {'producto_id': detalle.producto_id, 'cantidad': detalle.cantidad, 'precio_unitario': detalle.precio_unitario}
+        for detalle in pago.detalles.all()
+    ]
+
+
 def _sacar_del_carrito(pago):
-    for item in pago.items:
+    for detalle in pago.detalles.all():
         en_carrito = ItemCarritoProducto.objects.filter(
-            carrito__usuario=pago.usuario, producto_id=item['producto_id']
+            carrito__usuario=pago.usuario, carrito__vigente=True, producto_id=detalle.producto_id
         ).first()
         if en_carrito is None:
             continue
-        if en_carrito.cantidad > item['cantidad']:
-            en_carrito.cantidad -= item['cantidad']
+        if en_carrito.cantidad > detalle.cantidad:
+            en_carrito.cantidad -= detalle.cantidad
             en_carrito.save(update_fields=['cantidad'])
         else:
             en_carrito.delete()
@@ -148,7 +158,7 @@ def confirmar_pago(token):
             return pago
 
         try:
-            venta = crear_venta(pago.usuario, pago.items, pago.metodo_envio, pago.direccion_envio,
+            venta = crear_venta(pago.usuario, items_del_pago(pago), pago.metodo_envio, pago.direccion_envio,
                                 Venta.PAGO_WEBPAY)
         except ValueError as error:
             _reembolsar(pago, f"{error}. Reversamos el cargo completo.")

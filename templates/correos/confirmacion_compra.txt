@@ -17,7 +17,7 @@ ENTREGA
 {% if venta.direccion_envio and not venta.es_retiro_en_tienda %}Dirección: {{ venta.direccion_envio }}
 {% endif %}{% if opcion_envio %}{{ opcion_envio.descripcion }}
 {% endif %}
-Ver tu boleta: {{ url_boleta }}
+Ver tu comprobante de compra: {{ url_comprobante }}
 Seguir tu pedido: {{ url_compra }}
 
 CONDICIONES DE LA COMPRA

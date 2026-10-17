@@ -61,7 +61,7 @@ def admin_ventas(request):
 
 @admin_required
 def detalle_venta(request, venta_id):
-    venta = get_object_or_404(Venta.objects.prefetch_related('producto_venta__producto'), id=venta_id)
+    venta = get_object_or_404(Venta.objects.prefetch_related('producto_venta__producto__imagenes_producto'), id=venta_id)
     return render(request, 'admin_panel/detalle_venta.html', {'venta': venta})
 
 @admin_required
@@ -140,7 +140,7 @@ def anular_venta(request, venta_id):
             venta.save(update_fields=['anulada_en'])
 
             devuelto = dict(
-                venta.devoluciones.filter(estado='Aprobada', producto__isnull=False)
+                venta.devoluciones.filter(estado='Aprobada')
                 .values_list('producto_id').annotate(total=Sum('cantidad'))
             )
             for item in venta.producto_venta.all():

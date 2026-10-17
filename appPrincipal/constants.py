@@ -79,8 +79,9 @@ POLITICA_RETRACTO = [
 ]
 
 
-# Menús de categorías del navbar. Cada categoría se puede ocultar desde el panel
-# (Configuración); una categoría oculta sigue existiendo y sus productos siguen a la venta.
+# Menús de categorías del navbar. Cada entrada es (categoría, código de plataforma o None, etiqueta) y
+# enlaza a esa categoría filtrada por la plataforma. El admin oculta una categoría completa desde el panel
+# (Configuración, Categoria.visible_en_menu); oculta sigue existiendo y sus productos siguen a la venta.
 # clase_flecha / clase_submenu: las usa static/js/navbar.js para abrir el menú en celulares.
 MENU_NAVBAR = [
     {
@@ -88,13 +89,13 @@ MENU_NAVBAR = [
         'clase_flecha': 'htmlcss-arrow', 'clase_submenu': 'htmlCss-sub-menu',
         'texto_link': 'Ver detalles', 'color_etiqueta': '', 'vacio': 'Próximamente',
         'grupos': [
-            ('PlayStation', [('Videojuegos PS3', 'PlayStation 3'), ('Videojuegos PS4', 'PlayStation 4'),
-                             ('Videojuegos PS5', 'PlayStation 5')]),
-            ('Microsoft', [('Videojuegos XBOX 360', 'XBOX 360'), ('Videojuegos XBOX ONE', 'XBOX ONE'),
-                           ('Videojuegos XBOX SERIES', 'XBOX SERIES')]),
-            ('Nintendo', [('Videojuegos Nintendo SWITCH', 'SWITCH'), ('Videojuegos Nintendo 3DS', '3DS'),
-                          ('Videojuegos WII', 'WII'), ('Videojuegos WII U', 'WII U')]),
-            ('PC', [('Videojuegos para PC', 'Videojuegos PC')]),
+            ('PlayStation', [('Videojuegos', 'ps3', 'PlayStation 3'), ('Videojuegos', 'ps4', 'PlayStation 4'),
+                             ('Videojuegos', 'ps5', 'PlayStation 5')]),
+            ('Microsoft', [('Videojuegos', 'xbox360', 'XBOX 360'), ('Videojuegos', 'xboxone', 'XBOX ONE'),
+                           ('Videojuegos', 'xboxseries', 'XBOX SERIES')]),
+            ('Nintendo', [('Videojuegos', 'switch', 'SWITCH'), ('Videojuegos', '3ds', '3DS'),
+                          ('Videojuegos', 'wii', 'WII'), ('Videojuegos', 'wiiu', 'WII U')]),
+            ('PC', [('Videojuegos', 'pc', 'Videojuegos PC')]),
         ],
     },
     {
@@ -102,9 +103,9 @@ MENU_NAVBAR = [
         'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
         'texto_link': 'Ver consola', 'color_etiqueta': '', 'vacio': 'Próximamente',
         'grupos': [
-            ('PlayStation', [('Ps4 Consolas', 'PlayStation 4'), ('Ps5 Consolas', 'PlayStation 5')]),
-            ('Microsoft', [('Xbox One Consolas', 'XBOX ONE'), ('Xbox Series Consolas', 'XBOX SERIES')]),
-            ('Nintendo', [('Wii U Consolas', 'WII U'), ('Switch Consolas', 'SWITCH')]),
+            ('PlayStation', [('Consolas', 'ps4', 'PlayStation 4'), ('Consolas', 'ps5', 'PlayStation 5')]),
+            ('Microsoft', [('Consolas', 'xboxone', 'XBOX ONE'), ('Consolas', 'xboxseries', 'XBOX SERIES')]),
+            ('Nintendo', [('Consolas', 'wiiu', 'WII U'), ('Consolas', 'switch', 'SWITCH')]),
         ],
     },
     {
@@ -112,14 +113,14 @@ MENU_NAVBAR = [
         'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
         'texto_link': 'Ver accesorio', 'color_etiqueta': '#8e44ad', 'vacio': 'Sin stock destacado',
         'grupos': [
-            ('PlayStation', [('Accesorios Psp', 'PSP'), ('Accesorios Ps Vita', 'VITA'),
-                             ('Accesorios PS1', 'PLAY STATION 1'), ('Accesorios PS2', 'PLAY STATION 2'),
-                             ('Accesorios PS3', 'PLAY STATION 3'), ('Accesorios PS4', 'PLAY STATION 4'),
-                             ('Accesorios PS5', 'PLAY STATION 5')]),
-            ('Microsoft', [('Accesorios XBOX 360', 'XBOX 360'), ('Accesorios XBOX ONE', 'XBOX ONE'),
-                           ('Accesorios XBOX SERIES', 'XBOX SERIES')]),
-            ('Nintendo', [('Accesorios Nintendo 3DS', '3DS'), ('Accesorios WII U', 'WII U'),
-                          ('Accesorios Nintendo SWITCH', 'SWITCH')]),
+            ('PlayStation', [('Accesorios', 'psp', 'PSP'), ('Accesorios', 'psvita', 'VITA'),
+                             ('Accesorios', 'ps1', 'PLAY STATION 1'), ('Accesorios', 'ps2', 'PLAY STATION 2'),
+                             ('Accesorios', 'ps3', 'PLAY STATION 3'), ('Accesorios', 'ps4', 'PLAY STATION 4'),
+                             ('Accesorios', 'ps5', 'PLAY STATION 5')]),
+            ('Microsoft', [('Accesorios', 'xbox360', 'XBOX 360'), ('Accesorios', 'xboxone', 'XBOX ONE'),
+                           ('Accesorios', 'xboxseries', 'XBOX SERIES')]),
+            ('Nintendo', [('Accesorios', '3ds', '3DS'), ('Accesorios', 'wiiu', 'WII U'),
+                          ('Accesorios', 'switch', 'SWITCH')]),
         ],
     },
     {
@@ -127,7 +128,7 @@ MENU_NAVBAR = [
         'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
         'texto_link': 'Lo quiero', 'color_etiqueta': '#f39c12', 'vacio': 'Próximamente',
         'grupos': [
-            ('Coleccionables', [('Figuras Funko', 'FUNKO POP'), ('Figuras Amiibo', 'AMIIBO')]),
+            ('Coleccionables', [('Funko Pop', None, 'FUNKO POP'), ('Amiibo', None, 'AMIIBO')]),
         ],
     },
 ]

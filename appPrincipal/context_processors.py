@@ -1,7 +1,8 @@
+from django.urls import reverse
 from django.utils.functional import SimpleLazyObject
 
 from appPrincipal.constants import MENU_NAVBAR
-from appPrincipal.models import ConfiguracionSitio, Destacado
+from appPrincipal.models import Categoria, ConfiguracionSitio, Destacado
 
 
 def usuario_context(request):
@@ -17,7 +18,8 @@ class Portada:
     def _cargar(self):
         if self._por_seccion is None:
             self._por_seccion = {}
-            activos = Destacado.objects.filter(activo=True).select_related('producto')
+            activos = Destacado.objects.filter(activo=True).select_related('producto').prefetch_related(
+                'producto__imagenes_producto')
             for destacado in activos:
                 self._por_seccion.setdefault(destacado.seccion, []).append(destacado)
         return self._por_seccion
@@ -31,15 +33,24 @@ class Portada:
         return destacados[:Destacado.MAXIMO_VISIBLES.get(seccion)]
 
 
-def armar_menu_navbar(categorias_ocultas, portada):
-    """Los menús del navbar sin las categorías ocultas; un grupo o menú sin categorías no se muestra."""
+def url_categoria(categoria_id, plataforma=None):
+    if plataforma:
+        return reverse('productos_por_categoria_y_plataforma', args=[categoria_id, plataforma])
+    return reverse('productos_por_categoria', args=[categoria_id])
+
+
+def armar_menu_navbar(portada):
+    """Los menús del navbar sin las categorías ocultas (Categoria.visible_en_menu); un grupo o menú
+    sin categorías visibles no se muestra."""
+    visibles = dict(Categoria.objects.filter(visible_en_menu=True).values_list('nombre', 'id'))
     menus = []
     for menu in MENU_NAVBAR:
         grupos = []
-        for nombre, categorias in menu['grupos']:
-            visibles = [(codigo, etiqueta) for codigo, etiqueta in categorias if codigo not in categorias_ocultas]
-            if visibles:
-                grupos.append({'nombre': nombre, 'categorias': visibles})
+        for nombre, entradas in menu['grupos']:
+            enlaces = [(url_categoria(visibles[categoria], plataforma), etiqueta)
+                       for categoria, plataforma, etiqueta in entradas if categoria in visibles]
+            if enlaces:
+                grupos.append({'nombre': nombre, 'enlaces': enlaces})
         if grupos:
             menus.append({**menu, 'grupos': grupos, 'destacado': getattr(portada, menu['promo'])})
     return menus
@@ -53,5 +64,5 @@ def portada_context(request):
     return {
         'portada': portada,
         'config_sitio': configuracion,
-        'menu_navbar': SimpleLazyObject(lambda: armar_menu_navbar(configuracion.categorias_ocultas, portada)),
+        'menu_navbar': SimpleLazyObject(lambda: armar_menu_navbar(portada)),
     }

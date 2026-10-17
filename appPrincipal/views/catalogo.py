@@ -5,13 +5,20 @@ from django.core.paginator import Paginator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404, render
 
-from appPrincipal.models import ConfiguracionSitio, Favorito, Producto
+from appPrincipal.models import Categoria, ConfiguracionSitio, Favorito, Genero, Plataforma, Producto
 
-PLATAFORMAS = {
-    codigo: (nombre, categorias)
-    for _, opciones in Producto.PLATAFORMAS
-    for codigo, nombre, categorias in opciones
-}
+
+def productos_para_listado(productos):
+    """Carga de una vez lo que muestran las tarjetas: categoría, plataforma, género e imágenes."""
+    return productos.select_related('categoria', 'plataforma', 'genero').prefetch_related('imagenes_producto')
+
+
+def plataformas_por_familia():
+    """[(familia, [plataformas])] en el orden de la tabla, para el <select> con <optgroup>."""
+    grupos = {}
+    for plataforma in Plataforma.objects.all():
+        grupos.setdefault(plataforma.get_familia_display(), []).append(plataforma)
+    return list(grupos.items())
 
 
 def _leer_precio(valor):
@@ -25,17 +32,16 @@ def _leer_precio(valor):
 
 
 def filtrar_catalogo(request, productos, con_plataforma=True):
-    """Aplica los filtros de género, plataforma y rango de precio que vienen en la URL."""
-    genero = request.GET.get('genero', '')
-    plataforma = request.GET.get('plataforma', '') if con_plataforma else ''
+    """Aplica los filtros de género, plataforma y rango de precio que vienen en la URL.
+    El género llega como su id y la plataforma como su código (ej. ps5)."""
+    generos = list(Genero.objects.all())
+    texto_genero = request.GET.get('genero', '')
+    genero = next((g for g in generos if str(g.id) == texto_genero), None)
+    codigo_plataforma = request.GET.get('plataforma', '') if con_plataforma else ''
+    plataforma = Plataforma.objects.filter(codigo=codigo_plataforma).first() if codigo_plataforma else None
     texto_min = request.GET.get('precio_min', '').strip()
     texto_max = request.GET.get('precio_max', '').strip()
     errores = []
-
-    if genero not in dict(Producto.GENEROS):
-        genero = ''
-    if plataforma not in PLATAFORMAS:
-        plataforma = ''
 
     precio_min, min_valido = _leer_precio(texto_min)
     precio_max, max_valido = _leer_precio(texto_max)
@@ -49,7 +55,7 @@ def filtrar_catalogo(request, productos, con_plataforma=True):
     if genero:
         productos = productos.filter(genero=genero)
     if plataforma:
-        productos = productos.filter(categoria__in=PLATAFORMAS[plataforma][1])
+        productos = productos.filter(plataforma=plataforma)
     if precio_min is not None:
         productos = productos.filter(precio__gte=precio_min)
     if precio_max is not None:
@@ -58,9 +64,9 @@ def filtrar_catalogo(request, productos, con_plataforma=True):
     # etiquetas de los filtros aplicados, cada una con el enlace para quitarla
     aplicados = []
     if genero:
-        aplicados.append((f"Género: {dict(Producto.GENEROS)[genero]}", ['genero']))
+        aplicados.append((f"Género: {genero.nombre}", ['genero']))
     if plataforma:
-        aplicados.append((f"Plataforma: {PLATAFORMAS[plataforma][0]}", ['plataforma']))
+        aplicados.append((f"Plataforma: {plataforma.nombre}", ['plataforma']))
     if precio_min is not None and precio_max is not None:
         aplicados.append((f"Precio: ${precio_min:,} a ${precio_max:,}".replace(',', '.'), ['precio_min', 'precio_max']))
     elif precio_min is not None:
@@ -75,12 +81,12 @@ def filtrar_catalogo(request, productos, con_plataforma=True):
         return params.urlencode()
 
     return productos, {
-        'genero': genero,
-        'plataforma': plataforma,
+        'genero': genero.id if genero else None,
+        'plataforma': plataforma.codigo if plataforma else '',
         'precio_min': texto_min,
         'precio_max': texto_max,
-        'generos': Producto.GENEROS,
-        'plataformas': Producto.PLATAFORMAS,
+        'generos': generos,
+        'plataformas': plataformas_por_familia() if con_plataforma else [],
         'con_plataforma': con_plataforma,
         'errores': errores,
         'activos': bool(aplicados),
@@ -107,6 +113,7 @@ def productos_menu(request):
         )
 
     productos, filtros = filtrar_catalogo(request, productos)
+    productos = productos_para_listado(productos)
 
     if orden == 'precio_asc':
         productos = productos.order_by('precio')
@@ -136,7 +143,10 @@ def productos_menu(request):
 
 
 def producto_detalle(request, producto_id):
-    producto = get_object_or_404(Producto, id=producto_id)
+    producto = get_object_or_404(
+        Producto.objects.select_related('categoria', 'plataforma', 'genero').prefetch_related('imagenes_producto'),
+        id=producto_id,
+    )
     rango_cantidad = range(1, producto.stock + 1)
 
     opiniones_list = producto.opiniones.all().order_by('-fecha_creacion')
@@ -171,8 +181,9 @@ def producto_detalle(request, producto_id):
     if configuracion.productos_relacionados != ConfiguracionSitio.RELACIONADOS_NINGUNO:
         productos_relacionados = Producto.objects.filter(stock__gt=0).exclude(id=producto.id)
         if configuracion.productos_relacionados == ConfiguracionSitio.RELACIONADOS_CATEGORIA:
-            productos_relacionados = productos_relacionados.filter(categoria=producto.categoria)
-        productos_relacionados = productos_relacionados.order_by('?')[:4]
+            productos_relacionados = productos_relacionados.filter(categoria=producto.categoria,
+                                                                   plataforma=producto.plataforma)
+        productos_relacionados = productos_para_listado(productos_relacionados).order_by('?')[:4]
 
     es_favorito = False
     if request.user.is_authenticated:
@@ -193,13 +204,18 @@ def producto_detalle(request, producto_id):
     })
 
     
-def productos_por_categoria(request, categoria):
-    productos = Producto.objects.filter(
-        categoria=categoria,
-        stock__gt=0
-    )
-    # la categoría ya define la plataforma, así que aquí no se muestra ese filtro
-    productos, filtros = filtrar_catalogo(request, productos, con_plataforma=False)
+def productos_por_categoria(request, categoria_id, plataforma=None):
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+    productos = Producto.objects.filter(categoria=categoria, stock__gt=0)
+    nombre_categoria = categoria.nombre
+    if plataforma:
+        plataforma = get_object_or_404(Plataforma, codigo=plataforma)
+        productos = productos.filter(plataforma=plataforma)
+        nombre_categoria = f"{categoria.nombre} {plataforma.nombre}"
+    # si la URL ya fija la plataforma, o la categoría no la usa, no se muestra ese filtro
+    con_plataforma = plataforma is None and categoria.requiere_plataforma
+    productos, filtros = filtrar_catalogo(request, productos, con_plataforma=con_plataforma)
+    productos = productos_para_listado(productos)
 
     orden = request.GET.get('orden')
     
@@ -220,11 +236,8 @@ def productos_por_categoria(request, categoria):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    nombre_categoria = dict(Producto.CATEGORIAS).get(categoria, categoria)
-
     context = {
         'categoria': nombre_categoria,
-        'categoria_cod': categoria,  
         'favoritos_ids': favoritos_ids,
         'page_obj': page_obj,
         'productos': page_obj.object_list,

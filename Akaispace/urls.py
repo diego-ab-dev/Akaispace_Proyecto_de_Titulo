@@ -17,7 +17,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from appPrincipal import views
 
 urlpatterns = [
@@ -28,11 +28,15 @@ urlpatterns = [
     # menu
     path('menu/', views.productos_menu, name='productos_menu'),
     path('producto/<int:producto_id>/', views.producto_detalle, name='producto_detalle'),
-    path('productos/<str:categoria>/', views.productos_por_categoria, name='productos_por_categoria'),
+    path('productos/<int:categoria_id>/', views.productos_por_categoria, name='productos_por_categoria'),
+    path('productos/<int:categoria_id>/<slug:plataforma>/', views.productos_por_categoria,
+         name='productos_por_categoria_y_plataforma'),
     # login y register
     path('login/', views.login, name='login'),
     path('register/', views.register, name='register'),
     path('logout/', views.logout, name='logout'),
+    # inicio de sesión con Google (HU-02, django-allauth)
+    path('accounts/', include('allauth.urls')),
     path('obtener_ciudades/', views.obtener_ciudades, name='obtener_ciudades'),
     # recuperar contraseña
     path('recuperar-contrasena/', views.recuperar_contraseña, name='recuperar_contraseña'),
@@ -64,7 +68,7 @@ urlpatterns = [
     # carrito
     path('ver_carrito/', views.ver_carrito, name='ver_carrito'),
     path('agregar/<int:producto_id>/', views.agregar_al_carrito, name='agregar_al_carrito'),
-    path('eliminar/<int:item_id>/', views.eliminar_del_carrito, name='eliminar_del_carrito'),
+    path('eliminar/<int:producto_id>/', views.eliminar_del_carrito, name='eliminar_del_carrito'),
     path('carrito/eliminar-seleccionados/', views.eliminar_seleccionados_carrito, name='eliminar_seleccionados_carrito'),
     path('carrito/vaciar/', views.vaciar_carrito, name='vaciar_carrito'),
     path('actualizar-cantidad/', views.actualizar_cantidad_carrito, name='actualizar_cantidad_carrito'),
@@ -72,13 +76,13 @@ urlpatterns = [
     # favoritos
     path('favorites/', views.lista_favoritos, name='lista_favorito'),
     path('agregar_favorito/<int:producto_id>/', views.agregar_favorito, name='agregar_favorito'),
-    path('remove_favorito/<int:item_id>/', views.eliminar_favorito, name='eliminar_favorito'),
+    path('remove_favorito/<int:producto_id>/', views.eliminar_favorito, name='eliminar_favorito'),
     path('eliminar_favoritos_seleccionados/', views.eliminar_favoritos_seleccionados, name='eliminar_favoritos_seleccionados'),
     # pago - compra
     path('seleccionar-pago/', views.seleccionar_pago, name='seleccionar_pago'),
     path('pago/webpay/retorno/', views.webpay_retorno, name='webpay_retorno'),
     path('pago/<int:pago_id>/resultado/', views.resultado_pago, name='resultado_pago'),
-    path('boleta/<int:venta_id>/', views.ver_boleta, name='ver_boleta'),
+    path('comprobante/<int:venta_id>/', views.ver_comprobante, name='ver_comprobante'),
 
     # URLS ADMIN
 

@@ -88,33 +88,29 @@
                 <div>
                     <h2>Categorías del navbar</h2>
                     <p class="portada-seccion__nota">
-                        Desmarca las categorías que no quieras mostrar en los menús. Una categoría oculta no se borra:
-                        sus productos siguen a la venta y aparecen en el catálogo y en la búsqueda.
+                        Desmarca las categorías que no quieras mostrar en los menús del navbar (se ocultan con todas sus
+                        plataformas). Una categoría oculta no se borra: sus productos siguen a la venta y aparecen en el
+                        catálogo y en la búsqueda.
                     </p>
                 </div>
             </header>
 
             <div class="config-menus">
-                {% for menu in menus %}
                 <fieldset class="config-menu">
                     <legend>
-                        {{ menu.nombre }}
-                        <button type="button" class="config-menu__todas" data-menu="{{ forloop.counter }}">Marcar todas</button>
+                        Categorías
+                        <button type="button" class="config-menu__todas" data-menu="categorias">Marcar todas</button>
                     </legend>
-                    {% for grupo, categorias in menu.grupos %}
                     <div class="config-grupo">
-                        <span class="config-grupo__nombre">{{ grupo }}</span>
-                        {% for codigo, etiqueta in categorias %}
+                        {% for categoria in categorias %}
                         <label class="form-check config-categoria">
-                            <input type="checkbox" class="form-check-input" name="categorias_visibles" value="{{ codigo }}"
-                                   data-menu="{{ forloop.parentloop.parentloop.counter }}" {% if codigo in visibles %}checked{% endif %}>
-                            <span class="form-check-label">{{ etiqueta }}</span>
+                            <input type="checkbox" class="form-check-input" name="categorias_visibles" value="{{ categoria.id }}"
+                                   data-menu="categorias" {% if categoria.id in visibles %}checked{% endif %}>
+                            <span class="form-check-label">{{ categoria.nombre }}</span>
                         </label>
                         {% endfor %}
                     </div>
-                    {% endfor %}
                 </fieldset>
-                {% endfor %}
             </div>
         </section>
 
@@ -125,7 +121,7 @@
 </div>
 
 <script>
-    // "Marcar todas" vuelve a mostrar todas las categorías de ese menú
+    // "Marcar todas" vuelve a mostrar todas las categorías
     document.querySelectorAll('.config-menu__todas').forEach(function (boton) {
         boton.addEventListener('click', function () {
             document.querySelectorAll('input[data-menu="' + boton.dataset.menu + '"]').forEach(function (check) {

@@ -134,9 +134,12 @@ AUTH_USER_MODEL = 'appPrincipal.Usuario'
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
+    # inicio de sesión con Google (django-allauth)
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
 
 # Límite de intentos de login
 AXES_FAILURE_LIMIT = 5
@@ -146,17 +149,28 @@ AXES_RESET_ON_SUCCESS = True
 AXES_USERNAME_CALLABLE = 'appPrincipal.seguridad.email_para_axes'
 AXES_LOCKOUT_CALLABLE = 'appPrincipal.seguridad.login_bloqueado'
 
-# django-allauth: inicio de sesión con Google (HU-02). El usuario se identifica por correo y no tiene username
+# django-allauth: inicio de sesión con Google (HU-02). El usuario se identifica por correo y no tiene username.
+# Las credenciales OAuth se crean en Google Cloud Console y van en el .env (ver .env.example), nunca en el código.
+# URI de redirección autorizada: <SITIO_URL>/accounts/google/login/callback/
 SITE_ID = 1
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', default='')
+GOOGLE_CLIENT_SECRET = config('GOOGLE_CLIENT_SECRET', default='')
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
+        'APP': {'client_id': GOOGLE_CLIENT_ID, 'secret': GOOGLE_CLIENT_SECRET, 'key': ''},
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
+        'OAUTH_PKCE_ENABLED': True,
     },
 }
+# Google verifica el correo: si ya existe una cuenta con ese correo, se inicia sesión en ella
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+ACCOUNT_ADAPTER = 'appPrincipal.cuentas_google.AdaptadorCuenta'
+SOCIALACCOUNT_ADAPTER = 'appPrincipal.cuentas_google.AdaptadorCuentaGoogle'
 
 
 # Webpay Plus de Transbank
