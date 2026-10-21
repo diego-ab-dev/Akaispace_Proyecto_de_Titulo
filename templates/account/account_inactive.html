@@ -1,0 +1,11 @@
+{% extends "socialaccount/base_google.html" %}
+
+{% block title %}Cuenta inactiva - Akaispace{% endblock %}
+
+{% block tarjeta %}
+<h5 class="card-title text-center mb-4 fw-light fs-5 fw-bold">Cuenta inactiva</h5>
+<p class="text-center">Esta cuenta fue eliminada y ya no puede usarse para iniciar sesión.</p>
+<div class="d-grid">
+    <a href="{% url 'login' %}" class="btn btn-lg btn-login fw-bold text-uppercase">Ir a iniciar sesión</a>
+</div>
+{% endblock %}

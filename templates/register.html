@@ -106,38 +106,7 @@
                                 </button>
                             </div>
 
-                            <!-- consentimientos (HU-01): separados y sin marcar de antemano; solo la política es obligatoria -->
-                            <fieldset class="consentimientos mb-3" id="declaracionEdad">
-                                <legend class="form-label fs-6 mb-1">Declaro que soy:</legend>
-                                {% for valor, texto in form.fields.declaracion_edad.choices %}
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="declaracion_edad" id="edad_{{ valor }}" value="{{ valor }}" required>
-                                    <label class="form-check-label" for="edad_{{ valor }}">{{ texto }}</label>
-                                </div>
-                                {% endfor %}
-                            </fieldset>
-                            <fieldset class="consentimientos mb-4">
-                                <legend class="visually-hidden">Consentimientos</legend>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="aceptaPrivacidad" name="acepta_privacidad" value="on" required>
-                                    <label class="form-check-label" for="aceptaPrivacidad">
-                                        Acepto los
-                                        <a href="{% url 'terminos_condiciones' %}" target="_blank" rel="noopener">Términos y Condiciones</a>
-                                        y la
-                                        <a href="{% url 'politica_privacidad' %}" target="_blank" rel="noopener">Política de Privacidad</a>
-                                        de Akaispace.
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="autorizaNavegacion" name="autoriza_datos_navegacion" value="on">
-                                    <label class="form-check-label" for="autorizaNavegacion">
-                                        <span class="consentimiento-opcional">(Opcional)</span>
-                                        Autorizo el uso de mis datos de navegación (productos visitados, búsquedas, carrito y compras)
-                                        para recibir recomendaciones personalizadas, según la
-                                        <a href="{% url 'politica_privacidad' %}#navegacion" target="_blank" rel="noopener">sección 4 de la política</a>.
-                                    </label>
-                                </div>
-                            </fieldset>
+                            {% include 'partials/consentimientos_registro.html' %}
 
                             <div class="text-center">
                                 <a class="small fw-bold" style="text-decoration: none; color:black;" href="/login">¿Ya tienes una cuenta? Inicia sesion aquí.</a>
@@ -150,6 +119,9 @@
                                 </button>
                             </div>
                         </form>
+                        {% if google_habilitado %}
+                        {% include 'partials/boton_google.html' with texto='Registrarse con Google' %}
+                        {% endif %}
                         <div class="text-center mt-4">
                             <a href="{% url 'home' %}" class="btn-volver btn btn-minimal">Volver</a>
                         </div>

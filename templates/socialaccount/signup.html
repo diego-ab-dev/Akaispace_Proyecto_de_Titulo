@@ -1,0 +1,30 @@
+{% extends "socialaccount/base_google.html" %}
+
+{% block title %}Crear cuenta con Google - Akaispace{% endblock %}
+
+{% block tarjeta %}
+<h5 class="card-title text-center mb-4 fw-light fs-5 fw-bold">Crear cuenta con Google</h5>
+<p class="text-center mb-4">
+    Hola{% if form.sociallogin.user.nombre %} {{ form.sociallogin.user.nombre }}{% endif %}, vas a crear tu cuenta con
+    <strong>{{ form.email.value }}</strong>. Solo falta este último paso:
+</p>
+
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">
+    {% for campo in form %}{% for error in campo.errors %}<div>{{ error }}</div>{% endfor %}{% endfor %}
+    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" action="{% url 'socialaccount_signup' %}">
+    {% csrf_token %}
+    {% include 'partials/consentimientos_registro.html' %}
+    {{ redirect_field }}
+    <div class="d-grid mb-2">
+        <button class="btn btn-lg btn-login fw-bold text-uppercase" type="submit">Crear cuenta</button>
+    </div>
+</form>
+<p class="small text-muted text-center mt-3 mb-0">
+    Podrás completar tu teléfono y dirección de despacho desde tu perfil.
+</p>
+{% endblock %}

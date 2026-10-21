@@ -169,6 +169,9 @@ SOCIALACCOUNT_PROVIDERS = {
 # Google verifica el correo: si ya existe una cuenta con ese correo, se inicia sesión en ella
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+# Cuenta nueva desde Google: antes de crearla se piden los consentimientos de HU-01
+SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_FORMS = {'signup': 'appPrincipal.cuentas_google.RegistroGoogleForm'}
 ACCOUNT_ADAPTER = 'appPrincipal.cuentas_google.AdaptadorCuenta'
 SOCIALACCOUNT_ADAPTER = 'appPrincipal.cuentas_google.AdaptadorCuentaGoogle'
 

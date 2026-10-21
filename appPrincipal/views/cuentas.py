@@ -29,6 +29,10 @@ def _redirigir_tras_login(request, usuario):
     return redirect('admin_dashboard' if usuario.is_staff else 'home')
 
 
+def _google_habilitado():
+    return bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET)
+
+
 def login(request):
     if request.user.is_authenticated:
         return _redirigir_tras_login(request, request.user)
@@ -54,7 +58,7 @@ def login(request):
 
     return render(request, 'login.html', {
         'errors': errors,
-        'google_habilitado': bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
+        'google_habilitado': _google_habilitado(),
     })
 
 
@@ -122,7 +126,7 @@ def register(request):
             logger.debug("Registro inválido: %s", form.errors.as_json())
             primer_error = next(iter(form.errors.values()))[0]
             return JsonResponse({'success': False, 'message': primer_error})
-    data = {'form': form, 'regiones_ciudades': REGIONES_CIUDADES}
+    data = {'form': form, 'regiones_ciudades': REGIONES_CIUDADES, 'google_habilitado': _google_habilitado()}
     return render(request, 'register.html', data)
 
 def logout(request):

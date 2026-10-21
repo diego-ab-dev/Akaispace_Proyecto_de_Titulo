@@ -2164,3 +2164,45 @@ class LoginGoogleTests(TestCase):  # HU-02: django-allauth
                         return_value=sociallogin.user):
             usuario = AdaptadorCuentaGoogle().populate_user(None, sociallogin, {'email': 'ana@gmail.com'})
         self.assertEqual(usuario.nombre, 'Ana Pérez')
+
+    def test_el_boton_de_google_tambien_aparece_en_el_registro(self):
+        self.assertNotContains(self.client.get('/register/'), 'Registrarse con Google')
+        with self.settings(GOOGLE_CLIENT_ID='id-de-prueba', GOOGLE_CLIENT_SECRET='secreto-de-prueba'):
+            respuesta = self.client.get('/register/')
+        self.assertContains(respuesta, 'Registrarse con Google')
+        self.assertContains(respuesta, 'action="/accounts/google/login/')
+
+    def _registro_google(self, datos):
+        from allauth.account.models import EmailAddress
+        from allauth.socialaccount.models import SocialAccount, SocialLogin
+        from django.contrib.sessions.middleware import SessionMiddleware
+        from django.test import RequestFactory
+        from .cuentas_google import RegistroGoogleForm
+        sociallogin = SocialLogin(
+            user=Usuario(email='ana@gmail.com', nombre='Ana Pérez'),
+            account=SocialAccount(provider='google', uid='123'),
+            email_addresses=[EmailAddress(email='ana@gmail.com', verified=True, primary=True)],
+        )
+        form = RegistroGoogleForm(data=datos, sociallogin=sociallogin)
+        if not form.is_valid():
+            return form, None
+        request = RequestFactory().post('/accounts/3rdparty/signup/')
+        SessionMiddleware(lambda r: None).process_request(request)
+        return form, form.save(request)
+
+    def test_la_cuenta_nueva_de_google_guarda_los_consentimientos(self):
+        form, usuario = self._registro_google({'declaracion_edad': Usuario.MAYOR_18, 'acepta_privacidad': 'on',
+                                               'email': 'otro@example.com'})
+        usuario.refresh_from_db()
+        self.assertEqual(usuario.email, 'ana@gmail.com')  # el correo verificado por Google no se cambia
+        self.assertEqual(usuario.nombre, 'Ana Pérez')
+        self.assertEqual(usuario.declaracion_edad, Usuario.MAYOR_18)
+        self.assertIsNotNone(usuario.privacidad_aceptada_en)
+        self.assertIsNone(usuario.datos_navegacion_autorizados_en)
+        self.assertFalse(usuario.has_usable_password())
+
+    def test_la_cuenta_de_google_exige_aceptar_la_politica(self):
+        form, usuario = self._registro_google({'declaracion_edad': Usuario.MAYOR_18})
+        self.assertIsNone(usuario)
+        self.assertIn('acepta_privacidad', form.errors)
+        self.assertFalse(Usuario.objects.exists())

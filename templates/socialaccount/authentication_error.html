@@ -1,0 +1,11 @@
+{% extends "socialaccount/base_google.html" %}
+
+{% block title %}Error al ingresar con Google - Akaispace{% endblock %}
+
+{% block tarjeta %}
+<h5 class="card-title text-center mb-4 fw-light fs-5 fw-bold">No pudimos ingresar con Google</h5>
+<p class="text-center">Ocurrió un problema al conectar con Google. Inténtalo de nuevo en unos minutos o usa tu correo y contraseña.</p>
+<div class="d-grid">
+    <a href="{% url 'login' %}" class="btn btn-lg btn-login fw-bold text-uppercase">Ir a iniciar sesión</a>
+</div>
+{% endblock %}

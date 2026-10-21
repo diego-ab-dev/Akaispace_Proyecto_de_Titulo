@@ -1,0 +1,9 @@
+{% load socialaccount %}
+{# HU-02: el formulario va por POST, como pide django-allauth para no saltarse la protección CSRF #}
+<div class="separador-google text-center text-muted small my-3">o</div>
+<form method="post" action="{% provider_login_url 'google' %}" class="d-grid">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-dark fw-bold">
+        <i class="fab fa-google me-2"></i>{{ texto }}
+    </button>
+</form>

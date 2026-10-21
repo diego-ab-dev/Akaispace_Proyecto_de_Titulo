@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static socialaccount %}
+{% load static %}
 
 {% block title %}Inicio de sesión - Akaispace{% endblock %}
 
@@ -61,13 +61,7 @@
                     </div>
               </form>
               {% if google_habilitado %}
-              {# HU-02: el formulario va por POST, como pide django-allauth para no saltarse la protección CSRF #}
-              <form method="post" action="{% provider_login_url 'google' %}" class="d-grid mt-3">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-outline-dark fw-bold">
-                      <i class="fab fa-google me-2"></i>Continuar con Google
-                  </button>
-              </form>
+              {% include 'partials/boton_google.html' with texto='Continuar con Google' %}
               {% endif %}
               </div>
             </div>

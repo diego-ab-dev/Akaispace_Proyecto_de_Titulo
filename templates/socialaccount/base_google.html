@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+{# HU-02: pantallas de django-allauth con el mismo diseño que el registro #}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_register.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container d-flex justify-content-center align-items-start min-vh-100 pt-5 mt-4">
+        <div class="row w-100">
+            <div class="col-lg-10 col-xl-9 mx-auto">
+                <div class="card flex-row border-0 shadow rounded-3 overflow-hidden">
+                    <div class="card-img-left d-none d-md-flex text-center">
+                        <div class="marca-registro">
+                            <img src="{% static 'images/akaispace_logo.png' %}" alt="Akaispace">
+                            <p>Únete a Akaispace</p>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4 p-sm-5" style="background-color: #fafafa;">
+                        {% block tarjeta %}{% endblock %}
+                        <div class="text-center mt-4">
+                            <a href="{% url 'home' %}" class="btn-volver btn btn-minimal">Volver</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

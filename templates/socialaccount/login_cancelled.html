@@ -1,0 +1,11 @@
+{% extends "socialaccount/base_google.html" %}
+
+{% block title %}Inicio de sesión cancelado - Akaispace{% endblock %}
+
+{% block tarjeta %}
+<h5 class="card-title text-center mb-4 fw-light fs-5 fw-bold">Inicio de sesión cancelado</h5>
+<p class="text-center">Cancelaste el ingreso con Google. Puedes intentarlo de nuevo o usar tu correo y contraseña.</p>
+<div class="d-grid">
+    <a href="{% url 'login' %}" class="btn btn-lg btn-login fw-bold text-uppercase">Ir a iniciar sesión</a>
+</div>
+{% endblock %}
