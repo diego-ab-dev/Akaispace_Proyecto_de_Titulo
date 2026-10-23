@@ -26,7 +26,7 @@ from .panel import (
     admin_productos, agregar_producto, detalle_producto, editar_producto, eliminar_producto,
     admin_reclamos, detalle_reclamo, responder_reclamo,
     admin_usuarios, buscar_usuarios, crear_usuario, detalle_usuario, eliminar_usuario,
-    admin_ventas, anular_venta, detalle_venta, modificar_venta,
+    admin_ventas, anular_venta, buscar_productos_venta, detalle_venta, modificar_venta, registrar_venta,
     admin_portada, cambiar_estado_destacado, crear_destacado, editar_destacado, eliminar_destacado,
     admin_configuracion,
 )

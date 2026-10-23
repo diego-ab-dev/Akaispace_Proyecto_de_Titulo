@@ -22,10 +22,14 @@
     </div>
 
     <div class="info-cliente">
+        {% if venta.usuario %}
         <strong>Cliente:</strong> {{ venta.usuario.nombre }}<br>
         <strong>RUT:</strong> {{ venta.usuario.rut|default:"No especificado" }}<br>
         <strong>Dirección:</strong> {{ venta.usuario.direccion }}<br>
         <strong>Ciudad:</strong> {{ venta.usuario.ciudad }}
+        {% else %}
+        <strong>Venta:</strong> {{ venta.get_canal_display }}
+        {% endif %}
     </div>
 
     <table class="tabla-productos">
@@ -42,10 +46,12 @@
             <span>Subtotal:</span>
             <span>${{ venta.subtotal|formato_chileno }}</span>
         </div>
+        {% if venta.metodo_envio %}
         <div style="display:flex; justify-content:space-between;">
             <span>Envío ({{ venta.get_metodo_envio_display }}):</span>
             <span>{% include "partials/costo_envio.html" with metodo=venta.metodo_envio monto=venta.envio %}</span>
         </div>
+        {% endif %}
         <br>
         <div class="row-total">
             <span>TOTAL:</span>

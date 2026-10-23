@@ -8,5 +8,7 @@ from .devoluciones import admin_devoluciones, detalle_devolucion, responder_devo
 from .productos import admin_productos, agregar_producto, detalle_producto, editar_producto, eliminar_producto
 from .reclamos import admin_reclamos, detalle_reclamo, responder_reclamo
 from .usuarios import admin_usuarios, buscar_usuarios, crear_usuario, detalle_usuario, eliminar_usuario
-from .ventas import admin_ventas, anular_venta, detalle_venta, modificar_venta
+from .ventas import (
+    admin_ventas, anular_venta, buscar_productos_venta, detalle_venta, modificar_venta, registrar_venta,
+)
 

@@ -1,4 +1,5 @@
 {% comment %}
 Estado del envío de una venta, con su color (Envio.clase_estado) y el texto para el cliente.
+Las ventas presenciales (HU-12) no tienen envío: se muestran como entregadas o anuladas.
 Uso: {% include "partials/estado_envio.html" with venta=compra %}
-{% endcomment %}{% with envio=venta.datos_envio %}{% if envio %}<span class="{{ envio.clase_estado }}">{{ envio.estado_para_mostrar }}</span>{% endif %}{% endwith %}
+{% endcomment %}{% with envio=venta.datos_envio %}{% if envio %}<span class="{{ envio.clase_estado }}">{{ envio.estado_para_mostrar }}</span>{% elif venta.anulada %}<span class="estado-anulada">Anulada</span>{% elif venta.canal != "web" %}<span class="estado-entregado">Entregado</span>{% endif %}{% endwith %}

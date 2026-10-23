@@ -83,8 +83,20 @@
             </select>
         </div>
 
+        <div class="col-md-3">
+            <select name="canal" class="form-select">
+                <option value="">Todos los canales</option>
+                {% for valor, nombre in canales %}
+                <option value="{{ valor }}" {% if request.GET.canal == valor %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
         <div class="col-12 d-flex">
             <button type="submit" class="btn btn-buscar">Aplicar</button>
+            <a href="{% url 'registrar_venta' %}" class="btn btn-responder ms-auto">
+                <i class='bx bx-plus'></i> Registrar venta en tienda o WhatsApp
+            </a>
         </div>
 
     </form>
@@ -96,6 +108,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Usuario</th>
+                    <th>Canal</th>
                     <th>Total</th>
                     <th>Producto/s</th>
                     <th>Fecha</th>
@@ -107,7 +120,8 @@
                 {% for venta in ventas %}
                 <tr>
                     <td>{{ venta.id }}</td>
-                    <td>{{ venta.usuario.nombre|truncatechars:30 }}</td>
+                    <td>{{ venta.usuario.nombre|default:"Sin cuenta"|truncatechars:30 }}</td>
+                    <td>{{ venta.get_canal_display }}</td>
                     <td>${{ venta.total|formato_chileno }}</td>
                      <td>
                         <ul class="list-unstyled mb-0">

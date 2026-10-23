@@ -1,0 +1,150 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static custom_filters %}
+
+{% block title %}Registrar venta{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_portada.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_configuracion.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_registrar_venta.css' %}">
+{% endblock %}
+
+{% block encabezado %}
+<h1>Registrar venta</h1>
+{% endblock %}
+
+{% block content %}
+<div class="portada venta-presencial">
+    <a href="{% url 'admin_ventas' %}" class="portada-volver"><i class='bx bx-arrow-back'></i> Volver a ventas</a>
+    <p class="portada-intro">
+        Registra aquí las ventas hechas en la tienda física o por WhatsApp. Al confirmar, el stock se descuenta
+        de inmediato (es el mismo de la tienda en línea) y la venta queda en los reportes de ventas y de caja.
+    </p>
+
+    {% if error %}
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class='bx bx-error-circle fs-4 me-2'></i>
+        <div>No se registró la venta: {{ error }}</div>
+    </div>
+    {% endif %}
+
+    <form method="post" id="form-venta" data-url-buscar="{% url 'buscar_productos_venta' %}" novalidate>
+        {% csrf_token %}
+        <div class="venta-presencial__grid">
+            <section class="portada-seccion">
+                <header class="portada-seccion__header">
+                    <div>
+                        <h2>Productos</h2>
+                        <p class="portada-seccion__nota">Busca por nombre o escanea el código de barras.</p>
+                    </div>
+                </header>
+
+                <div class="venta-buscador">
+                    <i class='bx bx-barcode-reader venta-buscador__icono'></i>
+                    <input type="search" id="buscar-producto" class="form-control" autocomplete="off" autofocus
+                           placeholder="Nombre o código de barras" aria-label="Buscar producto">
+                    <ul id="resultados-busqueda" class="venta-resultados" hidden></ul>
+                </div>
+                <p id="aviso-busqueda" class="venta-aviso" role="status"></p>
+
+                <div class="table-responsive">
+                    <table class="venta-items">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                                <th><span class="visually-hidden">Quitar</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-venta"></tbody>
+                    </table>
+                </div>
+                <p id="venta-vacia" class="portada-vacia">Aún no has agregado productos.</p>
+            </section>
+
+            <section class="portada-seccion venta-resumen">
+                <header class="portada-seccion__header">
+                    <h2>Datos de la venta</h2>
+                </header>
+
+                <div class="config-campo">
+                    <span class="config-campo__titulo">Canal</span>
+                    <div class="config-opciones">
+                        {% for valor, nombre in canales %}
+                        <label class="config-opcion">
+                            <input type="radio" name="canal" value="{{ valor }}" required {% if canal == valor %}checked{% endif %}>
+                            <span>{{ nombre }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="config-campo">
+                    <span class="config-campo__titulo">Medio de pago</span>
+                    <div class="config-opciones">
+                        {% for valor, nombre in medios_pago %}
+                        <label class="config-opcion">
+                            <input type="radio" name="metodo_pago" value="{{ valor }}" required {% if metodo_pago == valor %}checked{% endif %}>
+                            <span>{{ nombre }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <span class="config-campo__ayuda">
+                        La plataforma no se conecta con los terminales de pago: cobra con tarjeta en el terminal y
+                        registra la venta cuando el pago esté aprobado.
+                    </span>
+                    <p id="falta-medio-pago" class="venta-aviso" hidden>Selecciona el medio de pago.</p>
+                </div>
+
+                <div class="config-campo" id="bloque-efectivo" hidden>
+                    <label class="config-campo__titulo" for="monto-recibido">Efectivo recibido (opcional)</label>
+                    <input type="number" id="monto-recibido" class="form-control" min="0" step="1" inputmode="numeric">
+                    <span class="config-campo__ayuda" id="vuelto">Solo para calcular el vuelto; no se guarda.</span>
+                </div>
+
+                <div class="venta-total">
+                    <span>Total</span>
+                    <strong data-total>$0</strong>
+                </div>
+
+                <button type="submit" id="btn-confirmar" class="btn-portada btn-portada--primario venta-confirmar" disabled>
+                    Confirmar venta <i class='bx bx-check'></i>
+                </button>
+            </section>
+        </div>
+    </form>
+</div>
+
+<div class="modal fade" id="confirmarVentaModal" tabindex="-1" aria-labelledby="confirmarVentaTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmarVentaTitulo">¿Registrar la venta?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="venta-confirmacion">
+                    <dt>Canal</dt><dd id="resumen-canal"></dd>
+                    <dt>Medio de pago</dt><dd id="resumen-pago"></dd>
+                    <dt>Unidades</dt><dd id="resumen-unidades"></dd>
+                    <dt>Total</dt><dd><strong data-total>$0</strong></dd>
+                </dl>
+                <p class="text-muted mb-0">Se descontará el stock de los productos.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-portada" data-bs-dismiss="modal">Volver</button>
+                <button type="button" id="btn-registrar" class="btn-portada btn-portada--primario">Sí, registrar venta</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ items_ingresados|json_script:"items-ingresados" }}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/registrar_venta.js' %}"></script>
+{% endblock %}

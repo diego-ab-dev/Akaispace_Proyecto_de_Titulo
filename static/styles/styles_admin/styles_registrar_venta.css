@@ -1,0 +1,189 @@
+/* Panel > Ventas > Registrar venta (HU-12). Usa la base visual de styles_portada.css y styles_configuracion.css */
+
+.venta-presencial__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.venta-presencial__grid .portada-seccion {
+    margin-bottom: 0;
+}
+
+.venta-buscador {
+    position: relative;
+}
+
+.venta-buscador__icono {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.3rem;
+    color: #7a828c;
+    pointer-events: none;
+}
+
+.venta-buscador .form-control {
+    padding-left: 2.5rem;
+}
+
+.venta-resultados {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 340px;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem;
+    background: #ffffff;
+    border: 1px solid #c9d3dc;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.venta-resultado {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    text-align: left;
+    color: #1c253b;
+}
+
+.venta-resultado:hover,
+.venta-resultado:focus {
+    background: #eef5fa;
+    outline: none;
+}
+
+.venta-resultado:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.venta-resultado small {
+    display: block;
+    color: #7a828c;
+}
+
+.venta-miniatura {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    background: #eef1f4;
+    object-fit: contain;
+}
+
+.venta-aviso {
+    min-height: 1.25rem;
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    color: #c82333;
+}
+
+.venta-items {
+    width: 100%;
+    margin-top: 0.5rem;
+    border-collapse: collapse;
+}
+
+.venta-items th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #7a828c;
+    padding: 0.5rem;
+    border-bottom: 1px solid #eef1f4;
+}
+
+.venta-items td {
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid #eef1f4;
+    vertical-align: middle;
+}
+
+.venta-items thead:has(+ tbody:empty) {
+    display: none;
+}
+
+.venta-item__producto {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 200px;
+}
+
+.venta-item__producto small {
+    display: block;
+    color: #7a828c;
+}
+
+.venta-item__cantidad {
+    width: 90px;
+}
+
+.venta-item__alerta {
+    display: block;
+    font-size: 0.8rem;
+    color: #c82333;
+}
+
+.venta-item__quitar {
+    border: none;
+    background: none;
+    color: #c82333;
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.venta-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 1rem 0;
+    border-top: 1px solid #eef1f4;
+    font-size: 1.1rem;
+    color: #1c253b;
+}
+
+.venta-total strong {
+    font-size: 1.5rem;
+}
+
+.venta-confirmar {
+    width: 100%;
+    justify-content: center;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+}
+
+.venta-confirmar:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.venta-confirmacion {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem 1rem;
+}
+
+.venta-confirmacion dd {
+    margin: 0;
+}
+
+@media (max-width: 992px) {
+    .venta-presencial__grid {
+        grid-template-columns: 1fr;
+    }
+}

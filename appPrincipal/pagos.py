@@ -1,4 +1,4 @@
-"""Flujo de pago con Webpay Plus
+"""Registro de ventas (web y presenciales) y flujo de pago con Webpay Plus
 """
 import logging
 import secrets
@@ -11,43 +11,70 @@ from appPrincipal.models import (Carrito, Comprobante, DetallePagoWebpay, Envio,
 
 logger = logging.getLogger(__name__)
 
+MEDIOS_PAGO_PRESENCIALES = [Venta.PAGO_TARJETA, Venta.PAGO_EFECTIVO, Venta.PAGO_TRANSFERENCIA]
+CANALES_PRESENCIALES = [Venta.CANAL_TIENDA, Venta.CANAL_WHATSAPP]
+
+
+# Crea la venta con su detalle y descuenta el stock; si algún producto no alcanza, no se registra nada.
+# `items`: [{'producto_id', 'cantidad', 'precio_unitario'}]; sin precio_unitario se cobra el precio actual.
+# Se llama dentro de transaction.atomic(): los productos quedan bloqueados hasta que termine.
+def _registrar_venta(items, **datos_venta):
+    bloqueados = Producto.todos.select_for_update().filter(
+        id__in=[item['producto_id'] for item in items]
+    ).order_by('id')
+    productos = {producto.id: producto for producto in bloqueados}
+
+    for item in items:
+        producto = productos.get(item['producto_id'])
+        if producto is None or producto.is_deleted:
+            raise ValueError(f"{producto.nombre if producto else 'Un producto'} ya no está disponible.")
+        if item['cantidad'] < 1:
+            raise ValueError(f"La cantidad de {producto.nombre} debe ser al menos 1.")
+        if item['cantidad'] > producto.stock:
+            raise ValueError(f"Stock insuficiente para el producto {producto.nombre} (disponible: {producto.stock})")
+
+    venta = Venta.objects.create(**datos_venta)
+    for item in items:
+        producto = productos[item['producto_id']]
+        ProductoVenta.objects.create(
+            venta=venta, producto=producto, cantidad=item['cantidad'],
+            precio_unitario=item.get('precio_unitario', producto.precio), costo_unitario=producto.costo,
+        )
+        producto.stock -= item['cantidad']
+        producto.save(update_fields=['stock'])
+
+    venta.calcular_total()
+    return venta
+
+
 # Registra la venta: descuenta el stock, crea el envío y emite el comprobante (no tributario)
 def crear_venta(usuario, items, metodo_envio, direccion_envio, metodo_pago):
     if not items:
         raise ValueError("Tu carrito está vacío.")
     with transaction.atomic():
-        bloqueados = Producto.todos.select_for_update().filter(
-            id__in=[item['producto_id'] for item in items]
-        ).order_by('id')
-        productos = {producto.id: producto for producto in bloqueados}
-
-        for item in items:
-            producto = productos.get(item['producto_id'])
-            if producto is None or producto.is_deleted:
-                raise ValueError(f"{producto.nombre if producto else 'Un producto'} ya no está disponible.")
-            if item['cantidad'] > producto.stock:
-                raise ValueError(f"Stock insuficiente para el producto {producto.nombre}")
-
-        venta = Venta.objects.create(
-            usuario=usuario,
-            metodo_envio=metodo_envio,
-            direccion_envio=direccion_envio,
+        venta = _registrar_venta(
+            items, usuario=usuario, metodo_envio=metodo_envio, direccion_envio=direccion_envio,
             metodo_pago=metodo_pago,
         )
-        for item in items:
-            producto = productos[item['producto_id']]
-            ProductoVenta.objects.create(
-                venta=venta, producto=producto, cantidad=item['cantidad'], precio_unitario=item['precio_unitario'],
-                costo_unitario=producto.costo,
-            )
-            producto.stock -= item['cantidad']
-            producto.save(update_fields=['stock'])
-
-        venta.calcular_total()
         Envio.objects.create(
             venta=venta, estado='En Preparación',
             transportista=envios.OPCIONES_ENVIO[metodo_envio]['transportista'],
         )
+        Comprobante.objects.create(venta=venta)
+    return venta
+
+
+# HU-12: venta en la tienda física o por WhatsApp que el admin registra en el panel. No tiene cliente
+# con cuenta ni envío, y no pasa por Webpay: el cobro se hace en el terminal, en efectivo o por transferencia.
+def crear_venta_presencial(items, canal, metodo_pago):
+    if canal not in CANALES_PRESENCIALES:
+        raise ValueError("Selecciona si la venta fue en la tienda física o por WhatsApp.")
+    if metodo_pago not in MEDIOS_PAGO_PRESENCIALES:
+        raise ValueError("Selecciona el medio de pago.")
+    if not items:
+        raise ValueError("Agrega al menos un producto a la venta.")
+    with transaction.atomic():
+        venta = _registrar_venta(items, canal=canal, metodo_pago=metodo_pago)
         Comprobante.objects.create(venta=venta)
     return venta
 

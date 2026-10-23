@@ -12,6 +12,10 @@
     <div id="toast" class="custom-toast success">La venta fue anulada exitosamente.</div>
     {% endif %}
 
+    {% if request.GET.msg == "registrada" %}
+    <div id="toast" class="custom-toast success">Venta registrada y stock descontado.</div>
+    {% endif %}
+
     {% if request.GET.msg == "estado_invalido" %}
     <div id="toast" class="custom-toast error">Estado de venta inválido.</div>
     {% endif %}
@@ -35,6 +39,8 @@
             <div class="info-card">
                 <h3 class="card-title">Datos del Comprador</h3>
 
+                <div class="data-row"><span class="data-label">Canal:</span> {{ venta.get_canal_display }}</div>
+                {% if venta.usuario %}
                 <div class="data-row"><span class="data-label">Nombre:</span> {{ venta.usuario.nombre }}</div>
                 <div class="data-row"><span class="data-label">Correo:</span> {{ venta.usuario.email }}</div>
                 <div class="data-row"><span class="data-label">RUT:</span> {{ venta.usuario.rut|default:"No especificado" }}</div>
@@ -47,12 +53,17 @@
                 </div>
                 <div class="data-row"><span class="data-label">Región:</span> {{ venta.usuario.region }}</div>
                 <div class="data-row"><span class="data-label">Ciudad:</span> {{ venta.usuario.ciudad }}</div>
+                {% else %}
+                <div class="data-row text-muted">Venta presencial registrada en el panel, sin cliente con cuenta.</div>
+                {% endif %}
 
-                {% if venta.datos_envio.estado != "Anulada" %}
+                {% if not venta.anulada and venta.datos_envio.estado != "Anulada" %}
                 <div class="actions-wrapper">
+                    {% if venta.canal == "web" %}
                     <a href="{% url 'modificar_venta' venta.id %}" class="btn-action btn-modificar">
                         Modificar <i class='bx bx-pencil'></i>
                     </a>
+                    {% endif %}
 
                     <button type="button" class="btn-action btn-anular" data-bs-toggle="modal" data-bs-target="#anularModal">
                         Anular Venta <i class='bx bx-error-circle'></i>
@@ -71,8 +82,10 @@
                 <h3 class="card-title">Detalles de la Venta</h3>
 
                 <div class="data-row"><span class="data-label">Subtotal:</span> <span>${{ venta.subtotal|formato_chileno }}</span></div>
+                {% if venta.metodo_envio %}
                 <div class="data-row"><span class="data-label">Entrega:</span> <span>{{ venta.get_metodo_envio_display }}</span></div>
                 <div class="data-row"><span class="data-label">Envío:</span> <span>{% include "partials/costo_envio.html" with metodo=venta.metodo_envio monto=venta.envio %}</span></div>
+                {% endif %}
                 <div class="data-row" style="font-size: 1.1rem;"><span class="data-label">Total:</span> <span class="fw-bold text-dark">${{ venta.total|formato_chileno }}</span></div>
 
                 <div class="data-row mt-3">
@@ -98,7 +111,7 @@
 
                         <div class="producto-info">
                             <span class="producto-item" title="{{ item.producto.nombre }}">{{ item.producto.nombre }}</span>
-                            <span class="producto-cantidad">Cantidad: {{ item.cantidad }}</span>
+                            <span class="producto-cantidad">Cantidad: {{ item.cantidad }} · ${{ item.precio_unitario|formato_chileno }} c/u</span>
                         </div>
 
                     </div>

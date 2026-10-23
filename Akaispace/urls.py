@@ -103,6 +103,8 @@ urlpatterns = [
     path('admin-panel/productos/detalle/<int:producto_id>/', views.detalle_producto, name='detalle_producto'),
     # ventas
     path('admin-panel/ventas/', views.admin_ventas, name='admin_ventas'),
+    path('admin-panel/ventas/registrar/', views.registrar_venta, name='registrar_venta'),
+    path('admin-panel/ventas/buscar-productos/', views.buscar_productos_venta, name='buscar_productos_venta'),
     path('admin-panel/ventas/detalle/<int:venta_id>/', views.detalle_venta, name='detalle_venta'),
     path('admin-panel/ventas/modificar/<int:venta_id>/', views.modificar_venta, name='modificar_venta'),
     path('ventas/anular/<int:venta_id>/', views.anular_venta, name='anular_venta'),

@@ -13,7 +13,7 @@ from appPrincipal.models import Devolucion, Envio, Producto, Reclamo, Venta
 def ventas_por_mes(anio):
     inicio = timezone.make_aware(datetime(anio, 1, 1))
     fin = timezone.make_aware(datetime(anio + 1, 1, 1))
-    ventas = Venta.objects.filter(fecha__gte=inicio, fecha__lt=fin).exclude(
+    ventas = Venta.objects.filter(fecha__gte=inicio, fecha__lt=fin, anulada_en__isnull=True).exclude(
         datos_envio__estado='Anulada'
     ).values_list('fecha', 'total')
 

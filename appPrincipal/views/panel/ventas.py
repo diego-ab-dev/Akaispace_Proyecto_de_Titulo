@@ -1,14 +1,16 @@
-"""Panel de administración: ventas y estado de los envíos."""
+"""Panel de administración: ventas, estado de los envíos y registro de ventas presenciales (HU-12)."""
 import re
 
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import F, Q, Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from appPrincipal import pagos
 from appPrincipal.decorators import admin_required
 from appPrincipal.envios import TRANSPORTISTAS_ENCOMIENDA
 from appPrincipal.models import Envio, Producto, Venta
@@ -39,6 +41,9 @@ def admin_ventas(request):
     entrega = request.GET.get('entrega', '')
     if entrega in dict(Venta.ENVIO_CHOICES):
         ventas_list = ventas_list.filter(metodo_envio=entrega)
+    canal = request.GET.get('canal', '')
+    if canal in dict(Venta.CANALES):
+        ventas_list = ventas_list.filter(canal=canal)
 
     if ordenar == "antiguas":
         ventas_list = ventas_list.order_by("fecha")
@@ -56,6 +61,7 @@ def admin_ventas(request):
         'errores': errores,
         'estados': Envio.ESTADO_CHOICES,
         'entregas': Venta.ENVIO_CHOICES,
+        'canales': Venta.CANALES,
     })
 
 
@@ -67,6 +73,8 @@ def detalle_venta(request, venta_id):
 @admin_required
 def modificar_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
+    if venta.canal != Venta.CANAL_WEB:
+        return redirect('detalle_venta', venta_id=venta.id)  # las ventas presenciales no tienen envío
     envio = getattr(venta, 'datos_envio', None)
 
     error = None
@@ -128,14 +136,15 @@ def modificar_venta(request, venta_id):
 @admin_required
 @require_POST
 def anular_venta(request, venta_id):
-    venta = get_object_or_404(Venta, id=venta_id)
-
     with transaction.atomic():
-        envio, _ = Envio.objects.get_or_create(venta=venta)
-        envio = Envio.objects.select_for_update().get(id=envio.id)
-        if envio.estado != "Anulada":
-            envio.estado = "Anulada"
-            envio.save()
+        venta = get_object_or_404(Venta.objects.select_for_update(), id=venta_id)
+        envio = Envio.objects.filter(venta=venta).first()
+        if not venta.anulada and not (envio and envio.estado == "Anulada"):
+            # las ventas presenciales (HU-12) no tienen envío: basta con anulada_en
+            if venta.canal == Venta.CANAL_WEB:
+                envio = envio or Envio(venta=venta)
+                envio.estado = "Anulada"
+                envio.save()
             venta.anulada_en = timezone.now()
             venta.save(update_fields=['anulada_en'])
 
@@ -149,3 +158,87 @@ def anular_venta(request, venta_id):
                     Producto.todos.filter(id=item.producto_id).update(stock=F('stock') + reponer)
 
     return redirect(f"{reverse('detalle_venta', args=[venta_id])}?msg=anulada")
+
+
+def _producto_para_venta(producto):
+    imagen = producto.imagen_principal
+    return {
+        'id': producto.id,
+        'nombre': producto.nombre,
+        'codigo': producto.codigo_de_barra or '',
+        'categoria': producto.categoria_texto,
+        'precio': producto.precio,
+        'stock': producto.stock,
+        'imagen': imagen.url if imagen else '',
+    }
+
+
+def _productos_para_venta():
+    return Producto.objects.select_related('categoria', 'plataforma').prefetch_related('imagenes_producto')
+
+
+# HU-12: el lector de código de barras escribe el código y presiona Enter, así que un código exacto
+# devuelve solo ese producto; si no, se busca por nombre o por parte del código.
+@admin_required
+def buscar_productos_venta(request):
+    texto = request.GET.get('q', '').strip()
+    if not texto:
+        return JsonResponse({'productos': []})
+    productos = list(_productos_para_venta().filter(codigo_de_barra=texto))
+    if not productos:
+        productos = _productos_para_venta().filter(
+            Q(nombre__icontains=texto) | Q(codigo_de_barra__icontains=texto)
+        ).order_by('nombre')[:10]
+    return JsonResponse({'productos': [_producto_para_venta(producto) for producto in productos]})
+
+
+def _items_del_formulario(datos):
+    """Une las filas del formulario por producto. Lanza ValueError si una cantidad no es válida."""
+    cantidades = {}
+    for producto_id, cantidad in zip(datos.getlist('producto'), datos.getlist('cantidad')):
+        try:
+            producto_id, cantidad = int(producto_id), int(cantidad)
+        except ValueError:
+            raise ValueError("Revisa las cantidades: deben ser números enteros.")
+        if cantidad < 1:
+            raise ValueError("La cantidad de cada producto debe ser al menos 1.")
+        cantidades[producto_id] = cantidades.get(producto_id, 0) + cantidad
+    return [{'producto_id': producto_id, 'cantidad': cantidad} for producto_id, cantidad in cantidades.items()]
+
+
+def _filas_ingresadas(datos):
+    """Si la venta no se pudo registrar, vuelve a mostrar los productos que el admin había agregado."""
+    filas = [(int(producto_id), cantidad) for producto_id, cantidad
+             in zip(datos.getlist('producto'), datos.getlist('cantidad')) if producto_id.isdigit()]
+    productos = _productos_para_venta().in_bulk([producto_id for producto_id, _ in filas])
+    return [
+        {**_producto_para_venta(productos[producto_id]), 'cantidad': cantidad}
+        for producto_id, cantidad in filas if producto_id in productos
+    ]
+
+
+@admin_required
+def registrar_venta(request):
+    """HU-12: venta hecha en la tienda física o por WhatsApp. Descuenta el stock y queda en los reportes."""
+    canal = request.POST.get('canal', Venta.CANAL_TIENDA)
+    metodo_pago = request.POST.get('metodo_pago', '')
+    error = None
+
+    if request.method == 'POST':
+        try:
+            venta = pagos.crear_venta_presencial(_items_del_formulario(request.POST), canal, metodo_pago)
+        except ValueError as e:
+            error = str(e)
+        else:
+            return redirect(f"{reverse('detalle_venta', args=[venta.id])}?msg=registrada")
+
+    return render(request, 'admin_panel/registrar_venta.html', {
+        'canales': [(valor, nombre) for valor, nombre in Venta.CANALES if valor in pagos.CANALES_PRESENCIALES],
+        'medios_pago': [
+            (valor, nombre) for valor, nombre in Venta.METODOS_PAGO if valor in pagos.MEDIOS_PAGO_PRESENCIALES
+        ],
+        'canal': canal,
+        'metodo_pago': metodo_pago,
+        'error': error,
+        'items_ingresados': _filas_ingresadas(request.POST) if error else [],
+    })

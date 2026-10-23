@@ -2143,7 +2143,9 @@ class ImagenesProductoPanelTests(TestCase):  # HU-09: formulario de producto con
 
 class LoginGoogleTests(TestCase):  # HU-02: django-allauth
     def test_el_boton_de_google_solo_aparece_con_credenciales(self):
-        self.assertNotContains(self.client.get('/login/'), 'Continuar con Google')
+        # sin credenciales a propósito: el .env de cada computador puede tenerlas configuradas
+        with self.settings(GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET=''):
+            self.assertNotContains(self.client.get('/login/'), 'Continuar con Google')
         with self.settings(GOOGLE_CLIENT_ID='id-de-prueba', GOOGLE_CLIENT_SECRET='secreto-de-prueba'):
             respuesta = self.client.get('/login/')
         self.assertContains(respuesta, 'Continuar con Google')
@@ -2166,7 +2168,8 @@ class LoginGoogleTests(TestCase):  # HU-02: django-allauth
         self.assertEqual(usuario.nombre, 'Ana Pérez')
 
     def test_el_boton_de_google_tambien_aparece_en_el_registro(self):
-        self.assertNotContains(self.client.get('/register/'), 'Registrarse con Google')
+        with self.settings(GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET=''):
+            self.assertNotContains(self.client.get('/register/'), 'Registrarse con Google')
         with self.settings(GOOGLE_CLIENT_ID='id-de-prueba', GOOGLE_CLIENT_SECRET='secreto-de-prueba'):
             respuesta = self.client.get('/register/')
         self.assertContains(respuesta, 'Registrarse con Google')
@@ -2206,3 +2209,139 @@ class LoginGoogleTests(TestCase):  # HU-02: django-allauth
         self.assertIsNone(usuario)
         self.assertIn('acepta_privacidad', form.errors)
         self.assertFalse(Usuario.objects.exists())
+
+
+class VentaPresencialTests(TestCase):  # HU-12: ventas de la tienda física y WhatsApp registradas en el panel
+    def setUp(self):
+        self.juego = crear_producto('Juego', stock=5, codigo_de_barra='7801234567890', precio=20000, costo=12000)
+        self.control = crear_producto('Control', stock=2, categoria='Accesorios', plataforma=None,
+                                      codigo_de_barra='7809999999999', precio=5000)
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def registrar(self, filas, canal='tienda', metodo_pago='efectivo'):
+        return self.client.post('/admin-panel/ventas/registrar/', {
+            'producto': [producto.id for producto, _ in filas],
+            'cantidad': [cantidad for _, cantidad in filas],
+            'canal': canal, 'metodo_pago': metodo_pago,
+        })
+
+    def test_registrar_descuenta_stock_y_queda_como_venta_presencial(self):
+        from .models import Comprobante, Envio, Venta
+        respuesta = self.registrar([(self.juego, 2), (self.control, 1)], canal='whatsapp', metodo_pago='transferencia')
+
+        venta = Venta.objects.get()
+        self.assertRedirects(respuesta, f'/admin-panel/ventas/detalle/{venta.id}/?msg=registrada',
+                             fetch_redirect_response=False)
+        self.assertEqual((venta.canal, venta.metodo_pago, venta.usuario), ('whatsapp', 'transferencia', None))
+        self.assertEqual((venta.subtotal, venta.envio, venta.total), (45000, 0, 45000))
+        self.assertEqual(venta.producto_venta.get(producto=self.juego).costo_unitario, 12000)
+        self.juego.refresh_from_db()
+        self.control.refresh_from_db()
+        self.assertEqual((self.juego.stock, self.control.stock), (3, 1))
+        self.assertFalse(Envio.objects.exists())
+        self.assertTrue(Comprobante.objects.filter(venta=venta).exists())
+
+    def test_sin_stock_suficiente_no_se_registra_nada(self):
+        from .models import Venta
+        respuesta = self.registrar([(self.juego, 1), (self.control, 3)])
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertIn('Stock insuficiente para el producto Control (disponible: 2)', respuesta.context['error'])
+        self.assertFalse(Venta.objects.exists())
+        self.juego.refresh_from_db()
+        self.assertEqual(self.juego.stock, 5)
+        # los productos agregados se vuelven a mostrar para corregir la cantidad
+        self.assertEqual([(fila['id'], fila['cantidad']) for fila in respuesta.context['items_ingresados']],
+                         [(self.juego.id, '1'), (self.control.id, '3')])
+
+    def test_el_mismo_producto_en_dos_filas_se_suma(self):
+        from .models import Venta
+        self.registrar([(self.juego, 2), (self.juego, 1)], metodo_pago='tarjeta')
+        detalle = Venta.objects.get().producto_venta.get()
+        self.assertEqual(detalle.cantidad, 3)
+        self.juego.refresh_from_db()
+        self.assertEqual(self.juego.stock, 2)
+
+    def test_datos_invalidos_se_rechazan(self):
+        from .models import Venta
+        casos = [
+            ([(self.juego, 1)], 'tienda', 'webpay'),  # Webpay es solo de la tienda en línea
+            ([(self.juego, 1)], 'tienda', ''),
+            ([(self.juego, 1)], 'web', 'efectivo'),
+            ([(self.juego, 0)], 'tienda', 'efectivo'),
+            ([(self.juego, 'dos')], 'tienda', 'efectivo'),
+            ([], 'tienda', 'efectivo'),
+        ]
+        for filas, canal, metodo_pago in casos:
+            respuesta = self.registrar(filas, canal, metodo_pago)
+            self.assertEqual(respuesta.status_code, 200, (filas, canal, metodo_pago))
+            self.assertTrue(respuesta.context['error'])
+        self.assertFalse(Venta.objects.exists())
+
+    def test_producto_eliminado_no_se_puede_vender(self):
+        from .models import Venta
+        self.juego.delete()
+        respuesta = self.registrar([(self.juego, 1)])
+        self.assertIn('ya no está disponible', respuesta.context['error'])
+        self.assertFalse(Venta.objects.exists())
+
+    def test_buscar_por_codigo_de_barras_exacto_o_por_nombre(self):
+        exacto = self.client.get('/admin-panel/ventas/buscar-productos/', {'q': '7801234567890'}).json()
+        self.assertEqual([p['id'] for p in exacto['productos']], [self.juego.id])
+        self.assertEqual(exacto['productos'][0]['stock'], 5)
+
+        por_nombre = self.client.get('/admin-panel/ventas/buscar-productos/', {'q': 'contr'}).json()
+        self.assertEqual([p['nombre'] for p in por_nombre['productos']], ['Control'])
+
+        por_parte_del_codigo = self.client.get('/admin-panel/ventas/buscar-productos/', {'q': '780'}).json()
+        self.assertEqual(len(por_parte_del_codigo['productos']), 2)
+
+        self.juego.delete()
+        eliminado = self.client.get('/admin-panel/ventas/buscar-productos/', {'q': '7801234567890'}).json()
+        self.assertEqual(eliminado['productos'], [])
+
+    def test_un_cliente_no_puede_registrar_ni_buscar(self):
+        from .models import Venta
+        self.client.force_login(crear_cliente())
+        self.assertRedirects(self.registrar([(self.juego, 1)]), '/', fetch_redirect_response=False)
+        self.assertRedirects(self.client.get('/admin-panel/ventas/buscar-productos/', {'q': 'Juego'}), '/',
+                             fetch_redirect_response=False)
+        self.assertFalse(Venta.objects.exists())
+
+    def test_formulario_listado_detalle_y_comprobante(self):
+        from .models import Venta
+        self.assertEqual(self.client.get('/admin-panel/ventas/registrar/').status_code, 200)
+        self.registrar([(self.juego, 1)])
+        venta = Venta.objects.get()
+
+        listado = self.client.get('/admin-panel/ventas/', {'canal': 'tienda'})
+        self.assertEqual(list(listado.context['ventas']), [venta])
+        self.assertEqual(list(self.client.get('/admin-panel/ventas/', {'canal': 'web'}).context['ventas']), [])
+
+        detalle = self.client.get(f'/admin-panel/ventas/detalle/{venta.id}/')
+        self.assertContains(detalle, 'Tienda física')
+        self.assertContains(detalle, 'Efectivo')
+        self.assertNotContains(detalle, f'/admin-panel/ventas/modificar/{venta.id}/')
+        self.assertContains(self.client.get(f'/comprobante/{venta.id}/'), 'Tienda física')
+        # no tiene envío que modificar
+        self.assertRedirects(self.client.get(f'/admin-panel/ventas/modificar/{venta.id}/'),
+                             f'/admin-panel/ventas/detalle/{venta.id}/', fetch_redirect_response=False)
+
+    def test_anular_repone_el_stock_una_vez_y_sale_del_grafico(self):
+        from django.utils import timezone
+        from .models import Envio, Venta
+        from .views.panel.dashboard import ventas_por_mes
+        self.registrar([(self.juego, 2)])
+        venta = Venta.objects.get()
+        self.assertEqual(sum(ventas_por_mes(timezone.localdate().year)), 40000)
+
+        self.client.post(f'/ventas/anular/{venta.id}/')
+        self.client.post(f'/ventas/anular/{venta.id}/')
+
+        venta.refresh_from_db()
+        self.juego.refresh_from_db()
+        self.assertTrue(venta.anulada)
+        self.assertEqual(self.juego.stock, 5)
+        self.assertFalse(Envio.objects.exists())
+        self.assertEqual(sum(ventas_por_mes(timezone.localdate().year)), 0)
+        self.assertContains(self.client.get(f'/admin-panel/ventas/detalle/{venta.id}/'), 'Venta Anulada')
