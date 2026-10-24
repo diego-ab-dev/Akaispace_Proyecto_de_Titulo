@@ -2412,3 +2412,137 @@ class VentaPresencialTests(TestCase):  # HU-12: ventas de la tienda física y Wh
         self.assertFalse(Envio.objects.exists())
         self.assertEqual(sum(ventas_por_mes(timezone.localdate().year)), 0)
         self.assertContains(self.client.get(f'/admin-panel/ventas/detalle/{venta.id}/'), 'Venta Anulada')
+
+
+class RecomendacionesTests(TestCase):  # HU-07: similitud TF-IDF + coseno y arranque en frío
+    def setUp(self):
+        self.elden = crear_producto('Elden Ring', genero='RPG')
+        self.demons = crear_producto("Demon's Souls", genero='RPG')
+        self.bloodborne = crear_producto('Bloodborne', plataforma='ps4', genero='RPG')
+        self.pokemon = crear_producto('Pokémon Escarlata', plataforma='switch', genero='RPG')
+        self.gow = crear_producto('God of War', genero='Acción')
+        self.consola = crear_producto('Consola PS5', categoria='Consolas')
+        self.funko = crear_producto('Funko Kratos', categoria='Funko Pop', plataforma=None)
+
+    def similares(self, producto):
+        from .models import SimilitudProducto
+        return list(SimilitudProducto.objects.filter(producto=producto).order_by('-puntaje', 'producto_similar_id')
+                    .values_list('producto_similar__nombre', 'puntaje'))
+
+    def autorizar(self, cliente):
+        from django.utils import timezone
+        cliente.datos_navegacion_autorizados_en = timezone.now()
+        cliente.save()
+        return cliente
+
+    def interaccion(self, cliente, producto, tipo='vista'):
+        from .models import InteraccionProducto
+        InteraccionProducto.objects.create(usuario=cliente, producto=producto, tipo=tipo)
+
+    def test_documento_de_etiquetas(self):
+        from .recomendaciones import documento
+        self.assertEqual(documento(self.elden), 'cat_videojuegos plat_ps5 fam_playstation gen_rpg')
+        self.assertEqual(documento(self.consola), 'cat_consolas plat_ps5 fam_playstation')
+        self.assertEqual(documento(self.funko), 'cat_funko_pop')
+
+    def test_calcula_similares_con_la_familia_de_plataforma(self):
+        from .recomendaciones import calcular_similitudes
+        calcular_similitudes()
+        similares = self.similares(self.elden)
+        self.assertEqual(similares[0][0], "Demon's Souls")
+        self.assertEqual(similares[0][1], 1)
+        # el RPG de PS4 (misma familia) queda antes que el de Switch
+        nombres = [nombre for nombre, _ in similares]
+        self.assertLess(nombres.index('Bloodborne'), nombres.index('Pokémon Escarlata'))
+        # sin etiquetas en común (puntaje 0) no se guarda, ni el producto consigo mismo
+        self.assertNotIn('Funko Kratos', nombres)
+        self.assertNotIn('Elden Ring', nombres)
+        self.assertTrue(all(0 < puntaje <= 1 for _, puntaje in similares))
+
+    def test_recalcular_reemplaza_y_excluye_eliminados(self):
+        from .models import SimilitudProducto
+        from .recomendaciones import calcular_similitudes
+        calcular_similitudes()
+        self.demons.delete()
+        calcular_similitudes()
+        self.assertNotIn("Demon's Souls", [nombre for nombre, _ in self.similares(self.elden)])
+        self.assertFalse(SimilitudProducto.objects.filter(producto=self.demons).exists())
+
+    def test_guarda_como_maximo_10_similares(self):
+        from .recomendaciones import TOP_SIMILARES, calcular_similitudes
+        for numero in range(12):
+            crear_producto(f'RPG {numero}', genero='RPG')
+        calcular_similitudes()
+        self.assertEqual(len(self.similares(self.elden)), TOP_SIMILARES)
+
+    def test_desempata_por_unidades_vendidas_y_luego_id(self):
+        from .recomendaciones import calcular_similitudes
+        juegos = [crear_producto(f'RPG {numero}', genero='RPG') for numero in range(10)]
+        crear_venta(crear_cliente(), juegos[-1], cantidad=3)
+        calcular_similitudes()
+        nombres = [nombre for nombre, _ in self.similares(self.elden)]
+        # 11 empatados con 1.0 para 10 puestos: entra el más vendido y queda fuera el de id más alto
+        self.assertIn('RPG 9', nombres)
+        self.assertNotIn('RPG 8', nombres)
+
+    def test_anonimo_en_la_ficha_ve_similares_con_stock(self):
+        from django.contrib.auth.models import AnonymousUser
+        from .recomendaciones import SIMILARES, calcular_similitudes, recomendar
+        self.demons.stock = 0
+        self.demons.save()
+        calcular_similitudes()
+        recomendaciones = recomendar(AnonymousUser(), self.elden)
+        self.assertEqual(recomendaciones.tipo, SIMILARES)
+        self.assertEqual(recomendaciones.productos[0], self.bloodborne)
+        self.assertNotIn(self.demons, recomendaciones.productos)
+        self.assertNotIn(self.elden, recomendaciones.productos)
+
+    def test_anonimo_en_la_portada_ve_los_mas_vendidos(self):
+        from django.contrib.auth.models import AnonymousUser
+        from .recomendaciones import MAS_VENDIDOS, recomendar
+        cliente = crear_cliente()
+        crear_venta(cliente, self.funko, cantidad=5)
+        crear_venta(cliente, self.consola, cantidad=2)
+        recomendaciones = recomendar(AnonymousUser())
+        self.assertEqual(recomendaciones.tipo, MAS_VENDIDOS)
+        self.assertEqual(recomendaciones.productos[:2], [self.funko, self.consola])
+
+    def test_las_ventas_anuladas_no_cuentan_como_vendidas(self):
+        from django.utils import timezone
+        from .recomendaciones import unidades_vendidas
+        venta = crear_venta(crear_cliente(), self.funko, cantidad=5)
+        venta.anulada_en = timezone.now()
+        venta.save()
+        self.assertNotIn(self.funko.id, unidades_vendidas())
+
+    def test_cliente_que_autorizo_recibe_personalizadas_sin_lo_comprado_ni_el_carrito(self):
+        from .models import Carrito, ItemCarritoProducto
+        from .recomendaciones import PERSONALIZADAS, recomendar
+        otro_switch = crear_producto('Xenoblade', plataforma='switch', genero='RPG')
+        cliente = self.autorizar(crear_cliente())
+        self.interaccion(cliente, self.pokemon)
+        self.interaccion(cliente, otro_switch, 'carrito')
+        crear_venta(cliente, self.pokemon)
+        carrito = Carrito.objects.create(usuario=cliente)
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=otro_switch)
+        recomendaciones = recomendar(cliente)
+        self.assertEqual(recomendaciones.tipo, PERSONALIZADAS)
+        self.assertNotIn(self.pokemon, recomendaciones.productos)
+        self.assertNotIn(otro_switch, recomendaciones.productos)
+        # sin más juegos de Switch, lo más cercano a un RPG de Switch son los otros RPG
+        self.assertIn(recomendaciones.productos[0], [self.elden, self.demons, self.bloodborne])
+
+    def test_sin_consentimiento_no_se_usa_su_historial(self):
+        from .recomendaciones import SIMILARES, calcular_similitudes, recomendar
+        cliente = crear_cliente()
+        self.interaccion(cliente, self.funko)
+        calcular_similitudes()
+        recomendaciones = recomendar(cliente, self.elden)
+        self.assertEqual(recomendaciones.tipo, SIMILARES)
+
+    def test_autorizo_pero_sin_historial_usa_el_arranque_en_frio(self):
+        from .recomendaciones import MAS_VENDIDOS, SIMILARES, calcular_similitudes, recomendar
+        cliente = self.autorizar(crear_cliente())
+        calcular_similitudes()
+        self.assertEqual(recomendar(cliente, self.elden).tipo, SIMILARES)
+        self.assertEqual(recomendar(cliente).tipo, MAS_VENDIDOS)
