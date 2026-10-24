@@ -33,6 +33,73 @@ class SeedDemoTests(TestCase):
         self.assertEqual(Producto.objects.count(), 6)
 
 
+@override_settings(MEDIA_ROOT=__import__('tempfile').mkdtemp())
+class SeedCatalogoTests(TestCase):  # HU-07: catálogo de prueba con atributos completos (KPI-10)
+    def csv(self, *filas):
+        import tempfile
+        encabezado = 'codigo_de_barra,nombre,categoria,plataforma,genero,precio,costo,stock,stock_critico,descripcion\n'
+        archivo = tempfile.NamedTemporaryFile('w', suffix='.csv', encoding='utf-8', delete=False)
+        archivo.write(encabezado + ''.join(fila + '\n' for fila in filas))
+        archivo.close()
+        return archivo.name
+
+    def test_carga_el_catalogo_completo_con_imagen_generica(self):
+        import csv
+        from .management.commands.seed_catalogo import FIXTURES_DIR
+        with open(FIXTURES_DIR / 'catalogo.csv', encoding='utf-8') as archivo:
+            total = sum(1 for _ in csv.DictReader(archivo))
+        call_command('seed_catalogo', verbosity=0)
+        self.assertEqual(Producto.objects.count(), total)
+        self.assertGreaterEqual(total, 100)
+        # KPI-10: cada producto tiene los atributos que exige su categoría
+        for producto in Producto.objects.select_related('categoria'):
+            if producto.categoria.requiere_plataforma:
+                self.assertIsNotNone(producto.plataforma_id, producto.nombre)
+            if producto.categoria.requiere_genero:
+                self.assertIsNotNone(producto.genero_id, producto.nombre)
+        elden = Producto.objects.get(codigo_de_barra='2000000000015')
+        self.assertEqual(elden.imagen_principal.name, 'productos/generico_videojuegos.png')
+        from django.core.files.storage import default_storage
+        self.assertTrue(default_storage.exists('productos/generico_funko_pop.png'))
+
+    def test_es_idempotente_y_no_toca_precio_ni_stock(self):
+        from .models import ImagenProducto
+        archivo = self.csv('2000000000015,Elden Ring,Videojuegos,ps5,RPG,39990,25000,10,5,RPG')
+        call_command('seed_catalogo', archivo=archivo, verbosity=0)
+        Producto.objects.filter(codigo_de_barra='2000000000015').update(stock=3, precio=35990)
+        archivo = self.csv('2000000000015,Elden Ring GOTY,Videojuegos,ps5,Acción,39990,25000,10,5,RPG')
+        call_command('seed_catalogo', archivo=archivo, verbosity=0)
+        producto = Producto.objects.get(codigo_de_barra='2000000000015')
+        self.assertEqual((producto.nombre, producto.genero.nombre), ('Elden Ring GOTY', 'Acción'))
+        self.assertEqual((producto.stock, producto.precio), (3, 35990))
+        self.assertEqual(Producto.objects.count(), 1)
+        self.assertEqual(ImagenProducto.objects.filter(producto=producto).count(), 1)
+
+    def test_respeta_productos_eliminados_e_imagenes_propias(self):
+        from .models import ImagenProducto
+        archivo = self.csv('2000000000015,Elden Ring,Videojuegos,ps5,RPG,39990,,10,5,',
+                           '2000000000022,Tekken 8,Videojuegos,ps5,Acción,44990,,10,5,')
+        call_command('seed_catalogo', archivo=archivo, verbosity=0)
+        Producto.objects.get(codigo_de_barra='2000000000015').delete()
+        tekken = Producto.objects.get(codigo_de_barra='2000000000022')
+        tekken.imagenes_producto.all().delete()
+        ImagenProducto.objects.create(producto=tekken, imagen='productos/tekken.png', es_principal=True)
+        call_command('seed_catalogo', archivo=archivo, verbosity=0)
+        self.assertFalse(Producto.objects.filter(codigo_de_barra='2000000000015').exists())
+        self.assertEqual([i.imagen.name for i in tekken.imagenes_producto.all()], ['productos/tekken.png'])
+
+    def test_una_fila_con_error_no_carga_nada(self):
+        from django.core.management.base import CommandError
+        archivo = self.csv('2000000000015,Elden Ring,Videojuegos,ps5,RPG,39990,,10,5,',
+                           '2000000000022,Juego sin plataforma,Videojuegos,,RPG,19990,,10,5,',
+                           '2000000000039,Otro,Videojuegos,ps9,RPG,19990,,10,5,')
+        with self.assertRaises(CommandError) as contexto:
+            call_command('seed_catalogo', archivo=archivo, verbosity=0)
+        self.assertIn('Fila 3', str(contexto.exception))
+        self.assertIn("plataforma 'ps9'", str(contexto.exception))
+        self.assertFalse(Producto.objects.exists())
+
+
 class RutTests(TestCase):
     def test_rut_valido_se_normaliza(self):
         from .forms import normalizar_rut
