@@ -2546,3 +2546,52 @@ class RecomendacionesTests(TestCase):  # HU-07: similitud TF-IDF + coseno y arra
         calcular_similitudes()
         self.assertEqual(recomendar(cliente, self.elden).tipo, SIMILARES)
         self.assertEqual(recomendar(cliente).tipo, MAS_VENDIDOS)
+
+    # recálculo automático al modificar el catálogo
+    def test_crear_un_producto_recalcula(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            nuevo = crear_producto('Final Fantasy XVI', genero='RPG')
+        self.assertIn('Final Fantasy XVI', [nombre for nombre, _ in self.similares(self.elden)])
+        self.assertTrue(self.similares(nuevo))
+
+    def test_cambiar_el_genero_recalcula(self):
+        from .models import Genero
+        self.gow.genero = Genero.objects.get(nombre='RPG')
+        with self.captureOnCommitCallbacks(execute=True) as recalculos:
+            self.gow.save()
+        self.assertEqual(len(recalculos), 1)
+        self.assertEqual(self.similares(self.elden)[0][1], 1)
+
+    def test_eliminar_un_producto_recalcula(self):
+        from .recomendaciones import calcular_similitudes
+        calcular_similitudes()
+        with self.captureOnCommitCallbacks(execute=True) as recalculos:
+            self.demons.delete()
+        self.assertEqual(len(recalculos), 1)
+        self.assertNotIn("Demon's Souls", [nombre for nombre, _ in self.similares(self.elden)])
+
+    def test_cambiar_precio_o_stock_no_recalcula(self):
+        self.elden.precio = 29990
+        with self.captureOnCommitCallbacks() as recalculos:
+            self.elden.save()
+            self.elden.stock -= 1
+            self.elden.save(update_fields=['stock'])  # como lo hace una venta
+        self.assertEqual(recalculos, [])
+
+    def test_seed_catalogo_recalcula_una_sola_vez(self):
+        import tempfile
+        archivo = tempfile.NamedTemporaryFile('w', suffix='.csv', encoding='utf-8', delete=False)
+        archivo.write('codigo_de_barra,nombre,categoria,plataforma,genero,precio,costo,stock,stock_critico,descripcion\n'
+                      '2000000000015,Elden Ring PS5,Videojuegos,ps5,RPG,39990,,4,5,\n'
+                      '2000000000022,Bloodborne PS4,Videojuegos,ps4,RPG,19990,,4,5,\n')
+        archivo.close()
+        with self.settings(MEDIA_ROOT=tempfile.mkdtemp()), self.captureOnCommitCallbacks() as recalculos:
+            call_command('seed_catalogo', archivo=archivo.name, verbosity=0)
+        self.assertEqual(recalculos, [])
+        nuevo = Producto.objects.get(codigo_de_barra='2000000000015')
+        self.assertIn('Bloodborne PS4', [nombre for nombre, _ in self.similares(nuevo)])
+
+    def test_comando_calcular_similitudes(self):
+        from .models import SimilitudProducto
+        call_command('calcular_similitudes', verbosity=0)
+        self.assertTrue(SimilitudProducto.objects.filter(producto=self.elden).exists())

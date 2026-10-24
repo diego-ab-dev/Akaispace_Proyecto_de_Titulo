@@ -11,12 +11,19 @@ están en notebooks/hu07_similitud_productos.ipynb.
 
 Los empates (muy frecuentes, porque hay pocos atributos) se resuelven por unidades vendidas y después
 por id, para que el resultado sea siempre el mismo.
+
+Las similitudes se recalculan solas cuando se crea o elimina un producto o cambia su categoría, plataforma
+o género (señales al final de este archivo). Un cambio de precio o de stock no las afecta.
 """
+import threading
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 import numpy as np
 from django.db import transaction
 from django.db.models import Sum
+from django.db.models.signals import post_delete, post_save, pre_save
+from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.timezone import now
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -174,3 +181,43 @@ def recomendar(usuario, producto=None, cantidad=CANTIDAD_RECOMENDACIONES):
     if producto:
         return Recomendaciones(SIMILARES, _similares(producto, excluidos, vendidos, cantidad))
     return Recomendaciones(MAS_VENDIDOS, _mas_vendidos(excluidos, vendidos, cantidad))
+
+
+# --- recálculo automático al modificar el catálogo ---
+
+ATRIBUTOS_SIMILITUD = ['categoria_id', 'plataforma_id', 'genero_id', 'is_deleted']
+_pausa = threading.local()
+
+
+@contextmanager
+def sin_recalculo_automatico():
+    """Para cargas masivas (seed_catalogo): no recalcula por cada producto; quien lo usa recalcula al final."""
+    _pausa.activa = True
+    try:
+        yield
+    finally:
+        _pausa.activa = False
+
+
+def _cambia_la_similitud(producto, update_fields):
+    if update_fields is not None:
+        campos = {campo.removesuffix('_id') for campo in update_fields}
+        if not campos & {atributo.removesuffix('_id') for atributo in ATRIBUTOS_SIMILITUD}:
+            return False  # ej. la venta que descuenta stock
+    anterior = Producto.todos.filter(pk=producto.pk).values(*ATRIBUTOS_SIMILITUD).first() if producto.pk else None
+    return anterior is None or any(anterior[atributo] != getattr(producto, atributo)
+                                   for atributo in ATRIBUTOS_SIMILITUD)
+
+
+@receiver(pre_save, sender=Producto)
+def _marcar_recalculo(sender, instance, update_fields=None, raw=False, **kwargs):
+    instance._recalcular_similitudes = (not raw and not getattr(_pausa, 'activa', False)
+                                        and _cambia_la_similitud(instance, update_fields))
+
+
+@receiver(post_save, sender=Producto)
+@receiver(post_delete, sender=Producto)
+def _recalcular(sender, instance, signal, **kwargs):
+    if signal is post_delete or getattr(instance, '_recalcular_similitudes', False):
+        # después del commit, una vez que el cambio quedó guardado
+        transaction.on_commit(calcular_similitudes)

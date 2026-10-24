@@ -160,7 +160,7 @@ python manage.py seed_catalogo
 python manage.py runserver
 ```
 
-`migrate` crea las tablas y `seed_demo` carga los productos de ejemplo (con sus imágenes) y los usuarios de prueba. `seed_catalogo` agrega el catálogo de prueba (unos 115 productos de `appPrincipal/fixtures/catalogo.csv`, con una imagen genérica por categoría), que usan las recomendaciones (HU-07). Ambos comandos se pueden ejecutar más de una vez sin duplicar datos: `seed_catalogo` actualiza el nombre, la descripción, la categoría, la plataforma y el género de los productos que ya existen, pero no cambia su precio ni su stock.
+`migrate` crea las tablas y `seed_demo` carga los productos de ejemplo (con sus imágenes) y los usuarios de prueba. `seed_catalogo` agrega el catálogo de prueba (unos 115 productos de `appPrincipal/fixtures/catalogo.csv`, con una imagen genérica por categoría), que usan las recomendaciones (HU-07). Ambos comandos se pueden ejecutar más de una vez sin duplicar datos: `seed_catalogo` actualiza el nombre, la descripción, la categoría, la plataforma y el género de los productos que ya existen, pero no cambia su precio ni su stock. Al terminar, `seed_catalogo` calcula las similitudes entre productos que usan las recomendaciones; después se recalculan solas cada vez que se crea, elimina o cambia la categoría, plataforma o género de un producto. Para forzar el recálculo a mano: `python manage.py calcular_similitudes`.
 
 Abre el navegador en: http://127.0.0.1:8000/
 

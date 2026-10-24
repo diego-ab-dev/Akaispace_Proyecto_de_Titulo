@@ -6,6 +6,7 @@
 - Un producto que el administrador eliminó (borrado lógico) sigue eliminado.
 - Los productos sin imágenes reciben la imagen genérica de su categoría (fixtures/catalogo_media).
 - Si una fila tiene un error, no se carga nada.
+- Al terminar se recalculan las similitudes de las recomendaciones (una vez, no por cada producto).
 """
 import csv
 from pathlib import Path
@@ -18,6 +19,7 @@ from django.db import transaction
 from django.utils.text import slugify
 
 from appPrincipal.models import Categoria, Genero, ImagenProducto, Plataforma, Producto
+from appPrincipal.recomendaciones import calcular_similitudes, sin_recalculo_automatico
 
 FIXTURES_DIR = Path(__file__).resolve().parents[2] / 'fixtures'
 COLUMNAS = ['codigo_de_barra', 'nombre', 'categoria', 'plataforma', 'genero', 'precio', 'costo', 'stock',
@@ -52,7 +54,7 @@ class Command(BaseCommand):
 
         creados = actualizados = sin_cambios = 0
         errores = []
-        with transaction.atomic():
+        with sin_recalculo_automatico(), transaction.atomic():
             for numero, fila in filas:
                 try:
                     datos = self._datos(fila, categorias, plataformas, generos)
@@ -89,9 +91,11 @@ class Command(BaseCommand):
 
         if errores:
             raise CommandError('No se cargó el catálogo:\n' + '\n'.join(errores))
+        similitudes = calcular_similitudes()
         if options['verbosity'] > 0:
             self.stdout.write(self.style.SUCCESS(
-                f'Catálogo listo: {creados} creados, {actualizados} actualizados, {sin_cambios} sin cambios.'
+                f'Catálogo listo: {creados} creados, {actualizados} actualizados, {sin_cambios} sin cambios. '
+                f'Similitudes recalculadas: {similitudes} pares.'
             ))
 
     def _leer(self, ruta):
