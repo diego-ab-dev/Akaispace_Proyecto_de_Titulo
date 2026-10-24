@@ -5,7 +5,9 @@ from django.core.paginator import Paginator
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404, render
 
-from appPrincipal.models import Categoria, ConfiguracionSitio, Favorito, Genero, Plataforma, Producto
+from appPrincipal.models import (Categoria, ConfiguracionSitio, Favorito, Genero, InteraccionProducto, Plataforma,
+                                 Producto)
+from appPrincipal.recomendaciones import registrar_interaccion
 
 
 def productos_para_listado(productos):
@@ -147,6 +149,8 @@ def producto_detalle(request, producto_id):
         Producto.objects.select_related('categoria', 'plataforma', 'genero').prefetch_related('imagenes_producto'),
         id=producto_id,
     )
+    # HU-07: historial para las recomendaciones (solo si el cliente lo autorizó)
+    registrar_interaccion(request.user, producto, InteraccionProducto.VISTA)
     rango_cantidad = range(1, producto.stock + 1)
 
     opiniones_list = producto.opiniones.all().order_by('-fecha_creacion')

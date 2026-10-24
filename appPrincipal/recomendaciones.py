@@ -5,6 +5,7 @@ gen_rpg") y se compara con TF-IDF y similitud del coseno. El prototipo y la just
 están en notebooks/hu07_similitud_productos.ipynb.
 
 - calcular_similitudes(): guarda en SimilitudProducto los 10 productos más similares a cada producto.
+- registrar_interaccion(): guarda las vistas de fichas y lo agregado al carrito, solo con consentimiento.
 - recomendar(): elige qué mostrar según el consentimiento y el historial del cliente (arranque en frío):
   personalizadas si autorizó sus datos de navegación y tiene historial; si no, los similares al producto
   de la ficha, o los más vendidos en la página principal.
@@ -16,6 +17,7 @@ Las similitudes se recalculan solas cuando se crea o elimina un producto o cambi
 o género (señales al final de este archivo). Un cambio de precio o de stock no las afecta.
 """
 import threading
+from datetime import timedelta
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 
@@ -36,6 +38,8 @@ CANTIDAD_RECOMENDACIONES = 4
 # peso de cada interacción en el perfil del cliente
 PESOS = {InteraccionProducto.VISTA: 1, InteraccionProducto.CARRITO: 2}
 PESO_COMPRA = 3
+# recargar la misma ficha dentro de este plazo no cuenta como otra vista
+VENTANA_VISTAS = timedelta(minutes=30)
 
 PERSONALIZADAS = 'personalizadas'
 SIMILARES = 'similares'
@@ -112,6 +116,18 @@ def calcular_similitudes():
 
 def autorizo_datos_navegacion(usuario):
     return usuario.is_authenticated and usuario.datos_navegacion_autorizados_en is not None
+
+
+def registrar_interaccion(usuario, producto, tipo):
+    """Guarda que el cliente vio la ficha o agregó el producto al carrito, solo si autorizó el uso de sus
+    datos de navegación. Devuelve True si se guardó."""
+    if not autorizo_datos_navegacion(usuario):
+        return False
+    if tipo == InteraccionProducto.VISTA and usuario.interacciones.filter(
+            producto=producto, tipo=tipo, fecha__gte=now() - VENTANA_VISTAS).exists():
+        return False
+    InteraccionProducto.objects.create(usuario=usuario, producto=producto, tipo=tipo)
+    return True
 
 
 def _historial(usuario):

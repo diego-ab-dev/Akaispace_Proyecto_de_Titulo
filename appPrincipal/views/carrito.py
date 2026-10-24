@@ -7,7 +7,8 @@ from django.views.decorators.http import require_POST
 from appPrincipal import envios
 from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.decorators import login_required_json
-from appPrincipal.models import Carrito, ItemCarritoProducto, Producto
+from appPrincipal.models import Carrito, InteraccionProducto, ItemCarritoProducto, Producto
+from appPrincipal.recomendaciones import registrar_interaccion
 
 
 def _leer_entero(valor):
@@ -41,6 +42,8 @@ def agregar_al_carrito(request, producto_id):
         item.save()
     else:
         ItemCarritoProducto.objects.create(carrito=carrito, producto=producto, cantidad=cantidad)
+    # HU-07: historial para las recomendaciones (solo si el cliente lo autorizó)
+    registrar_interaccion(request.user, producto, InteraccionProducto.CARRITO)
 
     return JsonResponse({
         'success': True,

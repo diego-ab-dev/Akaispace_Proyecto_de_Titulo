@@ -2595,3 +2595,53 @@ class RecomendacionesTests(TestCase):  # HU-07: similitud TF-IDF + coseno y arra
         from .models import SimilitudProducto
         call_command('calcular_similitudes', verbosity=0)
         self.assertTrue(SimilitudProducto.objects.filter(producto=self.elden).exists())
+
+
+class InteraccionesTests(TestCase):  # HU-07: historial de navegación, solo con consentimiento
+    def setUp(self):
+        from django.utils import timezone
+        self.producto = crear_producto(stock=3)
+        self.cliente = crear_cliente(datos_navegacion_autorizados_en=timezone.now())
+        self.client.force_login(self.cliente)
+
+    def interacciones(self):
+        from .models import InteraccionProducto
+        return list(InteraccionProducto.objects.values_list('usuario', 'producto', 'tipo'))
+
+    def ver_ficha(self):
+        self.assertEqual(self.client.get(f'/producto/{self.producto.id}/').status_code, 200)
+
+    def test_ver_la_ficha_registra_una_vista(self):
+        self.ver_ficha()
+        self.assertEqual(self.interacciones(), [(self.cliente.id, self.producto.id, 'vista')])
+
+    def test_recargar_la_ficha_antes_de_30_minutos_no_suma_otra_vista(self):
+        from datetime import timedelta
+        from django.db.models import F
+        from .models import InteraccionProducto
+        self.ver_ficha()
+        self.ver_ficha()
+        self.assertEqual(len(self.interacciones()), 1)
+        InteraccionProducto.objects.update(fecha=F('fecha') - timedelta(minutes=31))
+        self.ver_ficha()
+        self.assertEqual(len(self.interacciones()), 2)
+
+    def test_agregar_al_carrito_registra_la_interaccion(self):
+        self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1})
+        self.assertEqual(self.interacciones(), [(self.cliente.id, self.producto.id, 'carrito')])
+
+    def test_si_no_se_pudo_agregar_no_se_registra(self):
+        self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 5})  # más que el stock
+        self.assertEqual(self.interacciones(), [])
+
+    def test_sin_consentimiento_no_se_registra_nada(self):
+        self.cliente.datos_navegacion_autorizados_en = None
+        self.cliente.save()
+        self.ver_ficha()
+        self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1})
+        self.assertEqual(self.interacciones(), [])
+
+    def test_un_visitante_anonimo_no_registra_nada(self):
+        self.client.logout()
+        self.ver_ficha()
+        self.assertEqual(self.interacciones(), [])
