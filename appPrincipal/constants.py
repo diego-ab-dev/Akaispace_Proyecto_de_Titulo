@@ -41,7 +41,7 @@ REGIONES = [
 ]
 
 # Política de privacidad
-POLITICA_PRIVACIDAD_VERSION = '1.1'
+POLITICA_PRIVACIDAD_VERSION = '1.2'
 POLITICA_PRIVACIDAD_FECHA = '24 de octubre de 2026'
 
 # Términos y condiciones

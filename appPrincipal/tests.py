@@ -2856,3 +2856,61 @@ class Kpi05Tests(TestCase):  # HU-07: recomendaciones mostradas y clics, solo co
         self.assertEqual(tasa_de_clics(), {'mostradas': 2, 'clics': 1, 'tasa': 50.0})
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
         self.assertContains(self.client.get('/admin-panel/configuracion/'), '<strong>50,0%</strong> (1 de 2 mostradas)')
+
+
+class ConservacionNavegacionTests(TestCase):  # HU-07 y política de privacidad (secciones 4, 7 y 10)
+    def setUp(self):
+        from django.utils import timezone
+        from .models import InteraccionProducto, Recomendacion
+        self.producto = crear_producto()
+        self.cliente = crear_cliente(datos_navegacion_autorizados_en=timezone.now())
+        InteraccionProducto.objects.create(usuario=self.cliente, producto=self.producto, tipo='vista')
+        Recomendacion.objects.create(usuario=self.cliente, producto=self.producto, ubicacion='home')
+
+    def envejecer(self, dias):
+        from datetime import timedelta
+        from django.db.models import F
+        from .models import InteraccionProducto, Recomendacion
+        InteraccionProducto.objects.update(fecha=F('fecha') - timedelta(days=dias))
+        Recomendacion.objects.update(mostrada_en=F('mostrada_en') - timedelta(days=dias))
+
+    def cantidades(self):
+        from .models import InteraccionProducto, Recomendacion
+        return InteraccionProducto.objects.count(), Recomendacion.objects.count()
+
+    def test_conserva_la_navegacion_de_menos_de_24_meses(self):
+        from .recomendaciones import eliminar_navegacion_antigua
+        self.envejecer(700)
+        self.assertEqual(eliminar_navegacion_antigua(), (0, 0))
+        self.assertEqual(self.cantidades(), (1, 1))
+
+    def test_borra_la_navegacion_de_mas_de_24_meses(self):
+        from .recomendaciones import eliminar_navegacion_antigua
+        self.envejecer(731)
+        self.assertEqual(eliminar_navegacion_antigua(), (1, 1))
+        self.assertEqual(self.cantidades(), (0, 0))
+
+    def test_comando_diario_borra_lo_antiguo_y_recalcula(self):
+        from .models import SimilitudProducto
+        crear_producto('Otro juego')
+        self.envejecer(731)
+        call_command('mantener_recomendaciones', verbosity=0)
+        self.assertEqual(self.cantidades(), (0, 0))
+        self.assertTrue(SimilitudProducto.objects.exists())
+
+    def test_eliminar_la_cuenta_borra_su_navegacion(self):
+        otro = crear_cliente('otro@example.com')
+        from .models import InteraccionProducto
+        InteraccionProducto.objects.create(usuario=otro, producto=self.producto, tipo='vista')
+        self.cliente.delete()  # borrado lógico, como en el panel
+        self.cliente.refresh_from_db()
+        self.assertIsNone(self.cliente.datos_navegacion_autorizados_en)
+        self.assertEqual(list(InteraccionProducto.objects.values_list('usuario', flat=True)), [otro.id])
+        self.assertEqual(self.cantidades(), (1, 0))
+
+    def test_los_textos_declaran_solo_los_datos_que_se_usan(self):
+        for url in ['/politica-de-privacidad/', '/register/']:
+            respuesta = self.client.get(url)
+            self.assertEqual(respuesta.status_code, 200, url)
+            self.assertNotContains(respuesta, 'búsquedas')
+            self.assertNotContains(respuesta, 'favoritos')

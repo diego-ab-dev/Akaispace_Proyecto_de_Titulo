@@ -13,6 +13,8 @@ están en notebooks/hu07_similitud_productos.ipynb.
   historial con el producto que se está viendo.
 - registrar_mostradas() y marcar_clic(): registran las recomendaciones mostradas y sus clics (KPI-05), solo
   de clientes que autorizaron sus datos de navegación; tasa_de_clics() calcula el KPI.
+- eliminar_navegacion_antigua(): aplica el plazo de conservación de la política de privacidad (24 meses).
+  La ejecuta a diario el comando mantener_recomendaciones. Al eliminar una cuenta se borra su navegación.
 
 Los empates (muy frecuentes, porque hay pocos atributos) se resuelven por unidades vendidas y después
 por id, para que el resultado sea siempre el mismo.
@@ -36,7 +38,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from appPrincipal.models import (Carrito, InteraccionProducto, Producto, ProductoVenta, Recomendacion,
-                                 SimilitudProducto)
+                                 SimilitudProducto, Usuario)
 
 TOP_SIMILARES = 10
 CANTIDAD_RECOMENDACIONES = 4
@@ -51,6 +53,8 @@ VISTOS_RECIENTES = timedelta(days=7)
 # Es una proporción y no un peso, para que cuente lo mismo con 3 interacciones que con 300. Es mayor que 0,5
 # para que la página mande: con 0,5 empatan lo idéntico al historial y lo idéntico al producto de la ficha
 PESO_PRODUCTO_ACTUAL = 0.6
+# plazo de conservación de los datos de navegación (política de privacidad, sección 7)
+CONSERVACION_NAVEGACION = timedelta(days=730)
 
 PERSONALIZADAS = 'personalizadas'
 SIMILARES = 'similares'
@@ -147,6 +151,19 @@ def autorizo_datos_navegacion(usuario):
     return usuario.is_authenticated and usuario.datos_navegacion_autorizados_en is not None
 
 
+def _eliminar_navegacion(usuario):
+    InteraccionProducto.objects.filter(usuario=usuario).delete()
+    Recomendacion.objects.filter(usuario=usuario).delete()
+
+
+def eliminar_navegacion_antigua():
+    """Borra las interacciones y las recomendaciones registradas hace más de 24 meses. Devuelve cuántas borró."""
+    limite = now() - CONSERVACION_NAVEGACION
+    interacciones, _ = InteraccionProducto.objects.filter(fecha__lt=limite).delete()
+    recomendaciones, _ = Recomendacion.objects.filter(mostrada_en__lt=limite).delete()
+    return interacciones, recomendaciones
+
+
 def cambiar_consentimiento_navegacion(usuario, autoriza):
     """Da o retira la autorización de usar los datos de navegación. Al retirarla se eliminan el historial y
     las recomendaciones registradas del cliente, como indica la política de privacidad (sección 10)."""
@@ -156,8 +173,7 @@ def cambiar_consentimiento_navegacion(usuario, autoriza):
                 usuario.datos_navegacion_autorizados_en = now()
         else:
             usuario.datos_navegacion_autorizados_en = None
-            InteraccionProducto.objects.filter(usuario=usuario).delete()
-            Recomendacion.objects.filter(usuario=usuario).delete()
+            _eliminar_navegacion(usuario)
         usuario.save(update_fields=['datos_navegacion_autorizados_en'])
 
 
@@ -326,3 +342,14 @@ def _recalcular(sender, instance, signal, **kwargs):
     if signal is post_delete or getattr(instance, '_recalcular_similitudes', False):
         # después del commit, una vez que el cambio quedó guardado
         transaction.on_commit(calcular_similitudes)
+
+
+@receiver(post_save, sender=Usuario)
+def _eliminar_navegacion_de_cuenta_eliminada(sender, instance, raw=False, **kwargs):
+    """Al eliminar una cuenta (borrado lógico) se borra su navegación: no es un dato que la ley obligue a
+    conservar (política de privacidad, sección 7)."""
+    if raw or not instance.is_deleted:
+        return
+    _eliminar_navegacion(instance)
+    if instance.datos_navegacion_autorizados_en is not None:
+        Usuario.objects.filter(pk=instance.pk).update(datos_navegacion_autorizados_en=None)
