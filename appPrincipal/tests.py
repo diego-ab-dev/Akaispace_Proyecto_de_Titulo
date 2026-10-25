@@ -2543,6 +2543,22 @@ class RecomendacionesTests(TestCase):  # HU-07: similitud TF-IDF + coseno y arra
         InteraccionProducto.objects.update(fecha=F('fecha') - timedelta(days=8))
         self.assertEqual(recomendar(cliente).productos[0], self.elden)
 
+    def test_en_la_ficha_las_personalizadas_consideran_el_producto_que_se_ve(self):
+        from .recomendaciones import PERSONALIZADAS, recomendar
+        # el caso reportado: vio juegos de aventura de PS5 y abre un accesorio de Switch
+        cliente = self.autorizar(crear_cliente())
+        for numero in range(3):
+            self.interaccion(cliente, crear_producto(f'Aventura PS5 {numero}', genero='Aventura'))
+        crear_producto('Ghost of Tsushima', genero='Aventura')
+        control = crear_producto('Control Pro Switch', categoria='Accesorios', plataforma='switch')
+        joycon = crear_producto('Joy-Con', categoria='Accesorios', plataforma='switch')
+        en_la_ficha = recomendar(cliente, control)
+        self.assertEqual(en_la_ficha.tipo, PERSONALIZADAS)
+        self.assertEqual(en_la_ficha.productos[0], joycon)
+        self.assertIn(self.pokemon, en_la_ficha.productos)
+        # en la página principal sigue mandando el historial
+        self.assertEqual(recomendar(cliente).productos[0].nombre, 'Ghost of Tsushima')
+
     def test_sin_consentimiento_no_se_usa_su_historial(self):
         from .recomendaciones import SIMILARES, calcular_similitudes, recomendar
         cliente = crear_cliente()

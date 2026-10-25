@@ -9,7 +9,8 @@ están en notebooks/hu07_similitud_productos.ipynb.
 - cambiar_consentimiento_navegacion(): el cliente da o retira la autorización desde su perfil.
 - recomendar(): elige qué mostrar según el consentimiento y el historial del cliente (arranque en frío):
   personalizadas si autorizó sus datos de navegación y tiene historial; si no, los similares al producto
-  de la ficha, o los más vendidos en la página principal.
+  de la ficha, o los más vendidos en la página principal. En la ficha, las personalizadas mezclan el
+  historial con el producto que se está viendo.
 - registrar_mostradas() y marcar_clic(): registran las recomendaciones mostradas y sus clics (KPI-05), solo
   de clientes que autorizaron sus datos de navegación; tasa_de_clics() calcula el KPI.
 
@@ -46,6 +47,10 @@ PESO_COMPRA = 3
 VENTANA_VISTAS = timedelta(minutes=30)
 # lo visto en este plazo suma al perfil, pero no se recomienda (sería recomendar lo que el cliente ya conoce)
 VISTOS_RECIENTES = timedelta(days=7)
+# en la ficha, parte del perfil que corresponde al producto que se está viendo (el resto es el historial).
+# Es una proporción y no un peso, para que cuente lo mismo con 3 interacciones que con 300. Es mayor que 0,5
+# para que la página mande: con 0,5 empatan lo idéntico al historial y lo idéntico al producto de la ficha
+PESO_PRODUCTO_ACTUAL = 0.6
 
 PERSONALIZADAS = 'personalizadas'
 SIMILARES = 'similares'
@@ -192,8 +197,9 @@ def _vistos_recientes(usuario):
                .values_list('producto_id', flat=True))
 
 
-def _personalizadas(usuario, excluidos, vendidos, cantidad):
-    """Promedio ponderado de los vectores de los productos del historial, comparado con todo el catálogo."""
+def _personalizadas(usuario, excluidos, vendidos, cantidad, producto=None):
+    """Promedio ponderado de los vectores de los productos del historial, comparado con todo el catálogo.
+    En la ficha (`producto`), el perfil se mezcla con el vector del producto según PESO_PRODUCTO_ACTUAL."""
     pesos, comprados = _historial(usuario)
     productos, matriz = _catalogo()
     indice = {producto.id: i for i, producto in enumerate(productos)}
@@ -204,6 +210,9 @@ def _personalizadas(usuario, excluidos, vendidos, cantidad):
     for i, peso in pesos.items():
         vector_pesos[i] = peso
     perfil = np.asarray(matriz.T @ vector_pesos / vector_pesos.sum()).reshape(1, -1)
+    if producto is not None and producto.id in indice:
+        actual = matriz[indice[producto.id]].toarray()
+        perfil = (1 - PESO_PRODUCTO_ACTUAL) * perfil + PESO_PRODUCTO_ACTUAL * actual
     puntajes = cosine_similarity(perfil, matriz).ravel()
     excluidos = excluidos | comprados | _vistos_recientes(usuario)
     candidatos = [productos[i] for i in _ordenar(puntajes, productos, vendidos)
@@ -233,7 +242,7 @@ def recomendar(usuario, producto=None, cantidad=CANTIDAD_RECOMENDACIONES):
     excluidos = {producto.id} if producto else set()
     if autorizo_datos_navegacion(usuario):
         excluidos |= _en_carrito(usuario)
-        personalizadas = _personalizadas(usuario, excluidos, vendidos, cantidad)
+        personalizadas = _personalizadas(usuario, excluidos, vendidos, cantidad, producto)
         if personalizadas:
             return Recomendaciones(PERSONALIZADAS, personalizadas)
         excluidos |= _historial(usuario)[1]
