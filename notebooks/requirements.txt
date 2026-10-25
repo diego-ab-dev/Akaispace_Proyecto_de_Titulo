@@ -1,5 +1,6 @@
 # Librerías extra para los notebooks (no las necesita la web)
 -r ../requirements.txt
+Faker==40.43.0
 matplotlib==3.11.2
 notebook==7.6.3
 pandas==3.1.0

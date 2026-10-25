@@ -342,9 +342,10 @@ El navbar está en `templates/partials/navbar.html`, el footer en `templates/par
 
 ## Notebooks (prototipos para el informe)
 
-La carpeta `notebooks/` tiene los prototipos en Jupyter que se usan como material del informe. No los necesita la web y no usan la base de datos.
+La carpeta `notebooks/` tiene los prototipos en Jupyter que se usan como material del informe. No los necesita la web.
 
 - `hu07_similitud_productos.ipynb`: prototipo del recomendador de HU-07. Calcula la similitud entre los productos de `appPrincipal/fixtures/catalogo.csv` con TF-IDF y similitud del coseno, y muestra el mapa de calor, ejemplos de recomendación, el efecto del IDF y de la familia de plataforma, los empates y la limitación de Funko Pop y Amiibo.
+- `hu07_evaluacion.ipynb`: evaluación del recomendador implementado en `appPrincipal/recomendaciones.py`: coherencia de los productos similares frente a la ficha anterior y precision@5 con 200 clientes simulados con Faker. Crea una base de datos de prueba temporal (como los tests), así que necesita MySQL encendido; no toca la base de desarrollo y tarda uno o dos minutos.
 
 Para abrirlos, con el entorno virtual activo:
 
