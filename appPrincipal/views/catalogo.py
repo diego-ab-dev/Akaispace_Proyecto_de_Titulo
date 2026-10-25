@@ -2,12 +2,12 @@
 import re
 
 from django.core.paginator import Paginator
-from django.db.models import Avg
+from django.db.models import Avg, prefetch_related_objects
 from django.shortcuts import get_object_or_404, render
 
 from appPrincipal.models import (Categoria, ConfiguracionSitio, Favorito, Genero, InteraccionProducto, Plataforma,
                                  Producto)
-from appPrincipal.recomendaciones import registrar_interaccion
+from appPrincipal.recomendaciones import recomendar, registrar_interaccion
 
 
 def productos_para_listado(productos):
@@ -97,8 +97,17 @@ def filtrar_catalogo(request, productos, con_plataforma=True):
     }
 
 
+def recomendaciones_para(request, producto=None):
+    """HU-07: recomendaciones listas para las tarjetas, o None si el admin no las activó en Configuración."""
+    if not ConfiguracionSitio.actual().mostrar_recomendaciones:
+        return None
+    recomendaciones = recomendar(request.user, producto)
+    prefetch_related_objects(recomendaciones.productos, 'categoria', 'plataforma', 'imagenes_producto')
+    return recomendaciones
+
+
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'home.html', {'recomendaciones': recomendaciones_para(request)})
 
 def productos_menu(request):
     query = request.GET.get('buscar')
@@ -179,10 +188,16 @@ def producto_detalle(request, producto_id):
             "percent": round(percent, 1)
         })
 
-    # qué relacionados se muestran lo decide el admin en Configuración del panel
+    # qué relacionados se muestran lo decide el admin en Configuración del panel; si activó las
+    # recomendaciones (HU-07), estas reemplazan a los relacionados
     configuracion = ConfiguracionSitio.actual()
     productos_relacionados = Producto.objects.none()
-    if configuracion.productos_relacionados != ConfiguracionSitio.RELACIONADOS_NINGUNO:
+    titulo_relacionados = 'También te podría interesar'
+    recomendaciones = recomendaciones_para(request, producto)
+    if recomendaciones is not None:
+        productos_relacionados = recomendaciones.productos
+        titulo_relacionados = recomendaciones.titulo
+    elif configuracion.productos_relacionados != ConfiguracionSitio.RELACIONADOS_NINGUNO:
         productos_relacionados = Producto.objects.filter(stock__gt=0).exclude(id=producto.id)
         if configuracion.productos_relacionados == ConfiguracionSitio.RELACIONADOS_CATEGORIA:
             productos_relacionados = productos_relacionados.filter(categoria=producto.categoria,
@@ -205,6 +220,7 @@ def producto_detalle(request, producto_id):
         "total_opiniones": total_opiniones,
         "es_favorito": es_favorito,
         "productos_relacionados": productos_relacionados,
+        "titulo_relacionados": titulo_relacionados,
     })
 
     

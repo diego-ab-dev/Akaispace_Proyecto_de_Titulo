@@ -329,4 +329,14 @@ a {
 .estado-reparto { color: #20c997; font-weight: bold; }
 .estado-listo-retiro { color: #0a8fa8; font-weight: bold; }      
 .estado-entregado { color: #198754; font-weight: bold; }     
-.estado-anulada { color: #dc3545; font-weight: bold; }  
+.estado-anulada { color: #dc3545; font-weight: bold; }
+
+/* HU-07: consentimiento de datos de navegación */
+.consentimiento-navegacion {
+    border-top: 1px solid #e3e6ec;
+    padding-top: 1rem;
+}
+
+.consentimiento-navegacion button {
+    border: none;
+}

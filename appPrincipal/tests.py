@@ -2645,3 +2645,112 @@ class InteraccionesTests(TestCase):  # HU-07: historial de navegación, solo con
         self.client.logout()
         self.ver_ficha()
         self.assertEqual(self.interacciones(), [])
+
+
+class ConsentimientoNavegacionTests(TestCase):  # HU-07 y política de privacidad (sección 10): dar o retirar desde el perfil
+    url = '/perfil/datos-navegacion/'
+
+    def setUp(self):
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+
+    def test_activar_desde_el_perfil(self):
+        self.assertContains(self.client.get('/perfil/'), 'Activar recomendaciones personalizadas')
+        respuesta = self.client.post(self.url, {'autoriza': 'on'})
+        self.assertTrue(respuesta['Location'].startswith('/perfil/?notif='))
+        self.cliente.refresh_from_db()
+        self.assertIsNotNone(self.cliente.datos_navegacion_autorizados_en)
+        self.assertContains(self.client.get('/perfil/'), 'Desactivar y eliminar mi historial')
+
+    def test_activar_dos_veces_conserva_la_fecha_original(self):
+        self.client.post(self.url, {'autoriza': 'on'})
+        self.cliente.refresh_from_db()
+        fecha = self.cliente.datos_navegacion_autorizados_en
+        self.client.post(self.url, {'autoriza': 'on'})
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.datos_navegacion_autorizados_en, fecha)
+
+    def test_desactivar_elimina_solo_el_historial_del_cliente(self):
+        from django.utils import timezone
+        from .models import InteraccionProducto, Recomendacion
+        producto = crear_producto()
+        otro = crear_cliente('otro@example.com', datos_navegacion_autorizados_en=timezone.now())
+        self.client.post(self.url, {'autoriza': 'on'})
+        for usuario in [self.cliente, otro]:
+            InteraccionProducto.objects.create(usuario=usuario, producto=producto, tipo='vista')
+            Recomendacion.objects.create(usuario=usuario, producto=producto, ubicacion='home')
+        self.client.post(self.url)  # sin 'autoriza': retira el consentimiento
+        self.cliente.refresh_from_db()
+        self.assertIsNone(self.cliente.datos_navegacion_autorizados_en)
+        self.assertEqual(list(InteraccionProducto.objects.values_list('usuario', flat=True)), [otro.id])
+        self.assertEqual(list(Recomendacion.objects.values_list('usuario', flat=True)), [otro.id])
+
+    def test_solo_por_post_y_con_sesion(self):
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+        self.client.logout()
+        self.assertEqual(self.client.post(self.url, {'autoriza': 'on'}).status_code, 302)
+        self.cliente.refresh_from_db()
+        self.assertIsNone(self.cliente.datos_navegacion_autorizados_en)
+
+    def test_la_politica_indica_que_se_retira_desde_el_perfil(self):
+        self.assertContains(self.client.get('/politica-de-privacidad/'), 'Recomendaciones personalizadas')
+
+
+class MostrarRecomendacionesTests(TestCase):  # HU-07: home y ficha, según el interruptor de Configuración
+    def setUp(self):
+        from .recomendaciones import calcular_similitudes
+        self.elden = crear_producto('Elden Ring', genero='RPG')
+        self.demons = crear_producto("Demon's Souls", genero='RPG')
+        self.funko = crear_producto('Funko Kratos', categoria='Funko Pop', plataforma=None)
+        crear_venta(crear_cliente('comprador@example.com'), self.funko, cantidad=3)
+        calcular_similitudes()
+
+    def activar(self, activa=True):
+        from .models import ConfiguracionSitio
+        configuracion = ConfiguracionSitio.actual()
+        configuracion.mostrar_recomendaciones = activa
+        configuracion.save()
+
+    def ficha(self, producto):
+        return self.client.get(f'/producto/{producto.id}/')
+
+    def test_apagado_por_defecto_todo_sigue_como_antes(self):
+        respuesta = self.client.get('/')
+        self.assertIsNone(respuesta.context['recomendaciones'])
+        self.assertNotContains(respuesta, 'Lo más vendido')
+        respuesta = self.ficha(self.elden)
+        self.assertContains(respuesta, 'También te podría interesar')
+        self.assertEqual(list(respuesta.context['productos_relacionados']), [self.demons])
+
+    def test_anonimo_ve_los_mas_vendidos_en_el_home(self):
+        self.activar()
+        respuesta = self.client.get('/')
+        self.assertContains(respuesta, 'Lo más vendido')
+        self.assertEqual(respuesta.context['recomendaciones'].productos[0], self.funko)
+        self.assertContains(respuesta, f'href="/producto/{self.funko.id}/"')
+
+    def test_anonimo_ve_los_similares_en_la_ficha(self):
+        self.activar()
+        respuesta = self.ficha(self.elden)
+        self.assertContains(respuesta, 'Productos similares')
+        self.assertNotContains(respuesta, 'También te podría interesar')
+        self.assertEqual(respuesta.context['productos_relacionados'], [self.demons])
+
+    def test_cliente_que_autorizo_ve_recomendado_para_ti(self):
+        from django.utils import timezone
+        from .models import InteraccionProducto
+        self.activar()
+        cliente = crear_cliente(datos_navegacion_autorizados_en=timezone.now())
+        InteraccionProducto.objects.create(usuario=cliente, producto=self.elden, tipo='vista')
+        self.client.force_login(cliente)
+        respuesta = self.client.get('/')
+        self.assertContains(respuesta, 'Recomendado para ti')
+        self.assertIn(self.demons, respuesta.context['recomendaciones'].productos)
+
+    def test_el_panel_activa_el_interruptor_y_muestra_el_kpi_10(self):
+        from .models import ConfiguracionSitio
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        url = '/admin-panel/configuracion/'
+        self.assertContains(self.client.get(url), 'Productos con todos sus atributos (KPI-10): <strong>3 de 3</strong>')
+        self.client.post(url, {'productos_relacionados': 'categoria', 'mostrar_recomendaciones': 'on'})
+        self.assertTrue(ConfiguracionSitio.actual().mostrar_recomendaciones)

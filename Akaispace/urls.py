@@ -49,6 +49,7 @@ urlpatterns = [
     # perfil cliente
     path('perfil/', views.perfil, name='perfil'),
     path('editar/', views.editar_perfil, name='editar'),
+    path('perfil/datos-navegacion/', views.datos_navegacion, name='datos_navegacion'),
     path('cambiar/', views.cambiar_contraseña, name='cambiar'),
     # compras de cliente
     path('compras/', views.ver_compras, name='ver_compras'),

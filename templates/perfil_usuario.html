@@ -112,6 +112,34 @@
                             </a>
                         </div>
                     </div>
+
+                    <!-- HU-07: consentimiento de datos de navegación, se puede dar o retirar en cualquier momento -->
+                    <div class="consentimiento-navegacion mt-4" id="recomendaciones">
+                        <h3 class="card-header-title">Recomendaciones personalizadas</h3>
+                        <form method="post" action="{% url 'datos_navegacion' %}" id="formNavegacion">
+                            {% csrf_token %}
+                            {% if usuario.datos_navegacion_autorizados_en %}
+                            <p>
+                                <i class="fa-solid fa-circle-check text-success me-1"></i>
+                                <strong>Activadas</strong> desde el {{ usuario.datos_navegacion_autorizados_en|date:"d/m/Y" }}.
+                                Te recomendamos productos según los que visitas, agregas al carrito y compras.
+                            </p>
+                            <button type="submit" class="btn-dark-custom"
+                                    data-confirmar="Se eliminará tu historial de navegación y dejarás de recibir recomendaciones personalizadas. ¿Continuar?">
+                                Desactivar y eliminar mi historial
+                            </button>
+                            {% else %}
+                            <p>
+                                <strong>Desactivadas.</strong> Si las activas, usaremos los productos que visitas, agregas al
+                                carrito y compras para recomendarte productos, según la
+                                <a href="{% url 'politica_privacidad' %}#navegacion" target="_blank" rel="noopener">sección 4 de la política de privacidad</a>.
+                                Puedes desactivarlas cuando quieras.
+                            </p>
+                            <input type="hidden" name="autoriza" value="on">
+                            <button type="submit" class="btn-blue-custom">Activar recomendaciones personalizadas</button>
+                            {% endif %}
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,6 +243,12 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const formNavegacion = document.getElementById('formNavegacion');
+        formNavegacion.addEventListener('submit', (evento) => {
+            const texto = formNavegacion.querySelector('[data-confirmar]')?.dataset.confirmar;
+            if (texto && !confirm(texto)) evento.preventDefault();
+        });
+
         const notifBox = document.getElementById('notif-box');
         const notifMsg = document.getElementById('notif-msg');
 

@@ -388,12 +388,14 @@ class ConfiguracionSitioForm(forms.ModelForm):
 
     class Meta:
         model = ConfiguracionSitio
-        fields = ['productos_relacionados', 'mostrar_opiniones', 'mostrar_etiquetas', 'mostrar_stock']
+        fields = ['productos_relacionados', 'mostrar_opiniones', 'mostrar_etiquetas', 'mostrar_stock',
+                  'mostrar_recomendaciones']
         widgets = {
             'productos_relacionados': forms.RadioSelect,
             'mostrar_opiniones': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'mostrar_etiquetas': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'mostrar_stock': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'mostrar_recomendaciones': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
         }
 
     def __init__(self, *args, **kwargs):

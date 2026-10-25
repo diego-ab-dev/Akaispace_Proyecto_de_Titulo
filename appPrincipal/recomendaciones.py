@@ -6,6 +6,7 @@ están en notebooks/hu07_similitud_productos.ipynb.
 
 - calcular_similitudes(): guarda en SimilitudProducto los 10 productos más similares a cada producto.
 - registrar_interaccion(): guarda las vistas de fichas y lo agregado al carrito, solo con consentimiento.
+- cambiar_consentimiento_navegacion(): el cliente da o retira la autorización desde su perfil.
 - recomendar(): elige qué mostrar según el consentimiento y el historial del cliente (arranque en frío):
   personalizadas si autorizó sus datos de navegación y tiene historial; si no, los similares al producto
   de la ficha, o los más vendidos en la página principal.
@@ -23,7 +24,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.utils.text import slugify
@@ -31,7 +32,8 @@ from django.utils.timezone import now
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from appPrincipal.models import Carrito, InteraccionProducto, Producto, ProductoVenta, SimilitudProducto
+from appPrincipal.models import (Carrito, InteraccionProducto, Producto, ProductoVenta, Recomendacion,
+                                 SimilitudProducto)
 
 TOP_SIMILARES = 10
 CANTIDAD_RECOMENDACIONES = 4
@@ -44,12 +46,21 @@ VENTANA_VISTAS = timedelta(minutes=30)
 PERSONALIZADAS = 'personalizadas'
 SIMILARES = 'similares'
 MAS_VENDIDOS = 'mas_vendidos'
+TITULOS = {
+    PERSONALIZADAS: 'Recomendado para ti',
+    SIMILARES: 'Productos similares',
+    MAS_VENDIDOS: 'Lo más vendido',
+}
 
 
 @dataclass
 class Recomendaciones:
     tipo: str = MAS_VENDIDOS
     productos: list = field(default_factory=list)
+
+    @property
+    def titulo(self):
+        return TITULOS[self.tipo]
 
 
 def etiqueta(prefijo, valor):
@@ -114,8 +125,31 @@ def calcular_similitudes():
     return len(filas)
 
 
+def cobertura_atributos():
+    """KPI-10: (productos con los atributos que exige su categoría, total de productos vigentes)."""
+    productos = Producto.objects.all()
+    incompletos = productos.filter(Q(categoria__requiere_plataforma=True, plataforma__isnull=True)
+                                   | Q(categoria__requiere_genero=True, genero__isnull=True)).count()
+    total = productos.count()
+    return total - incompletos, total
+
+
 def autorizo_datos_navegacion(usuario):
     return usuario.is_authenticated and usuario.datos_navegacion_autorizados_en is not None
+
+
+def cambiar_consentimiento_navegacion(usuario, autoriza):
+    """Da o retira la autorización de usar los datos de navegación. Al retirarla se eliminan el historial y
+    las recomendaciones registradas del cliente, como indica la política de privacidad (sección 10)."""
+    with transaction.atomic():
+        if autoriza:
+            if usuario.datos_navegacion_autorizados_en is None:
+                usuario.datos_navegacion_autorizados_en = now()
+        else:
+            usuario.datos_navegacion_autorizados_en = None
+            InteraccionProducto.objects.filter(usuario=usuario).delete()
+            Recomendacion.objects.filter(usuario=usuario).delete()
+        usuario.save(update_fields=['datos_navegacion_autorizados_en'])
 
 
 def registrar_interaccion(usuario, producto, tipo):

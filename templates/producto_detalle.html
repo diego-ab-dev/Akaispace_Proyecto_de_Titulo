@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_prod_detalle.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_tarjetas_productos.css' %}">
 {% endblock %}
 
 {% block navbar %}{% include "partials/navbar.html" with nav_clase="navbar-main" %}{% endblock %}
@@ -279,29 +280,7 @@
     {% endif %}
 
     {% if productos_relacionados %}
-    <div class="container mt-5 pt-4 border-top">
-        <h4 class="fw-bold mb-4 text-dark">También te podría interesar</h4>
-
-        <div class="row g-4"> {% for rel in productos_relacionados %}
-            <div class="col-6 col-md-3">
-                <a href="{% url 'producto_detalle' rel.id %}" class="card-relacionada text-decoration-none">
-                    <div class="card-rel-img-wrapper">
-                        {% if rel.imagen_principal %}
-                            <img src="{{ rel.imagen_principal.url }}" alt="{{ rel.nombre }}">
-                        {% else %}
-                            <img src="https://via.placeholder.com/300" alt="Sin imagen">
-                        {% endif %}
-                    </div>
-                    <div class="card-rel-body">
-                        <h6 class="text-truncate fw-bold text-dark" title="{{ rel.nombre }}">{{ rel.nombre }}</h6>
-                        <p class="text-muted small mb-1">{{ rel.categoria_texto }}</p>
-                        <span class="fw-bold text-primary">${{ rel.precio|formato_chileno }}</span>
-                    </div>
-                </a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
+    {% include "partials/tarjetas_productos.html" with productos=productos_relacionados titulo=titulo_relacionados %}
     {% endif %}
 </section>
 

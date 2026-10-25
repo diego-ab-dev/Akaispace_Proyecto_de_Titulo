@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_home.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_tarjetas_productos.css' %}">
 {% endblock %}
 
 {% block navbar %}{% include "partials/navbar.html" with menu_simple=True %}{% endblock %}
@@ -145,6 +146,13 @@
       {% endfor %}
     </div>
   </section>
+{% endif %}
+
+{# HU-07: recomendaciones, si el admin las activó en Configuración #}
+{% if recomendaciones.productos %}
+<section class="wrapper paused recomendaciones-home">
+  {% include "partials/tarjetas_productos.html" with productos=recomendaciones.productos titulo=recomendaciones.titulo %}
+</section>
 {% endif %}
 
 

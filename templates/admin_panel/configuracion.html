@@ -38,7 +38,7 @@
 
             <div class="config-campo">
                 <span class="config-campo__titulo">Productos relacionados</span>
-                <span class="config-campo__ayuda">Se muestran al final de la ficha, en "También te podría interesar".</span>
+                <span class="config-campo__ayuda">Se muestran al final de la ficha, en "También te podría interesar". Si activas las recomendaciones, la ficha muestra las recomendaciones en su lugar.</span>
                 <div class="config-opciones">
                     {% for opcion in form.productos_relacionados %}
                     <label class="config-opcion">
@@ -63,6 +63,30 @@
                     <label class="form-check-label" for="{{ form.mostrar_stock.id_for_label }}">Mostrar las unidades disponibles</label>
                 </div>
                 <span class="config-campo__ayuda">El "Stock: X unidades" de la ficha. Aunque se oculte, nadie puede comprar más de lo que hay.</span>
+            </div>
+        </section>
+
+        <section class="portada-seccion">
+            <header class="portada-seccion__header">
+                <div>
+                    <h2>Recomendaciones</h2>
+                    <p class="portada-seccion__nota">Productos sugeridos con machine learning (similitud por categoría, plataforma y género).</p>
+                </div>
+            </header>
+
+            <div class="config-campo">
+                <div class="form-check form-switch">
+                    {{ form.mostrar_recomendaciones }}
+                    <label class="form-check-label" for="{{ form.mostrar_recomendaciones.id_for_label }}">Mostrar recomendaciones</label>
+                </div>
+                <span class="config-campo__ayuda">
+                    Aparecen en la página principal y al final de la ficha. Los clientes que autorizaron el uso de sus datos
+                    de navegación ven recomendaciones personalizadas; el resto, los productos similares o los más vendidos.
+                </span>
+                <span class="config-campo__ayuda">
+                    Productos con todos sus atributos (KPI-10): <strong>{{ kpi10.completos }} de {{ kpi10.total }}</strong>.
+                    {% if not kpi10.cumple %}Completa la plataforma y el género de los que faltan para que las recomendaciones sean precisas.{% endif %}
+                </span>
             </div>
         </section>
 

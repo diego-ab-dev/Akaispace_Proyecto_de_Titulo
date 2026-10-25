@@ -8,9 +8,11 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.models import Devolucion, Opinion, Reclamo, Venta
+from appPrincipal.recomendaciones import cambiar_consentimiento_navegacion
 
 
 @login_required
@@ -28,6 +30,17 @@ def perfil(request):
         'reclamos_recientes': reclamos_recientes,
         'devoluciones_recientes': devoluciones_recientes,
     })
+
+
+@login_required
+@require_POST
+def datos_navegacion(request):
+    """HU-07: el cliente autoriza o retira el uso de sus datos de navegación para las recomendaciones."""
+    autoriza = request.POST.get('autoriza') == 'on'
+    cambiar_consentimiento_navegacion(request.user, autoriza)
+    mensaje = ('Activaste las recomendaciones personalizadas.' if autoriza else
+               'Desactivaste las recomendaciones personalizadas y eliminamos tu historial de navegación.')
+    return redirect(f"{reverse('perfil')}?{urlencode({'notif': mensaje, 'type': 'success'})}")
 
 
 @login_required

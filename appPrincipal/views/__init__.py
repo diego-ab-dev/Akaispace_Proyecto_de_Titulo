@@ -18,7 +18,7 @@ from .favoritos import agregar_favorito, eliminar_favorito, eliminar_favoritos_s
 from .legal import politica_privacidad, terminos_condiciones
 from .opiniones import enviar_opinion, lista_opiniones
 from .pago import resultado_pago, seleccionar_pago, ver_comprobante, webpay_retorno
-from .perfil import cambiar_contraseña, editar_perfil, perfil
+from .perfil import cambiar_contraseña, datos_navegacion, editar_perfil, perfil
 from .reclamos import crear_reclamo, lista_reclamos, ver_detalle_reclamo
 from .panel import (
     admin_dashboard, get_dashboard_counts,
