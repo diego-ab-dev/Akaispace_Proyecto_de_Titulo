@@ -87,6 +87,14 @@
                     Productos con todos sus atributos (KPI-10): <strong>{{ kpi10.completos }} de {{ kpi10.total }}</strong>.
                     {% if not kpi10.cumple %}Completa la plataforma y el género de los que faltan para que las recomendaciones sean precisas.{% endif %}
                 </span>
+                <span class="config-campo__ayuda">
+                    Clics en recomendaciones, últimos 30 días (KPI-05):
+                    {% if kpi05.tasa is None %}
+                        aún no se han mostrado recomendaciones a clientes que autorizaron sus datos de navegación.
+                    {% else %}
+                        <strong>{{ kpi05.tasa }}%</strong> ({{ kpi05.clics }} de {{ kpi05.mostradas }} mostradas).
+                    {% endif %}
+                </span>
             </div>
         </section>
 

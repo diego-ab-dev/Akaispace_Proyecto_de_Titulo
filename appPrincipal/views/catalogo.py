@@ -3,11 +3,13 @@ import re
 
 from django.core.paginator import Paginator
 from django.db.models import Avg, prefetch_related_objects
-from django.shortcuts import get_object_or_404, render
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from appPrincipal.models import (Categoria, ConfiguracionSitio, Favorito, Genero, InteraccionProducto, Plataforma,
                                  Producto)
-from appPrincipal.recomendaciones import recomendar, registrar_interaccion
+from appPrincipal.recomendaciones import marcar_clic, recomendar, registrar_interaccion, registrar_mostradas
 
 
 def productos_para_listado(productos):
@@ -98,12 +100,25 @@ def filtrar_catalogo(request, productos, con_plataforma=True):
 
 
 def recomendaciones_para(request, producto=None):
-    """HU-07: recomendaciones listas para las tarjetas, o None si el admin no las activó en Configuración."""
+    """HU-07: recomendaciones listas para las tarjetas, o None si el admin no las activó en Configuración.
+    Las que se muestran a un cliente que autorizó sus datos quedan registradas (KPI-05) y su tarjeta enlaza
+    a clic_recomendacion, que marca el clic antes de abrir la ficha."""
     if not ConfiguracionSitio.actual().mostrar_recomendaciones:
         return None
     recomendaciones = recomendar(request.user, producto)
     prefetch_related_objects(recomendaciones.productos, 'categoria', 'plataforma', 'imagenes_producto')
+    mostradas = registrar_mostradas(request.user, recomendaciones.productos, 'ficha' if producto else 'home')
+    for recomendado, mostrada in zip(recomendaciones.productos, mostradas):
+        recomendado.url_recomendacion = reverse('clic_recomendacion', args=[mostrada.id])
     return recomendaciones
+
+
+def clic_recomendacion(request, recomendacion_id):
+    """HU-07, KPI-05: enlace intermedio de una recomendación; marca el clic y abre la ficha del producto."""
+    producto = marcar_clic(request.user, recomendacion_id)
+    if producto is None:
+        raise Http404
+    return redirect('producto_detalle', producto_id=producto.id)
 
 
 def home(request):

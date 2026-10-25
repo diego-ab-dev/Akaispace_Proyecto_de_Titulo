@@ -28,6 +28,7 @@ urlpatterns = [
     # menu
     path('menu/', views.productos_menu, name='productos_menu'),
     path('producto/<int:producto_id>/', views.producto_detalle, name='producto_detalle'),
+    path('recomendacion/<int:recomendacion_id>/', views.clic_recomendacion, name='clic_recomendacion'),
     path('productos/<int:categoria_id>/', views.productos_por_categoria, name='productos_por_categoria'),
     path('productos/<int:categoria_id>/<slug:plataforma>/', views.productos_por_categoria,
          name='productos_por_categoria_y_plataforma'),

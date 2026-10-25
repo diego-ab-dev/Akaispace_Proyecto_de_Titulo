@@ -2532,6 +2532,17 @@ class RecomendacionesTests(TestCase):  # HU-07: similitud TF-IDF + coseno y arra
         # sin más juegos de Switch, lo más cercano a un RPG de Switch son los otros RPG
         self.assertIn(recomendaciones.productos[0], [self.elden, self.demons, self.bloodborne])
 
+    def test_lo_visto_hace_mas_de_7_dias_se_puede_volver_a_recomendar(self):
+        from datetime import timedelta
+        from django.db.models import F
+        from .models import InteraccionProducto
+        from .recomendaciones import recomendar
+        cliente = self.autorizar(crear_cliente())
+        self.interaccion(cliente, self.elden)
+        self.assertNotIn(self.elden, recomendar(cliente).productos)
+        InteraccionProducto.objects.update(fecha=F('fecha') - timedelta(days=8))
+        self.assertEqual(recomendar(cliente).productos[0], self.elden)
+
     def test_sin_consentimiento_no_se_usa_su_historial(self):
         from .recomendaciones import SIMILARES, calcular_similitudes, recomendar
         cliente = crear_cliente()
@@ -2745,7 +2756,9 @@ class MostrarRecomendacionesTests(TestCase):  # HU-07: home y ficha, según el i
         self.client.force_login(cliente)
         respuesta = self.client.get('/')
         self.assertContains(respuesta, 'Recomendado para ti')
-        self.assertIn(self.demons, respuesta.context['recomendaciones'].productos)
+        # lo que vio en los últimos 7 días no se le recomienda
+        self.assertEqual(respuesta.context['recomendaciones'].productos[0], self.demons)
+        self.assertNotIn(self.elden, respuesta.context['recomendaciones'].productos)
 
     def test_el_panel_activa_el_interruptor_y_muestra_el_kpi_10(self):
         from .models import ConfiguracionSitio
@@ -2754,3 +2767,76 @@ class MostrarRecomendacionesTests(TestCase):  # HU-07: home y ficha, según el i
         self.assertContains(self.client.get(url), 'Productos con todos sus atributos (KPI-10): <strong>3 de 3</strong>')
         self.client.post(url, {'productos_relacionados': 'categoria', 'mostrar_recomendaciones': 'on'})
         self.assertTrue(ConfiguracionSitio.actual().mostrar_recomendaciones)
+
+
+class Kpi05Tests(TestCase):  # HU-07: recomendaciones mostradas y clics, solo con consentimiento
+    def setUp(self):
+        from django.utils import timezone
+        from .models import ConfiguracionSitio
+        from .recomendaciones import calcular_similitudes
+        self.elden = crear_producto('Elden Ring', genero='RPG')
+        self.demons = crear_producto("Demon's Souls", genero='RPG')
+        self.bloodborne = crear_producto('Bloodborne', plataforma='ps4', genero='RPG')
+        calcular_similitudes()
+        configuracion = ConfiguracionSitio.actual()
+        configuracion.mostrar_recomendaciones = True
+        configuracion.save()
+        self.cliente = crear_cliente(datos_navegacion_autorizados_en=timezone.now())
+        self.client.force_login(self.cliente)
+
+    def mostradas(self):
+        from .models import Recomendacion
+        return list(Recomendacion.objects.order_by('posicion').values_list('producto', 'ubicacion', 'posicion'))
+
+    def test_registra_las_mostradas_en_la_ficha_con_su_posicion(self):
+        respuesta = self.client.get(f'/producto/{self.elden.id}/')
+        self.assertEqual(self.mostradas(), [(self.demons.id, 'ficha', 1), (self.bloodborne.id, 'ficha', 2)])
+        from .models import Recomendacion
+        primera = Recomendacion.objects.get(posicion=1)
+        self.assertContains(respuesta, f'href="/recomendacion/{primera.id}/"')
+
+    def test_registra_las_mostradas_en_el_home(self):
+        self.client.get('/')
+        self.assertEqual({ubicacion for _, ubicacion, _ in self.mostradas()}, {'home'})
+        self.assertEqual(len(self.mostradas()), 3)
+
+    def test_sin_consentimiento_no_se_registra_y_el_enlace_va_directo(self):
+        self.client.logout()
+        respuesta = self.client.get(f'/producto/{self.elden.id}/')
+        self.assertEqual(self.mostradas(), [])
+        self.assertContains(respuesta, f'href="/producto/{self.demons.id}/"')
+        self.assertNotContains(respuesta, '/recomendacion/')
+
+    def test_el_clic_se_marca_una_vez_y_abre_la_ficha(self):
+        from .models import Recomendacion
+        self.client.get(f'/producto/{self.elden.id}/')
+        recomendacion = Recomendacion.objects.get(posicion=1)
+        respuesta = self.client.get(f'/recomendacion/{recomendacion.id}/')
+        self.assertRedirects(respuesta, f'/producto/{self.demons.id}/', fetch_redirect_response=False)
+        recomendacion.refresh_from_db()
+        primer_clic = recomendacion.clic_en
+        self.assertIsNotNone(primer_clic)
+        self.client.get(f'/recomendacion/{recomendacion.id}/')
+        recomendacion.refresh_from_db()
+        self.assertEqual(recomendacion.clic_en, primer_clic)
+
+    def test_no_se_puede_marcar_el_clic_de_otro_cliente(self):
+        from .models import Recomendacion
+        self.client.get(f'/producto/{self.elden.id}/')
+        recomendacion = Recomendacion.objects.get(posicion=1)
+        self.client.force_login(crear_cliente('otro@example.com'))
+        self.assertEqual(self.client.get(f'/recomendacion/{recomendacion.id}/').status_code, 404)
+        self.client.logout()
+        self.assertEqual(self.client.get(f'/recomendacion/{recomendacion.id}/').status_code, 404)
+        recomendacion.refresh_from_db()
+        self.assertIsNone(recomendacion.clic_en)
+
+    def test_tasa_de_clics_y_panel(self):
+        from .models import Recomendacion
+        from .recomendaciones import tasa_de_clics
+        self.assertIsNone(tasa_de_clics()['tasa'])
+        self.client.get(f'/producto/{self.elden.id}/')
+        self.client.get(f'/recomendacion/{Recomendacion.objects.get(posicion=1).id}/')
+        self.assertEqual(tasa_de_clics(), {'mostradas': 2, 'clics': 1, 'tasa': 50.0})
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.assertContains(self.client.get('/admin-panel/configuracion/'), '<strong>50,0%</strong> (1 de 2 mostradas)')

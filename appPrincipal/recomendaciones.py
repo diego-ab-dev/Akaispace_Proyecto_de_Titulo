@@ -10,6 +10,8 @@ están en notebooks/hu07_similitud_productos.ipynb.
 - recomendar(): elige qué mostrar según el consentimiento y el historial del cliente (arranque en frío):
   personalizadas si autorizó sus datos de navegación y tiene historial; si no, los similares al producto
   de la ficha, o los más vendidos en la página principal.
+- registrar_mostradas() y marcar_clic(): registran las recomendaciones mostradas y sus clics (KPI-05), solo
+  de clientes que autorizaron sus datos de navegación; tasa_de_clics() calcula el KPI.
 
 Los empates (muy frecuentes, porque hay pocos atributos) se resuelven por unidades vendidas y después
 por id, para que el resultado sea siempre el mismo.
@@ -18,9 +20,9 @@ Las similitudes se recalculan solas cuando se crea o elimina un producto o cambi
 o género (señales al final de este archivo). Un cambio de precio o de stock no las afecta.
 """
 import threading
-from datetime import timedelta
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from datetime import timedelta
 
 import numpy as np
 from django.db import transaction
@@ -42,6 +44,8 @@ PESOS = {InteraccionProducto.VISTA: 1, InteraccionProducto.CARRITO: 2}
 PESO_COMPRA = 3
 # recargar la misma ficha dentro de este plazo no cuenta como otra vista
 VENTANA_VISTAS = timedelta(minutes=30)
+# lo visto en este plazo suma al perfil, pero no se recomienda (sería recomendar lo que el cliente ya conoce)
+VISTOS_RECIENTES = timedelta(days=7)
 
 PERSONALIZADAS = 'personalizadas'
 SIMILARES = 'similares'
@@ -183,6 +187,11 @@ def _en_carrito(usuario):
     return set(carrito.items.values_list('producto_id', flat=True)) if carrito else set()
 
 
+def _vistos_recientes(usuario):
+    return set(usuario.interacciones.filter(tipo=InteraccionProducto.VISTA, fecha__gte=now() - VISTOS_RECIENTES)
+               .values_list('producto_id', flat=True))
+
+
 def _personalizadas(usuario, excluidos, vendidos, cantidad):
     """Promedio ponderado de los vectores de los productos del historial, comparado con todo el catálogo."""
     pesos, comprados = _historial(usuario)
@@ -196,7 +205,7 @@ def _personalizadas(usuario, excluidos, vendidos, cantidad):
         vector_pesos[i] = peso
     perfil = np.asarray(matriz.T @ vector_pesos / vector_pesos.sum()).reshape(1, -1)
     puntajes = cosine_similarity(perfil, matriz).ravel()
-    excluidos = excluidos | comprados
+    excluidos = excluidos | comprados | _vistos_recientes(usuario)
     candidatos = [productos[i] for i in _ordenar(puntajes, productos, vendidos)
                   if productos[i].id not in excluidos and productos[i].stock > 0]
     return candidatos[:cantidad]
@@ -219,7 +228,7 @@ def _mas_vendidos(excluidos, vendidos, cantidad):
 def recomendar(usuario, producto=None, cantidad=CANTIDAD_RECOMENDACIONES):
     """Recomendaciones para la ficha de `producto`, o para la página principal si `producto` es None.
     Nunca incluye el producto de la ficha ni productos sin stock. Con consentimiento, tampoco lo que el
-    cliente ya compró o tiene en el carrito."""
+    cliente ya compró o tiene en el carrito, y las personalizadas tampoco lo que vio en los últimos 7 días."""
     vendidos = unidades_vendidas()
     excluidos = {producto.id} if producto else set()
     if autorizo_datos_navegacion(usuario):
@@ -231,6 +240,43 @@ def recomendar(usuario, producto=None, cantidad=CANTIDAD_RECOMENDACIONES):
     if producto:
         return Recomendaciones(SIMILARES, _similares(producto, excluidos, vendidos, cantidad))
     return Recomendaciones(MAS_VENDIDOS, _mas_vendidos(excluidos, vendidos, cantidad))
+
+
+# --- KPI-05: recomendaciones mostradas y clics ---
+
+def registrar_mostradas(usuario, productos, ubicacion):
+    """Registra cada producto recomendado que se le mostró al cliente, con su posición desde 1. Solo con
+    consentimiento; si no, devuelve una lista vacía. Uno por uno (no bulk_create) porque MySQL no devuelve
+    los id de un bulk_create y cada tarjeta necesita el suyo para el enlace del clic."""
+    if not autorizo_datos_navegacion(usuario):
+        return []
+    return [Recomendacion.objects.create(usuario=usuario, producto=producto, ubicacion=ubicacion, posicion=posicion)
+            for posicion, producto in enumerate(productos, start=1)]
+
+
+def marcar_clic(usuario, recomendacion_id):
+    """Marca el primer clic en una recomendación del propio cliente. Devuelve el producto recomendado, o None
+    si la recomendación no existe o es de otro cliente."""
+    if not usuario.is_authenticated:
+        return None
+    recomendacion = Recomendacion.objects.filter(id=recomendacion_id, usuario=usuario).first()
+    if recomendacion is None:
+        return None
+    if recomendacion.clic_en is None:
+        recomendacion.clic_en = now()
+        recomendacion.save(update_fields=['clic_en'])
+    return recomendacion.producto
+
+
+def tasa_de_clics(desde=None):
+    """KPI-05: {'mostradas', 'clics', 'tasa'} de las recomendaciones mostradas desde `desde` (o todas).
+    La tasa es un porcentaje, o None si no se ha mostrado ninguna."""
+    recomendaciones = Recomendacion.objects.all()
+    if desde is not None:
+        recomendaciones = recomendaciones.filter(mostrada_en__gte=desde)
+    mostradas = recomendaciones.count()
+    clics = recomendaciones.filter(clic_en__isnull=False).count()
+    return {'mostradas': mostradas, 'clics': clics, 'tasa': round(clics / mostradas * 100, 1) if mostradas else None}
 
 
 # --- recálculo automático al modificar el catálogo ---

@@ -334,6 +334,8 @@ El navbar está en `templates/partials/navbar.html`, el footer en `templates/par
 
 **Catálogo**: la categoría, la plataforma y el género de cada producto son tablas propias (`Categoria`, `Plataforma` y `Genero`), cargadas por la migración `0011_catalogo_normalizado`. Las entradas de los menús del navbar están en `MENU_NAVBAR` (`appPrincipal/constants.py`) y cada categoría se oculta o muestra desde el panel, en **Configuración**. Las imágenes de un producto están en `ImagenProducto` (hasta 6, una principal); en las plantillas se usan `producto.imagen_principal` y `producto.imagenes`.
 
+**Recomendaciones (HU-07)**: toda la lógica está en `appPrincipal/recomendaciones.py` (similitud con TF-IDF y coseno, arranque en frío, registro de interacciones y KPI-05); el prototipo y la justificación están en `notebooks/hu07_similitud_productos.ipynb`. Se activan desde el panel, en **Configuración**. Solo se guarda la navegación de los clientes que lo autorizaron; cada cliente puede activarlo o retirarlo desde su perfil, y al retirarlo se borra su historial.
+
 **Portada editable** (carrusel del menú, nuevos lanzamientos del home y la tarjeta promocional de cada menú del navbar): se administra desde el panel, en **Portada**. Se guarda en el modelo `Destacado` y llega a las plantillas como `portada` (`appPrincipal/context_processors.py`). El contenido inicial lo crea la migración `0004_portada_inicial`, y `python manage.py seed_demo` lo enlaza con los productos de ejemplo.
 
 ---
