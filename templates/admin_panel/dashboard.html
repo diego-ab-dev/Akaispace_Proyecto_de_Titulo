@@ -1,252 +1,159 @@
 {% extends "admin_panel/base_admin.html" %}
-{% load static %}
+{% load static custom_filters %}
 
 {% block title %}Panel de Administración{% endblock %}
 
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_dashboard.css' %}">
-{% endblock %}
-
-{% block encabezado %}
-<div class="p-4 mb-4 rounded shadow-sm" style="background:#4e84a8; color:white;">
-    <h2 class="mb-0">Dashboard administrativo</h2>
-    <p class="m-0 opacity-75">Resumen general del estado de Akaispace</p>
-</div>
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_reportes.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
-        <!--Resumen de AKAISPACE-->
-        <section id="counter" class="counter">
-            <div class="main_counter_area">
-                <div class="overlay p-y-3">
-                    <div class="container">
-                        <div class="row">
-                            <h3>Resumen de Akaispace:</h3>
-                            <div class="main_counter_content d-flex justify-content-center flex-wrap gap-4">
-                                <div class="single_counter p-y-2 m-t-1" style="background-color: #fafafa;">
-                                    <a href="{% url 'admin_ventas' %}" class="card-link">
-                                        <i class="fa fa-shopping-cart m-b-1"></i>
-                                        <h2 class="statistic-counter" id="ventas-count">0</h2>
-                                        <p>Ventas</p>
-                                    </a>
-                                </div>
-                                <div class="single_counter p-y-2 m-t-1" style="background-color: #fafafa;">
-                                    <a href="{% url 'admin_ventas' %}" class="card-link">
-                                        <i class="fa fa-truck m-b-1"></i>
-                                        <h2 class="statistic-counter" id="envios-count">0</h2>
-                                        <p>Envíos Pendientes</p>
-                                    </a>
-                                </div>
-                                <div class="single_counter p-y-2 m-t-1" style="background-color: #fafafa;">
-                                    <a href="{% url 'admin_ventas' %}?estado=Listo+para+retiro" class="card-link">
-                                        <i class="fa fa-store m-b-1"></i>
-                                        <h2 class="statistic-counter" id="retiro-count">0</h2>
-                                        <p>Por Retirar</p>
-                                    </a>
-                                </div>
-                                <div class="single_counter p-y-2 m-t-1" style="background-color: #fafafa;">
-                                    <a href="{% url 'admin_devoluciones' %}" class="card-link">
-                                        <i class="fa fa-undo m-b-1"></i>
-                                        <h2 class="statistic-counter" id="devoluciones-count">0</h2>
-                                        <p>Devoluciones</p>
-                                    </a>
-                                </div>
-                                <div class="single_counter p-y-2 m-t-1" style="background-color: #fafafa;">
-                                    <a href="{% url 'admin_reclamos' %}" class="card-link">
-                                        <i class="fa fa-exclamation-circle m-b-1"></i>
-                                        <h2 class="statistic-counter" id="reclamos-count">0</h2>
-                                        <p>Reclamos</p>
-                                    </a>
-                                </div>
-                            </div>                            
-                        </div>
-                    </div>
+<div class="informe">
+    <header class="informe-cabecera">
+        <div>
+            <h1>Resumen</h1>
+            <p>{{ hoy|date:"l j \d\e F \d\e Y"|capfirst }} · cifras de {{ mes.desde|date:"F"|lower }} hasta hoy, con IVA incluido</p>
+        </div>
+        <div class="informe-acciones">
+            <a href="{% url 'registrar_venta' %}" class="boton"><i class='bx bx-plus' aria-hidden="true"></i>Registrar venta</a>
+            <a href="{% url 'admin_reportes' %}" class="boton boton--primario"><i class='bx bx-bar-chart-alt-2' aria-hidden="true"></i>Ver reportes</a>
+        </div>
+    </header>
+
+    {% with frente_a="vs. "|add:anterior.nombre %}
+    <section class="informe-cifras" aria-label="Cifras del mes">
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ventas del mes</span>
+            <span class="cifra__valor">${{ ventas.bruto|formato_chileno }}</span>
+            <span class="cifra__detalle">Neto ${{ ventas.neto|formato_chileno }}</span>
+            <span class="cifra__detalle">{% include "admin_panel/partials/variacion.html" with valor=variacion.bruto %}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Número de ventas</span>
+            <span class="cifra__valor">{{ ventas.cantidad|formato_chileno }}</span>
+            <span class="cifra__detalle">Todos los canales</span>
+            <span class="cifra__detalle">{% include "admin_panel/partials/variacion.html" with valor=variacion.cantidad %}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ticket promedio</span>
+            <span class="cifra__valor">${{ ventas.ticket_promedio|formato_chileno }}</span>
+            <span class="cifra__detalle">Monto promedio por venta</span>
+            <span class="cifra__detalle">{% include "admin_panel/partials/variacion.html" with valor=variacion.ticket_promedio %}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ganancia neta</span>
+            <span class="cifra__valor">${{ ganancia.ganancia.neto|formato_chileno }}</span>
+            <span class="cifra__detalle">{% if ganancia.margen is None %}Sin ventas con costo registrado{% else %}Margen {{ ganancia.margen }}% sobre la venta neta{% endif %}</span>
+            <span class="cifra__detalle">{% include "admin_panel/partials/variacion.html" with valor=variacion.ganancia %}</span>
+        </div>
+    </section>
+    {% endwith %}
+
+    {% if ganancia.detalles_sin_costo %}
+    <p class="informe-aviso">
+        La ganancia no considera {{ ganancia.productos_sin_costo|length }} producto{{ ganancia.productos_sin_costo|length|pluralize }}
+        vendido{{ ganancia.productos_sin_costo|length|pluralize }} sin costo registrado.
+        <a href="{% url 'admin_reportes' %}?vista=ganancia">Ver cuáles</a>
+    </p>
+    {% endif %}
+
+    <div class="informe-grid informe-grid--principal">
+        <section class="panel-informe panel-informe--grafico">
+            <header class="panel-informe__cabecera">
+                <div>
+                    <h2>Ventas de los últimos 12 meses</h2>
+                    <p class="panel-informe__nota">Monto vendido por canal, con IVA incluido.</p>
                 </div>
-            </div>
+                <a href="{% url 'admin_reportes' %}?periodo=anio" class="panel-informe__enlace">Ver reporte de ventas</a>
+            </header>
+            {% include "admin_panel/partials/grafico_ventas.html" with id_grafico="serie-12-meses" %}
         </section>
 
-
-        <!--Seccion de ultimas ventas, reclamos y bajo stock-->
-        <section class="container-fluid">
-
-        <div class="row mb-4">
-
-            <div class="col-lg-8 mb-4 mb-lg-0">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body">
-                        <h5 class="card-title text-center mb-4">Total de Ventas por Mes</h5>
-                        <div style="position: relative; height: 400px; width: 100%;">
-                            <canvas id="graficoVentas"></canvas>
-                        </div>
-                    </div>
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <div>
+                    <h2>Indicadores</h2>
+                    <p class="panel-informe__nota">{{ tablero.mes.desde|date:"F Y"|capfirst }}</p>
                 </div>
-            </div>
+                <a href="{% url 'admin_reportes' %}?vista=indicadores" class="panel-informe__enlace">Ver detalle</a>
+            </header>
+            {% include "admin_panel/partials/kpi_lista.html" %}
+        </section>
+    </div>
 
-            <div class="col-lg-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header text-white" style="background-color: #4E84A8;">
-                        <h5 class="card-title mb-0">Últimas Ventas</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush">
-                            {% for venta in ventas_info %}
-                            <li class="list-group-item">
-                                <strong>{{ venta.usuario }}</strong> - 
-                                <small class="d-block dashboard-text-limit text-muted" title="{{ venta.productos|join:', ' }}">
-                                    {{ venta.productos|join:", " }}
-                                </small>
-                                <small class="text-muted">{{ venta.fecha|date:"d/m/Y H:i" }}</small>
-                            </li>
-                            {% empty %}
-                            <li class="list-group-item text-center">No hay nuevas ventas.</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="card-footer text-center bg-white">
-                        <a href="{% url 'admin_ventas' %}" class="btn btn-primary btn-sm" style="background-color: #4E84A8; border:none;">Ver Más</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="informe-grid informe-grid--tercios">
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <h2>Por atender</h2>
+            </header>
+            <ul class="lista-informe">
+                {% for tarea in por_atender %}
+                <li>
+                    <a class="atender" href="{% url tarea.url_nombre %}{{ tarea.filtro }}">
+                        <i class='bx {{ tarea.icono }}' aria-hidden="true"></i>
+                        <span>{{ tarea.nombre }}</span>
+                        <span class="atender__cantidad{% if not tarea.cantidad %} atender__cantidad--cero{% endif %}">{{ tarea.cantidad }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
 
-        <div class="row mb-5">
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <h2>Últimas ventas</h2>
+                <a href="{% url 'admin_ventas' %}" class="panel-informe__enlace">Ver todas</a>
+            </header>
+            <ul class="lista-informe">
+                {% for venta in ultimas_ventas %}
+                <li>
+                    <a class="lista-informe__texto" href="{% url 'detalle_venta' venta.id %}">
+                        <strong>N.º {{ venta.id }} · {% if venta.usuario %}{{ venta.usuario.nombre }}{% else %}{{ venta.get_canal_display }}{% endif %}</strong>
+                        <small>{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.get_canal_display }}</small>
+                    </a>
+                    {% if venta.anulada %}
+                    <span class="estado"><i class='bx bx-x-circle' aria-hidden="true"></i>Anulada</span>
+                    {% else %}
+                    <span class="num">${{ venta.total|formato_chileno }}</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="informe-vacio">Aún no hay ventas.</li>
+                {% endfor %}
+            </ul>
+        </section>
 
-            <div class="col-lg-6 mb-4 mb-lg-0">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header text-white" style="background-color: #C9AA45;">
-                        <h5 class="card-title mb-0">Bajo Stock</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush">
-                            {% for producto in productos_info %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="dashboard-text-limit fw-bold" title="{{ producto.nombre }}">
-                                        {{ producto.nombre }}
-                                    </div>
-                                    <br>
-                                    {% if producto.stock == 0 %}
-                                        <span class="text-danger small">Agotado</span>
-                                    {% else %}
-                                        <span class="text-warning small">Quedan: {{ producto.stock }}</span>
-                                    {% endif %}
-                                </div>
-                            </li>
-                            {% empty %}
-                            <li class="list-group-item text-center">Stock saludable.</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="card-footer text-center bg-white">
-                        <a href="{% url 'admin_productos' %}" class="btn btn-warning btn-sm text-white" style="background-color: #C9AA45; border:none;">Ver Más</a>
-                    </div>
-                </div>
-            </div>
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <h2>Stock crítico</h2>
+                <a href="{% url 'admin_reportes' %}?vista=productos" class="panel-informe__enlace">
+                    {% if total_stock_critico > stock_critico|length %}Ver los {{ total_stock_critico }}{% else %}Ver reporte{% endif %}
+                </a>
+            </header>
+            <ul class="lista-informe">
+                {% for producto in stock_critico %}
+                <li>
+                    <a class="lista-informe__texto" href="{% url 'editar_producto' producto.id %}">
+                        <strong title="{{ producto.nombre }}">{{ producto.nombre }}</strong>
+                        <small>Crítico con {{ producto.stock_critico }} o menos</small>
+                    </a>
+                    {% if producto.stock == 0 %}
+                    <span class="estado estado--mal"><i class='bx bx-x-circle' aria-hidden="true"></i>Agotado</span>
+                    {% else %}
+                    <span class="estado estado--alerta"><i class='bx bx-error-circle' aria-hidden="true"></i>Quedan {{ producto.stock }}</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="informe-vacio">Ningún producto está en stock crítico.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+</div>
+{% endblock %}
 
-            <div class="col-lg-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header text-white" style="background-color: #D36767;">
-                        <h5 class="card-title mb-0">Últimos Reclamos</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush">
-                            {% for reclamo in reclamos_info %}
-                            <li class="list-group-item">
-                                <div class="d-flex align-items-center">
-                                    <strong class="text-nowrap me-1">{{ reclamo.usuario }}</strong> 
-                                    <span class="me-1">-</span>
-                                    <span class="dashboard-text-limit" title="{{ reclamo.asunto }}">
-                                        {{ reclamo.asunto }}
-                                    </span>
-                                </div>
-                                <small class="text-muted">{{ reclamo.fecha|date:"d/m/Y H:i" }}</small>
-                            </li>
-                            {% empty %}
-                            <li class="list-group-item text-center">Sin reclamos pendientes.</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="card-footer text-center bg-white">
-                        <a href="{% url 'admin_reclamos' %}" class="btn btn-danger btn-sm" style="background-color: #D36767; border:none;">Ver Más</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </section>
-{{ datos_grafico|json_script:"datos_ventas_json" }}
-<script>
-    // contadores para el resumen de Akaispace
-    async function updateCounts() {
-        try {
-            const response = await fetch("{% url 'get_dashboard_counts' %}");
-            const data = await response.json();
-
-            document.getElementById('envios-count').innerText = data.envios_pendientes;
-            document.getElementById('retiro-count').innerText = data.por_retirar;
-            document.getElementById('ventas-count').innerText = data.ventas;
-            document.getElementById('reclamos-count').innerText = data.reclamos;
-            document.getElementById('devoluciones-count').innerText = data.devoluciones;
-        } catch (error) {
-            console.error("Error al actualizar los datos del dashboard:", error);
-        }
-    }
-
-    setInterval(updateCounts, 2000);
-    updateCounts();
-
-    // navbar lateral
-
-    // grafico
-    document.addEventListener("DOMContentLoaded", function() {
-        const ctx = document.getElementById('graficoVentas').getContext('2d');
-
-        const datosVentas = JSON.parse(document.getElementById('datos_ventas_json').textContent);
-
-        new Chart(ctx, {
-            type: 'bar', 
-            data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                datasets: [{
-                    label: 'Ventas ($)',
-                    data: datosVentas, 
-                    backgroundColor: '#4E84A8', 
-                    borderRadius: 4, 
-                    barPercentage: 0.7 
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false 
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return '$ ' + context.raw.toLocaleString('es-CL');
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            borderDash: [2, 4], 
-                            color: '#e0e0e0'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    });
-</script>
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/grafico_ventas.js' %}"></script>
 {% endblock %}

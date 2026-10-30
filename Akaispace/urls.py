@@ -90,7 +90,8 @@ urlpatterns = [
 
     # principal
     path('admin-panel/', views.admin_dashboard, name='admin_dashboard'),
-    path('api/dashboard-counts/', views.get_dashboard_counts, name='get_dashboard_counts'),
+    path('admin-panel/reportes/', views.admin_reportes, name='admin_reportes'),
+    path('admin-panel/reportes/caja/', views.registrar_movimiento_caja, name='registrar_movimiento_caja'),
     # usuarios
     path('admin-panel/usuarios/', views.admin_usuarios, name='admin_usuarios'),
     path('admin-panel/usuarios/buscar/', views.buscar_usuarios, name='buscar_usuarios'),
@@ -110,6 +111,12 @@ urlpatterns = [
     path('admin-panel/ventas/detalle/<int:venta_id>/', views.detalle_venta, name='detalle_venta'),
     path('admin-panel/ventas/modificar/<int:venta_id>/', views.modificar_venta, name='modificar_venta'),
     path('ventas/anular/<int:venta_id>/', views.anular_venta, name='anular_venta'),
+
+    path('admin-panel/compras/', views.admin_compras, name='admin_compras'),
+    path('admin-panel/compras/registrar/', views.registrar_compra, name='registrar_compra'),
+    path('admin-panel/compras/<int:compra_id>/', views.detalle_compra, name='detalle_compra'),
+    path('admin-panel/compras/<int:compra_id>/recibir/', views.recibir_compra, name='recibir_compra'),
+    path('admin-panel/compras/<int:compra_id>/eliminar/', views.eliminar_compra, name='eliminar_compra'),
     # reclamo
     path('admin-panel/reclamos/', views.admin_reclamos, name='admin_reclamos'),
     path('admin-panel/reclamos/responder/<int:reclamo_id>/', views.responder_reclamo, name='responder_reclamo'),

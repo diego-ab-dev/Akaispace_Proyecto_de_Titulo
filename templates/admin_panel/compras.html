@@ -1,0 +1,54 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static custom_filters %}
+
+{% block title %}Compras{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_reportes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="informe">
+    <header class="informe-cabecera">
+        <div>
+            <h1>Compras</h1>
+            <p>Mercadería comprada a proveedores. Al recibirla se suma al stock y actualiza el costo de cada producto.</p>
+        </div>
+        <div class="informe-acciones">
+            <a href="{% url 'admin_reportes' %}?vista=compras" class="boton"><i class='bx bx-bar-chart-alt-2' aria-hidden="true"></i>Reporte de compras</a>
+            <a href="{% url 'registrar_compra' %}" class="boton boton--primario"><i class='bx bx-plus' aria-hidden="true"></i>Registrar compra</a>
+        </div>
+    </header>
+
+    {% for message in messages %}
+    <p class="informe-mensaje{% if message.tags != 'success' %} informe-mensaje--error{% endif %}">{{ message }}</p>
+    {% endfor %}
+
+    <section class="panel-informe">
+        <form method="get" class="filtro-periodo border-0 p-0 mb-3">
+            <input type="search" name="q" value="{{ request.GET.q }}" class="form-control" style="max-width: 320px"
+                   placeholder="Proveedor o n.º de documento" aria-label="Buscar compra">
+            <select name="estado" class="form-select" style="max-width: 200px" aria-label="Estado">
+                <option value="">Todos los estados</option>
+                {% for valor, nombre in estados %}
+                <option value="{{ valor }}"{% if request.GET.estado == valor %} selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="boton">Filtrar</button>
+            {% if pendientes %}<span class="filtro-periodo__actual">{{ pendientes }} compra{{ pendientes|pluralize }} sin recibir</span>{% endif %}
+        </form>
+
+        {% include "admin_panel/partials/tabla_compras.html" %}
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="paginacion" aria-label="Páginas">
+            <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <div class="paginacion__enlaces">
+                {% if page_obj.has_previous %}<a class="boton" href="?{% param_replace page=page_obj.previous_page_number %}">Anterior</a>{% endif %}
+                {% if page_obj.has_next %}<a class="boton" href="?{% param_replace page=page_obj.next_page_number %}">Siguiente</a>{% endif %}
+            </div>
+        </nav>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

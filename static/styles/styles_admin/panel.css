@@ -162,3 +162,13 @@ a{text-decoration: none}
                 padding-left: calc(var(--nav-width) + 188px)
             }
         }
+
+/* Con 10 secciones el menú debe caber en pantallas de notebook. Más específico que .nav_link para ganar
+   también a las hojas antiguas que repiten las reglas del menú. */
+.l-navbar .nav_logo {
+    margin-bottom: 1.25rem;
+}
+
+.l-navbar .nav_link {
+    margin-bottom: 0.6rem;
+}

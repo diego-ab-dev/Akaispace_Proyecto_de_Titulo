@@ -1,0 +1,38 @@
+{% load custom_filters %}
+{% comment %}Listado de compras a proveedores (HU-10). Recibe `compras`.{% endcomment %}
+{% if compras %}
+<div class="tabla-contenedor">
+    <table class="tabla-informe">
+        <thead>
+            <tr>
+                <th>N.º</th>
+                <th>Fecha</th>
+                <th>Proveedor</th>
+                <th>Documento</th>
+                <th>Estado</th>
+                <th class="num">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for compra in compras %}
+            <tr>
+                <td><a href="{% url 'detalle_compra' compra.id %}">{{ compra.id }}</a></td>
+                <td class="tenue">{{ compra.fecha|date:"d/m/Y" }}</td>
+                <td class="celda-recortada" title="{{ compra.proveedor.nombre }}">{{ compra.proveedor.nombre }}</td>
+                <td class="tenue">{{ compra.numero_documento|default:"—" }}</td>
+                <td>
+                    {% if compra.estado == 'recibida' %}
+                    <span class="estado estado--bien"><i class='bx bx-check-circle' aria-hidden="true"></i>Recibida</span>
+                    {% else %}
+                    <span class="estado estado--alerta"><i class='bx bx-time-five' aria-hidden="true"></i>Pendiente</span>
+                    {% endif %}
+                </td>
+                <td class="num">${{ compra.total|formato_chileno }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="informe-vacio">No hay compras registradas.</p>
+{% endif %}

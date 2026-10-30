@@ -1,0 +1,41 @@
+{% load custom_filters %}
+{% comment %}
+Ventas desglosadas por canal o por medio de pago (HU-10). Recibe `titulo`, `filas` (reportes._desglose),
+`primera_columna` y `neutro` (barra gris en vez del color de cada canal).
+{% endcomment %}
+<section class="panel-informe">
+    <header class="panel-informe__cabecera">
+        <h2>{{ titulo }}</h2>
+    </header>
+    <div class="tabla-contenedor">
+        <table class="tabla-informe">
+            <thead>
+                <tr>
+                    <th>{{ primera_columna }}</th>
+                    <th class="num">Ventas</th>
+                    <th class="num">Bruto</th>
+                    <th class="num">Neto</th>
+                    <th>Participación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in filas %}
+                <tr>
+                    <td>{% if not neutro %}<span class="marca marca--{{ fila.clave }} me-2"></span>{% endif %}{{ fila.nombre }}</td>
+                    <td class="num">{{ fila.cantidad|formato_chileno }}</td>
+                    <td class="num">${{ fila.total|formato_chileno }}</td>
+                    <td class="num">${{ fila.neto|formato_chileno }}</td>
+                    <td>
+                        <div class="proporcion">
+                            <div class="proporcion__barra">
+                                <div class="proporcion__relleno{% if neutro %} proporcion__relleno--neutro{% else %} proporcion__relleno--{{ fila.clave }}{% endif %}" style="width: {{ fila.porcentaje|stringformat:'s' }}%"></div>
+                            </div>
+                            <span class="proporcion__valor">{{ fila.porcentaje }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,117 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static %}
+
+{% block title %}Registrar compra{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_reportes.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_registrar_venta.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="informe" style="max-width: 1200px">
+    <a href="{% url 'admin_compras' %}" class="informe-volver"><i class='bx bx-arrow-back' aria-hidden="true"></i> Volver a compras</a>
+    <header class="informe-cabecera">
+        <div>
+            <h1>Registrar compra</h1>
+            <p>Mercadería comprada a un proveedor. Los costos van con IVA incluido, como en la factura.</p>
+        </div>
+    </header>
+
+    {% if error %}
+    <p class="informe-mensaje informe-mensaje--error" role="alert">No se registró la compra: {{ error }}</p>
+    {% endif %}
+
+    <form method="post" id="form-compra" data-url-buscar="{% url 'buscar_productos_venta' %}" novalidate>
+        {% csrf_token %}
+        <div class="venta-presencial__grid">
+            <section class="panel-informe">
+                <header class="panel-informe__cabecera">
+                    <div>
+                        <h2>Productos</h2>
+                        <p class="panel-informe__nota">Busca por nombre o escanea el código de barras.</p>
+                    </div>
+                </header>
+
+                <div class="venta-buscador">
+                    <i class='bx bx-barcode-reader venta-buscador__icono' aria-hidden="true"></i>
+                    <input type="search" id="buscar-producto" class="form-control" autocomplete="off" autofocus
+                           placeholder="Nombre o código de barras" aria-label="Buscar producto">
+                    <ul id="resultados-busqueda" class="venta-resultados" hidden></ul>
+                </div>
+                <p id="aviso-busqueda" class="venta-aviso" role="status"></p>
+
+                <div class="table-responsive">
+                    <table class="venta-items">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Costo unitario</th>
+                                <th>Subtotal</th>
+                                <th><span class="visually-hidden">Quitar</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-compra"></tbody>
+                    </table>
+                </div>
+                <p id="compra-vacia" class="informe-vacio">Aún no has agregado productos.</p>
+            </section>
+
+            <section class="panel-informe">
+                <header class="panel-informe__cabecera">
+                    <h2>Datos de la compra</h2>
+                </header>
+
+                <div class="campo mb-3">
+                    <label for="proveedor">Proveedor</label>
+                    <input type="text" id="proveedor" name="proveedor" class="form-control" list="lista-proveedores"
+                           maxlength="100" required value="{{ datos.proveedor|default:'' }}" autocomplete="off">
+                    <datalist id="lista-proveedores">
+                        {% for proveedor in proveedores %}<option value="{{ proveedor.nombre }}">{% endfor %}
+                    </datalist>
+                    <span class="campo__ayuda">Elige uno de la lista o escribe uno nuevo.</span>
+                </div>
+                <div class="campo mb-3">
+                    <label for="rut">RUT del proveedor (opcional)</label>
+                    <input type="text" id="rut" name="rut" class="form-control" maxlength="12" value="{{ datos.rut|default:'' }}"
+                           placeholder="12.345.678-9">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col campo">
+                        <label for="numero_documento">N.º de factura</label>
+                        <input type="text" id="numero_documento" name="numero_documento" class="form-control" maxlength="30"
+                               value="{{ datos.numero_documento|default:'' }}">
+                    </div>
+                    <div class="col campo">
+                        <label for="fecha">Fecha</label>
+                        <input type="date" id="fecha" name="fecha" class="form-control" max="{{ hoy|date:'Y-m-d' }}"
+                               value="{{ datos.fecha|default:'' }}">
+                    </div>
+                </div>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" id="recibida" name="recibida"{% if datos.recibida %} checked{% endif %}>
+                    <label class="form-check-label fw-semibold" for="recibida">La mercadería ya llegó</label>
+                </div>
+                <span class="campo__ayuda">Las unidades se suman al stock al registrar. Si llega después, márcala como recibida desde el detalle de la compra.</span>
+
+                <div class="venta-total mt-3">
+                    <span>Total</span>
+                    <strong id="total-compra">$0</strong>
+                </div>
+
+                <button type="submit" id="btn-registrar" class="boton boton--primario w-100 justify-content-center" disabled>
+                    Registrar compra
+                </button>
+            </section>
+        </div>
+    </form>
+</div>
+
+{{ items_ingresados|json_script:"items-ingresados" }}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/registrar_compra.js' %}"></script>
+{% endblock %}

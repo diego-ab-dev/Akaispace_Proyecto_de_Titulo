@@ -1055,6 +1055,12 @@ class ConfiguracionSitio(models.Model):
         default=False, verbose_name="Mostrar recomendaciones personalizadas",
         db_comment="Indica si se muestran recomendaciones personalizadas (HU-07). Se habilita con KPI-10 cumplido.",
     )
+    # HU-10: KPI-01 = ventas web del mes menos las del último mes en la plataforma anterior
+    kpi01_linea_base = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Ventas web del último mes en la plataforma anterior",
+        db_comment="Línea base de KPI-01: ventas web del último mes en la plataforma anterior. "
+                   "NULL mientras el propietario no la ingresa.",
+    )
     actualizado = models.DateTimeField(auto_now=True, db_comment="Fecha y hora del último cambio.")
 
     class Meta:
@@ -1138,13 +1144,15 @@ class Compra(models.Model):
         self.save(update_fields=['total'])
 
     def marcar_recibida(self):
-        """Suma al stock lo comprado y deja la compra como recibida. Devuelve False si ya lo estaba."""
+        """Suma al stock lo comprado, deja como costo de cada producto el de esta compra (para el reporte de
+        ganancia) y marca la compra como recibida. Devuelve False si ya lo estaba."""
         with transaction.atomic():
             compra = Compra.objects.select_for_update().get(pk=self.pk)
             if compra.estado == self.RECIBIDA:
                 return False
             for detalle in compra.detalles.all():
-                Producto.todos.filter(pk=detalle.producto_id).update(stock=F('stock') + detalle.cantidad)
+                Producto.todos.filter(pk=detalle.producto_id).update(
+                    stock=F('stock') + detalle.cantidad, costo=detalle.costo_unitario)
             compra.estado = self.RECIBIDA
             compra.fecha_recepcion = now()
             compra.save(update_fields=['estado', 'fecha_recepcion'])

@@ -1,0 +1,38 @@
+{% load custom_filters %}
+{% comment %}
+Gráfico de ventas por canal (HU-10). Recibe `serie` (reportes.serie_ventas), e `id_grafico`.
+Incluye la leyenda y una tabla con los mismos datos, para no depender solo del color.
+{% endcomment %}
+<ul class="leyenda" aria-label="Canales">
+    {% for canal in serie.series %}
+    <li><span class="marca marca--{{ canal.clave }}"></span>{{ canal.nombre }}</li>
+    {% endfor %}
+</ul>
+<div class="grafico mt-3">
+    <canvas data-grafico-ventas="{{ id_grafico }}" role="img"
+            aria-label="Ventas por canal. Los mismos datos están en la tabla bajo el gráfico."></canvas>
+</div>
+<details class="ver-tabla">
+    <summary>Ver datos en tabla</summary>
+    <div class="tabla-contenedor">
+        <table class="tabla-informe">
+            <thead>
+                <tr>
+                    <th>{% if serie.por_dia %}Día{% else %}Mes{% endif %}</th>
+                    {% for canal in serie.series %}<th class="num">{{ canal.nombre }}</th>{% endfor %}
+                    <th class="num">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in serie.filas %}
+                <tr>
+                    <td>{{ fila.etiqueta }}</td>
+                    {% for valor in fila.valores %}<td class="num">${{ valor|formato_chileno }}</td>{% endfor %}
+                    <td class="num"><strong>${{ fila.total|formato_chileno }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</details>
+{{ serie|json_script:id_grafico }}

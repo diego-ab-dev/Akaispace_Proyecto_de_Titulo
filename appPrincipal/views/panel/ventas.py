@@ -168,6 +168,7 @@ def _producto_para_venta(producto):
         'codigo': producto.codigo_de_barra or '',
         'categoria': producto.categoria_texto,
         'precio': producto.precio,
+        'costo': producto.costo,
         'stock': producto.stock,
         'imagen': imagen.url if imagen else '',
     }

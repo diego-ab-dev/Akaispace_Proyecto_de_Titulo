@@ -835,13 +835,13 @@ class RegionesTests(TestCase):
 
 class DashboardTests(TestCase): 
     def test_grafico_suma_por_mes_sin_ventas_anuladas_en_una_consulta(self):
-        from datetime import datetime
+        from datetime import date, datetime
         from django.utils import timezone
         from .models import Venta
-        from .views.panel.dashboard import ventas_por_mes
+        from .reportes import Periodo, serie_ventas
         producto = crear_producto()
         cliente = crear_cliente()
-        anio = timezone.localdate().year
+        anio = timezone.localdate().year - 1
         marzo = crear_venta(cliente, producto)
         anulada = crear_venta(cliente, producto, estado='Anulada')
         abril = crear_venta(cliente, producto)
@@ -850,10 +850,10 @@ class DashboardTests(TestCase):
         Venta.objects.filter(id=abril.id).update(fecha=timezone.make_aware(datetime(anio, 4, 1, 0, 30)), total=500)
 
         with self.assertNumQueries(1):
-            totales = ventas_por_mes(anio)
-        self.assertEqual(totales[2], 1000)
-        self.assertEqual(totales[3], 500)
-        self.assertEqual(sum(totales), 1500)
+            serie = serie_ventas(Periodo(date(anio, 1, 1), date(anio, 12, 31)))
+        self.assertEqual(serie['totales'][2], 1000)
+        self.assertEqual(serie['totales'][3], 500)
+        self.assertEqual(sum(serie['totales']), 1500)
 
 
 class ErroresInternosTests(TestCase): 
@@ -1250,7 +1250,8 @@ class ListoParaRetiroTests(TestCase):
         respuesta = self.client.get('/admin-panel/ventas/?estado=Listo+para+retiro')
         self.assertEqual([v.id for v in respuesta.context['ventas']], [self.venta.id])
         self.assertNotIn(otra.id, [v.id for v in respuesta.context['ventas']])
-        self.assertEqual(self.client.get('/api/dashboard-counts/').json()['por_retirar'], 1)
+        por_atender = {fila['nombre']: fila['cantidad'] for fila in self.client.get('/admin-panel/').context['por_atender']}
+        self.assertEqual(por_atender['Listos para retiro'], 1)
 
     def test_filtro_por_tipo_de_entrega(self):
         crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro')) 
@@ -2100,7 +2101,7 @@ class ModeloDeDatosTests(TestCase):  # restricciones del modelo de datos definit
 
     def test_el_detalle_copia_el_costo_y_la_ganancia_excluye_los_sin_costo(self):  # HU-10
         from .models import ProductoVenta, Venta
-        from .reportes import ganancia
+        from .reportes import ganancia, periodo_predefinido
         self.producto.costo = 6000
         self.producto.save()
         sin_costo = crear_producto('Sin costo')
@@ -2109,8 +2110,9 @@ class ModeloDeDatosTests(TestCase):  # restricciones del modelo de datos definit
         ProductoVenta.objects.create(venta=venta, producto=sin_costo, cantidad=1, precio_unitario=10000)
         self.assertEqual(venta.producto_venta.get(producto=self.producto).costo_unitario, 6000)
         self.assertIsNone(venta.producto_venta.get(producto=sin_costo).costo_unitario)
-        reporte = ganancia(Venta.objects.all())
-        self.assertEqual((reporte['ventas'], reporte['costos'], reporte['ganancia']), (20000, 12000, 8000))
+        reporte = ganancia(periodo_predefinido('mes'))
+        self.assertEqual((reporte['ventas']['bruto'], reporte['costos']['bruto'], reporte['ganancia']['bruto']),
+                         (20000, 12000, 8000))
         self.assertEqual((reporte['detalles_sin_costo'], reporte['productos_sin_costo']), (1, ['Sin costo']))
 
     def test_la_compra_suma_stock_solo_al_marcarse_recibida(self):  # HU-10
@@ -2395,12 +2397,11 @@ class VentaPresencialTests(TestCase):  # HU-12: ventas de la tienda física y Wh
                              f'/admin-panel/ventas/detalle/{venta.id}/', fetch_redirect_response=False)
 
     def test_anular_repone_el_stock_una_vez_y_sale_del_grafico(self):
-        from django.utils import timezone
         from .models import Envio, Venta
-        from .views.panel.dashboard import ventas_por_mes
+        from .reportes import serie_ventas, ultimos_12_meses
         self.registrar([(self.juego, 2)])
         venta = Venta.objects.get()
-        self.assertEqual(sum(ventas_por_mes(timezone.localdate().year)), 40000)
+        self.assertEqual(sum(serie_ventas(ultimos_12_meses())['totales']), 40000)
 
         self.client.post(f'/ventas/anular/{venta.id}/')
         self.client.post(f'/ventas/anular/{venta.id}/')
@@ -2410,7 +2411,7 @@ class VentaPresencialTests(TestCase):  # HU-12: ventas de la tienda física y Wh
         self.assertTrue(venta.anulada)
         self.assertEqual(self.juego.stock, 5)
         self.assertFalse(Envio.objects.exists())
-        self.assertEqual(sum(ventas_por_mes(timezone.localdate().year)), 0)
+        self.assertEqual(sum(serie_ventas(ultimos_12_meses())['totales']), 0)
         self.assertContains(self.client.get(f'/admin-panel/ventas/detalle/{venta.id}/'), 'Venta Anulada')
 
 
@@ -2780,7 +2781,7 @@ class MostrarRecomendacionesTests(TestCase):  # HU-07: home y ficha, según el i
         from .models import ConfiguracionSitio
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
         url = '/admin-panel/configuracion/'
-        self.assertContains(self.client.get(url), 'Productos con todos sus atributos (KPI-10): <strong>3 de 3</strong>')
+        self.assertContains(self.client.get(url), 'Productos con todos sus atributos: <strong>3 de 3</strong>')
         self.client.post(url, {'productos_relacionados': 'categoria', 'mostrar_recomendaciones': 'on'})
         self.assertTrue(ConfiguracionSitio.actual().mostrar_recomendaciones)
 
@@ -2914,3 +2915,297 @@ class ConservacionNavegacionTests(TestCase):  # HU-07 y política de privacidad 
             self.assertEqual(respuesta.status_code, 200, url)
             self.assertNotContains(respuesta, 'búsquedas')
             self.assertNotContains(respuesta, 'favoritos')
+
+
+def crear_venta_en(fecha, total, canal='web', metodo_pago='webpay', usuario=None, anulada=False):
+    """Venta con fecha y total dados (sin detalle), para los reportes de HU-10."""
+    from django.utils import timezone
+    from .models import Venta
+    venta = Venta.objects.create(usuario=usuario, canal=canal, metodo_pago=metodo_pago, total=total)
+    Venta.objects.filter(id=venta.id).update(fecha=fecha, anulada_en=timezone.now() if anulada else None)
+    return venta
+
+
+class PeriodoReportesTests(TestCase):  # HU-10: filtro por periodo
+    def test_neto_es_el_bruto_sin_iva(self):
+        from .reportes import bruto_y_neto, neto
+        self.assertEqual(neto(11900), 10000)
+        self.assertEqual(bruto_y_neto(30000), {'bruto': 30000, 'neto': 25210, 'iva': 4790})
+
+    def test_periodos_predefinidos_y_el_anterior(self):
+        from datetime import date
+        from .reportes import periodo_predefinido
+        hoy = date(2026, 10, 30)
+        mes = periodo_predefinido('mes', hoy)
+        self.assertEqual((mes.desde, mes.hasta), (date(2026, 10, 1), hoy))
+        self.assertEqual((mes.anterior().desde, mes.anterior().hasta), (date(2026, 9, 1), date(2026, 9, 30)))
+        anterior = periodo_predefinido('mes_anterior', hoy)
+        self.assertEqual((anterior.desde, anterior.hasta), (date(2026, 9, 1), date(2026, 9, 30)))
+        self.assertEqual(anterior.anterior().hasta, date(2026, 8, 31))
+        siete = periodo_predefinido('7d', hoy)
+        self.assertEqual((siete.anterior().desde, siete.anterior().hasta), (date(2026, 10, 17), date(2026, 10, 23)))
+        self.assertEqual(mes.nombre, '1 al 30 oct 2026')
+
+    def test_rango_personalizado_y_errores(self):
+        from datetime import date, timedelta
+        from django.utils import timezone
+        from .reportes import periodo_desde_request
+        periodo, errores = periodo_desde_request({'desde': '2026-01-05', 'hasta': '2026-02-10'})
+        self.assertEqual((periodo.desde, periodo.hasta, errores), (date(2026, 1, 5), date(2026, 2, 10), []))
+        manana = (timezone.localdate() + timedelta(days=1)).isoformat()
+        periodo, errores = periodo_desde_request({'hasta': manana})
+        self.assertEqual(periodo.clave, 'mes')
+        self.assertEqual(errores, ["Las fechas no pueden ser futuras."])
+        _, errores = periodo_desde_request({'desde': '2026-02-10', 'hasta': '2026-01-05'})
+        self.assertEqual(len(errores), 1)
+        periodo, errores = periodo_desde_request({'desde': '2026-02-31'})
+        self.assertEqual((periodo.clave, errores), ('mes', []))
+
+
+class ReportesVentasTests(TestCase):  # HU-10: ventas, ganancia, productos, caja y compras
+    def setUp(self):
+        from datetime import date, datetime
+        from django.utils import timezone
+        from .reportes import Periodo
+        self.periodo = Periodo(date(2026, 3, 1), date(2026, 3, 31))
+        self.en_marzo = timezone.make_aware(datetime(2026, 3, 15, 12))
+
+    def test_totales_de_todos_los_canales_sin_anuladas(self):
+        from datetime import datetime
+        from django.utils import timezone
+        from .reportes import totales_ventas, ventas_por_canal
+        crear_venta_en(self.en_marzo, 20000)
+        crear_venta_en(self.en_marzo, 10000, canal='tienda', metodo_pago='efectivo')
+        crear_venta_en(self.en_marzo, 50000, anulada=True)
+        crear_venta_en(timezone.make_aware(datetime(2026, 4, 1, 0, 5)), 99000)  # fuera del periodo
+        totales = totales_ventas(self.periodo)
+        self.assertEqual((totales['bruto'], totales['cantidad'], totales['ticket_promedio']), (30000, 2, 15000))
+        self.assertEqual(totales['neto'], 25210)
+        canales = {fila['clave']: fila for fila in ventas_por_canal(self.periodo)}
+        self.assertEqual(canales['tienda']['total'], 10000)
+        self.assertEqual(canales['whatsapp']['cantidad'], 0)
+        self.assertEqual(canales['web']['porcentaje'], 66.7)
+
+    def test_serie_por_dia_separa_los_canales(self):
+        from .reportes import serie_ventas
+        crear_venta_en(self.en_marzo, 20000)
+        crear_venta_en(self.en_marzo, 5000, canal='whatsapp', metodo_pago='transferencia')
+        serie = serie_ventas(self.periodo)
+        self.assertTrue(serie['por_dia'])
+        self.assertEqual(len(serie['etiquetas']), 31)
+        datos = {canal['clave']: canal['datos'] for canal in serie['series']}
+        self.assertEqual(datos['web'][14], 20000)
+        self.assertEqual(datos['whatsapp'][14], 5000)
+        self.assertEqual(serie['filas'][14], {'etiqueta': '15/03', 'valores': [20000, 0, 5000], 'total': 25000})
+
+    def test_ganancia_bruta_neta_y_productos_sin_costo(self):
+        from .models import ProductoVenta
+        from .reportes import ganancia
+        con_costo = crear_producto('Con costo', costo=5950)
+        sin_costo = crear_producto('Sin costo')
+        venta = crear_venta_en(self.en_marzo, 0)
+        ProductoVenta.objects.create(venta=venta, producto=con_costo, cantidad=2, precio_unitario=11900)
+        ProductoVenta.objects.create(venta=venta, producto=sin_costo, cantidad=1, precio_unitario=10000)
+        datos = ganancia(self.periodo)
+        self.assertEqual(datos['ventas'], {'bruto': 23800, 'neto': 20000, 'iva': 3800})
+        self.assertEqual(datos['ganancia'], {'bruto': 11900, 'neto': 10000})
+        self.assertEqual(datos['margen'], 50.0)
+        self.assertEqual(datos['productos_sin_costo'], ['Sin costo'])
+
+    def test_mas_vendidos_y_stock_critico(self):
+        from .models import ProductoVenta
+        from .reportes import mas_vendidos, stock_critico
+        poco = crear_producto('Poco', stock=10)
+        mucho = crear_producto('Mucho', stock=0)
+        venta = crear_venta_en(self.en_marzo, 0)
+        ProductoVenta.objects.create(venta=venta, producto=poco, cantidad=1, precio_unitario=1000)
+        ProductoVenta.objects.create(venta=venta, producto=mucho, cantidad=3, precio_unitario=1000)
+        self.assertEqual([fila['nombre'] for fila in mas_vendidos(self.periodo)], ['Mucho', 'Poco'])
+        self.assertEqual(list(stock_critico()), [mucho])
+
+    def test_caja_suma_efectivo_e_ingresos_y_resta_retiros(self):
+        from .models import MovimientoCaja
+        from .reportes import caja
+        crear_venta_en(self.en_marzo, 8000, canal='tienda', metodo_pago='efectivo')
+        crear_venta_en(self.en_marzo, 9000, canal='tienda', metodo_pago='tarjeta')
+        MovimientoCaja.objects.create(tipo='ingreso', monto=2000, motivo='Sencillo', fecha=self.en_marzo)
+        MovimientoCaja.objects.create(tipo='retiro', monto=5000, motivo='Pago flete', fecha=self.en_marzo)
+        datos = caja(self.periodo)
+        self.assertEqual((datos['ventas_efectivo'], datos['ingresos'], datos['retiros']), (8000, 2000, 5000))
+        self.assertEqual(datos['saldo_efectivo'], 5000)
+
+    def test_reporte_de_compras(self):
+        from datetime import date
+        from .models import Compra, Proveedor
+        from .reportes import compras
+        proveedor = Proveedor.objects.create(nombre='Distribuidora')
+        Compra.objects.create(proveedor=proveedor, fecha=date(2026, 3, 2), total=119000)
+        Compra.objects.create(proveedor=proveedor, fecha=date(2026, 4, 2), total=50000)
+        datos = compras(self.periodo)
+        self.assertEqual((datos['bruto'], datos['neto'], datos['cantidad'], datos['pendientes']), (119000, 100000, 1, 1))
+
+
+class KpiTests(TestCase):  # HU-10: tablero con KPI-01, KPI-03, KPI-04, KPI-05 y KPI-10 (Tabla 13 del informe)
+    def setUp(self):
+        from datetime import date
+        from .reportes import mes_de
+        self.hoy = date(2026, 3, 20)
+        self.mes = mes_de(self.hoy)
+
+    def fecha(self, dia, mes=3, anio=2026):
+        from datetime import datetime
+        from django.utils import timezone
+        return timezone.make_aware(datetime(anio, mes, dia, 12))
+
+    def test_kpi01_resta_la_linea_base(self):
+        from .reportes import kpi01
+        for _ in range(20):
+            crear_venta_en(self.fecha(5), 1000)
+        crear_venta_en(self.fecha(5), 1000, canal='tienda', metodo_pago='efectivo')
+        sin_linea_base = kpi01(self.mes, None)
+        self.assertEqual((sin_linea_base['valor'], sin_linea_base['ventas_web']), (None, 20))
+        datos = kpi01(self.mes, 3)
+        self.assertEqual((datos['valor'], datos['cumple']), (17, True))
+        self.assertFalse(kpi01(self.mes, 10)['cumple'])
+
+    def test_kpi03_tasa_de_recompra_en_6_meses(self):
+        from .reportes import kpi03
+        fiel, nuevo, antiguo = crear_cliente('fiel@example.com'), crear_cliente('nuevo@example.com'), crear_cliente()
+        crear_venta_en(self.fecha(1), 1000, usuario=fiel)
+        crear_venta_en(self.fecha(10, mes=1), 1000, usuario=fiel)
+        crear_venta_en(self.fecha(2), 1000, usuario=nuevo)
+        crear_venta_en(self.fecha(1, mes=9, anio=2025), 1000, usuario=antiguo)  # fuera de la ventana
+        crear_venta_en(self.fecha(3), 1000, canal='tienda', metodo_pago='efectivo')  # sin cliente: no cuenta
+        datos = kpi03(self.hoy)
+        self.assertEqual((datos['recurrentes'], datos['clientes'], datos['valor']), (1, 2, 50.0))
+        self.assertTrue(datos['cumple'])
+
+    def test_kpi04_cuenta_los_carritos_pagados_aunque_esten_vacios(self):
+        from .models import Carrito, ItemCarritoProducto
+        from .reportes import kpi04
+        producto = crear_producto()
+        pagado = Carrito.objects.create(usuario=crear_cliente('a@example.com'))
+        pagado.cerrar()
+        con_productos = Carrito.objects.create(usuario=crear_cliente('b@example.com'))
+        ItemCarritoProducto.objects.create(carrito=con_productos, producto=producto, cantidad=2)
+        Carrito.objects.create(usuario=crear_cliente('c@example.com'))  # vacío: no cuenta
+        Carrito.todos.update(creado_en=self.fecha(4))
+        datos = kpi04(self.mes)
+        self.assertEqual((datos['pagados'], datos['con_productos'], datos['valor']), (1, 2, 50.0))
+        self.assertTrue(datos['cumple'])
+
+    def test_kpi05_solo_las_recomendaciones_del_mes(self):
+        from .models import Recomendacion
+        from .reportes import kpi05
+        cliente, producto = crear_cliente(), crear_producto()
+        con_clic = Recomendacion.objects.create(usuario=cliente, producto=producto, ubicacion='home',
+                                                clic_en=self.fecha(6))
+        sin_clic = Recomendacion.objects.create(usuario=cliente, producto=producto, ubicacion='home')
+        otro_mes = Recomendacion.objects.create(usuario=cliente, producto=producto, ubicacion='ficha')
+        Recomendacion.objects.filter(id__in=[con_clic.id, sin_clic.id]).update(mostrada_en=self.fecha(6))
+        Recomendacion.objects.filter(id=otro_mes.id).update(mostrada_en=self.fecha(7, mes=4))
+        datos = kpi05(self.mes)
+        self.assertEqual((datos['clics'], datos['mostradas'], datos['valor']), (1, 2, 50.0))
+
+    def test_kpi10_y_historial(self):
+        from .reportes import historial_kpi, kpi10
+        crear_producto(genero='Deportes')
+        self.assertEqual(kpi10()['valor'], 100.0)
+        crear_producto('Sin género')
+        self.assertEqual(kpi10()['valor'], 50.0)
+        historial = historial_kpi(None, hoy=self.hoy)
+        self.assertEqual([fila['nombre'] for fila in historial][:2], ['marzo 2026', 'febrero 2026'])
+        self.assertTrue(historial[0]['en_curso'])
+
+
+class PanelReportesTests(TestCase):  # HU-10: pantallas del panel
+    def setUp(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def test_dashboard_y_cada_reporte_responden(self):
+        producto = crear_producto(costo=5000)
+        crear_venta(crear_cliente(), producto)
+        self.assertContains(self.client.get('/admin-panel/'), 'Ventas de los últimos 12 meses')
+        for vista in ['ventas', 'ganancia', 'productos', 'caja', 'compras', 'indicadores']:
+            respuesta = self.client.get('/admin-panel/reportes/', {'vista': vista, 'periodo': 'anio'})
+            self.assertEqual(respuesta.status_code, 200, vista)
+            self.assertEqual(respuesta.context['vista'], vista)
+
+    def test_las_pestanas_conservan_el_periodo(self):
+        respuesta = self.client.get('/admin-panel/reportes/', {'desde': '2026-01-01', 'hasta': '2026-01-31'})
+        self.assertContains(respuesta, '?vista=ganancia&desde=2026-01-01&amp;hasta=2026-01-31')
+
+    def test_un_cliente_no_entra_a_reportes(self):
+        self.client.force_login(crear_cliente('otro@example.com'))
+        self.assertRedirects(self.client.get('/admin-panel/reportes/'), '/', fetch_redirect_response=False)
+
+    def test_registrar_movimiento_de_caja(self):
+        from .models import MovimientoCaja
+        self.client.post('/admin-panel/reportes/caja/', {'tipo': 'retiro', 'monto': '15000', 'motivo': 'Pago flete'})
+        self.assertEqual(MovimientoCaja.objects.get().monto, 15000)
+        respuesta = self.client.post('/admin-panel/reportes/caja/', {'tipo': 'retiro', 'monto': '0', 'motivo': ''},
+                                     follow=True)
+        self.assertContains(respuesta, 'No se registró el movimiento')
+        self.assertEqual(MovimientoCaja.objects.count(), 1)
+
+    def test_linea_base_de_kpi01_en_configuracion(self):
+        from .models import ConfiguracionSitio
+        self.client.post('/admin-panel/configuracion/', {'productos_relacionados': 'categoria', 'kpi01_linea_base': '12'})
+        self.assertEqual(ConfiguracionSitio.actual().kpi01_linea_base, 12)
+
+
+class ComprasPanelTests(TestCase):  # HU-10: compras a proveedores, base del reporte de compras
+    def setUp(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.producto = crear_producto(stock=2)
+
+    def registrar(self, **extra):
+        datos = {'proveedor': 'Distribuidora Sur', 'rut': '', 'numero_documento': 'F-100',
+                 'producto': [self.producto.id], 'cantidad': ['5'], 'costo_unitario': ['7000'], **extra}
+        return self.client.post('/admin-panel/compras/registrar/', datos)
+
+    def test_compra_recibida_suma_stock_y_actualiza_el_costo(self):
+        from .models import Compra
+        self.registrar(recibida='on')
+        compra = Compra.objects.get()
+        self.assertEqual((compra.estado, compra.total, compra.proveedor.nombre), ('recibida', 35000, 'Distribuidora Sur'))
+        self.producto.refresh_from_db()
+        self.assertEqual((self.producto.stock, self.producto.costo), (7, 7000))
+
+    def test_compra_pendiente_no_toca_el_stock_hasta_recibirla(self):
+        from .models import Compra
+        self.registrar()
+        compra = Compra.objects.get()
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 2)
+        self.client.post(f'/admin-panel/compras/{compra.id}/recibir/')
+        self.client.post(f'/admin-panel/compras/{compra.id}/recibir/')  # dos veces no suma dos veces
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 7)
+
+    def test_reutiliza_el_proveedor_y_valida_los_datos(self):
+        from .models import Compra, Proveedor
+        self.registrar()
+        self.registrar(proveedor='distribuidora sur')
+        self.assertEqual(Proveedor.objects.count(), 1)
+        self.assertContains(self.registrar(costo_unitario=['0']), 'Ingresa el costo unitario')
+        self.assertContains(self.registrar(rut='11.111.111-2'), 'RUT')
+        self.assertEqual(Compra.objects.count(), 2)
+
+    def test_solo_se_elimina_una_compra_pendiente(self):
+        from .models import Compra
+        self.registrar(recibida='on')
+        recibida = Compra.objects.get()
+        self.client.post(f'/admin-panel/compras/{recibida.id}/eliminar/')
+        self.assertTrue(Compra.objects.filter(id=recibida.id).exists())
+        self.registrar()
+        pendiente = Compra.objects.get(estado='pendiente')
+        self.client.post(f'/admin-panel/compras/{pendiente.id}/eliminar/')
+        self.assertFalse(Compra.objects.filter(id=pendiente.id).exists())
+
+    def test_listado_y_detalle(self):
+        from .models import Compra
+        self.registrar()
+        compra = Compra.objects.get()
+        self.assertContains(self.client.get('/admin-panel/compras/'), 'Distribuidora Sur')
+        self.assertContains(self.client.get(f'/admin-panel/compras/{compra.id}/'), 'Marcar como recibida')

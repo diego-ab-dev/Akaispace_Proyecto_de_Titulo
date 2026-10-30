@@ -1,0 +1,485 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static custom_filters %}
+
+{% block title %}Reportes{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_reportes.css' %}">
+{% if vista == 'ventas' %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="informe">
+    <header class="informe-cabecera">
+        <div>
+            <h1>Reportes</h1>
+            <p>Todos los canales: tienda en línea, tienda física y WhatsApp. Montos en pesos; el neto es sin IVA (19%).</p>
+        </div>
+        <div class="informe-acciones">
+            <button type="button" class="boton" onclick="window.print()"><i class='bx bx-printer' aria-hidden="true"></i>Imprimir</button>
+        </div>
+    </header>
+
+    <nav class="informe-pestanas" aria-label="Reportes">
+        {% for clave, nombre in vistas %}
+        <a href="?vista={{ clave }}&{{ consulta_periodo }}"{% if clave == vista %} aria-current="page"{% endif %}>{{ nombre }}</a>
+        {% endfor %}
+    </nav>
+
+    {% if usa_periodo %}
+    <div class="filtro-periodo">
+        <div class="filtro-periodo__opciones" aria-label="Periodo">
+            {% for clave, nombre in periodos %}
+            <a href="?vista={{ vista }}&periodo={{ clave }}"{% if periodo.clave == clave %} aria-current="true"{% endif %}>{{ nombre }}</a>
+            {% endfor %}
+        </div>
+        <form method="get" class="filtro-periodo__rango">
+            <input type="hidden" name="vista" value="{{ vista }}">
+            <label for="desde">Desde</label>
+            <input type="date" id="desde" name="desde" class="form-control" value="{{ periodo.desde|date:'Y-m-d' }}" max="{% now 'Y-m-d' %}">
+            <label for="hasta">hasta</label>
+            <input type="date" id="hasta" name="hasta" class="form-control" value="{{ periodo.hasta|date:'Y-m-d' }}" max="{% now 'Y-m-d' %}">
+            <button type="submit" class="boton">Aplicar</button>
+        </form>
+        <span class="filtro-periodo__actual">{{ periodo.nombre }}</span>
+    </div>
+    {% endif %}
+
+    {% for error in errores %}
+    <p class="informe-mensaje informe-mensaje--error">{{ error }} Se muestra el mes en curso.</p>
+    {% endfor %}
+    {% for message in messages %}
+    <p class="informe-mensaje{% if message.tags != 'success' %} informe-mensaje--error{% endif %}">{{ message }}</p>
+    {% endfor %}
+
+    {% if vista == 'ventas' %}
+    {% with frente_a="vs. "|add:anterior.nombre %}
+    <section class="informe-cifras" aria-label="Totales del periodo">
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ventas brutas</span>
+            <span class="cifra__valor">${{ totales.bruto|formato_chileno }}</span>
+            <span class="cifra__detalle">{% include "admin_panel/partials/variacion.html" with valor=variacion.bruto %}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ventas netas</span>
+            <span class="cifra__valor">${{ totales.neto|formato_chileno }}</span>
+            <span class="cifra__detalle">IVA ${{ totales.iva|formato_chileno }} · envíos ${{ totales.envio|formato_chileno }}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Número de ventas</span>
+            <span class="cifra__valor">{{ totales.cantidad|formato_chileno }}</span>
+            <span class="cifra__detalle">{% include "admin_panel/partials/variacion.html" with valor=variacion.cantidad %}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ticket promedio</span>
+            <span class="cifra__valor">${{ totales.ticket_promedio|formato_chileno }}</span>
+            <span class="cifra__detalle">{% include "admin_panel/partials/variacion.html" with valor=variacion.ticket_promedio %}</span>
+        </div>
+    </section>
+    {% endwith %}
+
+    <section class="panel-informe">
+        <header class="panel-informe__cabecera">
+            <div>
+                <h2>Ventas por {% if serie.por_dia %}día{% else %}mes{% endif %}</h2>
+                <p class="panel-informe__nota">Monto bruto por canal.</p>
+            </div>
+        </header>
+        {% include "admin_panel/partials/grafico_ventas.html" with id_grafico="serie-periodo" %}
+    </section>
+
+    <div class="informe-grid informe-grid--mitades">
+        {% include "admin_panel/partials/tabla_desglose.html" with titulo="Por canal" filas=por_canal primera_columna="Canal" %}
+        {% include "admin_panel/partials/tabla_desglose.html" with titulo="Por medio de pago" filas=por_medio primera_columna="Medio de pago" neutro=True %}
+    </div>
+
+    {% elif vista == 'ganancia' %}
+    {% if ganancia.detalles_sin_costo %}
+    <p class="informe-aviso">
+        No se incluyen {{ ganancia.detalles_sin_costo }} línea{{ ganancia.detalles_sin_costo|pluralize }} de venta de productos sin costo
+        registrado: {{ ganancia.productos_sin_costo|join:", " }}. Registra su costo en Productos o con una compra recibida.
+    </p>
+    {% endif %}
+    <section class="informe-cifras" aria-label="Ganancia del periodo">
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ganancia neta</span>
+            <span class="cifra__valor">${{ ganancia.ganancia.neto|formato_chileno }}</span>
+            <span class="cifra__detalle">{% if ganancia.margen is None %}Sin ventas con costo{% else %}Margen {{ ganancia.margen }}%{% endif %}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ventas netas de productos</span>
+            <span class="cifra__valor">${{ ganancia.ventas.neto|formato_chileno }}</span>
+            <span class="cifra__detalle">Sin envíos ni IVA</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Costo neto de lo vendido</span>
+            <span class="cifra__valor">${{ ganancia.costos.neto|formato_chileno }}</span>
+            <span class="cifra__detalle">Costo al momento de cada venta</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ganancia bruta</span>
+            <span class="cifra__valor">${{ ganancia.ganancia.bruto|formato_chileno }}</span>
+            <span class="cifra__detalle">Con IVA incluido</span>
+        </div>
+    </section>
+
+    <div class="informe-grid informe-grid--principal">
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <div>
+                    <h2>Por categoría</h2>
+                    <p class="panel-informe__nota">Montos netos, ordenados por ganancia.</p>
+                </div>
+            </header>
+            {% if por_categoria %}
+            <div class="tabla-contenedor">
+                <table class="tabla-informe">
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th class="num">Unidades</th>
+                            <th class="num">Ventas netas</th>
+                            <th class="num">Costo neto</th>
+                            <th class="num">Ganancia neta</th>
+                            <th class="num">Margen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in por_categoria %}
+                        <tr>
+                            <td>{{ fila.categoria }}</td>
+                            <td class="num">{{ fila.unidades|formato_chileno }}</td>
+                            <td class="num">${{ fila.ventas_netas|formato_chileno }}</td>
+                            <td class="num">${{ fila.costos_netos|formato_chileno }}</td>
+                            <td class="num"><strong>${{ fila.ganancia_neta|formato_chileno }}</strong></td>
+                            <td class="num">{% if fila.margen is None %}—{% else %}{{ fila.margen }}%{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="informe-vacio">No hay ventas con costo registrado en este periodo.</p>
+            {% endif %}
+        </section>
+
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <h2>Bruto y neto</h2>
+            </header>
+            <table class="tabla-informe">
+                <thead>
+                    <tr><th></th><th class="num">Bruto</th><th class="num">Neto</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Ventas</td><td class="num">${{ ganancia.ventas.bruto|formato_chileno }}</td><td class="num">${{ ganancia.ventas.neto|formato_chileno }}</td></tr>
+                    <tr><td>Costo</td><td class="num">${{ ganancia.costos.bruto|formato_chileno }}</td><td class="num">${{ ganancia.costos.neto|formato_chileno }}</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr><td>Ganancia</td><td class="num">${{ ganancia.ganancia.bruto|formato_chileno }}</td><td class="num">${{ ganancia.ganancia.neto|formato_chileno }}</td></tr>
+                </tfoot>
+            </table>
+            <p class="panel-informe__nota mt-3">Solo productos con costo registrado. No incluye el envío cobrado.</p>
+        </section>
+    </div>
+
+    {% elif vista == 'productos' %}
+    <div class="informe-grid informe-grid--mitades">
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <div>
+                    <h2>Más vendidos</h2>
+                    <p class="panel-informe__nota">Los 10 con más unidades vendidas en el periodo.</p>
+                </div>
+            </header>
+            {% if mas_vendidos %}
+            <div class="tabla-contenedor">
+                <table class="tabla-informe">
+                    <thead>
+                        <tr>
+                            <th class="num">#</th>
+                            <th>Producto</th>
+                            <th class="num">Unidades</th>
+                            <th class="num">Bruto</th>
+                            <th class="num">Neto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in mas_vendidos %}
+                        <tr>
+                            <td class="num tenue">{{ forloop.counter }}</td>
+                            <td class="celda-recortada" title="{{ fila.nombre }}">
+                                <a href="{% url 'detalle_producto' fila.producto_id %}">{{ fila.nombre }}</a><br>
+                                <small class="tenue">{{ fila.categoria }}</small>
+                            </td>
+                            <td class="num"><strong>{{ fila.unidades|formato_chileno }}</strong></td>
+                            <td class="num">${{ fila.total|formato_chileno }}</td>
+                            <td class="num">${{ fila.neto|formato_chileno }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="informe-vacio">No hay ventas en este periodo.</p>
+            {% endif %}
+        </section>
+
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <div>
+                    <h2>Stock crítico</h2>
+                    <p class="panel-informe__nota">
+                        Estado actual, no depende del periodo. {{ stock_critico|length }} producto{{ stock_critico|length|pluralize }}{% if agotados %}, {{ agotados }} agotado{{ agotados|pluralize }}{% endif %}.
+                    </p>
+                </div>
+                <a href="{% url 'registrar_compra' %}" class="panel-informe__enlace no-imprimir">Registrar compra</a>
+            </header>
+            {% if stock_critico %}
+            <div class="tabla-contenedor">
+                <table class="tabla-informe">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="num">Stock</th>
+                            <th class="num">Crítico</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in stock_critico %}
+                        <tr>
+                            <td class="celda-recortada" title="{{ producto.nombre }}">
+                                <a href="{% url 'editar_producto' producto.id %}">{{ producto.nombre }}</a><br>
+                                <small class="tenue">{{ producto.categoria_texto }}</small>
+                            </td>
+                            <td class="num"><strong>{{ producto.stock }}</strong></td>
+                            <td class="num tenue">{{ producto.stock_critico }}</td>
+                            <td>
+                                {% if producto.stock == 0 %}
+                                <span class="estado estado--mal"><i class='bx bx-x-circle' aria-hidden="true"></i>Agotado</span>
+                                {% else %}
+                                <span class="estado estado--alerta"><i class='bx bx-error-circle' aria-hidden="true"></i>Crítico</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="informe-vacio">Ningún producto está en stock crítico.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    {% elif vista == 'caja' %}
+    <section class="informe-cifras" aria-label="Caja del periodo">
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ventas en efectivo</span>
+            <span class="cifra__valor">${{ caja.ventas_efectivo|formato_chileno }}</span>
+            <span class="cifra__detalle">Tienda física y WhatsApp</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Ingresos de dinero</span>
+            <span class="cifra__valor">${{ caja.ingresos|formato_chileno }}</span>
+            <span class="cifra__detalle">Por ejemplo, sencillo para la caja</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Retiros de dinero</span>
+            <span class="cifra__valor">${{ caja.retiros|formato_chileno }}</span>
+            <span class="cifra__detalle">Dinero sacado de la caja</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Efectivo del periodo</span>
+            <span class="cifra__valor">${{ caja.saldo_efectivo|formato_chileno }}</span>
+            <span class="cifra__detalle">Efectivo + ingresos − retiros</span>
+        </div>
+    </section>
+
+    <section class="panel-informe no-imprimir">
+        <header class="panel-informe__cabecera">
+            <div>
+                <h2>Registrar retiro o ingreso</h2>
+                <p class="panel-informe__nota">Cada vez que saques o pongas dinero en la caja de la tienda.</p>
+            </div>
+        </header>
+        <form method="post" action="{% url 'registrar_movimiento_caja' %}" class="formulario-linea" novalidate>
+            {% csrf_token %}
+            <div class="campo">
+                <span class="campo__titulo">Tipo</span>
+                <div class="opciones-segmento">
+                    {% for opcion in form_caja.tipo %}
+                    <label>{{ opcion.tag }}{{ opcion.choice_label }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="campo">
+                <label for="{{ form_caja.monto.id_for_label }}">Monto</label>
+                {{ form_caja.monto }}
+            </div>
+            <div class="campo">
+                <label for="{{ form_caja.motivo.id_for_label }}">Motivo</label>
+                {{ form_caja.motivo }}
+            </div>
+            <button type="submit" class="boton boton--primario">Registrar</button>
+        </form>
+    </section>
+
+    <div class="informe-grid informe-grid--mitades">
+        {% include "admin_panel/partials/tabla_desglose.html" with titulo="Dinero recibido por medio de pago" filas=caja.medios primera_columna="Medio de pago" neutro=True %}
+
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <h2>Retiros e ingresos</h2>
+            </header>
+            {% if caja.movimientos %}
+            <div class="tabla-contenedor">
+                <table class="tabla-informe">
+                    <thead>
+                        <tr><th>Fecha</th><th>Tipo</th><th>Motivo</th><th class="num">Monto</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for movimiento in caja.movimientos %}
+                        <tr>
+                            <td class="tenue">{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if movimiento.tipo == 'retiro' %}
+                                <span class="estado"><i class='bx bx-minus' aria-hidden="true"></i>Retiro</span>
+                                {% else %}
+                                <span class="estado"><i class='bx bx-plus' aria-hidden="true"></i>Ingreso</span>
+                                {% endif %}
+                            </td>
+                            <td class="celda-recortada" title="{{ movimiento.motivo }}">{{ movimiento.motivo }}</td>
+                            <td class="num">{% if movimiento.tipo == 'retiro' %}−{% endif %}${{ movimiento.monto|formato_chileno }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="informe-vacio">No hay retiros ni ingresos en este periodo.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    {% elif vista == 'compras' %}
+    <section class="informe-cifras informe-cifras--tres" aria-label="Compras del periodo">
+        <div class="cifra">
+            <span class="cifra__etiqueta">Compras brutas</span>
+            <span class="cifra__valor">${{ compras.bruto|formato_chileno }}</span>
+            <span class="cifra__detalle">Con IVA incluido</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Compras netas</span>
+            <span class="cifra__valor">${{ compras.neto|formato_chileno }}</span>
+            <span class="cifra__detalle">IVA crédito ${{ compras.iva|formato_chileno }}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Número de compras</span>
+            <span class="cifra__valor">{{ compras.cantidad }}</span>
+            <span class="cifra__detalle">{% if compras.pendientes %}{{ compras.pendientes }} sin recibir{% else %}Todas recibidas{% endif %}</span>
+        </div>
+    </section>
+
+    <div class="informe-grid informe-grid--principal">
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <h2>Compras del periodo</h2>
+                <a href="{% url 'registrar_compra' %}" class="panel-informe__enlace no-imprimir">Registrar compra</a>
+            </header>
+            {% include "admin_panel/partials/tabla_compras.html" with compras=compras.compras %}
+        </section>
+
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <h2>Por proveedor</h2>
+            </header>
+            {% if compras.por_proveedor %}
+            <table class="tabla-informe">
+                <thead>
+                    <tr><th>Proveedor</th><th class="num">Compras</th><th class="num">Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for fila in compras.por_proveedor %}
+                    <tr>
+                        <td>{{ fila.nombre }}</td>
+                        <td class="num">{{ fila.cantidad }}</td>
+                        <td class="num">${{ fila.total|formato_chileno }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="informe-vacio">Sin compras en este periodo.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    {% elif vista == 'indicadores' %}
+    <div class="informe-grid informe-grid--principal">
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <div>
+                    <h2>Evolución mensual</h2>
+                    <p class="panel-informe__nota">Revisión mensual de los últimos 6 meses. La recompra se mide al cierre de cada mes, sobre los 6 meses anteriores.</p>
+                </div>
+            </header>
+            <div class="tabla-contenedor">
+                <table class="tabla-informe tabla-informe--titulos-largos">
+                    <thead>
+                        <tr>
+                            <th>Mes</th>
+                            <th class="num">Ventas web</th>
+                            <th class="num">Ventas web adicionales</th>
+                            <th class="num">Recompra</th>
+                            <th class="num">Carritos que compran</th>
+                            <th class="num">Clics en recomendaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in historial %}
+                        <tr>
+                            <td class="text-nowrap">{{ fila.nombre|capfirst }}{% if fila.en_curso %} <small class="tenue">(en curso)</small>{% endif %}</td>
+                            <td class="num">{{ fila.kpi01.ventas_web }}</td>
+                            <td class="num">{% if fila.kpi01.valor is None %}—{% else %}{{ fila.kpi01.valor }}{% endif %}</td>
+                            <td class="num">{% if fila.kpi03.valor is None %}—{% else %}{{ fila.kpi03.valor }}%{% endif %}</td>
+                            <td class="num">{% if fila.kpi04.valor is None %}—{% else %}{{ fila.kpi04.valor }}%{% endif %}</td>
+                            <td class="num">{% if fila.kpi05.valor is None %}—{% else %}{{ fila.kpi05.valor }}%{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <dl class="panel-informe__nota mt-3 mb-0">
+                <dt class="d-inline">Metas:</dt>
+                <dd class="d-inline">ventas web adicionales, {{ tablero.kpi01.meta }} o más al mes · recompra, {{ tablero.kpi03.meta }}% o más ·
+                    carritos que terminan en compra, {{ tablero.kpi04.meta }}% o más · clics en recomendados, 20% sobre lo medido
+                    en los 2 primeros meses · productos con datos completos, {{ tablero.kpi10.meta }}% antes de activar las recomendaciones.</dd>
+            </dl>
+            {% if tablero.kpi01.linea_base is None %}
+            <p class="informe-aviso mt-3 mb-0">
+                Para calcular las ventas web adicionales falta la línea base: las ventas web del último mes en la plataforma anterior.
+                <a href="{% url 'admin_configuracion' %}">Ingrésala en Configuración</a>.
+            </p>
+            {% endif %}
+        </section>
+
+        <section class="panel-informe">
+            <header class="panel-informe__cabecera">
+                <div>
+                    <h2>Mes en curso</h2>
+                    <p class="panel-informe__nota">{{ tablero.mes.desde|date:"F Y"|capfirst }}</p>
+                </div>
+            </header>
+            {% include "admin_panel/partials/kpi_lista.html" %}
+        </section>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+{% if vista == 'ventas' %}<script src="{% static 'js/grafico_ventas.js' %}"></script>{% endif %}
+{% endblock %}

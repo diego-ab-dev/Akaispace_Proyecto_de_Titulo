@@ -293,12 +293,14 @@ def marcar_clic(usuario, recomendacion_id):
     return recomendacion.producto
 
 
-def tasa_de_clics(desde=None):
-    """KPI-05: {'mostradas', 'clics', 'tasa'} de las recomendaciones mostradas desde `desde` (o todas).
-    La tasa es un porcentaje, o None si no se ha mostrado ninguna."""
+def tasa_de_clics(desde=None, hasta=None):
+    """KPI-05: {'mostradas', 'clics', 'tasa'} de las recomendaciones mostradas desde `desde` y antes de `hasta`
+    (o todas). La tasa es un porcentaje, o None si no se ha mostrado ninguna."""
     recomendaciones = Recomendacion.objects.all()
     if desde is not None:
         recomendaciones = recomendaciones.filter(mostrada_en__gte=desde)
+    if hasta is not None:
+        recomendaciones = recomendaciones.filter(mostrada_en__lt=hasta)
     mostradas = recomendaciones.count()
     clics = recomendaciones.filter(clic_en__isnull=False).count()
     return {'mostradas': mostradas, 'clics': clics, 'tasa': round(clics / mostradas * 100, 1) if mostradas else None}

@@ -3,8 +3,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
 from .constants import REGIONES, REGIONES_CIUDADES
-from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto, Opinion,
-                     Producto, Usuario, youtube_embed_url)
+from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto,
+                     MovimientoCaja, Opinion, Producto, Usuario, youtube_embed_url)
 import os
 
 
@@ -389,8 +389,9 @@ class ConfiguracionSitioForm(forms.ModelForm):
     class Meta:
         model = ConfiguracionSitio
         fields = ['productos_relacionados', 'mostrar_opiniones', 'mostrar_etiquetas', 'mostrar_stock',
-                  'mostrar_recomendaciones']
+                  'mostrar_recomendaciones', 'kpi01_linea_base']
         widgets = {
+            'kpi01_linea_base': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': 1}),
             'productos_relacionados': forms.RadioSelect,
             'mostrar_opiniones': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'mostrar_etiquetas': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
@@ -411,3 +412,29 @@ class ConfiguracionSitioForm(forms.ModelForm):
         Categoria.objects.filter(id__in=visibles).update(visible_en_menu=True)
         Categoria.objects.exclude(id__in=visibles).update(visible_en_menu=False)
         return configuracion
+
+
+# HU-10: retiro o ingreso de dinero en la caja de la tienda física
+class MovimientoCajaForm(forms.ModelForm):
+    tipo = forms.ChoiceField(choices=[(MovimientoCaja.RETIRO, 'Retiro'), (MovimientoCaja.INGRESO, 'Ingreso')],
+                             initial=MovimientoCaja.RETIRO, widget=forms.RadioSelect,
+                             error_messages={'required': 'Indica si es un retiro o un ingreso.'})
+
+    class Meta:
+        model = MovimientoCaja
+        fields = ['tipo', 'monto', 'motivo']
+        widgets = {
+            'monto': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'step': 1, 'inputmode': 'numeric'}),
+            'motivo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 255,
+                                             'placeholder': 'Ej.: pago a proveedor, sencillo para la caja'}),
+        }
+        error_messages = {
+            'monto': {'required': 'Ingresa el monto.'},
+            'motivo': {'required': 'Indica el motivo del movimiento.'},
+        }
+
+    def clean_monto(self):
+        monto = self.cleaned_data['monto']
+        if monto < 1:
+            raise ValidationError("El monto debe ser mayor que cero.")
+        return monto

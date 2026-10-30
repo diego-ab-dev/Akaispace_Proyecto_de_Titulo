@@ -1,83 +1,50 @@
-"""Panel de administración: dashboard principal."""
-from datetime import datetime
-
-from django.db.models import F
-from django.http import JsonResponse
+"""Panel de administración: resumen del negocio (HU-10). Los cálculos están en appPrincipal/reportes.py."""
 from django.shortcuts import render
 from django.utils import timezone
 
+from appPrincipal import reportes
 from appPrincipal.decorators import admin_required
-from appPrincipal.models import Devolucion, Envio, Producto, Reclamo, Venta
+from appPrincipal.models import ConfiguracionSitio, Devolucion, Envio, Reclamo, Venta
 
 
-def ventas_por_mes(anio):
-    inicio = timezone.make_aware(datetime(anio, 1, 1))
-    fin = timezone.make_aware(datetime(anio + 1, 1, 1))
-    ventas = Venta.objects.filter(fecha__gte=inicio, fecha__lt=fin, anulada_en__isnull=True).exclude(
-        datos_envio__estado='Anulada'
-    ).values_list('fecha', 'total')
-
-    totales = [0] * 12
-    for fecha, total in ventas:
-        totales[timezone.localtime(fecha).month - 1] += total
-    return totales
+def _por_atender():
+    return [
+        {'nombre': 'Pedidos por preparar', 'cantidad': Envio.objects.filter(estado='En Preparación').count(),
+         'url_nombre': 'admin_ventas', 'filtro': '?estado=En+Preparación', 'icono': 'bx-package'},
+        {'nombre': 'Listos para retiro', 'cantidad': Envio.objects.filter(estado='Listo para retiro').count(),
+         'url_nombre': 'admin_ventas', 'filtro': '?estado=Listo+para+retiro', 'icono': 'bx-store'},
+        {'nombre': 'Reclamos abiertos', 'cantidad': Reclamo.objects.filter(estado='Abierto').count(),
+         'url_nombre': 'admin_reclamos', 'filtro': '', 'icono': 'bx-message-square-error'},
+        {'nombre': 'Devoluciones pendientes', 'cantidad': Devolucion.objects.filter(estado='Pendiente').count(),
+         'url_nombre': 'admin_devoluciones', 'filtro': '', 'icono': 'bx-revision'},
+    ]
 
 
 @admin_required
 def admin_dashboard(request):
-    ultimas_ventas = Venta.objects.select_related('usuario').prefetch_related('producto_venta__producto').order_by('-fecha')[:4]
-    ventas_info = [
-        {
-            "usuario": venta.usuario.nombre if venta.usuario else venta.get_canal_display(),
-            "productos": [
-                f"{pv.producto.nombre} (x{pv.cantidad})" for pv in venta.producto_venta.all()
-            ],
-            "fecha": venta.fecha,
-        }
-        for venta in ultimas_ventas
-    ]
-    ultimos_reclamos = Reclamo.objects.select_related('usuario').order_by('-fecha')[:4]
-    reclamos_info = [
-        {
-            "usuario": reclamo.usuario.nombre if reclamo.usuario else reclamo.nombre_contacto or reclamo.get_canal_display(),
-            "asunto": reclamo.asunto,
-            "fecha": reclamo.fecha,
-        }
-        for reclamo in ultimos_reclamos
-    ]
-    
-    productos_bajo_stock = Producto.objects.filter(stock__lte=F('stock_critico')).order_by('stock')[:4]
-    productos_info = [
-        {
-            "nombre": producto.nombre,
-            "stock": producto.stock,
-        }
-        for producto in productos_bajo_stock
-    ]
+    hoy = timezone.localdate()
+    mes = reportes.periodo_predefinido('mes', hoy)
+    anterior = mes.anterior()
+    ventas, ventas_anterior = reportes.totales_ventas(mes), reportes.totales_ventas(anterior)
+    ganancia, ganancia_anterior = reportes.ganancia(mes), reportes.ganancia(anterior)
+    criticos = reportes.stock_critico()
 
-    datos_grafico = ventas_por_mes(timezone.localdate().year)
-
-    context = {
-        "ventas_info": ventas_info,
-        "reclamos_info": reclamos_info,
-        "productos_info": productos_info,
-        "datos_grafico": datos_grafico,
-    }
-    return render(request, 'admin_panel/dashboard.html', context)
-
-
-@admin_required
-def get_dashboard_counts(request):
-    envios_pendientes = Envio.objects.filter(estado="En Preparación").count()
-    por_retirar = Envio.objects.filter(estado="Listo para retiro").count()
-    ventas = Venta.objects.count()
-    reclamos = Reclamo.objects.count()
-    devoluciones = Devolucion.objects.count()
-
-    return JsonResponse({
-        "envios_pendientes": envios_pendientes,
-        "por_retirar": por_retirar,
-        "ventas": ventas,
-        "reclamos": reclamos,
-        "devoluciones": devoluciones,
+    return render(request, 'admin_panel/dashboard.html', {
+        'hoy': hoy,
+        'mes': mes,
+        'anterior': anterior,
+        'ventas': ventas,
+        'ganancia': ganancia,
+        'variacion': {
+            'bruto': reportes.variacion(ventas['bruto'], ventas_anterior['bruto']),
+            'cantidad': reportes.variacion(ventas['cantidad'], ventas_anterior['cantidad']),
+            'ticket_promedio': reportes.variacion(ventas['ticket_promedio'], ventas_anterior['ticket_promedio']),
+            'ganancia': reportes.variacion(ganancia['ganancia']['neto'], ganancia_anterior['ganancia']['neto']),
+        },
+        'serie': reportes.serie_ventas(reportes.ultimos_12_meses(hoy)),
+        'tablero': reportes.tablero_kpi(ConfiguracionSitio.actual().kpi01_linea_base, hoy),
+        'por_atender': _por_atender(),
+        'ultimas_ventas': Venta.objects.select_related('usuario').order_by('-fecha')[:6],
+        'stock_critico': criticos[:6],
+        'total_stock_critico': criticos.count(),
     })

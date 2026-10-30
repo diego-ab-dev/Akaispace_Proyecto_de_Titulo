@@ -36,3 +36,7 @@ def param_replace(context, **kwargs):
     for k, v in kwargs.items():
         d[k] = v
     return d.urlencode()
+
+@register.filter
+def valor_absoluto(valor):
+    return abs(valor) if isinstance(valor, (int, float)) else valor

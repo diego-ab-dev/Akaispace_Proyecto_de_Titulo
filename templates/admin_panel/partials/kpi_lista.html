@@ -1,0 +1,63 @@
+{% comment %}
+Tablero con los KPI que se calculan con datos de la plataforma (HU-10). Recibe `tablero` (reportes.tablero_kpi).
+Fórmulas y metas de la Tabla 13 del informe. En pantalla van sin código, con nombres simples; el orden es
+KPI-01, KPI-03, KPI-04, KPI-05 y KPI-10.
+{% endcomment %}
+<ul class="kpis">
+    <li class="kpi">
+        <div>
+            <span class="kpi__nombre">Ventas web adicionales</span>
+            <span class="kpi__detalle">
+                {% if tablero.kpi01.linea_base is None %}
+                {{ tablero.kpi01.ventas_web }} ventas web. <a href="{% url 'admin_configuracion' %}">Ingresa la línea base</a> para calcularlo.
+                {% else %}
+                {{ tablero.kpi01.ventas_web }} ventas web − {{ tablero.kpi01.linea_base }} de línea base · meta {{ tablero.kpi01.meta }} o más
+                {% endif %}
+            </span>
+        </div>
+        <div>
+            <div class="kpi__valor">{% if tablero.kpi01.valor is None %}—{% else %}{{ tablero.kpi01.valor }}{% endif %}</div>
+            <div class="kpi__estado">{% include "admin_panel/partials/estado_kpi.html" with cumple=tablero.kpi01.cumple %}</div>
+        </div>
+    </li>
+    <li class="kpi">
+        <div>
+            <span class="kpi__nombre">Clientes que vuelven a comprar</span>
+            <span class="kpi__detalle">{{ tablero.kpi03.recurrentes }} de {{ tablero.kpi03.clientes }} clientes en 6 meses · meta {{ tablero.kpi03.meta }}%</span>
+        </div>
+        <div>
+            <div class="kpi__valor">{% if tablero.kpi03.valor is None %}—{% else %}{{ tablero.kpi03.valor }}%{% endif %}</div>
+            <div class="kpi__estado">{% include "admin_panel/partials/estado_kpi.html" with cumple=tablero.kpi03.cumple %}</div>
+        </div>
+    </li>
+    <li class="kpi">
+        <div>
+            <span class="kpi__nombre">Carritos que terminan en compra</span>
+            <span class="kpi__detalle">{{ tablero.kpi04.pagados }} de {{ tablero.kpi04.con_productos }} carritos pagados · meta {{ tablero.kpi04.meta }}%</span>
+        </div>
+        <div>
+            <div class="kpi__valor">{% if tablero.kpi04.valor is None %}—{% else %}{{ tablero.kpi04.valor }}%{% endif %}</div>
+            <div class="kpi__estado">{% include "admin_panel/partials/estado_kpi.html" with cumple=tablero.kpi04.cumple %}</div>
+        </div>
+    </li>
+    <li class="kpi">
+        <div>
+            <span class="kpi__nombre">Clics en productos recomendados</span>
+            <span class="kpi__detalle">{{ tablero.kpi05.clics }} de {{ tablero.kpi05.mostradas }} recomendaciones · la meta se fija tras 2 meses</span>
+        </div>
+        <div>
+            <div class="kpi__valor">{% if tablero.kpi05.valor is None %}—{% else %}{{ tablero.kpi05.valor }}%{% endif %}</div>
+            <div class="kpi__estado">{% include "admin_panel/partials/estado_kpi.html" with sin_meta="En medición" %}</div>
+        </div>
+    </li>
+    <li class="kpi">
+        <div>
+            <span class="kpi__nombre">Productos con datos completos</span>
+            <span class="kpi__detalle">{{ tablero.kpi10.completos }} de {{ tablero.kpi10.total }} productos · meta {{ tablero.kpi10.meta }}%</span>
+        </div>
+        <div>
+            <div class="kpi__valor">{% if tablero.kpi10.valor is None %}—{% else %}{{ tablero.kpi10.valor }}%{% endif %}</div>
+            <div class="kpi__estado">{% include "admin_panel/partials/estado_kpi.html" with cumple=tablero.kpi10.cumple %}</div>
+        </div>
+    </li>
+</ul>

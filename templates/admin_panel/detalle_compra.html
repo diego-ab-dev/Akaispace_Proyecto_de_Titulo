@@ -1,0 +1,94 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load static custom_filters %}
+
+{% block title %}Compra N.º {{ compra.id }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/styles_reportes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="informe" style="max-width: 1000px">
+    <a href="{% url 'admin_compras' %}" class="informe-volver"><i class='bx bx-arrow-back' aria-hidden="true"></i> Volver a compras</a>
+    <header class="informe-cabecera">
+        <div>
+            <h1>Compra N.º {{ compra.id }}</h1>
+            <p>{{ compra.proveedor.nombre }}{% if compra.proveedor.rut %} · RUT {{ compra.proveedor.rut }}{% endif %} · {{ compra.fecha|date:"d/m/Y" }}</p>
+        </div>
+        {% if compra.estado == 'pendiente' %}
+        <div class="informe-acciones">
+            <form method="post" action="{% url 'eliminar_compra' compra.id %}" onsubmit="return confirm('¿Eliminar esta compra? No afecta el stock.');">
+                {% csrf_token %}
+                <button type="submit" class="boton boton--peligro"><i class='bx bx-trash' aria-hidden="true"></i>Eliminar</button>
+            </form>
+            <form method="post" action="{% url 'recibir_compra' compra.id %}" onsubmit="return confirm('¿Marcar como recibida? Las unidades se sumarán al stock.');">
+                {% csrf_token %}
+                <button type="submit" class="boton boton--primario"><i class='bx bx-check' aria-hidden="true"></i>Marcar como recibida</button>
+            </form>
+        </div>
+        {% endif %}
+    </header>
+
+    {% for message in messages %}
+    <p class="informe-mensaje{% if message.tags != 'success' %} informe-mensaje--error{% endif %}">{{ message }}</p>
+    {% endfor %}
+
+    <section class="informe-cifras informe-cifras--tres" aria-label="Resumen de la compra">
+        <div class="cifra">
+            <span class="cifra__etiqueta">Estado</span>
+            <span class="cifra__valor" style="font-size: 1.25rem">
+                {% if compra.estado == 'recibida' %}
+                <span class="estado estado--bien"><i class='bx bx-check-circle' aria-hidden="true"></i>Recibida</span>
+                {% else %}
+                <span class="estado estado--alerta"><i class='bx bx-time-five' aria-hidden="true"></i>Pendiente</span>
+                {% endif %}
+            </span>
+            <span class="cifra__detalle">{% if compra.fecha_recepcion %}Sumada al stock el {{ compra.fecha_recepcion|date:"d/m/Y H:i" }}{% else %}Aún no se suma al stock{% endif %}</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Total</span>
+            <span class="cifra__valor">${{ compra.total|formato_chileno }}</span>
+            <span class="cifra__detalle">Con IVA incluido</span>
+        </div>
+        <div class="cifra">
+            <span class="cifra__etiqueta">Documento</span>
+            <span class="cifra__valor" style="font-size: 1.25rem">{{ compra.numero_documento|default:"Sin número" }}</span>
+            <span class="cifra__detalle">Registrada el {{ compra.creado|date:"d/m/Y H:i" }}</span>
+        </div>
+    </section>
+
+    <section class="panel-informe">
+        <header class="panel-informe__cabecera">
+            <h2>Productos</h2>
+        </header>
+        <div class="tabla-contenedor">
+            <table class="tabla-informe">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th class="num">Cantidad</th>
+                        <th class="num">Costo unitario</th>
+                        <th class="num">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'detalle_producto' detalle.producto.id %}">{{ detalle.producto.nombre }}</a><br>
+                            <small class="tenue">{{ detalle.producto.categoria.nombre }}</small>
+                        </td>
+                        <td class="num">{{ detalle.cantidad }}</td>
+                        <td class="num">${{ detalle.costo_unitario|formato_chileno }}</td>
+                        <td class="num">${{ detalle.total_producto|formato_chileno }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr><td colspan="3">Total</td><td class="num">${{ compra.total|formato_chileno }}</td></tr>
+                </tfoot>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -84,11 +84,11 @@
                     de navegación ven recomendaciones personalizadas; el resto, los productos similares o los más vendidos.
                 </span>
                 <span class="config-campo__ayuda">
-                    Productos con todos sus atributos (KPI-10): <strong>{{ kpi10.completos }} de {{ kpi10.total }}</strong>.
+                    Productos con todos sus atributos: <strong>{{ kpi10.completos }} de {{ kpi10.total }}</strong>.
                     {% if not kpi10.cumple %}Completa la plataforma y el género de los que faltan para que las recomendaciones sean precisas.{% endif %}
                 </span>
                 <span class="config-campo__ayuda">
-                    Clics en recomendaciones, últimos 30 días (KPI-05):
+                    Clics en recomendaciones, últimos 30 días:
                     {% if kpi05.tasa is None %}
                         aún no se han mostrado recomendaciones a clientes que autorizaron sus datos de navegación.
                     {% else %}
@@ -143,6 +143,25 @@
                         {% endfor %}
                     </div>
                 </fieldset>
+            </div>
+        </section>
+
+        <section class="portada-seccion">
+            <header class="portada-seccion__header">
+                <div>
+                    <h2>Indicadores</h2>
+                    <p class="portada-seccion__nota">Datos para calcular los indicadores de Reportes.</p>
+                </div>
+            </header>
+
+            <div class="config-campo">
+                <label class="config-campo__titulo" for="{{ form.kpi01_linea_base.id_for_label }}">{{ form.kpi01_linea_base.label }}</label>
+                <div class="config-numero">{{ form.kpi01_linea_base }}</div>
+                <span class="config-campo__ayuda">
+                    Cuántas ventas tuvo la tienda en línea anterior en su último mes. Las ventas web adicionales
+                    se calculan restando este número a las ventas web de cada mes.
+                </span>
+                {% for error in form.kpi01_linea_base.errors %}<span class="text-danger small d-block">{{ error }}</span>{% endfor %}
             </div>
         </section>
 
