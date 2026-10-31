@@ -661,9 +661,11 @@ class Devolucion(models.Model):
 
     id = models.BigAutoField(primary_key=True, db_comment="Identificador y número de la solicitud de devolución.")
     venta = models.ForeignKey(Venta, on_delete=models.PROTECT, related_name='devoluciones',
-                              db_comment="Venta en la que se compró el producto (FK a venta).")
+                              db_comment="Venta en la que se compró el producto (FK a venta). Junto con producto_id, "
+                                         "FK compuesta a detalle_venta.")
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT,
-                                 db_comment="Producto que se devuelve (FK a producto).")
+                                 db_comment="Producto que se devuelve (FK a producto). Junto con venta_id, FK compuesta "
+                                            "a detalle_venta: solo se devuelve un producto de esa venta.")
     cantidad = models.PositiveIntegerField(default=1, db_comment="Unidades que se devuelven.")
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT,
                                 db_comment="Cliente que solicita la devolución (FK a usuario).")
@@ -684,9 +686,12 @@ class Devolucion(models.Model):
     fecha_reembolso = models.DateTimeField(null=True, blank=True,
                                            db_comment="Fecha y hora del reembolso. NULL si no se ha reembolsado.")
 
+    # La FK compuesta (venta_id, producto_id) -> detalle_venta la crea la migración 0017 con SQL:
+    # Django 5.2 no permite declarar una ForeignKey hacia un modelo con clave primaria compuesta.
     class Meta:
         db_table = 'devolucion'
-        db_table_comment = "Solicitudes de devolución de productos de una venta (derecho a retracto y garantía)."
+        db_table_comment = ("Solicitudes de devolución de productos de una venta (derecho a retracto y garantía). "
+                            "FK compuesta (venta_id, producto_id) a detalle_venta.")
 
     def __str__(self):
         return f"Devolución {self.id} - {self.usuario.nombre}"

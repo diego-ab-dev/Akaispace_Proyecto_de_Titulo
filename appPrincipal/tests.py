@@ -2083,6 +2083,18 @@ class ModeloDeDatosTests(TestCase):  # restricciones del modelo de datos definit
                                                  fecha_calculo=now())
         self.assertEqual(self.producto.similitudes.get().producto_similar, otro)
 
+    def test_la_devolucion_solo_admite_productos_de_esa_venta(self):
+        # FK compuesta (venta_id, producto_id) -> detalle_venta, migración 0017
+        from django.db import IntegrityError, transaction
+        from .models import Devolucion
+        venta = crear_venta(self.cliente, self.producto)
+        otro = crear_producto('Otro')
+        crear_venta(self.cliente, otro)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Devolucion.objects.create(usuario=self.cliente, venta=venta, producto=otro, motivo='x')
+        Devolucion.objects.create(usuario=self.cliente, venta=venta, producto=self.producto, motivo='x')
+        self.assertEqual(venta.devoluciones.get().producto, self.producto)
+
     def test_una_sola_imagen_principal_por_producto(self):
         from django.db import IntegrityError, transaction
         from .models import ImagenProducto
