@@ -14,7 +14,7 @@ FIXTURES_DIR = Path(__file__).resolve().parents[2] / 'fixtures'
 USUARIOS_DEMO = [
     {
         'email': 'admin@gmail.com',
-        'password': 'Akaispace-Admin-2026',
+        'password': 'Akaispace-Admin-2026',  # nosec B105 (cuenta de demo documentada en el README)
         'nombre': 'Admin',
         'rut': '12.343.455-2',
         'telefono': '+56 9 45533453',
@@ -26,7 +26,7 @@ USUARIOS_DEMO = [
     },
     {
         'email': 'user@gmail.com',
-        'password': 'Akaispace-Cliente-2026',
+        'password': 'Akaispace-Cliente-2026',  # nosec B105 (cuenta de demo documentada en el README)
         'nombre': 'Usuario',
         'rut': '75.292.177-6',
         'telefono': '+56 9 45645354',

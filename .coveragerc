@@ -1,0 +1,11 @@
+[run]
+source = appPrincipal, Akaispace
+omit =
+    */migrations/*
+    appPrincipal/tests.py
+    Akaispace/asgi.py
+    Akaispace/wsgi.py
+
+[report]
+show_missing = True
+skip_covered = True

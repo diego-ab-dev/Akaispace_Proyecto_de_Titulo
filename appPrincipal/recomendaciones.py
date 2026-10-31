@@ -96,7 +96,7 @@ def _catalogo():
     if not productos:
         return productos, None
     # cada palabra es una etiqueta; tf siempre vale 1, así que el peso lo pone el IDF
-    vectorizador = TfidfVectorizer(token_pattern=r'\S+', lowercase=False)
+    vectorizador = TfidfVectorizer(token_pattern=r'\S+', lowercase=False)  # nosec B106 (es una expresión regular, no una contraseña)
     return productos, vectorizador.fit_transform([documento(producto) for producto in productos])
 
 

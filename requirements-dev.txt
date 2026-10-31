@@ -1,0 +1,5 @@
+# Herramientas de calidad y seguridad (no las necesita la web en producción)
+-r requirements.txt
+bandit==1.9.4
+coverage==7.17.0
+pip-audit==2.10.1

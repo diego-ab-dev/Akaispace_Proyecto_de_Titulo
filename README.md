@@ -362,6 +362,23 @@ El notebook se guarda con sus resultados, así que también se puede leer sin ej
 
 ---
 
+## Pruebas, cobertura y seguridad
+
+Las herramientas de calidad están en `requirements-dev.txt` (no las necesita la web en producción). Con el entorno virtual activo y MySQL encendido:
+
+```powershell
+pip install -r requirements-dev.txt
+python manage.py test appPrincipal          # pruebas unitarias y de integración (Django TestCase)
+coverage run manage.py test appPrincipal    # las mismas pruebas, midiendo la cobertura
+coverage report                             # cobertura por archivo (coverage html deja el detalle en htmlcov/)
+bandit -r . --ini .bandit                   # análisis estático de seguridad del código
+pip-audit -r requirements.txt               # vulnerabilidades conocidas en las librerías
+```
+
+La configuración de coverage está en `.coveragerc` (excluye migraciones y tests) y la de Bandit en `.bandit`. Los avisos de Bandit revisados y descartados se marcan en el código con `# nosec` y el motivo.
+
+---
+
 ## Solución de problemas
 
 | Mensaje de error | Causa | Solución |

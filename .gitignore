@@ -18,3 +18,7 @@ Thumbs.db
 
 # Respaldos locales de la base de datos (mysqldump)
 respaldos/
+
+# Reportes de cobertura (coverage.py)
+.coverage
+htmlcov/
