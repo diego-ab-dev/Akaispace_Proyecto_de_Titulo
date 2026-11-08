@@ -1638,6 +1638,64 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
         respuesta = self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'NuevaClave-2027'})
         self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
 
+    def crear_cliente_google(self, email='ana@gmail.com'):
+        from allauth.socialaccount.models import SocialAccount
+        usuario = crear_cliente(email, password=None)  # como la crea allauth: sin contraseña utilizable
+        SocialAccount.objects.create(user=usuario, provider='google', uid='123')
+        self.assertFalse(usuario.has_usable_password())
+        return usuario
+
+    def definir_contraseña(self, contraseña='NuevaClave-2027'):
+        formulario = self.client.get(self.enlace_del_correo(), follow=True)
+        return self.client.post(formulario.redirect_chain[-1][0],
+                                {'new_password1': contraseña, 'new_password2': contraseña})
+
+    def test_cuenta_creada_solo_con_google_puede_definir_una_contraseña(self):
+        from django.core import mail
+        usuario = self.crear_cliente_google()
+        self.assertRedirects(self.pedir_enlace('ana@gmail.com'), '/recuperar-contrasena/enviado/')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['ana@gmail.com'])
+        self.assertRedirects(self.definir_contraseña(), '/recuperar-contrasena/listo/')
+        usuario.refresh_from_db()
+        self.assertTrue(usuario.check_password('NuevaClave-2027'))
+        respuesta = self.client.post('/login/', {'email': 'ana@gmail.com', 'contraseña': 'NuevaClave-2027'})
+        self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
+
+    def test_cuenta_inactiva_no_recibe_enlace(self):
+        from django.core import mail
+        self.usuario.is_active = False
+        self.usuario.save()
+        google = self.crear_cliente_google()
+        google.is_active = False
+        google.save()
+        self.pedir_enlace()
+        self.pedir_enlace('ana@gmail.com')
+        self.assertEqual(mail.outbox, [])
+
+    def test_cuenta_de_google_eliminada_no_recibe_enlace(self):
+        from django.core import mail
+        self.crear_cliente_google().delete()
+        self.pedir_enlace('ana@gmail.com')
+        self.assertEqual(mail.outbox, [])
+
+    def test_cuenta_marcada_como_eliminada_no_recibe_enlace_aunque_siga_activa(self):
+        from django.core import mail
+        Usuario.objects.filter(pk=self.usuario.pk).update(is_deleted=True)
+        self.pedir_enlace()
+        self.assertEqual(mail.outbox, [])
+
+    def test_usuario_con_contraseña_sigue_el_mismo_flujo(self):
+        from django.core import mail
+        self.assertRedirects(self.pedir_enlace(), '/recuperar-contrasena/enviado/')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['cliente@example.com'])
+        self.assertRedirects(self.definir_contraseña(), '/recuperar-contrasena/listo/')
+        self.usuario.refresh_from_db()
+        self.assertFalse(self.usuario.check_password('Akaispace-2026!'))
+        respuesta = self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'NuevaClave-2027'})
+        self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
+
 
 class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, plataforma y precio
     def setUp(self):

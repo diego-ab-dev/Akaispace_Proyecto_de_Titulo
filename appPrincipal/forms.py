@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.forms import PasswordResetForm, _unicode_ci_compare
 from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
@@ -122,6 +123,13 @@ class UsuarioCustomForm(forms.Form):
         except ValidationError as e:
             self.add_error('contraseña', e)
         return cleaned_data
+
+# form para recuperar contraseña (HU-11): a diferencia del de Django, también incluye las cuentas
+# creadas solo con Google (sin contraseña utilizable), para que puedan definir una
+class RecuperarContraseñaForm(PasswordResetForm):
+    def get_users(self, email):
+        usuarios = Usuario._default_manager.filter(email__iexact=email, is_active=True, is_deleted=False)
+        return (u for u in usuarios if _unicode_ci_compare(email, u.email))
 
 # form para opiniones
 class OpinionForm(forms.ModelForm):

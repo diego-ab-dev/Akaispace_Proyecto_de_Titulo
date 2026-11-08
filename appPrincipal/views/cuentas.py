@@ -143,6 +143,7 @@ class RecuperarContraseñaView(PasswordResetView):
 
 
 recuperar_contraseña = RecuperarContraseñaView.as_view(
+    form_class=forms.RecuperarContraseñaForm,
     template_name='recuperar_contraseña.html',
     subject_template_name='correos/recuperar_contraseña_asunto.txt',
     email_template_name='correos/recuperar_contraseña.txt',
