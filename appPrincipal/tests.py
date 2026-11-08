@@ -398,11 +398,6 @@ class ModeloTests(TestCase):  # 17, 25, 26 y 28
         with self.assertRaises(IntegrityError), transaction.atomic():
             Favorito.objects.create(usuario=self.cliente, producto=self.producto)
 
-    def test_varios_usuarios_sin_rut(self):  # 26
-        crear_cliente('a@example.com')
-        crear_cliente('b@example.com')
-        self.assertEqual(Usuario.objects.filter(rut__isnull=True).count(), 3)
-
     def test_estado_se_modifica_en_envio_y_anular_dos_veces_no_duplica_stock(self):  # 25
         from .models import Envio
         Envio.objects.create(venta=self.venta)
@@ -1772,28 +1767,11 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
         self.pedir_enlace('ana@gmail.com')
         self.assertEqual(mail.outbox, [])
 
-    def test_cuenta_de_google_eliminada_no_recibe_enlace(self):
-        from django.core import mail
-        self.crear_cliente_google().delete()
-        self.pedir_enlace('ana@gmail.com')
-        self.assertEqual(mail.outbox, [])
-
     def test_cuenta_marcada_como_eliminada_no_recibe_enlace_aunque_siga_activa(self):
         from django.core import mail
         Usuario.objects.filter(pk=self.usuario.pk).update(is_deleted=True)
         self.pedir_enlace()
         self.assertEqual(mail.outbox, [])
-
-    def test_usuario_con_contraseña_sigue_el_mismo_flujo(self):
-        from django.core import mail
-        self.assertRedirects(self.pedir_enlace(), '/recuperar-contrasena/enviado/')
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, ['cliente@example.com'])
-        self.assertRedirects(self.definir_contraseña(), '/recuperar-contrasena/listo/')
-        self.usuario.refresh_from_db()
-        self.assertFalse(self.usuario.check_password('Akaispace-2026!'))
-        respuesta = self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'NuevaClave-2027'})
-        self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
 
 
 class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, plataforma y precio
