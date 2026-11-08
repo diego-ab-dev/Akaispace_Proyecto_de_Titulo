@@ -499,6 +499,12 @@ class Venta(models.Model):
     )
     anulada_en = models.DateTimeField(null=True, blank=True, verbose_name="Anulada en",
                                       db_comment="Fecha y hora de anulación. NULL si la venta está vigente.")
+    # si el correo falla, el comando reenviar_confirmaciones lo reintenta (Ley 19.496, ventas a distancia)
+    confirmacion_enviada = models.BooleanField(
+        default=False,
+        db_comment="Indica si se envió el correo de confirmación de compra (HU-06). Las ventas web con 0 se "
+                   "reenvían con el comando reenviar_confirmaciones.",
+    )
 
     class Meta:
         db_table = 'venta'

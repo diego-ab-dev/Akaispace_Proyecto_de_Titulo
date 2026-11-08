@@ -1,6 +1,7 @@
 """Correos que envía la tienda.
 
-- Confirmación de compra: se envía al aprobarse el pago con Webpay.
+- Confirmación de compra: se envía al aprobarse el pago con Webpay. Si falla, la reenvía el comando
+  reenviar_confirmaciones.
 - Resolución de devolución: se envía cuando el administrador aprueba o rechaza una solicitud.
 - Recuperación de contraseña: la envía Django (PasswordResetView).
 """
@@ -13,6 +14,7 @@ from django.urls import reverse
 
 from appPrincipal import envios
 from appPrincipal.constants import CONDICIONES_COMPRA, POLITICA_RETRACTO, RESPONSABLE_DATOS
+from appPrincipal.models import Venta
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,12 @@ def enviar_confirmacion_compra(venta):
     enviado = _enviar(f"Confirmación de tu compra Nº {venta.id} - Akaispace", 'confirmacion_compra',
                       contexto, venta.usuario.email)
     if enviado:
+        Venta.objects.filter(pk=venta.pk).update(confirmacion_enviada=True)
+        venta.confirmacion_enviada = True
         logger.info("Correo de confirmación enviado: venta %s", venta.id)
+    else:
+        logger.error("Confirmación de compra pendiente: venta %s, cliente %s. La reenvía reenviar_confirmaciones.",
+                     venta.id, venta.usuario.email)
     return enviado
 
 

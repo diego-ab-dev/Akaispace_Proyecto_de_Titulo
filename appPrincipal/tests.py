@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.utils.timezone import now
 
 from .models import Producto, Usuario
 
@@ -1554,6 +1557,102 @@ class CorreoCompraTests(TestCase):  # HU-06: correo de confirmación al aprobars
             respuesta, pago = pagar(self.client)
         self.assertEqual(pago.estado, PagoWebpay.APROBADO)
         self.assertEqual(self.producto.__class__.objects.get(pk=self.producto.pk).stock, 3)
+
+    def test_correo_enviado_marca_la_confirmacion(self):
+        _, pago = pagar(self.client)
+        pago.venta.refresh_from_db()
+        self.assertTrue(pago.venta.confirmacion_enviada)
+
+
+class ReenviarConfirmacionesTests(TestCase):  # HU-06 y Ley 19.496: reenvío de la confirmación si SES falla
+    def setUp(self):
+        from .models import Carrito, ItemCarritoProducto
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+        producto = crear_producto(stock=5)
+        carrito = Carrito.objects.create(usuario=self.cliente)
+        ItemCarritoProducto.objects.create(carrito=carrito, producto=producto, cantidad=2)
+        elegir_entrega(self.client)
+
+    def pagar_con_ses_caido(self, hace=timedelta(minutes=10)):
+        """Compra aprobada cuyo correo falla; la venta queda con la fecha de `hace` atrás."""
+        import smtplib
+        from unittest import mock
+        from django.core import mail
+        from .models import Venta
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=smtplib.SMTPException('caído')), \
+                self.assertLogs('appPrincipal.correos', level='ERROR'):
+            _, pago = pagar(self.client)
+        Venta.objects.filter(pk=pago.venta_id).update(fecha=now() - hace)
+        mail.outbox.clear()
+        return Venta.objects.get(pk=pago.venta_id)
+
+    def test_si_ses_falla_la_venta_queda_pendiente_y_se_registra_venta_y_correo(self):
+        import smtplib
+        from unittest import mock
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=smtplib.SMTPException('caído')), \
+                self.assertLogs('appPrincipal.correos', level='ERROR') as logs:
+            _, pago = pagar(self.client)
+        pago.venta.refresh_from_db()
+        self.assertFalse(pago.venta.confirmacion_enviada)
+        self.assertTrue(any(f'venta {pago.venta_id}' in linea and 'cliente@example.com' in linea
+                            for linea in logs.output))
+
+    def test_el_comando_reenvia_y_marca_la_venta(self):
+        from django.core import mail
+        venta = self.pagar_con_ses_caido()
+        call_command('reenviar_confirmaciones', verbosity=0)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['cliente@example.com'])
+        self.assertIn(f'Nº {venta.id}', mail.outbox[0].subject)
+        venta.refresh_from_db()
+        self.assertTrue(venta.confirmacion_enviada)
+
+    def test_si_el_reenvio_falla_la_venta_sigue_pendiente(self):
+        import smtplib
+        from unittest import mock
+        venta = self.pagar_con_ses_caido()
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=smtplib.SMTPException('caído')), \
+                self.assertLogs('appPrincipal.correos', level='ERROR'):
+            call_command('reenviar_confirmaciones', verbosity=0)
+        venta.refresh_from_db()
+        self.assertFalse(venta.confirmacion_enviada)
+
+    def test_no_reenvia_ventas_de_mas_de_7_dias(self):
+        from django.core import mail
+        venta = self.pagar_con_ses_caido(hace=timedelta(days=7, minutes=1))
+        call_command('reenviar_confirmaciones', verbosity=0)
+        self.assertEqual(mail.outbox, [])
+        venta.refresh_from_db()
+        self.assertFalse(venta.confirmacion_enviada)
+
+    def test_no_reenvia_ventas_de_menos_de_5_minutos(self):  # el envío normal puede estar en curso
+        from django.core import mail
+        self.pagar_con_ses_caido(hace=timedelta(minutes=1))
+        call_command('reenviar_confirmaciones', verbosity=0)
+        self.assertEqual(mail.outbox, [])
+
+    def test_no_reenvia_las_ya_enviadas(self):
+        from django.core import mail
+        from .models import Venta
+        _, pago = pagar(self.client)
+        Venta.objects.filter(pk=pago.venta_id).update(fecha=now() - timedelta(minutes=10))
+        mail.outbox.clear()
+        call_command('reenviar_confirmaciones', verbosity=0)
+        self.assertEqual(mail.outbox, [])
+
+    def test_dos_instancias_a_la_vez_no_envian_dos_veces_la_misma_venta(self):
+        from unittest import mock
+        from django.core import mail
+        from appPrincipal.management.commands import reenviar_confirmaciones
+        self.pagar_con_ses_caido()
+        # la instancia A lee las pendientes, la B corre completa y luego A procesa su lista ya desactualizada
+        leidas_por_a = list(reenviar_confirmaciones.confirmaciones_pendientes())
+        call_command('reenviar_confirmaciones', verbosity=0)
+        with mock.patch.object(reenviar_confirmaciones, 'confirmaciones_pendientes', return_value=leidas_por_a):
+            call_command('reenviar_confirmaciones', verbosity=0)
+        self.assertEqual(len(leidas_por_a), 1)
+        self.assertEqual(len(mail.outbox), 1)
 
 
 class RecuperarContraseñaTests(TestCase):  # HU-11

@@ -340,6 +340,8 @@ El navbar está en `templates/partials/navbar.html`, el footer en `templates/par
 
 En el servidor hay que programar una vez al día `python manage.py mantener_recomendaciones`: borra la navegación con más de 24 meses (el plazo que promete la política de privacidad) y recalcula las similitudes con las ventas del día. En Linux, con cron, por ejemplo a las 4:00: `0 4 * * * cd /ruta/del/proyecto && venv/bin/python manage.py mantener_recomendaciones`. En desarrollo no es necesario.
 
+**Confirmación de compra (HU-06, Ley 19.496)**: si el correo de confirmación falla al aprobarse el pago (por ejemplo, porque Amazon SES no responde), la venta queda con `confirmacion_enviada = False` y el error se registra en el log con el número de venta y el correo del cliente. En el servidor hay que programar cada 15 minutos `python manage.py reenviar_confirmaciones`, que reenvía las confirmaciones pendientes de las ventas pagadas con Webpay creadas hace más de 5 minutos y hace menos de 7 días. Con cron: `*/15 * * * * cd /ruta/del/proyecto && venv/bin/python manage.py reenviar_confirmaciones`. Puede correr en dos instancias a la vez sin enviar el mismo correo dos veces.
+
 **Portada editable** (carrusel del menú, nuevos lanzamientos del home y la tarjeta promocional de cada menú del navbar): se administra desde el panel, en **Portada**. Se guarda en el modelo `Destacado` y llega a las plantillas como `portada` (`appPrincipal/context_processors.py`). El contenido inicial lo crea la migración `0004_portada_inicial`, y `python manage.py seed_demo` lo enlaza con los productos de ejemplo.
 
 ---
