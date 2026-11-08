@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import PasswordResetForm, _unicode_ci_compare
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
@@ -7,6 +7,7 @@ from .constants import REGIONES, REGIONES_CIUDADES
 from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto,
                      MovimientoCaja, Opinion, Producto, Usuario, youtube_embed_url)
 import os
+import unicodedata
 
 
 # validacion de rut
@@ -129,7 +130,12 @@ class UsuarioCustomForm(forms.Form):
 class RecuperarContraseñaForm(PasswordResetForm):
     def get_users(self, email):
         usuarios = Usuario._default_manager.filter(email__iexact=email, is_active=True, is_deleted=False)
-        return (u for u in usuarios if _unicode_ci_compare(email, u.email))
+        return (u for u in usuarios if _mismo_correo(email, u.email))
+
+# compara correos sin distinguir mayúsculas ni formas unicode equivalentes (NFKC + casefold),
+# igual que hace Django internamente, sin depender de su función privada
+def _mismo_correo(correo1, correo2):
+    return unicodedata.normalize('NFKC', correo1).casefold() == unicodedata.normalize('NFKC', correo2).casefold()
 
 # form para opiniones
 class OpinionForm(forms.ModelForm):
