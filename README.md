@@ -1,292 +1,41 @@
-# Guía de instalación y uso: Proyecto Akaispace
+# Akaispace
 
-Guía para dejar el proyecto funcionando desde cero en un computador con Windows.
+Tienda web de Akaispace (Django 5.2 + MySQL 8.4).
 
-## Requisitos
+## Acceso rápido
 
-| Programa | Versión | Dónde obtenerlo |
+### Usuarios de prueba
+
+Los crea `python manage.py seed_demo` (solo existen en tu base local).
+
+| Rol | Correo | Contraseña |
 |---|---|---|
-| Git | Cualquiera reciente | https://git-scm.com/download/win |
-| Python | **3.12** | https://www.python.org/downloads/windows |
-| MySQL Community Server | **8.4 LTS** | https://dev.mysql.com/downloads/mysql |
+| Administrador | admin@gmail.com | Akaispace-Admin-2026 |
+| Cliente | user@gmail.com | Akaispace-Cliente-2026 |
 
-**Importante:**
-
-- **No usar XAMPP.** Su MySQL es en realidad MariaDB 10.4, versión que Django 5.2 ya no soporta. Si tienes XAMPP instalado, deja su MySQL detenido (botón *Stop* en el panel de XAMPP).
-- **No usar el Python de Microsoft Store.** Instala Python 3.12 desde python.org.
-- **No clonar el proyecto dentro de OneDrive** (por ejemplo, en el Escritorio o Documentos si están sincronizados). OneDrive intenta sincronizar los miles de archivos del entorno virtual y vuelve todo lento.
-
----
-
-## Paso 1: Instalar Python 3.12
-
-1. Descarga el **Windows installer (64-bit)** de la versión 3.12 más reciente.
-2. Al abrir el instalador, marca abajo la casilla **"Add python.exe to PATH"** y presiona **Install Now**.
-3. Cierra y vuelve a abrir PowerShell.
-4. Verifica la instalación ejecutando:
-
-```powershell
-py --list
-```
-
-Debe aparecer una línea con **3.12**.
-
-## Paso 2: Instalar MySQL 8.4 LTS
-
-1. Descarga el instalador MSI de **MySQL Community Server 8.4.x LTS** (no la versión "Innovation").
-2. En **Choose Setup Type**, elige **Typical**.
-3. Al terminar, deja marcada la casilla **"Run MySQL Configurator"** y presiona **Finish**.
-4. En el configurador:
-   - **Data Directory:** dejar la ruta por defecto.
-   - **Type and Networking:** Config Type = **Development Computer**, puerto **3306**.
-   - **Accounts and Roles:** crear la contraseña de **root** y **anotarla**.
-   - **Windows Service:** dejar marcadas las opciones de servicio y de inicio automático.
-   - **Sample Databases:** no marcar nada.
-   - **Apply Configuration:** presionar **Execute** y luego **Finish**.
-
-## Paso 3: Clonar el proyecto
-
-En PowerShell:
-
-```powershell
-mkdir C:\Proyectos
-cd C:\Proyectos
-git clone URL_DEL_REPOSITORIO
-cd Akaispace_Proyecto_de_Titulo
-```
-
-La URL se obtiene en GitHub, con el botón verde **Code**, pestaña **HTTPS**.
-
-## Paso 4: Crear el entorno virtual e instalar librerías
-
-En la carpeta del proyecto:
-
-```powershell
-py -3.12 -m venv venv
-.\venv\Scripts\activate
-python --version
-```
-
-Debe decir **Python 3.12.x**, y la línea de la terminal debe comenzar con `(venv)`.
-
-> **Si `activate` muestra un error sobre "scripts" o "execution policy":** abre PowerShell como administrador (clic derecho, "Ejecutar como administrador") y ejecuta una sola vez:
->
-> ```powershell
-> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-> ```
->
-> Responde `S`, cierra esa ventana y vuelve a activar el entorno.
-
-Luego instala las librerías:
-
-```powershell
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-## Paso 5: Crear la base de datos
-
-Con el entorno virtual activo o sin él (da lo mismo), entra a MySQL:
-
-```powershell
-& "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root -p
-```
-
-Ingresa la contraseña de root. Cuando aparezca `mysql>`, ejecuta:
-
-```sql
-CREATE DATABASE db_akaispace CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-exit
-```
-
-La base de datos queda vacía. Las tablas y los datos de prueba se crean en el Paso 7.
-
-## Paso 6: Configurar la conexión (archivo .env)
-
-La contraseña de la base de datos y la clave secreta de Django no se escriben en `settings.py`, sino en un archivo `.env` propio de cada computador. Este archivo **no se sube a GitHub**.
-
-Crea tu `.env` copiando la plantilla:
-
-```powershell
-Copy-Item .env.example .env
-notepad .env
-```
-
-Primero genera una clave secreta (con el entorno virtual activo):
-
-```powershell
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
-En el Bloc de notas, pega esa clave en `SECRET_KEY=`, completa `DB_PASSWORD=` con tu contraseña de MySQL (sin comillas ni espacios) y guarda:
-
-```
-SECRET_KEY=la_clave_que_generaste
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-DB_NAME=db_akaispace
-DB_USER=root
-DB_PASSWORD=tu_contraseña
-DB_HOST=localhost
-DB_PORT=3306
-```
-
-`DEBUG=True` es solo para desarrollo. En un servidor real va `DEBUG=False`, con una `SECRET_KEY` distinta y el dominio en `ALLOWED_HOSTS`.
-
-### (Opcional) Envío real de correos
-
-Sin esta configuración el proyecto funciona igual, pero los correos (confirmación de compra y recuperación de contraseña) **no se envían**: solo se muestran en la terminal donde corre `runserver`.
-
-Para enviarlos de verdad, en el `.env` quita el `#` del inicio de estas líneas de la sección "Correo":
-
-```
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST_USER=akaispacepruebas13@gmail.com
-EMAIL_HOST_PASSWORD=la-contraseña-de-aplicación-de-16-letras
-DEFAULT_FROM_EMAIL=Akaispace <akaispacepruebas13@gmail.com>
-```
-
-La contraseña de aplicación de la cuenta de pruebas **no está en el repositorio**: pídesela al encargado del proyecto y pégala en `EMAIL_HOST_PASSWORD=`. Después reinicia `runserver`.
-
-## Paso 7: Ejecutar el proyecto
-
-Con el entorno virtual activo:
-
-```powershell
-python manage.py migrate
-python manage.py seed_demo
-python manage.py seed_catalogo
-python manage.py runserver
-```
-
-`migrate` crea las tablas y `seed_demo` carga los productos de ejemplo (con sus imágenes) y los usuarios de prueba. `seed_catalogo` agrega el catálogo de prueba (unos 115 productos de `appPrincipal/fixtures/catalogo.csv`, con una imagen genérica por categoría), que usan las recomendaciones (HU-07). Ambos comandos se pueden ejecutar más de una vez sin duplicar datos: `seed_catalogo` actualiza el nombre, la descripción, la categoría, la plataforma y el género de los productos que ya existen, pero no cambia su precio ni su stock. Al terminar, `seed_catalogo` calcula las similitudes entre productos que usan las recomendaciones; después se recalculan solas cada vez que se crea, elimina o cambia la categoría, plataforma o género de un producto. Para forzar el recálculo a mano: `python manage.py calcular_similitudes`.
-
-Abre el navegador en: http://127.0.0.1:8000/
-
-Para detener el servidor, presiona `Ctrl + C`.
-
----
-
-## Credenciales de acceso (usuarios de prueba)
-
-Estas cuentas las crea `python manage.py seed_demo` y existen solo en tu base de datos local.
-
-**Rol administrador** (acceso total al panel y gestión):
-- Correo: admin@gmail.com
-- Contraseña: Akaispace-Admin-2026
-
-**Rol cliente** (usuario normal para comprar):
-- Correo: user@gmail.com
-- Contraseña: Akaispace-Cliente-2026
-
-Las cuentas nuevas que se registren desde el sitio deben cumplir las reglas de contraseña: al menos 8 caracteres, tener al menos una letra y un número, no ser una contraseña común y no parecerse al nombre ni al correo.
-
-Si tus cuentas de prueba todavía tienen la contraseña antigua (`12345`), ejecuta `python manage.py seed_demo`: restablece las contraseñas de prueba sin tocar el resto de los datos.
-
-Si quieres otra cuenta de administrador, ejecuta `python manage.py createsuperuser`.
-
-**Bloqueo por intentos fallidos:** después de 5 intentos de login fallidos con el mismo correo, ese correo queda bloqueado por 15 minutos. Para desbloquear todo durante el desarrollo, ejecuta `python manage.py axes_reset`.
-
----
-
-## Pagos con Webpay Plus (ambiente de pruebas)
-
-El checkout paga con Webpay Plus de Transbank. Por defecto usa el **ambiente de integración**, con las credenciales públicas de prueba de Transbank: no hay que configurar nada y no se cobra dinero real (necesitas conexión a internet).
-
-En el formulario de Webpay usa estas tarjetas de prueba (lista completa en [Transbank Developers](https://www.transbankdevelopers.cl/documentacion/como_empezar#tarjetas-de-prueba)):
+### Tarjetas de prueba Webpay
 
 | Tarjeta | Número | CVV | Resultado |
 |---|---|---|---|
 | VISA crédito | 4051 8856 0044 6623 | 123 | Aprobada |
 | Mastercard crédito | 5186 0595 5959 0568 | 123 | Rechazada |
 
-La fecha de vencimiento puede ser cualquiera futura. Si Webpay pide autenticarse, usa el RUT **11.111.111-1** y la clave **123**.
+- Vencimiento: cualquier fecha futura.
+- Si Webpay pide autenticación: RUT **11.111.111-1**, clave **123**.
+- Más tarjetas en [Transbank Developers](https://www.transbankdevelopers.cl/documentacion/como_empezar#tarjetas-de-prueba).
 
-Cada intento de pago queda registrado en el modelo `PagoWebpay` (visible en `/admin/` con `DEBUG=True`). La venta se crea solo cuando Transbank aprueba el pago.
+### Comandos útiles
 
-**Para cobrar de verdad** hay que contratar Webpay Plus con Transbank, pasar su proceso de validación y poner en el `.env` del servidor `WEBPAY_AMBIENTE=produccion`, `WEBPAY_CODIGO_COMERCIO` y `WEBPAY_API_KEY` (ver `.env.example`).
-
----
-
-## (Opcional) Inicio de sesión con Google
-
-Sin esta configuración el login con correo y contraseña funciona igual; solo no aparece el botón **Continuar con Google**.
-
-1. En [Google Cloud Console](https://console.cloud.google.com/) crea un proyecto y, en **APIs y servicios > Credenciales**, un **ID de cliente de OAuth** de tipo *Aplicación web*.
-2. En **URI de redireccionamiento autorizados** agrega `http://localhost:8000/accounts/google/login/callback/`.
-3. Copia el ID y el secreto en tu `.env` (las líneas están en `.env.example`), nunca en el código:
-
-   ```
-   GOOGLE_CLIENT_ID=el-id-de-cliente.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=el-secreto
-   ```
-
-4. Reinicia `runserver`. El botón aparece en `/login/`.
-
-Si el correo de Google ya tiene una cuenta en la tienda, se inicia sesión en esa cuenta; si no, se crea una con el nombre del perfil de Google. El registro con contraseña sigue siendo solo el de `/register/` (el de allauth, `/accounts/signup/`, está cerrado).
-
----
-
-## Si ya tenías el proyecto instalado
-
-### Modelo de datos definitivo (migraciones 0010 a 0015)
-
-Estas migraciones normalizan la base: categoría, plataforma y género pasan a tablas propias, las imágenes a `imagen_producto` e `imagen_devolucion`, las tablas de detalle tienen clave primaria compuesta, `Boleta` pasa a llamarse `Comprobante` (no tributario) y todas las tablas quedan con nombre en minúscula y sin el prefijo `appPrincipal_`. Tus datos se conservan. Después de hacer `git pull`, con el entorno virtual activo:
-
-1. (Recomendado) Respalda tu base antes de migrar, con el `mysqldump` de MySQL 8.4:
-
-   ```powershell
-   & "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqldump.exe" -u root -p --databases db_akaispace > respaldo_db_akaispace.sql
-   ```
-
-2. Instala las librerías y migra:
-
-   ```powershell
-   pip install -r requirements.txt
-   python manage.py migrate
-   ```
-
-3. Si usas los datos de ejemplo, vuelve a cargarlos: `python manage.py seed_demo`.
-
-Ten en cuenta:
-
-- Las URL de categorías cambiaron a `/productos/<id de categoría>/` y `/productos/<id de categoría>/<plataforma>/` (ej. `/productos/1/ps5/`). La boleta ahora es `/comprobante/<n.º de venta>/`.
-- Si tienes consultas SQL o diagramas propios, los nombres de tabla cambiaron (`appPrincipal_producto` ahora es `producto`, `appPrincipal_productoventa` ahora es `detalle_venta`, etc.).
-- Ningún producto existente tiene costo registrado: el reporte de ganancia los excluye hasta que se ingrese su costo en el panel (Editar producto).
-
-### Si venías de la base antigua `db_sdgames`
-
-El proyecto pasó al sistema de usuarios de Django y **las migraciones se reiniciaron desde cero**. La base de datos antigua (`db_sdgames`) ya no es compatible. Después de hacer `git pull`:
-
-1. Instala las librerías nuevas (con el entorno virtual activo):
-
-   ```powershell
-   pip install -r requirements.txt
-   ```
-
-2. Crea la base de datos nueva, como en el Paso 5:
-
-   ```sql
-   CREATE DATABASE db_akaispace CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-   ```
-
-3. En tu `.env`, cambia `DB_NAME=db_sdgames` por `DB_NAME=db_akaispace`. Si aún no tienes `SECRET_KEY`, `DEBUG` y `ALLOWED_HOSTS`, agrégalos como se indica en el Paso 6.
-
-4. Crea las tablas y carga los datos de prueba:
-
-   ```powershell
-   python manage.py migrate
-   python manage.py seed_demo
-   ```
-
-La base `db_sdgames` puede quedarse ahí o puedes borrarla (`DROP DATABASE db_sdgames;`); el proyecto ya no la usa.
+| Comando | Para qué |
+|---|---|
+| `python manage.py runserver` | Levantar el sitio en http://127.0.0.1:8000/ |
+| `python manage.py axes_reset` | Desbloquear el login (se bloquea 15 min tras 5 intentos fallidos) |
+| `python manage.py seed_demo` | Recargar productos de ejemplo y restablecer los usuarios de prueba |
+| `python manage.py createsuperuser` | Crear otro administrador |
 
 ---
 
 ## Uso diario
-
-Cada vez que vayas a trabajar en el proyecto:
 
 ```powershell
 cd C:\Proyectos\Akaispace_Proyecto_de_Titulo
@@ -297,109 +46,161 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-`pip install` y `migrate` no hacen nada si no hubo cambios, así que ejecutarlos siempre es seguro.
+`pip install` y `migrate` no hacen nada si no hubo cambios, así que siempre es seguro ejecutarlos.
 
 ---
 
-## Dónde va cada cosa (para agregar funcionalidades)
+## Instalación desde cero (Windows)
 
-**Vistas** (`appPrincipal/views/`): un archivo por funcionalidad. Las del cliente están en la carpeta (`catalogo.py`, `cuentas.py`, `carrito.py`, `pago.py`, `compras.py`, `opiniones.py`...) y las del panel de administración en `views/panel/`. Cada vista nueva se agrega también en el `__init__.py` de su carpeta, y en `Akaispace/urls.py` se usa como `views.nombre_de_la_vista`.
+### Requisitos
 
-**Plantillas** (`templates/`): ninguna página se escribe desde cero; todas heredan de una base:
-
-| La página es... | Hereda de | Trae incluido |
+| Programa | Versión | Dónde obtenerlo |
 |---|---|---|
-| De la tienda, con navbar y footer | `base_tienda.html` | Navbar, footer y su JavaScript |
-| Del panel, con menú lateral | `admin_panel/base_admin.html` | Header, menú lateral y su JavaScript |
-| Cualquier otra (perfil, formularios, detalles) | `base.html` | Bootstrap, Font Awesome, Boxicons y el favicon |
+| Git | Reciente | https://git-scm.com/download/win |
+| Python | **3.12** | https://www.python.org/downloads/windows |
+| MySQL Community Server | **8.4 LTS** | https://dev.mysql.com/downloads/mysql |
 
-Una página nueva solo define sus bloques:
+- **No usar XAMPP**: su MySQL es MariaDB 10.4 y Django 5.2 no lo soporta.
+- **No usar el Python de Microsoft Store.**
+- **No clonar dentro de OneDrive** (Escritorio/Documentos sincronizados): se vuelve muy lento.
 
-```django
-{% extends "base_tienda.html" %}
-{% load static %}
+### 1. Instalar Python 3.12
 
-{% block title %}Mi página - Akaispace{% endblock %}
+Instalador **Windows installer (64-bit)**, marcando **"Add python.exe to PATH"**. Reabre PowerShell y verifica con `py --list` (debe aparecer 3.12).
 
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'styles/styles_mi_pagina.css' %}">
-{% endblock %}
+### 2. Instalar MySQL 8.4 LTS
 
-{% block content %}
-...
-{% endblock %}
+Instalador MSI (no la versión "Innovation"), tipo **Typical**, y en el configurador:
+**Development Computer**, puerto **3306**, crea y **anota** la contraseña de root, deja el servicio con inicio automático.
+
+### 3. Clonar el proyecto
+
+```powershell
+mkdir C:\Proyectos
+cd C:\Proyectos
+git clone URL_DEL_REPOSITORIO
+cd Akaispace_Proyecto_de_Titulo
 ```
 
-El navbar está en `templates/partials/navbar.html`, el footer en `templates/partials/footer.html` y el menú lateral del panel en `templates/admin_panel/partials/sidebar.html`. Para cambiarlos se edita solo ese archivo.
+### 4. Entorno virtual y librerías
 
-**Catálogo**: la categoría, la plataforma y el género de cada producto son tablas propias (`Categoria`, `Plataforma` y `Genero`), cargadas por la migración `0011_catalogo_normalizado`. Las entradas de los menús del navbar están en `MENU_NAVBAR` (`appPrincipal/constants.py`) y cada categoría se oculta o muestra desde el panel, en **Configuración**. Las imágenes de un producto están en `ImagenProducto` (hasta 6, una principal); en las plantillas se usan `producto.imagen_principal` y `producto.imagenes`.
+```powershell
+py -3.12 -m venv venv
+.\venv\Scripts\activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-**Recomendaciones (HU-07)**: toda la lógica está en `appPrincipal/recomendaciones.py` (similitud con TF-IDF y coseno, arranque en frío, registro de interacciones y KPI-05); el prototipo y la justificación están en `notebooks/hu07_similitud_productos.ipynb`. Se activan desde el panel, en **Configuración**. Solo se guarda la navegación de los clientes que lo autorizaron; cada cliente puede activarlo o retirarlo desde su perfil, y al retirarlo (o al eliminarse su cuenta) se borra su historial.
+> Si `activate` da error de "execution policy", ejecuta una vez en PowerShell como administrador:
+> `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`
 
-**Reportes (HU-10)**: los cálculos están en `appPrincipal/reportes.py` (ventas, ganancia, productos, caja, compras y los KPI-01, 03, 04, 05 y 10 con las fórmulas del informe); el panel los muestra en **Resumen** y en **Reportes**, con filtro por periodo. Los montos se guardan con IVA (bruto) y el neto se calcula dividiendo por 1,19. Las compras a proveedores se registran en **Compras**: al marcarlas como recibidas suman al stock y actualizan el costo del producto. La línea base de KPI-01 se ingresa en **Configuración**.
+### 5. Crear la base de datos
 
-En el servidor hay que programar una vez al día `python manage.py mantener_recomendaciones`: borra la navegación con más de 24 meses (el plazo que promete la política de privacidad) y recalcula las similitudes con las ventas del día. En Linux, con cron, por ejemplo a las 4:00: `0 4 * * * cd /ruta/del/proyecto && venv/bin/python manage.py mantener_recomendaciones`. En desarrollo no es necesario.
+```powershell
+& "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root -p
+```
 
-**Confirmación de compra (HU-06, Ley 19.496)**: si el correo de confirmación falla al aprobarse el pago (por ejemplo, porque Amazon SES no responde), la venta queda con `confirmacion_enviada = False` y el error se registra en el log con el número de venta y el correo del cliente. En el servidor hay que programar cada 15 minutos `python manage.py reenviar_confirmaciones`, que reenvía las confirmaciones pendientes de las ventas pagadas con Webpay creadas hace más de 5 minutos y hace menos de 7 días. Con cron: `*/15 * * * * cd /ruta/del/proyecto && venv/bin/python manage.py reenviar_confirmaciones`. Puede correr en dos instancias a la vez sin enviar el mismo correo dos veces.
+```sql
+CREATE DATABASE db_akaispace CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+exit
+```
 
-**Portada editable** (carrusel del menú, nuevos lanzamientos del home y la tarjeta promocional de cada menú del navbar): se administra desde el panel, en **Portada**. Se guarda en el modelo `Destacado` y llega a las plantillas como `portada` (`appPrincipal/context_processors.py`). El contenido inicial lo crea la migración `0004_portada_inicial`, y `python manage.py seed_demo` lo enlaza con los productos de ejemplo.
+### 6. Archivo `.env`
+
+```powershell
+Copy-Item .env.example .env
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+notepad .env
+```
+
+Pega la clave generada en `SECRET_KEY=` y tu contraseña de MySQL en `DB_PASSWORD=` (sin comillas). El `.env` **no se sube a GitHub**. `DEBUG=True` es solo para desarrollo.
+
+### 7. Cargar datos y ejecutar
+
+```powershell
+python manage.py migrate
+python manage.py seed_demo
+python manage.py seed_catalogo
+python manage.py runserver
+```
+
+- `seed_demo`: productos de ejemplo, portada y usuarios de prueba.
+- `seed_catalogo`: catálogo de ~115 productos (`appPrincipal/fixtures/catalogo.csv`) usado por las recomendaciones; al final calcula las similitudes.
+
+Ambos se pueden repetir sin duplicar datos.
 
 ---
 
-## Notebooks (prototipos para el informe)
+## Configuración opcional (`.env`)
 
-La carpeta `notebooks/` tiene los prototipos en Jupyter que se usan como material del informe. No los necesita la web.
+Todo funciona sin esto; las variables están comentadas en `.env.example`.
 
-- `hu07_similitud_productos.ipynb`: prototipo del recomendador de HU-07. Calcula la similitud entre los productos de `appPrincipal/fixtures/catalogo.csv` con TF-IDF y similitud del coseno, y muestra el mapa de calor, ejemplos de recomendación, el efecto del IDF y de la familia de plataforma, los empates y la limitación de Funko Pop y Amiibo.
-- `hu07_evaluacion.ipynb`: evaluación del recomendador implementado en `appPrincipal/recomendaciones.py`: coherencia de los productos similares frente a la ficha anterior y precision@5 con 200 clientes simulados con Faker. Crea una base de datos de prueba temporal (como los tests), así que necesita MySQL encendido; no toca la base de desarrollo y tarda uno o dos minutos.
+| Función | Variables | Sin configurar |
+|---|---|---|
+| Envío real de correos | `EMAIL_BACKEND`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL` | Los correos se muestran en la terminal de `runserver` |
+| Login con Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | No aparece el botón "Continuar con Google" |
+| Webpay real | `WEBPAY_AMBIENTE=produccion`, `WEBPAY_CODIGO_COMERCIO`, `WEBPAY_API_KEY` | Usa el ambiente de integración (sin cobros reales) |
 
-Para abrirlos, con el entorno virtual activo:
+- **Correos**: la contraseña de aplicación de la cuenta de pruebas no está en el repositorio; pídesela al encargado del proyecto.
+- **Google**: crea un ID de cliente OAuth (*Aplicación web*) en [Google Cloud Console](https://console.cloud.google.com/) con la URI de redirección `http://localhost:8000/accounts/google/login/callback/`.
+
+Reinicia `runserver` después de cambiar el `.env`.
+
+---
+
+## Tareas programadas (solo servidor)
+
+| Frecuencia | Comando | Qué hace |
+|---|---|---|
+| Diaria | `python manage.py mantener_recomendaciones` | Borra navegación de más de 24 meses y recalcula similitudes |
+| Cada 15 min | `python manage.py reenviar_confirmaciones` | Reenvía confirmaciones de compra que fallaron |
+
+Ejemplo cron: `*/15 * * * * cd /ruta/del/proyecto && venv/bin/python manage.py reenviar_confirmaciones`
+
+---
+
+## Pruebas y calidad
+
+```powershell
+pip install -r requirements-dev.txt
+python manage.py test appPrincipal
+coverage run manage.py test appPrincipal; coverage report
+bandit -r . --ini .bandit
+pip-audit -r requirements.txt
+```
+
+## Notebooks
+
+Prototipos para el informe en `notebooks/` (no los necesita la web):
 
 ```powershell
 pip install -r notebooks/requirements.txt
 jupyter notebook notebooks
 ```
 
-El notebook se guarda con sus resultados, así que también se puede leer sin ejecutarlo (por ejemplo, en GitHub o en VS Code).
+## Estructura
 
----
-
-## Pruebas, cobertura y seguridad
-
-Las herramientas de calidad están en `requirements-dev.txt` (no las necesita la web en producción). Con el entorno virtual activo y MySQL encendido:
-
-```powershell
-pip install -r requirements-dev.txt
-python manage.py test appPrincipal          # pruebas unitarias y de integración (Django TestCase)
-coverage run manage.py test appPrincipal    # las mismas pruebas, midiendo la cobertura
-coverage report                             # cobertura por archivo (coverage html deja el detalle en htmlcov/)
-bandit -r . --ini .bandit                   # análisis estático de seguridad del código
-pip-audit -r requirements.txt               # vulnerabilidades conocidas en las librerías
-```
-
-La configuración de coverage está en `.coveragerc` (excluye migraciones y tests) y la de Bandit en `.bandit`. Los avisos de Bandit revisados y descartados se marcan en el código con `# nosec` y el motivo.
+| Qué | Dónde |
+|---|---|
+| Vistas de la tienda / del panel | `appPrincipal/views/` / `appPrincipal/views/panel/` |
+| Plantillas base | `templates/base.html`, `base_tienda.html`, `admin_panel/base_admin.html` |
+| Recomendaciones (HU-07) | `appPrincipal/recomendaciones.py` |
+| Reportes y KPI (HU-10) | `appPrincipal/reportes.py` |
+| Rutas | `Akaispace/urls.py` |
 
 ---
 
 ## Solución de problemas
 
-| Mensaje de error | Causa | Solución |
-|---|---|---|
-| `No module named 'django'` | El entorno virtual no está activo o faltan librerías | Ejecutar `.\venv\Scripts\activate` y luego `pip install -r requirements.txt` |
-| `py` no se reconoce como comando | Python no se instaló desde python.org | Reinstalar Python 3.12 desde python.org y reabrir PowerShell |
-| `MariaDB 10.5 or later is required` | El proyecto se está conectando al MySQL de XAMPP | Detener MySQL en XAMPP y verificar que el servicio MySQL 8.4 esté iniciado |
-| `Access denied for user 'root'@'localhost'` | Contraseña incorrecta en `.env` | Revisar `DB_PASSWORD` en el archivo `.env` |
-| `Unknown database 'db_akaispace'` | No se creó la base de datos | Repetir el Paso 5 |
-| `SECRET_KEY not found` | Falta `SECRET_KEY` en el archivo `.env` | Agregarla como se indica en el Paso 6 |
-| La página carga sin estilos ni imágenes | `DEBUG` no está en `True` en el `.env` | Agregar `DEBUG=True` al `.env` |
-| Los correos no llegan (aparecen en la terminal) | Falta la configuración de correo en el `.env` | Seguir "(Opcional) Envío real de correos" en el Paso 6 |
-| `SMTPAuthenticationError` al enviar un correo | `EMAIL_HOST_PASSWORD` incorrecta o se usó la contraseña normal de Gmail | Usar la contraseña de aplicación de la cuenta de pruebas |
-| `Table '...' doesn't exist` | Faltan las tablas | Ejecutar `python manage.py migrate` |
-| `InconsistentMigrationHistory` | El `.env` apunta a la base de datos antigua | Seguir la sección "Si ya tenías el proyecto instalado" |
-| `No module named 'axes'` | Faltan librerías nuevas | Ejecutar `pip install -r requirements.txt` |
-| `No module named 'allauth'` | Faltan librerías nuevas | Ejecutar `pip install -r requirements.txt` |
-| Un enlace antiguo de categoría da error 404 | Las URL de categorías cambiaron con el modelo de datos definitivo | Usar los enlaces del navbar (`/productos/<id>/<plataforma>/`) |
-| "Demasiados intentos fallidos" en el login | Se superó el límite de intentos | Esperar 15 minutos o ejecutar `python manage.py axes_reset` |
-| `Unknown command` al usar manage.py | Comando mal escrito | Los comandos van en minúscula y separados: `python manage.py runserver` |
-
-
+| Error | Solución |
+|---|---|
+| `No module named ...` | Activar el entorno (`.\venv\Scripts\activate`) y `pip install -r requirements.txt` |
+| `py` no se reconoce | Reinstalar Python 3.12 desde python.org |
+| `MariaDB 10.5 or later is required` | Está conectando al MySQL de XAMPP: detenerlo e iniciar MySQL 8.4 |
+| `Access denied for user 'root'` | Revisar `DB_PASSWORD` en `.env` |
+| `Unknown database 'db_akaispace'` | Repetir el paso 5 |
+| `SECRET_KEY not found` | Agregarla al `.env` (paso 6) |
+| Página sin estilos ni imágenes | Poner `DEBUG=True` en `.env` |
+| `Table '...' doesn't exist` | `python manage.py migrate` |
+| `SMTPAuthenticationError` | Usar la contraseña de aplicación, no la normal de Gmail |
+| "Demasiados intentos fallidos" | Esperar 15 min o `python manage.py axes_reset` |
