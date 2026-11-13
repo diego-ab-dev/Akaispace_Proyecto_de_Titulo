@@ -23,7 +23,8 @@ from .reclamos import crear_reclamo, lista_reclamos, ver_detalle_reclamo
 from .panel import (
     admin_dashboard, admin_reportes, registrar_movimiento_caja,
     admin_compras, registrar_compra, detalle_compra, recibir_compra, eliminar_compra,
-    admin_devoluciones, detalle_devolucion, responder_devolucion,
+    admin_devoluciones, detalle_devolucion, registrar_recepcion_devolucion, registrar_reembolso_manual,
+    responder_devolucion,
     admin_productos, agregar_producto, detalle_producto, editar_producto, eliminar_producto,
     admin_reclamos, detalle_reclamo, responder_reclamo,
     admin_usuarios, buscar_usuarios, crear_usuario, detalle_usuario, eliminar_usuario,

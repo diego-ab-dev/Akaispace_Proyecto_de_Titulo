@@ -26,6 +26,7 @@
                 <option value="">Estado (Todos)</option>
                 <option value="Pendiente" {% if request.GET.estado == "Pendiente" %}selected{% endif %}>Pendiente</option>
                 <option value="Aprobada" {% if request.GET.estado == "Aprobada" %}selected{% endif %}>Aprobada</option>
+                <option value="Recibida" {% if request.GET.estado == "Recibida" %}selected{% endif %}>Recibida</option>
                 <option value="Rechazada" {% if request.GET.estado == "Rechazada" %}selected{% endif %}>Rechazada</option>
             </select>
         </div>
@@ -52,8 +53,15 @@
             {{ e }}{% if not forloop.last %}<br>{% endif %}
         {% endfor %}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div> 
+    </div>
     {% endif %}
+
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-warning{% endif %} alert-dismissible fade show" role="alert">
+        <i class='bx {% if message.tags == 'success' %}bx-check-circle{% else %}bx-error{% endif %} me-2'></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
         <div class="table-responsive">
             <table>
                 <thead>
@@ -85,6 +93,8 @@
                                     bg-warning text-dark
                                 {% elif devolucion.estado == 'Aprobada' %}
                                     bg-success
+                                {% elif devolucion.estado == 'Recibida' %}
+                                    bg-primary
                                 {% elif devolucion.estado == 'Rechazada' %}
                                     bg-danger
                                 {% else %}

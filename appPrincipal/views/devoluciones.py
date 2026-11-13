@@ -8,6 +8,7 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from appPrincipal import reembolsos
 from appPrincipal.forms import ImagenDevolucionFormSet, SolicitudDevolucionForm
 from appPrincipal.models import Devolucion, Producto, ProductoVenta, Venta
 
@@ -106,5 +107,6 @@ def ver_detalle_devolucion(request, devolucion_id):
 
     return render(request, 'detalle_devolucion.html', {
         'devolucion': devolucion,
-        'monto_reembolso': monto_reembolso 
+        'monto_reembolso': monto_reembolso,
+        'estado_reembolso': reembolsos.estado_reembolso(devolucion),
     })

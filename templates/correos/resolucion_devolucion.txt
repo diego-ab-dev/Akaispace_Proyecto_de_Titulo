@@ -12,7 +12,7 @@ Cantidad: {{ devolucion.cantidad }}
 RESPUESTA DE AKAISPACE
 {{ devolucion.respuesta_admin }}
 
-{% if aprobada %}Sigue las indicaciones de la respuesta para completar la devolución del producto.{% else %}Si tienes dudas sobre esta decisión, puedes ingresar un reclamo desde el detalle de tu compra o escribirnos a {{ tienda.correo_privacidad }}.{% endif %}
+{% if aprobada %}Entrega o envía el producto según las indicaciones de la respuesta. Cuando lo recibamos y lo revisemos, te avisaremos por correo y haremos el reembolso.{% else %}Si tienes dudas sobre esta decisión, puedes ingresar un reclamo desde el detalle de tu compra o escribirnos a {{ tienda.correo_privacidad }}.{% endif %}
 
 Ver tu solicitud: {{ url_devolucion }}
 

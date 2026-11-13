@@ -1,14 +1,17 @@
 """Panel de administración: devoluciones."""
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.timezone import now
+from django.views.decorators.http import require_POST
 
-from appPrincipal import correos
+from appPrincipal import correos, reembolsos
 from appPrincipal.decorators import admin_required
-from appPrincipal.models import Devolucion, Producto, ProductoVenta
+from appPrincipal.models import Devolucion, ProductoVenta
+from appPrincipal.templatetags.custom_filters import formato_chileno
 from appPrincipal.views.panel.filtros import filtrar_por_fechas
 
 LARGO_MAXIMO_RESPUESTA = 1000
@@ -75,15 +78,9 @@ def responder_devolucion(request, devolucion_id):
             if devolucion.estado != 'Pendiente':
                 return redirect('detalle_devolucion', devolucion_id=devolucion.id)
 
-            if accion == 'aceptar':
-                envio = getattr(devolucion.venta, 'datos_envio', None)
-                venta_anulada = envio is not None and envio.estado == 'Anulada'
-                if not venta_anulada:
-                    Producto.todos.filter(id=devolucion.producto_id).update(stock=F('stock') + devolucion.cantidad)
-                devolucion.estado = 'Aprobada'
-            else:
-                devolucion.estado = 'Rechazada'
-
+            # aprobar solo avisa al cliente cómo entregar o enviar el producto: el stock y el reembolso
+            # se procesan cuando el administrador registra la recepción
+            devolucion.estado = 'Aprobada' if accion == 'aceptar' else 'Rechazada'
             devolucion.respuesta_admin = respuesta
             devolucion.fecha_resolucion = now()
             devolucion.save()
@@ -91,6 +88,9 @@ def responder_devolucion(request, devolucion_id):
             # el aviso al cliente sale solo si la resolución quedó guardada
             transaction.on_commit(lambda: correos.enviar_resolucion_devolucion(devolucion))
 
+        if devolucion.estado == 'Aprobada':
+            messages.success(request, f"Devolución Nº {devolucion.id} aprobada. Cuando recibas e inspecciones el "
+                                      "producto, usa \"Registrar recepción\" para reponer el stock y reembolsar.")
         return redirect('admin_devoluciones')
 
     return render(request, 'admin_panel/responder_devolucion.html', {
@@ -107,5 +107,52 @@ def responder_devolucion(request, devolucion_id):
 def detalle_devolucion(request, devolucion_id):
     devolucion = get_object_or_404(Devolucion, id=devolucion_id)
     return render(request, 'admin_panel/detalle_devolucion.html', {
-        'devolucion': devolucion
+        'devolucion': devolucion,
+        'estado_reembolso': reembolsos.estado_reembolso(devolucion),
+        'reembolso_pendiente': reembolsos.reembolso_pendiente(devolucion),
     })
+
+
+def _mensaje_recepcion(request, devolucion, reembolso):
+    inicio = f"Recepción de la devolución Nº {devolucion.id} registrada y stock repuesto."
+    if reembolso is None:
+        messages.success(request, inicio)
+    elif reembolso.realizado and reembolso.guardado:
+        messages.success(request, f"{inicio} Se reembolsaron ${formato_chileno(reembolso.monto)} en Webpay.")
+    elif reembolso.realizado:
+        messages.error(request, f"{inicio} Transbank reembolsó ${formato_chileno(reembolso.monto)}, pero no se pudo "
+                                "guardar el registro. No lo reembolses de nuevo en Transbank: anótalo con "
+                                "\"Registrar reembolso manual\".")
+    else:
+        messages.error(request, f"{inicio} El reembolso de ${formato_chileno(reembolso.monto)} NO se hizo en Webpay. "
+                                f"{reembolso.motivo} Hazlo a mano en el portal de Transbank y anótalo con "
+                                "\"Registrar reembolso manual\".")
+
+
+@admin_required
+@require_POST
+def registrar_recepcion_devolucion(request, devolucion_id):
+    """Aprobada -> Recibida, después de recibir e inspeccionar el producto."""
+    get_object_or_404(Devolucion, id=devolucion_id)
+    try:
+        devolucion, reembolso = reembolsos.registrar_recepcion(devolucion_id)
+    except reembolsos.OperacionNoPermitida as error:
+        messages.error(request, str(error))
+    else:
+        correos.enviar_recepcion_devolucion(devolucion, reembolso)
+        _mensaje_recepcion(request, devolucion, reembolso)
+    return redirect('detalle_devolucion', devolucion_id=devolucion_id)
+
+
+@admin_required
+@require_POST
+def registrar_reembolso_manual(request, devolucion_id):
+    """Anota un reembolso que el administrador hizo a mano en el portal de Transbank."""
+    get_object_or_404(Devolucion, id=devolucion_id)
+    try:
+        devolucion = reembolsos.registrar_reembolso_manual(devolucion_id, request.POST.get('monto', ''))
+    except (reembolsos.OperacionNoPermitida, ValueError) as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, f"Reembolso manual de ${formato_chileno(devolucion.monto_reembolso)} registrado.")
+    return redirect('detalle_devolucion', devolucion_id=devolucion_id)

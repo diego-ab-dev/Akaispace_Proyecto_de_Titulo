@@ -405,8 +405,8 @@ class ModeloTests(TestCase):  # 17, 25, 26 y 28
         self.client.post(f'/admin-panel/ventas/modificar/{self.venta.id}/', {'estado': 'Entregado'})
         self.assertEqual(Envio.objects.get(venta=self.venta).estado, 'Entregado')
 
-        self.client.post(f'/ventas/anular/{self.venta.id}/')
-        self.client.post(f'/ventas/anular/{self.venta.id}/')
+        self.client.post(f'/ventas/anular/{self.venta.id}/', {'motivo_anulacion': 'Error al registrar'})
+        self.client.post(f'/ventas/anular/{self.venta.id}/', {'motivo_anulacion': 'Error al registrar'})
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 7)  # 5 + 2 devueltos una sola vez
         self.venta.refresh_from_db()
@@ -692,7 +692,10 @@ class DevolucionesTests(TestCase):
         self.pedir(1)
         self.assertFalse(Devolucion.objects.exists())
 
-    def test_aprobar_dos_veces_repone_el_stock_una_sola_vez(self):
+    def recibir_como_admin(self, devolucion):
+        return self.client.post(f'/admin-panel/devoluciones/recepcion/{devolucion.id}/')
+
+    def test_aprobar_dos_veces_no_cambia_la_resolucion_ni_el_stock(self):
         from .models import Devolucion
         self.pedir(2)
         devolucion = Devolucion.objects.get()
@@ -700,15 +703,16 @@ class DevolucionesTests(TestCase):
         self.responder_como_admin(devolucion, 'aceptar')
         self.responder_como_admin(devolucion, 'rechazar')
         self.producto.refresh_from_db()
-        self.assertEqual(self.producto.stock, 7)
+        self.assertEqual(self.producto.stock, 5)  # el stock vuelve al registrar la recepción
         self.assertEqual(Devolucion.objects.get().estado, 'Aprobada')
 
-    def test_anular_una_venta_con_devolucion_aprobada_no_repone_dos_veces(self):
+    def test_anular_una_venta_con_devolucion_recibida_no_repone_dos_veces(self):
         from .models import Devolucion
         self.pedir(1)
         self.responder_como_admin(Devolucion.objects.get(), 'aceptar')
-        self.client.post(f'/ventas/anular/{self.venta.id}/')
-        self.client.post(f'/ventas/anular/{self.venta.id}/')
+        self.recibir_como_admin(Devolucion.objects.get())
+        self.client.post(f'/ventas/anular/{self.venta.id}/', {'motivo_anulacion': 'Error al registrar'})
+        self.client.post(f'/ventas/anular/{self.venta.id}/', {'motivo_anulacion': 'Error al registrar'})
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock, 7) 
 
@@ -1182,6 +1186,71 @@ class EnviosPanelTests(TestCase):
         venta = self.venta_con('bluexpress')
         respuesta = self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': 'Anulada'})
         self.assertContains(respuesta, 'Estado no válido.')
+
+
+class AnularVentaTests(TestCase):  # motivo obligatorio y bloqueo de ventas pagadas con Webpay
+    def setUp(self):
+        self.jefe = crear_cliente('jefe@example.com', is_staff=True, nombre='Ana Jefa')
+        self.client.force_login(self.jefe)
+        self.producto = crear_producto(stock=5)
+        self.venta = crear_venta(crear_cliente(), self.producto, estado='En Preparación')
+        self.url = f'/ventas/anular/{self.venta.id}/'
+
+    def anular(self, motivo):
+        return self.client.post(self.url, {'motivo_anulacion': motivo})
+
+    def assertNoAnulada(self, respuesta, error):
+        self.assertContains(respuesta, error)
+        self.venta.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertFalse(self.venta.anulada)
+        self.assertEqual(self.producto.stock, 5)
+
+    def test_el_motivo_es_obligatorio_y_tiene_largo_maximo(self):
+        self.assertNoAnulada(self.client.post(self.url), 'Escribe el motivo de la anulación.')
+        self.assertNoAnulada(self.anular('   '), 'Escribe el motivo de la anulación.')
+        self.assertNoAnulada(self.anular('x' * 201), 'El motivo no puede superar los 200 caracteres.')
+
+    def test_guarda_el_motivo_sin_espacios_y_lo_muestra_con_la_fecha(self):
+        from django.utils import timezone
+        self.anular('  ' + 'x' * 196 + ' fin  ')
+        self.venta.refresh_from_db()
+        self.assertEqual(self.venta.motivo_anulacion, 'x' * 196 + ' fin')
+        detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
+        self.assertContains(detalle, 'x' * 196 + ' fin')
+        self.assertContains(detalle, timezone.localtime(self.venta.anulada_en).strftime('%d/%m/%Y - %H:%M'))
+
+    def test_guarda_al_administrador_que_anula_y_lo_muestra(self):
+        from .models import Venta
+        otro_admin = crear_cliente('otro@example.com', is_staff=True, nombre='Otro Admin')
+        self.anular('Error al registrar')
+        self.venta.refresh_from_db()
+        self.assertEqual(self.venta.anulada_por, self.jefe)
+        self.assertNotEqual(self.venta.anulada_por, otro_admin)
+        detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
+        self.assertContains(detalle, 'Anulada por:')
+        self.assertContains(detalle, 'Ana Jefa')
+        # ventas anuladas antes de registrar quién anula
+        Venta.objects.filter(id=self.venta.id).update(anulada_por=None)
+        self.assertContains(self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/'), 'No registrado')
+
+    def test_una_venta_pagada_con_webpay_no_se_anula(self):
+        from .models import PagoWebpay
+        PagoWebpay.objects.create(usuario=self.venta.usuario, venta=self.venta, orden_compra='AKATEST1', monto=1000,
+                                  metodo_envio='tienda', estado=PagoWebpay.APROBADO)
+        detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
+        self.assertContains(detalle, 'flujo de devolución')
+        self.assertNotContains(detalle, 'data-bs-target="#anularModal"')
+        self.assertNoAnulada(self.anular('El cliente se arrepintió'), 'se pagó con Webpay y no se puede anular')
+
+    def test_una_venta_ya_reembolsada_tampoco_se_anula(self):
+        from .models import PagoWebpay
+        PagoWebpay.objects.create(usuario=self.venta.usuario, venta=self.venta, orden_compra='AKATEST2', monto=1000,
+                                  metodo_envio='tienda', estado=PagoWebpay.REEMBOLSADO)
+        detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
+        self.assertContains(detalle, 'aunque ya se haya reembolsado')
+        self.assertNotContains(detalle, 'data-bs-target="#anularModal"')
+        self.assertNoAnulada(self.anular('Error al registrar'), 'se pagó con Webpay y no se puede anular')
 
 
 class ListoParaRetiroTests(TestCase):
@@ -1930,6 +1999,254 @@ class CarritoEliminarVariosTests(TestCase):  # HU-11: eliminar algunos o todos l
         self.assertContains(respuesta, 'Eliminar seleccionados')
 
 
+class ReembolsoDevolucionTests(TestCase):  # aprobar avisa al cliente; registrar la recepción repone y reembolsa
+    ANULADO = {'type': 'NULLIFIED', 'response_code': 0, 'authorization_code': '123456', 'balance': 0}
+
+    def setUp(self):
+        from .models import PagoWebpay
+        self.producto = crear_producto(stock=5)  # $10.000 c/u
+        self.cliente = crear_cliente()
+        self.venta = crear_venta(self.cliente, self.producto, cantidad=2)
+        self.pago = PagoWebpay.objects.create(
+            usuario=self.cliente, venta=self.venta, orden_compra='AKAREEMB1', token='token-webpay', monto=20000,
+            metodo_envio='tienda', estado=PagoWebpay.APROBADO, tipo_pago='VD', fecha_transaccion=now(),
+        )
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def devolucion(self, cantidad, venta=None, estado='Aprobada'):
+        from .models import Devolucion
+        return Devolucion.objects.create(usuario=self.cliente, venta=venta or self.venta, producto=self.producto,
+                                         cantidad=cantidad, motivo='Llegó roto', estado=estado)
+
+    def aprobar(self, devolucion):
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(f'/admin-panel/devoluciones/responder/{devolucion.id}/',
+                                    {'accion': 'aceptar', 'respuesta': 'Envíalo por Starken.'}, follow=True)
+
+    def recibir(self, devolucion):
+        return self.client.post(f'/admin-panel/devoluciones/recepcion/{devolucion.id}/', follow=True)
+
+    def registrar_manual(self, devolucion, monto):
+        return self.client.post(f'/admin-panel/devoluciones/reembolso-manual/{devolucion.id}/', {'monto': monto},
+                                follow=True)
+
+    def detalle(self, devolucion):
+        return self.client.get(f'/devolucion/detalle/{devolucion.id}/')
+
+    def correo(self):
+        from django.core import mail
+        return mail.outbox[-1]
+
+    def dejar_pendiente(self, devolucion):
+        from unittest import mock
+        from .webpay import ErrorWebpay
+        with mock.patch('appPrincipal.webpay.reembolsar', side_effect=ErrorWebpay('Monto excede el saldo')), \
+                self.assertLogs('appPrincipal.reembolsos', 'ERROR'):
+            return self.recibir(devolucion)
+
+    def test_aprobar_no_repone_stock_ni_reembolsa(self):
+        from unittest import mock
+        devolucion = self.devolucion(2, estado='Pendiente')
+        with mock.patch('appPrincipal.webpay.reembolsar') as reembolsar:
+            respuesta = self.aprobar(devolucion)
+        reembolsar.assert_not_called()
+        devolucion.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual(devolucion.estado, 'Aprobada')
+        self.assertIsNone(devolucion.monto_reembolso)
+        self.assertEqual(self.producto.stock, 5)
+        self.assertContains(respuesta, 'Registrar recepción')
+        self.assertIn('Entrega o envía el producto', self.correo().body)
+        self.assertIn('Envíalo por Starken.', self.correo().body)
+        self.assertContains(self.detalle(devolucion), '/admin-panel/devoluciones/recepcion/')
+
+    def test_recepcion_con_reembolso_total(self):
+        from unittest import mock
+        from .models import PagoWebpay
+        devolucion = self.devolucion(2)
+        with mock.patch('appPrincipal.webpay.reembolsar', return_value=self.ANULADO) as reembolsar:
+            respuesta = self.recibir(devolucion)
+        reembolsar.assert_called_once_with('token-webpay', 20000)
+        devolucion.refresh_from_db()
+        self.pago.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual((devolucion.estado, devolucion.monto_reembolso), ('Recibida', 20000))
+        self.assertIsNotNone(devolucion.fecha_reembolso)
+        self.assertEqual(self.pago.estado, PagoWebpay.REEMBOLSADO)
+        self.assertEqual(self.pago.get_estado_display(), 'Reembolsado')
+        self.assertEqual(self.producto.stock, 7)
+        self.assertContains(respuesta, 'Se reembolsaron $20.000 en Webpay.')
+        self.assertIn('Recibimos el producto', self.correo().subject)
+        self.assertIn('Reembolsamos <strong>$20.000</strong>', self.correo().alternatives[0][0])
+        self.assertContains(self.detalle(devolucion), 'Reembolso en Webpay:')
+
+    def test_recepcion_con_reembolso_parcial_descuenta_lo_ya_reembolsado_y_no_supera_lo_pagado(self):
+        from unittest import mock
+        from .models import PagoWebpay
+        PagoWebpay.objects.filter(id=self.pago.id).update(monto=15000)
+        primera, segunda = self.devolucion(1), self.devolucion(1)
+        with mock.patch('appPrincipal.webpay.reembolsar', return_value={**self.ANULADO, 'balance': 5000}) as reembolsar:
+            self.recibir(primera)
+            self.pago.refresh_from_db()
+            self.assertEqual(self.pago.estado, PagoWebpay.APROBADO)  # queda saldo por reembolsar
+            self.recibir(segunda)
+        self.assertEqual(reembolsar.call_args_list,
+                         [mock.call('token-webpay', 10000), mock.call('token-webpay', 5000)])
+        primera.refresh_from_db()
+        segunda.refresh_from_db()
+        self.pago.refresh_from_db()
+        self.assertEqual((primera.monto_reembolso, segunda.monto_reembolso), (10000, 5000))
+        self.assertEqual(self.pago.estado, PagoWebpay.REEMBOLSADO)
+
+    def test_si_transbank_falla_queda_recibida_y_el_reembolso_pendiente(self):
+        from .models import PagoWebpay
+        devolucion = self.devolucion(1)
+        respuesta = self.dejar_pendiente(devolucion)
+        devolucion.refresh_from_db()
+        self.pago.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual(devolucion.estado, 'Recibida')
+        self.assertIsNone(devolucion.monto_reembolso)
+        self.assertIsNone(devolucion.fecha_reembolso)
+        self.assertEqual(self.producto.stock, 6)
+        self.assertEqual(self.pago.estado, PagoWebpay.APROBADO)
+        self.assertContains(respuesta, 'NO se hizo en Webpay')
+        self.assertContains(respuesta, 'Registrar reembolso manual')
+        self.assertIn('Lo gestionaremos a mano', self.correo().body)
+        detalle = self.detalle(devolucion)
+        self.assertContains(detalle, 'Reembolso pendiente:')
+        self.assertContains(detalle, 'value="10000"')  # prellenado con el monto pendiente
+        self.assertContains(detalle, 'max="20000"')  # sin superar el saldo
+
+    def test_respuesta_sin_exito_de_transbank_tambien_queda_pendiente(self):
+        from unittest import mock
+        devolucion = self.devolucion(1)
+        with mock.patch('appPrincipal.webpay.reembolsar', return_value={**self.ANULADO, 'response_code': -1}), \
+                self.assertLogs('appPrincipal.reembolsos', 'ERROR'):
+            self.recibir(devolucion)
+        devolucion.refresh_from_db()
+        self.assertIsNone(devolucion.monto_reembolso)
+
+    def test_si_falla_el_guardado_despues_de_reembolsar_queda_en_el_log_y_no_se_repite(self):
+        from unittest import mock
+        from django.db import DatabaseError
+        devolucion = self.devolucion(2)
+        with mock.patch('appPrincipal.webpay.reembolsar', return_value=self.ANULADO) as reembolsar, \
+                mock.patch('appPrincipal.reembolsos._marcar_pago_si_quedo_en_cero', side_effect=DatabaseError), \
+                self.assertLogs('appPrincipal.reembolsos', 'ERROR') as log:
+            respuesta = self.recibir(devolucion)
+            self.recibir(devolucion)
+        reembolsar.assert_called_once()
+        self.assertIn('AKAREEMB1', log.output[-1])
+        self.assertIn('20000', log.output[-1])
+        devolucion.refresh_from_db()
+        self.assertEqual(devolucion.estado, 'Recibida')
+        self.assertIsNone(devolucion.monto_reembolso)
+        self.assertContains(respuesta, 'no se pudo guardar el registro')
+
+    def test_no_se_registra_la_recepcion_dos_veces(self):
+        from unittest import mock
+        devolucion = self.devolucion(2)
+        pendiente = self.devolucion(1, estado='Pendiente')
+        with mock.patch('appPrincipal.webpay.reembolsar', return_value=self.ANULADO) as reembolsar:
+            self.recibir(devolucion)
+            segunda = self.recibir(devolucion)
+            self.recibir(pendiente)
+        reembolsar.assert_called_once()
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 7)
+        self.assertContains(segunda, 'Solo se registra la recepción de una devolución aprobada.')
+        pendiente.refresh_from_db()
+        self.assertEqual(pendiente.estado, 'Pendiente')
+
+    def test_reembolso_manual_con_monto_valido(self):
+        from unittest import mock
+        from .models import PagoWebpay
+        devolucion = self.devolucion(1)
+        self.dejar_pendiente(devolucion)
+        with mock.patch('appPrincipal.webpay.reembolsar') as reembolsar:
+            respuesta = self.registrar_manual(devolucion, '10000')
+        reembolsar.assert_not_called()
+        devolucion.refresh_from_db()
+        self.pago.refresh_from_db()
+        self.assertEqual(devolucion.monto_reembolso, 10000)
+        self.assertIsNotNone(devolucion.fecha_reembolso)
+        self.assertEqual(self.pago.estado, PagoWebpay.APROBADO)  # quedan $10.000 del pago
+        self.assertContains(respuesta, 'Reembolso manual de $10.000 registrado.')
+        self.assertNotContains(respuesta, '/admin-panel/devoluciones/reembolso-manual/')
+        # ya no se puede registrar otro
+        self.assertContains(self.registrar_manual(devolucion, '5000'), 'no tiene un reembolso pendiente')
+        devolucion.refresh_from_db()
+        self.assertEqual(devolucion.monto_reembolso, 10000)
+
+    def test_reembolso_manual_no_supera_el_saldo_ni_acepta_montos_invalidos(self):
+        devolucion = self.devolucion(1)
+        self.dejar_pendiente(devolucion)
+        self.assertContains(self.registrar_manual(devolucion, '20001'),
+                            'El monto no puede superar el saldo por reembolsar ($20.000).')
+        self.assertContains(self.registrar_manual(devolucion, '0'), 'El monto debe ser mayor que cero.')
+        self.assertContains(self.registrar_manual(devolucion, 'abc'), 'solo con números')
+        devolucion.refresh_from_db()
+        self.assertIsNone(devolucion.monto_reembolso)
+
+    def test_reembolso_manual_y_recepcion_solo_admin_y_por_post(self):
+        devolucion = self.devolucion(1)
+        self.dejar_pendiente(devolucion)
+        recepcion = f'/admin-panel/devoluciones/recepcion/{devolucion.id}/'
+        manual = f'/admin-panel/devoluciones/reembolso-manual/{devolucion.id}/'
+        for url in [recepcion, manual]:
+            self.assertEqual(self.client.get(url).status_code, 405, url)
+        self.client.force_login(self.cliente)
+        self.client.post(manual, {'monto': '10000'})
+        devolucion.refresh_from_db()
+        self.assertIsNone(devolucion.monto_reembolso)
+
+    def test_reglas_de_transbank_no_llaman_si_no_se_permite(self):
+        from unittest import mock
+        from .models import PagoWebpay
+        # cuotas comercio (sin interés): solo anulación total
+        PagoWebpay.objects.filter(id=self.pago.id).update(tipo_pago='SI')
+        parcial = self.devolucion(1)
+        # pasado el plazo de 90 días desde la venta
+        otra_venta = crear_venta(self.cliente, self.producto, cantidad=1)
+        PagoWebpay.objects.create(usuario=self.cliente, venta=otra_venta, orden_compra='AKAREEMB2', token='token-2',
+                                  monto=10000, metodo_envio='tienda', estado=PagoWebpay.APROBADO, tipo_pago='VN',
+                                  fecha_transaccion=now() - timedelta(days=91))
+        vencida = self.devolucion(1, venta=otra_venta)
+        with mock.patch('appPrincipal.webpay.reembolsar') as reembolsar, \
+                self.assertLogs('appPrincipal.reembolsos', 'ERROR'):
+            self.assertContains(self.recibir(parcial), 'cuotas sin interés')
+            self.assertContains(self.recibir(vencida), 'más de 90 días')
+        reembolsar.assert_not_called()
+
+    def test_devolucion_de_venta_presencial_no_llama_a_transbank(self):
+        from unittest import mock
+        from .models import ProductoVenta, Venta
+        presencial = Venta.objects.create(canal=Venta.CANAL_TIENDA, metodo_pago=Venta.PAGO_EFECTIVO)
+        ProductoVenta.objects.create(venta=presencial, producto=self.producto, cantidad=1, precio_unitario=10000)
+        devolucion = self.devolucion(1, venta=presencial)
+        with mock.patch('appPrincipal.webpay.reembolsar') as reembolsar:
+            respuesta = self.recibir(devolucion)
+        reembolsar.assert_not_called()
+        devolucion.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual(devolucion.estado, 'Recibida')
+        self.assertIsNone(devolucion.monto_reembolso)
+        self.assertEqual(self.producto.stock, 6)
+        self.assertNotContains(respuesta, 'Webpay')
+        self.assertIn('mismo medio con que pagaste en la tienda', self.correo().body)
+
+    def test_migracion_pasa_las_aprobadas_existentes_a_recibidas(self):
+        import importlib
+        from django.apps import apps
+        migracion = importlib.import_module('appPrincipal.migrations.0019_anulacion_y_devolucion_recibida')
+        aprobada, pendiente = self.devolucion(1), self.devolucion(1, estado='Pendiente')
+        migracion.aprobadas_a_recibidas(apps, None)
+        aprobada.refresh_from_db()
+        pendiente.refresh_from_db()
+        self.assertEqual((aprobada.estado, pendiente.estado), ('Recibida', 'Pendiente'))
+
+
 class DevolucionCorreoTests(TestCase):  # HU-21: se notifica al cliente la resolución de su devolución
     def setUp(self):
         from .models import Devolucion
@@ -2550,8 +2867,8 @@ class VentaPresencialTests(TestCase):  # HU-12: ventas de la tienda física y Wh
         venta = Venta.objects.get()
         self.assertEqual(sum(serie_ventas(ultimos_12_meses())['totales']), 40000)
 
-        self.client.post(f'/ventas/anular/{venta.id}/')
-        self.client.post(f'/ventas/anular/{venta.id}/')
+        self.client.post(f'/ventas/anular/{venta.id}/', {'motivo_anulacion': 'Error al registrar'})
+        self.client.post(f'/ventas/anular/{venta.id}/', {'motivo_anulacion': 'Error al registrar'})
 
         venta.refresh_from_db()
         self.juego.refresh_from_db()

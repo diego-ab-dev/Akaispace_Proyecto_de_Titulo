@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from appPrincipal import pagos
 from appPrincipal.decorators import admin_required
 from appPrincipal.envios import TRANSPORTISTAS_ENCOMIENDA
-from appPrincipal.models import Envio, Producto, Venta
+from appPrincipal.models import Envio, PagoWebpay, Producto, Venta
 from appPrincipal.views.panel.filtros import filtrar_por_fechas
 
 
@@ -65,10 +65,30 @@ def admin_ventas(request):
     })
 
 
+LARGO_MAXIMO_MOTIVO_ANULACION = Venta._meta.get_field('motivo_anulacion').max_length
+
+
+def _pagada_con_webpay(venta):
+    """Una venta pagada con Webpay (aprobada o ya reembolsada) no se anula: el reembolso va por el flujo de
+    devolución."""
+    return PagoWebpay.objects.filter(
+        venta=venta, estado__in=[PagoWebpay.APROBADO, PagoWebpay.REEMBOLSADO]
+    ).exists()
+
+
+def _render_detalle_venta(request, venta, **extra):
+    return render(request, 'admin_panel/detalle_venta.html', {
+        'venta': venta,
+        'pagada_con_webpay': _pagada_con_webpay(venta),
+        'largo_maximo_motivo': LARGO_MAXIMO_MOTIVO_ANULACION,
+        **extra,
+    })
+
+
 @admin_required
 def detalle_venta(request, venta_id):
     venta = get_object_or_404(Venta.objects.prefetch_related('producto_venta__producto__imagenes_producto'), id=venta_id)
-    return render(request, 'admin_panel/detalle_venta.html', {'venta': venta})
+    return _render_detalle_venta(request, venta)
 
 @admin_required
 def modificar_venta(request, venta_id):
@@ -136,20 +156,34 @@ def modificar_venta(request, venta_id):
 @admin_required
 @require_POST
 def anular_venta(request, venta_id):
+    motivo = request.POST.get('motivo_anulacion', '').strip()
     with transaction.atomic():
         venta = get_object_or_404(Venta.objects.select_for_update(), id=venta_id)
         envio = Envio.objects.filter(venta=venta).first()
         if not venta.anulada and not (envio and envio.estado == "Anulada"):
+            error = None
+            if _pagada_con_webpay(venta):
+                error = "Esta venta se pagó con Webpay y no se puede anular."
+            elif not motivo:
+                error = "Escribe el motivo de la anulación."
+            elif len(motivo) > LARGO_MAXIMO_MOTIVO_ANULACION:
+                error = f"El motivo no puede superar los {LARGO_MAXIMO_MOTIVO_ANULACION} caracteres."
+            if error:
+                return _render_detalle_venta(request, venta, error_anulacion=error, motivo_anulacion=motivo)
+
             # las ventas presenciales (HU-12) no tienen envío: basta con anulada_en
             if venta.canal == Venta.CANAL_WEB:
                 envio = envio or Envio(venta=venta)
                 envio.estado = "Anulada"
                 envio.save()
             venta.anulada_en = timezone.now()
-            venta.save(update_fields=['anulada_en'])
+            venta.motivo_anulacion = motivo
+            venta.anulada_por = request.user
+            venta.save(update_fields=['anulada_en', 'motivo_anulacion', 'anulada_por'])
 
+            # solo las devoluciones recibidas ya repusieron su stock
             devuelto = dict(
-                venta.devoluciones.filter(estado='Aprobada')
+                venta.devoluciones.filter(estado='Recibida')
                 .values_list('producto_id').annotate(total=Sum('cantidad'))
             )
             for item in venta.producto_venta.all():

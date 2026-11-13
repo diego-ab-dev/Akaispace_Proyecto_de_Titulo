@@ -1,0 +1,19 @@
+{% load custom_filters %}{% autoescape off %}Hola, {{ devolucion.usuario.nombre }}
+
+Recibimos y revisamos el producto de tu solicitud de devolución Nº {{ devolucion.id }}.
+
+ESTADO: PRODUCTO RECIBIDO
+
+Producto: {{ devolucion.producto.nombre|default:"No especificado" }}
+Cantidad: {{ devolucion.cantidad }}
+Pedido: Nº {{ devolucion.venta.id }}
+{% if monto %}{% if reembolsado %}Monto reembolsado{% else %}Monto a reembolsar{% endif %}: ${{ monto|formato_chileno }}
+{% endif %}
+{% if reembolsado %}Reembolsamos ${{ monto|formato_chileno }} a la tarjeta con que pagaste en Webpay el {{ fecha_reembolso|date:"d/m/Y" }}. El plazo para verlo reflejado depende del banco emisor de tu tarjeta.{% elif webpay %}No pudimos hacer el reembolso automáticamente en Webpay. Lo gestionaremos a mano y te avisaremos cuando esté listo.{% else %}El reembolso se hace por el mismo medio con que pagaste en la tienda.{% endif %}
+
+Ver tu solicitud: {{ url_devolucion }}
+
+--
+Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
+{% endautoescape %}

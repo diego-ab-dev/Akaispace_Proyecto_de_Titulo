@@ -124,6 +124,10 @@ urlpatterns = [
     # devolucion
     path('admin-panel/devoluciones/', views.admin_devoluciones, name='admin_devoluciones'),
     path('admin-panel/devoluciones/responder/<int:devolucion_id>/', views.responder_devolucion, name='responder_devolucion'),
+    path('admin-panel/devoluciones/recepcion/<int:devolucion_id>/', views.registrar_recepcion_devolucion,
+         name='registrar_recepcion_devolucion'),
+    path('admin-panel/devoluciones/reembolso-manual/<int:devolucion_id>/', views.registrar_reembolso_manual,
+         name='registrar_reembolso_manual'),
     path('devolucion/detalle/<int:devolucion_id>/', views.detalle_devolucion, name='detalle_devolucion'),
     # portada (carrusel, nuevos lanzamientos y promos del navbar)
     path('admin-panel/portada/', views.admin_portada, name='admin_portada'),

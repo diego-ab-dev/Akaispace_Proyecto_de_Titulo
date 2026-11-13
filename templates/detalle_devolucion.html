@@ -47,6 +47,11 @@
                         <div class="col-4 text-end border-start">
                             <span class="label-tiny text-muted text-uppercase">Reembolso</span>
                             <div class="refund-amount">${{ monto_reembolso | formato_chileno }}</div>
+                            {% if estado_reembolso == 'realizado' %}
+                            <small class="text-success d-block">Reembolsado en Webpay el {{ devolucion.fecha_reembolso|date:"d/m/Y" }}</small>
+                            {% elif estado_reembolso == 'pendiente_manual' %}
+                            <small class="text-muted d-block">Reembolso en gestión</small>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

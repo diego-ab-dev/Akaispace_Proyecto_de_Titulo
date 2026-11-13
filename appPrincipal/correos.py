@@ -2,7 +2,10 @@
 
 - Confirmación de compra: se envía al aprobarse el pago con Webpay. Si falla, la reenvía el comando
   reenviar_confirmaciones.
-- Resolución de devolución: se envía cuando el administrador aprueba o rechaza una solicitud.
+- Resolución de devolución: se envía cuando el administrador aprueba (con las instrucciones para entregar o enviar
+  el producto) o rechaza una solicitud.
+- Recepción de devolución: se envía cuando la tienda recibe el producto, e indica si el reembolso se hizo en Webpay
+  o se gestionará a mano.
 - Recuperación de contraseña: la envía Django (PasswordResetView).
 """
 import logging
@@ -11,6 +14,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.timezone import now
 
 from appPrincipal import envios
 from appPrincipal.constants import CONDICIONES_COMPRA, POLITICA_RETRACTO, RESPONSABLE_DATOS
@@ -70,4 +74,23 @@ def enviar_resolucion_devolucion(devolucion):
                       'resolucion_devolucion', contexto, devolucion.usuario.email)
     if enviado:
         logger.info("Correo de resolución de devolución enviado: devolución %s", devolucion.id)
+    return enviado
+
+
+def enviar_recepcion_devolucion(devolucion, reembolso=None):
+    """`reembolso`: el ResultadoReembolso de Webpay, o None si la venta no se pagó con Webpay."""
+    item = devolucion.venta.producto_venta.filter(producto=devolucion.producto).first()
+    contexto = {
+        'devolucion': devolucion,
+        'webpay': reembolso is not None,
+        'reembolsado': reembolso is not None and reembolso.realizado,
+        'monto': reembolso.monto if reembolso is not None else (item.precio_unitario * devolucion.cantidad if item else 0),
+        'fecha_reembolso': devolucion.fecha_reembolso or now(),
+        'url_devolucion': settings.SITIO_URL + reverse('ver_detalle_devolucion', args=[devolucion.id]),
+        'tienda': RESPONSABLE_DATOS,
+    }
+    enviado = _enviar(f"Recibimos el producto de tu devolución Nº {devolucion.id} - Akaispace",
+                      'recepcion_devolucion', contexto, devolucion.usuario.email)
+    if enviado:
+        logger.info("Correo de recepción de devolución enviado: devolución %s", devolucion.id)
     return enviado

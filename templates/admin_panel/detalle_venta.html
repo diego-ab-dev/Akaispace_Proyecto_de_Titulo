@@ -20,6 +20,10 @@
     <div id="toast" class="custom-toast error">Estado de venta inválido.</div>
     {% endif %}
 
+    {% if error_anulacion %}
+    <div id="toast" class="custom-toast error">{{ error_anulacion }}</div>
+    {% endif %}
+
     <div class="page-container">
 
         <a href="{% url 'admin_ventas' %}" class="btn-back">
@@ -65,16 +69,37 @@
                     </a>
                     {% endif %}
 
+                    {% if pagada_con_webpay %}
+                    <button type="button" class="btn-action" style="background-color:#6c757d; cursor:not-allowed;" disabled
+                            aria-describedby="aviso-anulacion-webpay">
+                        Anular Venta <i class='bx bx-error-circle'></i>
+                    </button>
+                    {% else %}
                     <button type="button" class="btn-action btn-anular" data-bs-toggle="modal" data-bs-target="#anularModal">
                         Anular Venta <i class='bx bx-error-circle'></i>
                     </button>
+                    {% endif %}
                 </div>
+                {% if pagada_con_webpay %}
+                <p id="aviso-anulacion-webpay" class="text-muted small mt-2 mb-0">
+                    Esta venta se pagó con Webpay y no se puede anular, aunque ya se haya reembolsado.
+                    El reembolso se gestiona en el flujo de devolución:
+                    el cliente la solicita desde su compra una vez entregada y,
+                    cuando la tienda registra la recepción del producto, el reembolso se hace automáticamente en Webpay.
+                    Si Transbank no lo permite, queda pendiente para hacerlo a mano y registrarlo en la devolución.
+                </p>
+                {% endif %}
                 {% else %}
                 <div class="actions-wrapper">
                     <button class="btn-action" style="background-color:#6c757d; cursor:not-allowed;" disabled>
                         Venta Anulada
                     </button>
                 </div>
+                {% if venta.anulada_en %}
+                <div class="data-row mt-3"><span class="data-label">Anulada el:</span> <span>{{ venta.anulada_en|date:"d/m/Y - H:i" }}</span></div>
+                {% endif %}
+                <div class="data-row"><span class="data-label">Anulada por:</span> <span>{{ venta.anulada_por.nombre|default:"No registrado" }}</span></div>
+                <div class="data-row"><span class="data-label">Motivo:</span> <span>{{ venta.motivo_anulacion|default:"No registrado" }}</span></div>
                 {% endif %}
             </div>
 
@@ -139,7 +164,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="anularModal" tabindex="-1" aria-labelledby="anularModalLabel" aria-hidden="true">
+    {% if not pagada_con_webpay %}
+    <div class="modal fade" id="anularModal"tabindex="-1" aria-labelledby="anularModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -147,24 +173,41 @@
                         <i class='bx bx-x'></i>
                     </div>
                 </div>
-                <div class="modal-body">
-                    <h4 class="fw-bold mb-3">¿Estás seguro?</h4>
-                    <p class="text-muted">Estás a punto de anular esta venta. Esta acción podría ser irreversible y afectará el inventario.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
-                    <form method="post" action="{% url 'anular_venta' venta.id %}">
-                        {% csrf_token %}
+                <form method="post" action="{% url 'anular_venta' venta.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <h4 class="fw-bold mb-3">¿Estás seguro?</h4>
+                        <p class="text-muted">Estás a punto de anular esta venta. Esta acción podría ser irreversible y afectará el inventario.</p>
+                        <div class="text-start">
+                            <label for="motivo_anulacion" class="form-label fw-semibold">Motivo de la anulación</label>
+                            <textarea id="motivo_anulacion" name="motivo_anulacion" class="form-control{% if error_anulacion %} is-invalid{% endif %}"
+                                      rows="3" maxlength="{{ largo_maximo_motivo }}" required
+                                      {% if error_anulacion %}aria-describedby="error-anulacion"{% endif %}>{{ motivo_anulacion|default:"" }}</textarea>
+                            {% if error_anulacion %}
+                            <div id="error-anulacion" class="invalid-feedback">{{ error_anulacion }}</div>
+                            {% endif %}
+                            <small class="text-muted">Máximo {{ largo_maximo_motivo }} caracteres.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn-modal-confirm">Sí, Anular Venta</button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+    {% endif %}
 <script>
 setTimeout(() => {
     const toast = document.getElementById('toast');
     if (toast) toast.remove();
 }, 4000);
+{% if error_anulacion and not pagada_con_webpay %}
+// si el motivo no fue válido, se vuelve a abrir la confirmación con lo que el admin escribió
+document.addEventListener('DOMContentLoaded', () => {
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('anularModal')).show();
+});
+{% endif %}
 </script>
 {% endblock %}

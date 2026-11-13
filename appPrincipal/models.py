@@ -1,5 +1,6 @@
 import re
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -499,6 +500,14 @@ class Venta(models.Model):
     )
     anulada_en = models.DateTimeField(null=True, blank=True, verbose_name="Anulada en",
                                       db_comment="Fecha y hora de anulación. NULL si la venta está vigente.")
+    motivo_anulacion = models.CharField(
+        max_length=200, blank=True,
+        db_comment="Motivo de la anulación, obligatorio al anular. Vacío en ventas vigentes",
+    )
+    anulada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="ventas_anuladas",
+        db_comment="Administrador que anuló la venta. NULL en ventas vigentes",
+    )
     # si el correo falla, el comando reenviar_confirmaciones lo reintenta (Ley 19.496, ventas a distancia)
     confirmacion_enviada = models.BooleanField(
         default=False,
@@ -660,7 +669,8 @@ class Reclamo(models.Model):
 class Devolucion(models.Model):
     ESTADO_CHOICES = [
         ('Pendiente', 'Pendiente'),
-        ('Aprobada', 'Aprobada'),
+        ('Aprobada', 'Aprobada'),  # se espera que el cliente entregue o envíe el producto
+        ('Recibida', 'Recibida'),  # la tienda recibió e inspeccionó el producto: se repuso el stock
         ('Rechazada', 'Rechazada'),
     ]
     MAXIMO_IMAGENES = 3
@@ -680,7 +690,7 @@ class Devolucion(models.Model):
     motivo = models.TextField(verbose_name="Motivo de la devolución", db_comment="Motivo que indica el cliente.")
 
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Pendiente',
-                              db_comment="Estado de la solicitud. Valores: Pendiente, Aprobada, Rechazada.")
+                              db_comment="Estado de la solicitud. Valores: Pendiente, Aprobada, Recibida, Rechazada.")
     respuesta_admin = models.TextField(blank=True, null=True, verbose_name="Respuesta del administrador",
                                        db_comment="Respuesta del administrador al cliente. NULL mientras está pendiente.")
     fecha_resolucion = models.DateTimeField(null=True, blank=True,
@@ -846,7 +856,7 @@ class PagoWebpay(models.Model):
         (APROBADO, 'Aprobado'),
         (RECHAZADO, 'Rechazado'),
         (ANULADO, 'Anulado por el cliente'),
-        (REEMBOLSADO, 'Reembolsado (sin stock)'),
+        (REEMBOLSADO, 'Reembolsado'),
         (ERROR, 'Error'),
     ]
     TIPOS_PAGO = {

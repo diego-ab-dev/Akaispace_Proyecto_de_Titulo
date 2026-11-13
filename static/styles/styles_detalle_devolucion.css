@@ -218,6 +218,10 @@ h1 {
     color: #4CAF50; 
 }
 
+.estado-recibida {
+    color: #2E7DB5;
+}
+
 .estado-rechazada {
     color: #f44336; 
 }
