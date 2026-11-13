@@ -27,7 +27,6 @@ h2 {
     font-weight: 500;
 }
 
-
 .form-group {
     margin-bottom: 20px;
 }
@@ -39,7 +38,6 @@ label {
     font-size: 14px;
     font-weight: 400;
 }
-
 
 input[type="text"],
 input[type="email"],
@@ -57,14 +55,12 @@ input.form-control {
     color: #333;
 }
 
-
 input:focus, select:focus {
     border-color: #b0c4de;
     background-color: #fff;
     outline: none;
     box-shadow: 0 0 0 2px rgba(91, 133, 166, 0.1);
 }
-
 
 .input-group-text {
     background-color: #fcfcfc;
@@ -76,7 +72,6 @@ input:focus, select:focus {
 #telefono_visible {
     border-left: none;
 }
-
 
 .checkbox-group {
     display: flex;
@@ -96,7 +91,6 @@ input:focus, select:focus {
     height: 20px;
     cursor: pointer;
 }
-
 
 .form-actions {
     display: flex;
@@ -132,8 +126,6 @@ input:focus, select:focus {
     color: white;
 }
 
-
-
 .cancel-button {
     background-color: #1c253b; 
     color: white;
@@ -159,25 +151,3 @@ input:focus, select:focus {
     padding-right: 2.5rem !important; 
 }
 
-.password-toggle-btn {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%); 
-    background: transparent;
-    border: none;
-    color: #6c757d;
-    cursor: pointer;
-    z-index: 10;
-    display: none; 
-    padding: 0;
-    width: auto; 
-}
-
-.password-toggle-btn:hover {
-    color: #4e84a8; 
-}
-
-.password-toggle-btn:focus {
-    outline: none;
-}

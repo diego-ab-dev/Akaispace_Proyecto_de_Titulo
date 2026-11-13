@@ -21,33 +21,18 @@
 
             <div class="mb-3">
                 <label for="contraseña_actual" class="form-label">Contraseña Actual</label>
-                <div class="position-relative">
-                    <input id="contraseña_actual" type="password" name="contraseña_actual" class="form-control pe-5" required>
-                    <button type="button" class="password-toggle-btn" id="toggleActual">
-                        <i class="fas fa-eye" id="iconActual"></i>
-                    </button>
-                </div>
+                <input id="contraseña_actual" type="password" name="contraseña_actual" class="form-control pe-5" required>
             </div>
 
             <div class="mb-3">
                 <label for="nueva_contraseña" class="form-label">Nueva Contraseña</label>
-                <div class="position-relative">
-                    <input id="nueva_contraseña" type="password" name="nueva_contraseña" class="form-control pe-5" required>
-                    <button type="button" class="password-toggle-btn" id="toggleNueva">
-                        <i class="fas fa-eye" id="iconNueva"></i>
-                    </button>
-                </div>
+                <input id="nueva_contraseña" type="password" name="nueva_contraseña" class="form-control pe-5" required>
                 {% include "partials/reglas_contraseña.html" %}
             </div>
 
             <div class="mb-3">
                 <label for="confirmar_contraseña" class="form-label">Confirmar Nueva Contraseña</label>
-                <div class="position-relative">
-                    <input id="confirmar_contraseña" type="password" name="confirmar_contraseña" class="form-control pe-5" required>
-                    <button type="button" class="password-toggle-btn" id="toggleConfirmar">
-                        <i class="fas fa-eye" id="iconConfirmar"></i>
-                    </button>
-                </div>
+                <input id="confirmar_contraseña" type="password" name="confirmar_contraseña" class="form-control pe-5" required>
             </div>
 
             <div class="button-group">
@@ -70,35 +55,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 3500);
     }
 
-    // ojo para ver la contra
-    function configurarOjo(inputId, toggleId, iconId) {
-        const input = document.getElementById(inputId);
-        const btn = document.getElementById(toggleId);
-        const icon = document.getElementById(iconId);
-
-        if (!input || !btn || !icon) return;
-
-        input.addEventListener('input', function() {
-            btn.style.display = input.value.length > 0 ? 'block' : 'none';
-        });
-
-        btn.addEventListener('click', function() {
-            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-            input.setAttribute('type', type);
-
-            if (type === 'password') {
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            } else {
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            }
-        });
-    }
-
-    configurarOjo('contraseña_actual', 'toggleActual', 'iconActual');
-    configurarOjo('nueva_contraseña', 'toggleNueva', 'iconNueva');
-    configurarOjo('confirmar_contraseña', 'toggleConfirmar', 'iconConfirmar');
 });
 </script>
 {% endblock %}

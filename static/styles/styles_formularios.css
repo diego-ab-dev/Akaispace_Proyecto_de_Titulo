@@ -1,0 +1,121 @@
+/* Estilos compartidos por todos los formularios (se cargan en base.html). */
+
+/* ---------- Ojo para mostrar/ocultar la contraseña (static/js/mostrar_contrasena.js) ---------- */
+.campo-contrasena {
+    position: relative;
+}
+
+.campo-contrasena > input {
+    padding-right: 2.75rem !important;
+}
+
+/* Edge trae su propio ojo: se oculta para no tener dos */
+.campo-contrasena > input::-ms-reveal,
+.campo-contrasena > input::-ms-clear {
+    display: none;
+}
+
+.btn-ojo {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    padding: 0 0.35rem;
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    z-index: 5;
+}
+
+/* En form-floating el contenedor también incluye el mensaje de error: alto fijo del campo
+   para que el ojo no se mueva cuando aparece el error debajo */
+.form-floating.campo-contrasena > .btn-ojo {
+    bottom: auto;
+    height: calc(3.5rem + 2px);
+}
+
+.btn-ojo[hidden] {
+    display: none;
+}
+
+.btn-ojo:hover {
+    color: #4E84A8;
+}
+
+.btn-ojo:focus {
+    outline: none;
+}
+
+.btn-ojo:focus-visible {
+    color: #4E84A8;
+    outline: 2px solid rgba(78, 132, 168, 0.5);
+    outline-offset: -2px;
+    border-radius: 0.375rem;
+}
+
+/* Con error, el ícono rojo de Bootstrap se corre a la izquierda del ojo */
+.campo-contrasena > .form-control.is-invalid {
+    padding-right: 4.5rem !important;
+    background-position: right 2.75rem center;
+}
+
+/* ---------- Botón "Continuar con Google" (partials/boton_google.html) ---------- */
+/* Sigue las pautas de marca de Google: fondo claro, logo "G" a color y texto legible. */
+.separador-google {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+    color: #8a929b;
+    font-size: 0.85rem;
+}
+
+.separador-google::before,
+.separador-google::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: #d5dae0;
+}
+
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: #ffffff;
+    color: #1f1f1f;
+    border: 1px solid #dadce0;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-google:hover {
+    background-color: #f8faff;
+    border-color: #c6d4e4;
+    box-shadow: 0 2px 6px rgba(60, 64, 67, 0.15);
+}
+
+.btn-google:active {
+    background-color: #eef3fb;
+    box-shadow: none;
+}
+
+.btn-google:focus-visible {
+    outline: 2px solid #4E84A8;
+    outline-offset: 2px;
+}
+
+.btn-google svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}

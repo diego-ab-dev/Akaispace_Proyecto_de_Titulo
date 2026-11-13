@@ -86,11 +86,6 @@
                             <div class="form-floating mb-3 position-relative">
                                 <input type="password" class="form-control" id="floatingPassword" name="contraseña" placeholder="Password">
                                 <label for="floatingPassword">Contraseña</label>
-
-                                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 password-toggle-btn" 
-                                        id="togglePassword" style="z-index: 10; border: none; background: transparent;">
-                                    <i class="fas fa-eye" id="eyeIcon"></i>
-                                </button>
                             </div>
                             <div class="mb-3 mt-n2">
                                 {% include "partials/reglas_contraseña.html" %}
@@ -99,11 +94,6 @@
                             <div class="form-floating mb-3 position-relative">
                                 <input type="password" class="form-control" id="floatingPasswordConfirm" name="confirmar_contraseña" placeholder="Confirm Password">
                                 <label for="floatingPasswordConfirm">Confirmar Contraseña</label>
-
-                                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 password-toggle-btn" 
-                                        id="toggleConfirmPassword" style="z-index: 10; border: none; background: transparent;">
-                                    <i class="fas fa-eye" id="eyeIconConfirm"></i>
-                                </button>
                             </div>
 
                             {% include 'partials/consentimientos_registro.html' %}
@@ -364,40 +354,6 @@
         });
     });
 
-    // ojo para ver la contra
-    function configurarOjo(inputId, toggleId, iconId) {
-        const passwordInput = document.getElementById(inputId);
-        const toggleButton = document.getElementById(toggleId);
-        const eyeIcon = document.getElementById(iconId);
-
-        if (!passwordInput || !toggleButton || !eyeIcon) return;
-
-        toggleButton.addEventListener('click', function () {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-
-            if (type === 'password') {
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
-            } else {
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
-            }
-        });
-
-        passwordInput.addEventListener('input', function () {
-            if (passwordInput.value.length > 0) {
-                toggleButton.style.display = 'block';
-            } else {
-                toggleButton.style.display = 'none';
-            }
-        });
-
-        toggleButton.style.display = 'none';
-    }
-
-    configurarOjo('floatingPassword', 'togglePassword', 'eyeIcon');
-    configurarOjo('floatingPasswordConfirm', 'toggleConfirmPassword', 'eyeIconConfirm');
 
     function configurarContador(inputId, counterId, maxLength) {
         const input = document.getElementById(inputId);
