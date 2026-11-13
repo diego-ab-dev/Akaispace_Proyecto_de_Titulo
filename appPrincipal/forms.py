@@ -38,92 +38,283 @@ def normalizar_rut(rut):
     return f"{int(cuerpo):,}".replace(',', '.') + '-' + dv
 
 
-# formulario usuario
-class UsuarioCustomForm(forms.Form):
+# ---------- validaciones compartidas por los formularios de cuentas ----------
+# Los mismos límites se repiten en los atributos de los <input> (maxlength, pattern) para avisar
+# antes de enviar, pero la validación que vale es siempre la del servidor.
 
-    rut = forms.CharField()
+NOMBRE_MAXIMO = 100            # igual que Usuario.nombre
+DIRECCION_MAXIMA = 100
+SIGNOS_PERMITIDOS_EN_NOMBRE = " '’-."
+
+
+def limpiar_nombre(valor):
+    """Nombre de una persona. Acepta cualquier letra de Unicode (tildes, ñ, ü, ç, etc.), espacios,
+    apóstrofos, guiones y puntos (O'Higgins, Pérez-Cotapos, Mª José), como recomienda la W3C para
+    nombres de personas; rechaza números y otros símbolos. Normaliza a NFC y quita espacios repetidos."""
+    nombre = ' '.join(unicodedata.normalize('NFC', valor or '').split())
+    if not nombre:
+        raise ValidationError('Ingresa tu nombre.', code='required')
+    for caracter in nombre:
+        if caracter not in SIGNOS_PERMITIDOS_EN_NOMBRE and not unicodedata.category(caracter).startswith(('L', 'M')):
+            raise ValidationError(
+                'El nombre solo puede tener letras (con o sin tilde), espacios, guiones y apóstrofos.',
+                code='nombre_caracteres')
+    if sum(caracter.isalpha() for caracter in nombre) < 2:
+        raise ValidationError('El nombre debe tener al menos 2 letras.', code='nombre_corto')
+    if len(nombre) > NOMBRE_MAXIMO:
+        raise ValidationError(f'El nombre puede tener hasta {NOMBRE_MAXIMO} caracteres.', code='max_length')
+    return nombre
+
+
+def normalizar_telefono(valor):
+    """Celular chileno: 8 dígitos después del +56 9. Acepta '12345678', '912345678' o '+56 9 1234 5678'
+    y lo guarda siempre como '+56 9 12345678'."""
+    digitos = ''.join(caracter for caracter in (valor or '') if caracter.isdigit())
+    if len(digitos) == 11 and digitos.startswith('569'):
+        digitos = digitos[3:]
+    elif len(digitos) == 9 and digitos.startswith('9'):
+        digitos = digitos[1:]
+    if len(digitos) != 8:
+        raise ValidationError('El teléfono debe tener 8 dígitos después del +56 9.', code='telefono_invalido')
+    return f'+56 9 {digitos}'
+
+
+def limpiar_direccion(valor):
+    direccion = ' '.join((valor or '').split())
+    if not direccion:
+        raise ValidationError('Ingresa tu dirección.', code='required')
+    if len(direccion) > DIRECCION_MAXIMA:
+        raise ValidationError(f'La dirección puede tener hasta {DIRECCION_MAXIMA} caracteres.', code='max_length')
+    if not any(caracter.isalpha() for caracter in direccion):
+        raise ValidationError('Escribe la calle y el número (por ejemplo: Picarte 344).', code='direccion_invalida')
+    return direccion
+
+
+def validar_region_y_ciudad(form, requerido=True):
+    """Valida que la ciudad pertenezca a la región. Con requerido=False ambos pueden quedar vacíos,
+    pero si se llena uno hay que llenar el otro."""
+    region = form.cleaned_data.get('region') or ''
+    ciudad = form.cleaned_data.get('ciudad') or ''
+    if 'region' in form.errors:
+        return
+    if not region and not ciudad and not requerido:
+        return
+    if not region:
+        form.add_error('region', 'Selecciona tu región.')
+    elif not ciudad:
+        form.add_error('ciudad', 'Selecciona tu ciudad.')
+    elif ciudad not in REGIONES_CIUDADES.get(region, []):
+        form.add_error('ciudad', 'Selecciona una ciudad de la región elegida.')
+
+
+def errores_para_json(form):
+    """{'campo': [mensajes]} en el orden de los campos del formulario, más el primer mensaje
+    (para respuestas JSON de formularios que se envían con fetch)."""
+    errores = {}
+    for nombre in [*form.fields, '__all__']:
+        if nombre in form.errors:
+            errores[nombre] = list(form.errors[nombre])
+    for nombre, mensajes in form.errors.items():
+        errores.setdefault(nombre, list(mensajes))
+    primero = next(iter(errores.values()))[0] if errores else 'Revisa los datos del formulario.'
+    return {'success': False, 'message': primero, 'errors': errores}
+
+
+def _correo_o_rut_en_uso(campo, valor, mensajes):
+    usuario = Usuario.objects.filter(**{campo: valor}).only('is_deleted').first()
+    if usuario:
+        raise ValidationError(mensajes['eliminado'] if usuario.is_deleted else mensajes['registrado'],
+                              code='duplicado')
+
+
+class DatosCuentaForm(forms.Form):
+    """Datos personales de una cuenta nueva (registro del cliente y creación desde el panel)."""
+    telefono_requerido = True
+    direccion_requerida = True
+    ubicacion_requerida = True
+
+    rut = forms.CharField(max_length=12, error_messages={'required': 'Ingresa tu RUT.'})
+    nombre = forms.CharField(max_length=NOMBRE_MAXIMO, strip=False,
+                             error_messages={'required': 'Ingresa tu nombre.',
+                                             'max_length': f'El nombre puede tener hasta {NOMBRE_MAXIMO} caracteres.'})
+    email = forms.EmailField(max_length=254, error_messages={
+        'required': 'Ingresa tu correo electrónico.',
+        'invalid': 'Escribe un correo válido (por ejemplo: nombre@correo.cl).',
+        'max_length': 'El correo puede tener hasta 254 caracteres.',
+    })
+    telefono = forms.CharField(max_length=20, required=False)
+    region = forms.ChoiceField(choices=REGIONES, required=False,
+                               error_messages={'invalid_choice': 'Selecciona una región de la lista.'})
+    ciudad = forms.CharField(max_length=100, required=False)
+    direccion = forms.CharField(max_length=200, required=False, strip=False)
 
     def clean_rut(self):
-        return normalizar_rut(self.cleaned_data['rut'])
-        
-    nombre = forms.CharField(
-        max_length=50, 
-        validators=[
-            validators.MinLengthValidator(5),
-            validators.MaxLengthValidator(50)
-        ],
-        widget=forms.TextInput(attrs={
-            'class': 'form-control', 
-            'id': 'floatingInputUsername',
-            'maxlength': '50', 
-            'placeholder': 'myusername'
+        rut = normalizar_rut(self.cleaned_data['rut'])
+        _correo_o_rut_en_uso('rut', rut, {
+            'registrado': 'El RUT ya está registrado.',
+            'eliminado': 'Este RUT pertenece a un usuario eliminado. No puede volver a usarse.',
         })
-    )
-    telefono = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'number'}))
+        return rut
 
-    email = forms.EmailField(
-        max_length=254, 
-        widget=forms.EmailInput(attrs={
-            'class': 'form-control', 
-            'id': 'floatingInputEmail',
-            'maxlength': '254', 
-            'placeholder': 'name@example.com'
+    def clean_nombre(self):
+        return limpiar_nombre(self.cleaned_data['nombre'])
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        _correo_o_rut_en_uso('email', email, {
+            'registrado': 'El correo ya está registrado.',
+            'eliminado': 'Este correo ya fue utilizado previamente (usuario eliminado). '
+                         'No puede volver a registrarse con el mismo correo.',
         })
-    )
+        return email
 
-    contraseña = forms.CharField()
-    confirmar_contraseña = forms.CharField()
+    def clean_telefono(self):
+        telefono = self.cleaned_data['telefono']
+        if not telefono.strip():
+            if self.telefono_requerido:
+                raise ValidationError('Ingresa tu teléfono.', code='required')
+            return ''
+        return normalizar_telefono(telefono)
 
-    direccion = forms.CharField(
-        max_length=100,
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'id': 'floatingInputAdress', 
-            'maxlength': '100', 
-            'placeholder': 'Picarte 344'
-        })
-    )
+    def clean_direccion(self):
+        direccion = self.cleaned_data['direccion']
+        if not direccion.strip() and not self.direccion_requerida:
+            return ''
+        return limpiar_direccion(direccion)
 
-    region = forms.ChoiceField(choices=REGIONES, widget=forms.Select(attrs={'id': 'id_region', 'class': 'form-control'}))
-    ciudad = forms.ChoiceField(choices=[], widget=forms.Select(attrs={'id': 'id_ciudad', 'class': 'form-control'}))
+    def clean(self):
+        cleaned_data = super().clean()
+        validar_region_y_ciudad(self, requerido=self.ubicacion_requerida)
+        return cleaned_data
 
+
+class ContraseñaNuevaMixin(forms.Form):
+    """Contraseña + confirmación, validadas con AUTH_PASSWORD_VALIDATORS (RNF-01)."""
+    contraseña = forms.CharField(strip=False, error_messages={'required': 'Ingresa una contraseña.'})
+    confirmar_contraseña = forms.CharField(strip=False, error_messages={'required': 'Repite tu contraseña.'})
+
+    def validar_contraseña_nueva(self, usuario):
+        contraseña = self.cleaned_data.get('contraseña')
+        confirmacion = self.cleaned_data.get('confirmar_contraseña')
+        if not contraseña:
+            return
+        try:
+            validate_password(contraseña, user=usuario)
+        except ValidationError as e:
+            self.add_error('contraseña', e)
+        if confirmacion and contraseña != confirmacion:
+            self.add_error('confirmar_contraseña', 'Las contraseñas no coinciden.')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # el validador de similitud compara con el nombre y el correo que se están registrando
+        self.validar_contraseña_nueva(Usuario(email=cleaned_data.get('email') or '',
+                                              nombre=cleaned_data.get('nombre') or ''))
+        return cleaned_data
+
+
+# formulario de registro del cliente (HU-01)
+class UsuarioCustomForm(DatosCuentaForm, ContraseñaNuevaMixin):
+    field_order = ['rut', 'nombre', 'email', 'telefono', 'region', 'ciudad', 'direccion',
+                   'contraseña', 'confirmar_contraseña', 'declaracion_edad', 'acepta_privacidad',
+                   'autoriza_datos_navegacion']
 
     # HU-01: declaración de edad obligatoria al registrarse
     declaracion_edad = forms.ChoiceField(
         choices=Usuario.DECLARACIONES_EDAD, widget=forms.RadioSelect,
-        error_messages={'required': 'Debes declarar tu edad para crear tu cuenta.'},
+        error_messages={'required': 'Debes declarar tu edad para crear tu cuenta.',
+                        'invalid_choice': 'Debes declarar tu edad para crear tu cuenta.'},
     )
     acepta_privacidad = forms.BooleanField(error_messages={
         'required': 'Debes aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta.',
     })
     autoriza_datos_navegacion = forms.BooleanField(required=False)
 
-    def clean_ciudad(self):
-        ciudad = self.cleaned_data.get('ciudad')
-        region = self.cleaned_data.get('region')
-        if ciudad not in REGIONES_CIUDADES.get(region, []):
-            raise forms.ValidationError(f'La ciudad {ciudad} no es válida para la región seleccionada.')
-        return ciudad
 
-    def clean_email(self):
-        return self.cleaned_data['email'].strip().lower()
+# formulario para crear un usuario desde el panel: teléfono y dirección son opcionales
+# (una cuenta de administrador no los necesita; el cliente puede completarlos en su perfil)
+class CrearUsuarioAdminForm(DatosCuentaForm, ContraseñaNuevaMixin):
+    telefono_requerido = False
+    direccion_requerida = False
+    ubicacion_requerida = False
+    field_order = ['rut', 'nombre', 'email', 'telefono', 'region', 'ciudad', 'direccion',
+                   'contraseña', 'confirmar_contraseña', 'es_administrador']
+
+    es_administrador = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # el administrador llena los datos de otra persona: mensajes sin "tu"
+        for campo, mensaje in [('rut', 'Ingresa el RUT.'), ('nombre', 'Ingresa el nombre.'),
+                               ('email', 'Ingresa el correo electrónico.'), ('contraseña', 'Ingresa una contraseña.'),
+                               ('confirmar_contraseña', 'Repite la contraseña.')]:
+            self.fields[campo].error_messages['required'] = mensaje
+
+
+# datos de contacto y despacho que el cliente edita en su perfil
+class EditarPerfilForm(forms.Form):
+    telefono = forms.CharField(max_length=20, error_messages={'required': 'Ingresa tu teléfono.'})
+    region = forms.ChoiceField(choices=REGIONES, error_messages={
+        'required': 'Selecciona tu región.', 'invalid_choice': 'Selecciona una región de la lista.'})
+    ciudad = forms.CharField(max_length=100, error_messages={'required': 'Selecciona tu ciudad.'})
+    direccion = forms.CharField(max_length=200, strip=False, error_messages={'required': 'Ingresa tu dirección.'})
+
+    def clean_telefono(self):
+        return normalizar_telefono(self.cleaned_data['telefono'])
+
+    def clean_direccion(self):
+        return limpiar_direccion(self.cleaned_data['direccion'])
 
     def clean(self):
         cleaned_data = super().clean()
-        contraseña = cleaned_data.get('contraseña')
-        if not contraseña:
-            return cleaned_data
-
-        if contraseña != cleaned_data.get('confirmar_contraseña'):
-            self.add_error('confirmar_contraseña', 'Las contraseñas no coinciden.')
-            return cleaned_data
-
-        usuario = Usuario(email=cleaned_data.get('email', ''), nombre=cleaned_data.get('nombre', ''))
-        try:
-            validate_password(contraseña, user=usuario)
-        except ValidationError as e:
-            self.add_error('contraseña', e)
+        if 'ciudad' not in self.errors:
+            validar_region_y_ciudad(self)
         return cleaned_data
+
+
+class CambiarContraseñaForm(forms.Form):
+    contraseña_actual = forms.CharField(strip=False, error_messages={'required': 'Ingresa tu contraseña actual.'})
+    nueva_contraseña = forms.CharField(strip=False, error_messages={'required': 'Ingresa la nueva contraseña.'})
+    confirmar_contraseña = forms.CharField(strip=False, error_messages={'required': 'Repite la nueva contraseña.'})
+
+    def __init__(self, *args, usuario, **kwargs):
+        self.usuario = usuario
+        super().__init__(*args, **kwargs)
+
+    def clean_contraseña_actual(self):
+        contraseña = self.cleaned_data['contraseña_actual']
+        if not self.usuario.check_password(contraseña):
+            raise ValidationError('La contraseña actual no es correcta.', code='contraseña_incorrecta')
+        return contraseña
+
+    def clean(self):
+        cleaned_data = super().clean()
+        nueva = cleaned_data.get('nueva_contraseña')
+        confirmacion = cleaned_data.get('confirmar_contraseña')
+        if nueva:
+            try:
+                validate_password(nueva, user=self.usuario)
+            except ValidationError as e:
+                self.add_error('nueva_contraseña', e)
+            if confirmacion and nueva != confirmacion:
+                self.add_error('confirmar_contraseña', 'Las contraseñas nuevas no coinciden.')
+            if cleaned_data.get('contraseña_actual') and nueva == cleaned_data['contraseña_actual']:
+                self.add_error('nueva_contraseña', 'La nueva contraseña debe ser distinta de la actual.')
+        return cleaned_data
+
+
+class ReclamoForm(forms.Form):
+    ASUNTO_MAXIMO = 50
+    DESCRIPCION_MAXIMA = 2000
+
+    asunto = forms.CharField(max_length=ASUNTO_MAXIMO, error_messages={
+        'required': 'Escribe el asunto del reclamo.',
+        'max_length': f'El asunto puede tener hasta {ASUNTO_MAXIMO} caracteres.',
+    })
+    descripcion = forms.CharField(max_length=DESCRIPCION_MAXIMA, error_messages={
+        'required': 'Describe qué pasó con tu compra.',
+        'max_length': f'La descripción puede tener hasta {DESCRIPCION_MAXIMA} caracteres.',
+    })
 
 # form para recuperar contraseña (HU-11): a diferencia del de Django, también incluye las cuentas
 # creadas solo con Google (sin contraseña utilizable), para que puedan definir una
@@ -139,14 +330,37 @@ def _mismo_correo(correo1, correo2):
 
 # form para opiniones
 class OpinionForm(forms.ModelForm):
+    COMENTARIO_MAXIMO = 1000
+
     class Meta:
         model = Opinion
         fields = ['puntuacion', 'comentario']
+        error_messages = {
+            'puntuacion': {'required': 'Elige una puntuación de 1 a 5 estrellas.',
+                           'invalid_choice': 'Elige una puntuación de 1 a 5 estrellas.',
+                           'invalid': 'Elige una puntuación de 1 a 5 estrellas.'},
+            'comentario': {'required': 'Escribe un comentario sobre el producto.'},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['comentario'].max_length = self.COMENTARIO_MAXIMO
+        self.fields['comentario'].validators.append(validators.MaxLengthValidator(
+            self.COMENTARIO_MAXIMO, message=f'El comentario puede tener hasta {self.COMENTARIO_MAXIMO} caracteres.'))
 
 # form para devoluciones
 class SolicitudDevolucionForm(forms.Form):
-    cantidad = forms.IntegerField(min_value=1)
-    descripcion = forms.CharField(widget=forms.Textarea, required=True)
+    DESCRIPCION_MAXIMA = 1000
+
+    cantidad = forms.IntegerField(min_value=1, error_messages={
+        'required': 'Indica cuántas unidades quieres devolver.',
+        'invalid': 'Indica cuántas unidades quieres devolver.',
+        'min_value': 'Debes devolver al menos 1 unidad.',
+    })
+    descripcion = forms.CharField(widget=forms.Textarea, max_length=DESCRIPCION_MAXIMA, error_messages={
+        'required': 'Cuéntanos el motivo de la devolución.',
+        'max_length': f'El motivo puede tener hasta {DESCRIPCION_MAXIMA} caracteres.',
+    })
 
     def __init__(self, *args, cantidad_maxima, **kwargs):
         super().__init__(*args, **kwargs)

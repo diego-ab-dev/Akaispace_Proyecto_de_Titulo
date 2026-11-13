@@ -3,14 +3,12 @@ from urllib.parse import urlencode
 
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from appPrincipal.constants import REGIONES_CIUDADES
+from appPrincipal.constants import REGIONES, REGIONES_CIUDADES
+from appPrincipal.forms import DIRECCION_MAXIMA, CambiarContraseñaForm, EditarPerfilForm
 from appPrincipal.models import Devolucion, Opinion, Reclamo, Venta
 from appPrincipal.recomendaciones import cambiar_consentimiento_navegacion
 
@@ -45,59 +43,45 @@ def datos_navegacion(request):
 
 @login_required
 def cambiar_contraseña(request):
+    usuario = request.user
+    form = CambiarContraseñaForm(usuario=usuario)
     if request.method == 'POST':
-        contraseña_actual = request.POST.get('contraseña_actual', '')
-        nueva_contraseña = request.POST.get('nueva_contraseña', '')
-        confirmar_contraseña = request.POST.get('confirmar_contraseña', '')
-        usuario = request.user
-        url_error = reverse('cambiar')
+        form = CambiarContraseñaForm(request.POST, usuario=usuario)
+        if form.is_valid():
+            usuario.set_password(form.cleaned_data['nueva_contraseña'])
+            usuario.save()
+            update_session_auth_hash(request, usuario)
+            aviso = urlencode({'notif': 'Contraseña actualizada correctamente.', 'type': 'success'})
+            return redirect(f"{reverse('perfil')}?{aviso}")
 
-        if not usuario.check_password(contraseña_actual):
-            return redirect(f"{url_error}?{urlencode({'notif': 'La contraseña actual no es correcta.', 'type': 'error'})}")
-
-        if nueva_contraseña != confirmar_contraseña:
-            return redirect(f"{url_error}?{urlencode({'notif': 'Las contraseñas nuevas no coinciden.', 'type': 'error'})}")
-
-        try:
-            validate_password(nueva_contraseña, user=usuario)
-        except ValidationError as e:
-            return redirect(f"{url_error}?{urlencode({'notif': ' '.join(e.messages), 'type': 'error'})}")
-
-        usuario.set_password(nueva_contraseña)
-        usuario.save()
-        update_session_auth_hash(request, usuario)
-
-        return redirect(f"{reverse('perfil')}?{urlencode({'notif': 'Contraseña actualizada correctamente.', 'type': 'success'})}")
-
-    return render(request, 'cambiar_contrausu.html')
+    return render(request, 'cambiar_contrausu.html', {
+        'form': form,
+        # las cuentas creadas con Google no tienen contraseña: la crean con "¿Olvidaste tu contraseña?"
+        'sin_contraseña': not usuario.has_usable_password(),
+    })
 
 
 @login_required
 def editar_perfil(request):
     usuario = request.user
-
     if request.method == 'POST':
-        telefono = request.POST.get('telefono')
-        direccion = request.POST.get('direccion')
-        region = request.POST.get('region')
-        ciudad = request.POST.get('ciudad')
+        form = EditarPerfilForm(request.POST)
+        if form.is_valid():
+            for campo in ['telefono', 'direccion', 'region', 'ciudad']:
+                setattr(usuario, campo, form.cleaned_data[campo])
+            usuario.save(update_fields=['telefono', 'direccion', 'region', 'ciudad'])
+            aviso = urlencode({'notif': 'Tus datos se actualizaron correctamente.', 'type': 'success'})
+            return redirect(f"{reverse('perfil')}?{aviso}")
+    else:
+        form = EditarPerfilForm(initial={
+            'telefono': usuario.telefono[-8:] if usuario.telefono else '',
+            'direccion': usuario.direccion, 'region': usuario.region, 'ciudad': usuario.ciudad,
+        })
 
-        if region and ciudad not in REGIONES_CIUDADES.get(region, []):
-            return JsonResponse({'error': 'La ciudad no coincide con la región seleccionada.'}, status=400)
-
-        usuario.telefono = telefono or usuario.telefono
-        usuario.direccion = direccion or usuario.direccion
-        usuario.region = region or usuario.region
-        usuario.ciudad = ciudad or usuario.ciudad
-        usuario.save()
-
-        return JsonResponse({'success': 'Perfil actualizado correctamente.'})
-
-    ciudades = REGIONES_CIUDADES.get(usuario.region, [])
-    context = {
-        'usuario': usuario,
-        'regiones': REGIONES_CIUDADES.keys(),
-        'ciudades': ciudades,
-    }
-    return render(request, 'editar_datos.html', context)
-
+    region = form['region'].value() or ''
+    return render(request, 'editar_datos.html', {
+        'form': form,
+        'regiones': REGIONES,
+        'ciudades': REGIONES_CIUDADES.get(region, []),
+        'direccion_maxima': DIRECCION_MAXIMA,
+    })

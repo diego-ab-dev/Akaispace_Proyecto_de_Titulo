@@ -11,21 +11,28 @@
 <div class="reclamo-card">
     <h1>Ingreso de Reclamo</h1>
 
-    <form method="post">
+    <form method="post" data-validar>
         {% csrf_token %}
+        <div data-resumen-errores hidden></div>
 
-        <div class="mb-4">
-            <label for="asunto" class="form-label">Asunto del Reclamo</label>
-            <input type="text" class="form-control" id="asunto" name="asunto" required maxlength="50">
+        <div class="mb-4" data-campo>
+            <label for="asunto" class="form-label">Asunto del reclamo</label>
+            <input type="text" class="form-control" id="asunto" name="asunto" required maxlength="{{ form.ASUNTO_MAXIMO }}"
+                   value="{{ form.asunto.value|default:'' }}" placeholder="Ej.: El producto llegó dañado"
+                   data-contador data-msg-requerido="Escribe el asunto del reclamo.">
+            {% include "partials/error_campo.html" with campo=form.asunto %}
         </div>
 
-        <div class="mb-4">
+        <div class="mb-4" data-campo>
             <label for="descripcion" class="form-label">Descripción</label>
-            <textarea class="form-control" id="descripcion" name="descripcion" rows="6" placeholder="Escribe aquí tu descripción" required></textarea>
+            <textarea class="form-control" id="descripcion" name="descripcion" rows="6" maxlength="{{ form.DESCRIPCION_MAXIMA }}"
+                      placeholder="Cuéntanos qué pasó con tu compra" required data-contador
+                      data-msg-requerido="Describe qué pasó con tu compra.">{{ form.descripcion.value|default:'' }}</textarea>
+            {% include "partials/error_campo.html" with campo=form.descripcion %}
         </div>
 
         <div class="buttons-row">
-            <button type="submit" class="btn-custom btn-enviar">
+            <button type="submit" class="btn-custom btn-enviar" data-texto-enviando="Enviando…">
                 Enviar
             </button>
 

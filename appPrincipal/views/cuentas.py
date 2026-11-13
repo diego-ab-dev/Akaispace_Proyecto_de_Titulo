@@ -8,12 +8,12 @@ from django.contrib.auth.views import (PasswordResetCompleteView, PasswordResetC
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from appPrincipal import forms
-from appPrincipal.constants import POLITICA_PRIVACIDAD_VERSION, REGIONES_CIUDADES
+from appPrincipal.constants import POLITICA_PRIVACIDAD_VERSION, REGIONES, REGIONES_CIUDADES
 from appPrincipal.models import Usuario
 from appPrincipal.seguridad import MENSAJE_LOGIN_INVALIDO
 
@@ -63,70 +63,49 @@ def login(request):
 
 
 def register(request):
-    form = forms.UsuarioCustomForm()
+    if request.user.is_authenticated:
+        return redirect('home')
+
     if request.method == 'POST':
         form = forms.UsuarioCustomForm(request.POST)
-        region_seleccionada = request.POST.get('region')
-        ciudades = REGIONES_CIUDADES.get(region_seleccionada, [])
-        form.fields['ciudad'].choices = [(ciudad, ciudad) for ciudad in ciudades]
-
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            rut = form.cleaned_data['rut']
-
-            usuario_email = Usuario.objects.filter(email=email).first()
-            if usuario_email:
-                if usuario_email.is_deleted:
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'Este correo ya fue utilizado previamente (usuario eliminado). No puede volver a registrarse con el mismo correo.'
-                    })
-                return JsonResponse({
-                    'success': False,
-                    'message': 'El correo ya está registrado.'
-                })
-
-            usuario_rut = Usuario.objects.filter(rut=rut).first()
-            if usuario_rut:
-                if usuario_rut.is_deleted:
-                    return JsonResponse({
-                        'success': False,
-                        'message': 'Este RUT pertenece a un usuario eliminado. No puede volver a usarse.'
-                    })
-                return JsonResponse({
-                    'success': False,
-                    'message': 'El RUT ya está registrado.'
-                })
-            momento_consentimiento = timezone.now()
-            autoriza_navegacion = form.cleaned_data['autoriza_datos_navegacion']
-            try:
-                Usuario.objects.create_user(
-                    email=email,
-                    password=form.cleaned_data['contraseña'],
-                    rut=rut,
-                    nombre=form.cleaned_data['nombre'],
-                    telefono=form.cleaned_data['telefono'],
-                    direccion=form.cleaned_data['direccion'],
-                    ciudad=form.cleaned_data['ciudad'],
-                    region=form.cleaned_data['region'],
-                    declaracion_edad=form.cleaned_data['declaracion_edad'],
-                    privacidad_aceptada_en=momento_consentimiento,
-                    privacidad_version=POLITICA_PRIVACIDAD_VERSION,
-                    datos_navegacion_autorizados_en=momento_consentimiento if autoriza_navegacion else None,
-                )
-                return JsonResponse({'success': True, 'message': 'Usuario registrado exitosamente.'})
-
-            except IntegrityError as e:
-                if 'email' in str(e):
-                    return JsonResponse({'success': False, 'message': 'El correo ya está registrado.'})
-                elif 'rut' in str(e):
-                    return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
-                return JsonResponse({'success': False, 'message': 'Error inesperado.'})
-        else:
+        if not form.is_valid():
             logger.debug("Registro inválido: %s", form.errors.as_json())
-            primer_error = next(iter(form.errors.values()))[0]
-            return JsonResponse({'success': False, 'message': primer_error})
-    data = {'form': form, 'regiones_ciudades': REGIONES_CIUDADES, 'google_habilitado': _google_habilitado()}
+            return JsonResponse(forms.errores_para_json(form), status=400)
+
+        datos = form.cleaned_data
+        momento_consentimiento = timezone.now()
+        try:
+            usuario = Usuario.objects.create_user(
+                email=datos['email'],
+                password=datos['contraseña'],
+                rut=datos['rut'],
+                nombre=datos['nombre'],
+                telefono=datos['telefono'],
+                direccion=datos['direccion'],
+                ciudad=datos['ciudad'],
+                region=datos['region'],
+                declaracion_edad=datos['declaracion_edad'],
+                privacidad_aceptada_en=momento_consentimiento,
+                privacidad_version=POLITICA_PRIVACIDAD_VERSION,
+                datos_navegacion_autorizados_en=momento_consentimiento if datos['autoriza_datos_navegacion'] else None,
+            )
+        except IntegrityError as e:
+            # dos registros simultáneos con el mismo correo o RUT: la base de datos frena el segundo
+            campo = 'email' if 'email' in str(e) else 'rut' if 'rut' in str(e) else None
+            mensaje = {'email': 'El correo ya está registrado.', 'rut': 'El RUT ya está registrado.'}.get(
+                campo, 'No pudimos crear tu cuenta. Inténtalo de nuevo.')
+            return JsonResponse({'success': False, 'message': mensaje,
+                                 'errors': {campo or '__all__': [mensaje]}}, status=400)
+
+        # tras registrarse queda con la sesión iniciada, como en cualquier tienda en línea
+        auth_login(request, usuario, backend='django.contrib.auth.backends.ModelBackend')
+        logger.info("Registro: usuario %s", usuario.pk)
+        return JsonResponse({'success': True, 'message': f'¡Bienvenido/a a Akaispace, {usuario.nombre}! Tu cuenta quedó creada.',
+                             'redirect': reverse('home')})
+
+    data = {'form': forms.UsuarioCustomForm(), 'regiones': REGIONES,
+            'google_habilitado': _google_habilitado(), 'nombre_maximo': forms.NOMBRE_MAXIMO,
+            'direccion_maxima': forms.DIRECCION_MAXIMA}
     return render(request, 'register.html', data)
 
 def logout(request):

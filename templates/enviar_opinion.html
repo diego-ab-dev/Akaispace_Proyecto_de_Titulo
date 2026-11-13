@@ -13,24 +13,35 @@
             Tu opinión de "{{ producto.nombre }}"
         </h1>
         <!--Formulario-->
-        <form method="post" id="opinionForm">
+        <form method="post" id="opinionForm" data-validar>
             {% csrf_token %}
-            <label class="rating-label">Puntuación</label>
-            <div class="star-container" id="starContainer">
-                <i class="fa-solid fa-star star-icon" data-value="1"></i>
-                <i class="fa-solid fa-star star-icon" data-value="2"></i>
-                <i class="fa-solid fa-star star-icon" data-value="3"></i>
-                <i class="fa-solid fa-star star-icon" data-value="4"></i>
-                <i class="fa-solid fa-star star-icon" data-value="5"></i>
+            <div data-resumen-errores hidden></div>
+            <fieldset class="mb-3" data-campo>
+                <legend class="rating-label">Puntuación</legend>
+                <div class="star-container" id="starContainer" role="radiogroup" aria-label="Puntuación de 1 a 5 estrellas">
+                    {% for n in "12345" %}
+                    <input type="radio" class="visually-hidden estrella-radio" name="puntuacion" id="estrella{{ n }}" value="{{ n }}" required
+                           data-msg-requerido="Elige una puntuación de 1 a 5 estrellas."
+                           {% if form.is_bound %}{% if form.puntuacion.value|stringformat:"s" == n %}checked{% endif %}{% elif n == "5" %}checked{% endif %}>
+                    <label for="estrella{{ n }}" class="star-label" title="{{ n }} estrella{{ n|pluralize }}">
+                        <i class="fa-solid fa-star star-icon" data-value="{{ n }}" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ n }} estrella{{ n|pluralize }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% include "partials/error_campo.html" with campo=form.puntuacion %}
+            </fieldset>
+
+            <div class="mb-3" data-campo>
+                <label for="comentario" class="comment-label">Comentario</label>
+                <textarea name="comentario" id="comentario" class="custom-textarea" placeholder="Escribe aquí tu comentario"
+                          maxlength="{{ form.COMENTARIO_MAXIMO }}" required data-contador
+                          data-msg-requerido="Escribe un comentario sobre el producto.">{{ form.comentario.value|default:'' }}</textarea>
+                {% include "partials/error_campo.html" with campo=form.comentario %}
             </div>
 
-            <input type="number" name="puntuacion" id="ratingValue" class="hidden-rating-input" required value="5">
-
-            <label class="comment-label">Comentario</label>
-            <textarea name="comentario" class="custom-textarea" placeholder="Escribe aquí tu comentario" required></textarea>
-
             <div class="actions-row">
-                <button type="submit" class="btn-custom btn-submit">Enviar</button>
+                <button type="submit" class="btn-custom btn-submit" data-texto-enviando="Enviando…">Enviar</button>
 
                 <a href="javascript:history.back()" class="btn-custom btn-cancel">Cancelar</a>
             </div>
@@ -38,29 +49,19 @@
     </div>
 
 <script>
-    const stars = document.querySelectorAll('.star-icon');
-    const ratingInput = document.getElementById('ratingValue');
-
-    // funcion para pintar las estrellas
-    function highlightStars(value) {
-        stars.forEach(star => {
-            const starValue = parseInt(star.getAttribute('data-value'));
-            if (starValue <= value) {
-                star.classList.add('active');
-            } else {
-                star.classList.remove('active');
-            }
-        });
-    }
-
-    highlightStars(5);
-
-    stars.forEach(star => {
-        star.addEventListener('click', () => {
-            const value = parseInt(star.getAttribute('data-value'));
-            ratingInput.value = value; 
-            highlightStars(value); 
-        });
-    });
+    // pinta las estrellas hasta la puntuación elegida (los radios son los que se envían)
+    (function () {
+        const radios = document.querySelectorAll('.estrella-radio');
+        const estrellas = document.querySelectorAll('.star-icon');
+        function pintar() {
+            const elegido = document.querySelector('.estrella-radio:checked');
+            const valor = elegido ? Number(elegido.value) : 0;
+            estrellas.forEach(function (estrella) {
+                estrella.classList.toggle('active', Number(estrella.dataset.value) <= valor);
+            });
+        }
+        radios.forEach(function (radio) { radio.addEventListener('change', pintar); });
+        pintar();
+    })();
 </script>
 {% endblock %}

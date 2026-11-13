@@ -1,0 +1,5 @@
+{% comment %}
+Mensaje de error de un campo de un formulario de Django, bajo el campo. static/js/formularios.js lo
+reconoce por data-error-de, marca el campo en rojo y arma con todos ellos el resumen arriba del formulario.
+Uso: {% include "partials/error_campo.html" with campo=form.nombre %}
+{% endcomment %}{% if campo.errors %}<div class="invalid-feedback d-block mensaje-error" id="error-{{ campo.html_name }}" data-error-de="{{ campo.html_name }}">{{ campo.errors.0 }}</div>{% endif %}

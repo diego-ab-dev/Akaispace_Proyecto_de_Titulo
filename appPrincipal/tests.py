@@ -184,8 +184,62 @@ class RegisterTests(TestCase):
 
     def test_rut_duplicado_con_otro_formato_es_rechazado(self):
         self.client.post('/register/', self.datos)
+        self.client.logout()
         respuesta = self.client.post('/register/', {**self.datos, 'email': 'otro@example.com', 'rut': '12.343.455-2'})
         self.assertEqual(respuesta.json()['message'], 'El RUT ya está registrado.')
+        self.assertEqual(respuesta.json()['errors'], {'rut': ['El RUT ya está registrado.']})
+
+    def test_nombres_con_tildes_enie_dieresis_guion_y_apostrofo_son_validos(self):
+        nombres = ['José Ñúñez', 'Agüero Müller', "Bernardo O'Higgins", 'María-José Pérez', 'Ana Lí', 'Zoë Çelik']
+        for i, nombre in enumerate(nombres):
+            self.client.logout()
+            datos = {**self.datos, 'nombre': nombre, 'email': f'n{i}@example.com', 'rut': ['11111111-1', '22222222-2',
+                     '33333333-3', '44444444-4', '55555555-5', '66666666-6'][i]}
+            respuesta = self.client.post('/register/', datos).json()
+            self.assertTrue(respuesta['success'], (nombre, respuesta))
+            self.assertEqual(Usuario.objects.get(email=f'n{i}@example.com').nombre, nombre)
+
+    def test_nombre_con_numeros_o_simbolos_es_rechazado_y_se_limpian_espacios(self):
+        for nombre in ['Juan 123', 'Juan <script>', 'J', '   ', '@@@']:
+            respuesta = self.client.post('/register/', {**self.datos, 'nombre': nombre})
+            self.assertEqual(respuesta.status_code, 400, nombre)
+            self.assertIn('nombre', respuesta.json()['errors'], nombre)
+        self.client.post('/register/', {**self.datos, 'nombre': '  Juan    Pérez  '})
+        self.assertEqual(Usuario.objects.get().nombre, 'Juan Pérez')
+
+    def test_formulario_vacio_avisa_cada_campo_que_falta(self):
+        respuesta = self.client.post('/register/', {})
+        self.assertEqual(respuesta.status_code, 400)
+        errores = respuesta.json()['errors']
+        for campo in ['rut', 'nombre', 'email', 'telefono', 'region', 'direccion', 'contraseña',
+                      'confirmar_contraseña', 'declaracion_edad', 'acepta_privacidad']:
+            self.assertIn(campo, errores, campo)
+        self.assertEqual(errores['contraseña'], ['Ingresa una contraseña.'])
+        self.assertEqual(list(errores)[0], 'rut')  # en el mismo orden del formulario
+
+    def test_sin_contraseña_el_mensaje_dice_que_falta_la_contraseña(self):
+        datos = {**self.datos, 'contraseña': '', 'confirmar_contraseña': ''}
+        respuesta = self.client.post('/register/', datos).json()
+        self.assertEqual(respuesta['message'], 'Ingresa una contraseña.')
+        self.assertEqual(respuesta['errors']['confirmar_contraseña'], ['Repite tu contraseña.'])
+
+    def test_telefono_se_valida_y_se_guarda_con_formato(self):
+        for telefono in ['1234', 'abcdefgh', '+56 9 1234 56789']:
+            respuesta = self.client.post('/register/', {**self.datos, 'telefono': telefono})
+            self.assertIn('telefono', respuesta.json()['errors'], telefono)
+        self.client.post('/register/', {**self.datos, 'telefono': '87654321'})
+        self.assertEqual(Usuario.objects.get().telefono, '+56 9 87654321')
+
+    def test_ciudad_de_otra_region_es_rechazada(self):
+        respuesta = self.client.post('/register/', {**self.datos, 'ciudad': 'Osorno'}).json()
+        self.assertIn('ciudad', respuesta['errors'])
+        self.assertFalse(Usuario.objects.exists())
+
+    def test_registro_inicia_la_sesion(self):
+        respuesta = self.client.post('/register/', self.datos).json()
+        self.assertEqual(respuesta['redirect'], '/')
+        self.assertEqual(int(self.client.session['_auth_user_id']), Usuario.objects.get().pk)
+        self.assertRedirects(self.client.get('/register/'), '/', fetch_redirect_response=False)
 
 
 def crear_cliente(email='cliente@example.com', password='Akaispace-2026!', **extra):
@@ -263,6 +317,17 @@ class ContraseñaTests(TestCase):  # 15
     def test_registro_rechaza_confirmacion_distinta(self):
         datos = {**RegisterTests.datos, 'confirmar_contraseña': 'Otra-Clave-2026!'}
         self.assertEqual(self.client.post('/register/', datos).json()['message'], 'Las contraseñas no coinciden.')
+
+    def test_cambiar_contraseña_muestra_los_errores_en_cada_campo(self):
+        usuario = crear_cliente()
+        self.client.force_login(usuario)
+        respuesta = self.client.post('/cambiar/', {'contraseña_actual': 'mala', 'nueva_contraseña': '',
+                                                   'confirmar_contraseña': ''})
+        self.assertEqual(respuesta.status_code, 200)
+        errores = respuesta.context['form'].errors
+        self.assertEqual(errores['contraseña_actual'], ['La contraseña actual no es correcta.'])
+        self.assertEqual(errores['nueva_contraseña'], ['Ingresa la nueva contraseña.'])
+        self.assertContains(respuesta, 'data-error-de="contraseña_actual"')
 
     def test_cambiar_contraseña_valida_reglas_y_mantiene_la_sesion(self):
         usuario = crear_cliente()
@@ -3673,3 +3738,68 @@ class ComprasPanelTests(TestCase):  # HU-10: compras a proveedores, base del rep
         compra = Compra.objects.get()
         self.assertContains(self.client.get('/admin-panel/compras/'), 'Distribuidora Sur')
         self.assertContains(self.client.get(f'/admin-panel/compras/{compra.id}/'), 'Marcar como recibida')
+
+
+class FormulariosDeCuentaTests(TestCase):  # validación con mensajes por campo en los formularios de cuenta
+    def test_editar_perfil_valida_y_guarda_con_formato(self):
+        cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1', telefono='+56 9 11111111')
+        self.client.force_login(cliente)
+        respuesta = self.client.post('/editar/', {'telefono': '12', 'region': 'LOS RIOS', 'ciudad': 'Osorno',
+                                                  'direccion': '123'})
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(set(respuesta.context['form'].errors), {'telefono', 'ciudad', 'direccion'})
+        cliente.refresh_from_db()
+        self.assertEqual(cliente.ciudad, 'Valdivia')
+
+        respuesta = self.client.post('/editar/', {'telefono': '22223333', 'region': 'LOS LAGOS', 'ciudad': 'Osorno',
+                                                  'direccion': '  Calle   Nueva 45 '})
+        self.assertRedirects(respuesta, '/perfil/?notif=Tus+datos+se+actualizaron+correctamente.&type=success',
+                             fetch_redirect_response=False)
+        cliente.refresh_from_db()
+        self.assertEqual((cliente.telefono, cliente.region, cliente.ciudad, cliente.direccion),
+                         ('+56 9 22223333', 'LOS LAGOS', 'Osorno', 'Calle Nueva 45'))
+
+    def test_editar_perfil_no_acepta_ciudad_sin_region(self):
+        cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1')
+        self.client.force_login(cliente)
+        self.client.post('/editar/', {'telefono': '22223333', 'region': '', 'ciudad': 'Santiago', 'direccion': 'Calle 1'})
+        cliente.refresh_from_db()
+        self.assertEqual(cliente.ciudad, 'Valdivia')
+
+    def test_crear_usuario_desde_el_panel_devuelve_errores_por_campo(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        respuesta = self.client.post('/admin-panel/usuarios/crear/', {'nombre': 'Ñandú 2', 'email': 'malo',
+                                                                     'region': 'LOS RIOS'})
+        self.assertEqual(respuesta.status_code, 400)
+        errores = respuesta.json()['errors']
+        self.assertEqual(errores['rut'], ['Ingresa el RUT.'])
+        self.assertIn('nombre', errores)
+        self.assertIn('email', errores)
+        self.assertIn('ciudad', errores)
+        self.assertEqual(errores['contraseña'], ['Ingresa una contraseña.'])
+
+        datos = {'nombre': 'Sofía Muñoz', 'email': 'sofia@example.com', 'rut': '12343455-2',
+                 'contraseña': 'Akaispace-2026!', 'confirmar_contraseña': 'Akaispace-2026!'}
+        self.assertTrue(self.client.post('/admin-panel/usuarios/crear/', datos).json()['success'])
+        self.assertEqual(Usuario.objects.get(email='sofia@example.com').nombre, 'Sofía Muñoz')
+
+    def test_reclamo_vacio_muestra_el_error_y_conserva_lo_escrito(self):
+        from .models import Reclamo, Venta
+        cliente = crear_cliente()
+        venta = Venta.objects.create(usuario=cliente, metodo_envio='tienda')
+        self.client.force_login(cliente)
+        respuesta = self.client.post(f'/crear_reclamo/{venta.id}/', {'asunto': 'Llegó roto', 'descripcion': '   '})
+        self.assertContains(respuesta, 'Describe qué pasó con tu compra.')
+        self.assertContains(respuesta, 'value="Llegó roto"')
+        self.assertFalse(Reclamo.objects.exists())
+        self.client.post(f'/crear_reclamo/{venta.id}/', {'asunto': 'Llegó roto', 'descripcion': 'La caja venía abierta'})
+        self.assertEqual(Reclamo.objects.get().asunto, 'Llegó roto')
+
+    def test_las_paginas_de_formularios_cargan_la_validacion_compartida(self):
+        cliente = crear_cliente()
+        for url in ['/register/', '/login/']:
+            self.assertContains(self.client.get(url), 'js/formularios.js')
+        self.client.force_login(cliente)
+        for url in ['/editar/', '/cambiar/']:
+            respuesta = self.client.get(url)
+            self.assertContains(respuesta, 'data-validar')

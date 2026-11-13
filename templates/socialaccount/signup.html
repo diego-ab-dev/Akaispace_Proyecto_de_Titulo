@@ -9,19 +9,16 @@
     <strong>{{ form.email.value }}</strong>. Solo falta este último paso:
 </p>
 
-{% if form.errors %}
-<div class="alert alert-danger" role="alert">
-    {% for campo in form %}{% for error in campo.errors %}<div>{{ error }}</div>{% endfor %}{% endfor %}
-    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
-</div>
-{% endif %}
-
-<form method="post" action="{% url 'socialaccount_signup' %}">
+<form method="post" action="{% url 'socialaccount_signup' %}" id="form-registro-google" data-validar>
     {% csrf_token %}
+    <div data-resumen-errores hidden></div>
+    {% include 'partials/errores_generales.html' %}
+    {# el correo no es un campo visible (lo verificó Google): sus errores van al resumen #}
+    {% for error in form.email.errors %}<div class="alert alert-danger" data-error-general>{{ error }}</div>{% endfor %}
     {% include 'partials/consentimientos_registro.html' %}
     {{ redirect_field }}
     <div class="d-grid mb-2">
-        <button class="btn btn-lg btn-login fw-bold text-uppercase" type="submit">Crear cuenta</button>
+        <button class="btn btn-lg btn-login fw-bold text-uppercase" type="submit" data-texto-enviando="Creando tu cuenta…">Crear cuenta</button>
     </div>
 </form>
 <p class="small text-muted text-center mt-3 mb-0">

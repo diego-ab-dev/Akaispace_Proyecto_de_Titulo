@@ -1,5 +1,6 @@
 """Carrito de compras."""
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
@@ -7,6 +8,7 @@ from django.views.decorators.http import require_POST
 from appPrincipal import envios
 from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.decorators import login_required_json
+from appPrincipal.forms import limpiar_direccion
 from appPrincipal.models import Carrito, InteraccionProducto, ItemCarritoProducto, Producto
 from appPrincipal.recomendaciones import registrar_interaccion
 
@@ -177,12 +179,12 @@ def ver_carrito(request):
 def guardar_datos_envio(request):
     region = request.POST.get("region", "")
     ciudad = request.POST.get("ciudad", "")
-    direccion = request.POST.get("direccion", "").strip()
-
     if ciudad not in REGIONES_CIUDADES.get(region, []):
         return JsonResponse({'success': False, 'error': 'La ciudad no corresponde a la región seleccionada.'}, status=400)
-    if not direccion or len(direccion) > 100:
-        return JsonResponse({'success': False, 'error': 'Ingresa una dirección de hasta 100 caracteres.'}, status=400)
+    try:
+        direccion = limpiar_direccion(request.POST.get("direccion", ""))
+    except ValidationError as e:
+        return JsonResponse({'success': False, 'error': e.messages[0]}, status=400)
 
     usuario = request.user
     usuario.region = region

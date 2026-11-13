@@ -1,17 +1,16 @@
 """Panel de administración: usuarios."""
 import logging
 
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import admin_required
-from appPrincipal.constants import REGIONES_CIUDADES
-from appPrincipal.forms import normalizar_rut
+from appPrincipal.constants import REGIONES
+from appPrincipal.forms import DIRECCION_MAXIMA, NOMBRE_MAXIMO, CrearUsuarioAdminForm, errores_para_json
 from appPrincipal.models import Usuario
 
 logger = logging.getLogger(__name__)
@@ -70,74 +69,42 @@ def buscar_usuarios(request):
 
 @admin_required
 def crear_usuario(request):
-    if request.method == 'GET':
+    if request.method != 'POST':
         return render(request, 'admin_panel/crear_usuario.html', {
-            'regiones_ciudades': REGIONES_CIUDADES,
+            'regiones': REGIONES,
+            'nombre_maximo': NOMBRE_MAXIMO,
+            'direccion_maxima': DIRECCION_MAXIMA,
         })
 
-    if request.method == 'POST':
-        try:
-            data = request.POST
-            nombre = data.get('nombre')
-            email = data.get('email', '').strip().lower()
-            contraseña = data.get('contraseña')
-            confirmar_contraseña = data.get('confirmar_contraseña')
-            telefono = data.get('telefono') 
-            direccion = data.get('direccion')
-            rut = data.get('rut')
-            region = data.get('region')
-            ciudad = data.get('ciudad')
+    form = CrearUsuarioAdminForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse(errores_para_json(form), status=400)
 
-            es_administrador = data.get('es_administrador') == 'on'
+    datos = form.cleaned_data
+    try:
+        Usuario.objects.create_user(
+            email=datos['email'],
+            password=datos['contraseña'],
+            nombre=datos['nombre'],
+            is_staff=datos['es_administrador'],
+            telefono=datos['telefono'],
+            direccion=datos['direccion'],
+            rut=datos['rut'],
+            region=datos['region'],
+            ciudad=datos['ciudad'],
+        )
+    except IntegrityError as e:
+        campo = 'email' if 'email' in str(e) else 'rut' if 'rut' in str(e) else None
+        mensaje = {'email': 'El correo ya está registrado.', 'rut': 'El RUT ya está registrado.'}.get(
+            campo, 'No se pudo crear el usuario. Inténtalo de nuevo.')
+        return JsonResponse({'success': False, 'message': mensaje, 'errors': {campo or '__all__': [mensaje]}},
+                            status=400)
+    except Exception:
+        logger.exception("Error al crear un usuario desde el panel")
+        return JsonResponse({'success': False, 'message': 'Ocurrió un error inesperado. Inténtalo de nuevo.'}, status=500)
 
-            if contraseña != confirmar_contraseña:
-                return JsonResponse({'success': False, 'message': 'Las contraseñas no coinciden.'})
-
-            try:
-                rut = normalizar_rut(rut)
-            except ValidationError as e:
-                return JsonResponse({'success': False, 'message': e.messages[0]})
-
-            try:
-                validate_password(contraseña, user=Usuario(email=email, nombre=nombre))
-            except ValidationError as e:
-                return JsonResponse({'success': False, 'message': ' '.join(e.messages)})
-
-            ciudades_validas = REGIONES_CIUDADES.get(region, [])
-            if ciudad not in ciudades_validas:
-                return JsonResponse({'success': False, 'message': 'La ciudad no es válida para la región seleccionada.'})
-
-            if Usuario.objects.filter(email=email).exists():
-                return JsonResponse({'success': False, 'message': 'El correo electrónico ya está registrado.'})
-
-            if Usuario.objects.filter(rut=rut).exists():
-                return JsonResponse({'success': False, 'message': 'El RUT ya está registrado.'})
-
-            Usuario.objects.create_user(
-                email=email,
-                password=contraseña,
-                nombre=nombre,
-                is_staff=es_administrador,
-                telefono=telefono,
-                direccion=direccion,
-                rut=rut,
-                region=region,
-                ciudad=ciudad
-            )
-            
-            return JsonResponse({'success': True, 'message': 'Usuario creado exitosamente.'})
-
-        except IntegrityError as e:
-            error_msg = 'Error de base de datos.'
-            if 'email' in str(e):
-                error_msg = 'El email ya existe.'
-            elif 'rut' in str(e):
-                error_msg = 'El RUT ya existe.'
-            return JsonResponse({'success': False, 'message': error_msg})
-            
-        except Exception:
-            logger.exception("Error al crear un usuario desde el panel")
-            return JsonResponse({'success': False, 'message': 'Ocurrió un error inesperado. Inténtalo de nuevo.'}, status=500)
+    logger.info("Usuario creado desde el panel por %s (admin=%s)", request.user.pk, datos['es_administrador'])
+    return JsonResponse({'success': True, 'message': 'Usuario creado exitosamente.', 'redirect': reverse('admin_usuarios')})
 
 
 @admin_required

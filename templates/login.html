@@ -19,32 +19,32 @@
       <div class="col-md-8 col-lg-6">
         <div class="login d-flex align-items-center py-5">
           <div class="container">
-            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
-            <div class="row">
+                        <div class="row">
               <div class="col-md-9 col-lg-8 mx-auto">
                 <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" class="d-md-none" style="width: 110px; display: block; margin-bottom: 1rem;">
                 <h3 class="login-heading mb-4">Bienvenido/a!</h3>
-                <form method="POST" id="login-form">
+                <form method="POST" id="login-form" data-validar>
                     {% csrf_token %}
-                    <div class="form-floating mb-3">
-                      <input type="email" class="form-control {% if errors.email %}is-invalid{% endif %}" 
-                             id="floatingInput" name="email" placeholder="name@example.com" value="{{ request.POST.email }}">
-                      <label for="floatingInput">Correo Electrónico</label>
-                      {% if errors.email %}
-                          <div class="invalid-feedback">{{ errors.email }}</div>
-                      {% endif %}
+                    <div data-resumen-errores hidden></div>
+                    <div class="mb-3" data-campo>
+                      <div class="form-floating">
+                        <input type="email" class="form-control" id="floatingInput" name="email" placeholder="nombre@correo.cl"
+                               value="{{ request.POST.email }}" maxlength="254" autocomplete="email" required autofocus
+                               data-msg-requerido="Ingresa tu correo electrónico.">
+                        <label for="floatingInput">Correo electrónico</label>
+                      </div>
+                      {% if errors.email %}<div class="invalid-feedback d-block mensaje-error" data-error-de="email">{{ errors.email }}</div>{% endif %}
                     </div>
-                    <div class="form-floating mb-3 position-relative">
-                        <input type="password" class="form-control {% if errors.contraseña %}is-invalid{% endif %}" 
-                              id="floatingPassword" name="contraseña" placeholder="Password">
+                    <div class="mb-3" data-campo>
+                      <div class="form-floating">
+                        <input type="password" class="form-control" id="floatingPassword" name="contraseña" placeholder="Contraseña"
+                               autocomplete="current-password" required data-msg-requerido="Ingresa tu contraseña.">
                         <label for="floatingPassword">Contraseña</label>
-
-                        {% if errors.contraseña %}
-                            <div class="invalid-feedback">{{ errors.contraseña }}</div>
-                        {% endif %}
+                      </div>
+                      {% if errors.contraseña %}<div class="invalid-feedback d-block mensaje-error" data-error-de="contraseña">{{ errors.contraseña }}</div>{% endif %}
                     </div>
                     <div class="d-grid">
-                        <button class="btn btn-lg btn-login text-uppercase fw-bold mb-2" type="submit">Iniciar Sesión</button>
+                        <button class="btn btn-lg btn-login text-uppercase fw-bold mb-2" type="submit" data-texto-enviando="Ingresando…">Iniciar Sesión</button>
                         <div class="text-center mb-1">
                             <a class="small" style="text-decoration: none; color:#4E84A8;" href="{% url 'recuperar_contraseña' %}">¿Olvidaste tu contraseña?</a>
                         </div>
@@ -67,20 +67,5 @@
     </div>
   </div>  
 
-  <script>
-    // validaciones (el ojo de la contraseña lo agrega static/js/mostrar_contrasena.js)
-    document.addEventListener('DOMContentLoaded', function () {
-        const passwordInput = document.getElementById('floatingPassword');
-        const errorFeedback = document.querySelector('.invalid-feedback');
-
-        passwordInput.addEventListener('input', function () {
-            const hasError = errorFeedback && !errorFeedback.classList.contains('d-none');
-
-            if (passwordInput.value && hasError) {
-                errorFeedback.classList.add('d-none');
-                passwordInput.classList.remove('is-invalid');
-            }
-        });
-    });
-    </script>  
+  
 {% endblock %}

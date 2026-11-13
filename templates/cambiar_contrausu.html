@@ -8,53 +8,48 @@
 {% endblock %}
 
 {% block content %}
-    <div id="notif-box" class="notif {{ request.GET.type }}">
-        <span id="notif-msg">{{ request.GET.notif }}</span>
-    </div>
-
-
     <div class="pass-card">
         <h2 class="form-title">Cambio de Contraseña</h2>
 
-        <form id="cambiar-contraseña-form" method="POST">
+        {% if sin_contraseña %}
+        <div class="alert alert-info small" role="note">
+            Tu cuenta se creó con Google y todavía no tiene contraseña. Para crear una, usa
+            <a href="{% url 'recuperar_contraseña' %}">¿Olvidaste tu contraseña?</a> con tu correo y te enviaremos un enlace.
+        </div>
+        {% endif %}
+
+        <form id="cambiar-contraseña-form" method="POST" data-validar>
             {% csrf_token %}
+            <div data-resumen-errores hidden></div>
 
-            <div class="mb-3">
-                <label for="contraseña_actual" class="form-label">Contraseña Actual</label>
-                <input id="contraseña_actual" type="password" name="contraseña_actual" class="form-control pe-5" required>
+            <div class="mb-3" data-campo>
+                <label for="contraseña_actual" class="form-label">Contraseña actual</label>
+                <input id="contraseña_actual" type="password" name="contraseña_actual" class="form-control pe-5"
+                       autocomplete="current-password" required data-msg-requerido="Ingresa tu contraseña actual.">
+                {% include "partials/error_campo.html" with campo=form.contraseña_actual %}
             </div>
 
-            <div class="mb-3">
-                <label for="nueva_contraseña" class="form-label">Nueva Contraseña</label>
-                <input id="nueva_contraseña" type="password" name="nueva_contraseña" class="form-control pe-5" required>
-                {% include "partials/reglas_contraseña.html" %}
+            <div class="mb-3" data-campo>
+                <label for="nueva_contraseña" class="form-label">Nueva contraseña</label>
+                <input id="nueva_contraseña" type="password" name="nueva_contraseña" class="form-control pe-5"
+                       autocomplete="new-password" required data-validacion="contraseña"
+                       data-msg-requerido="Ingresa la nueva contraseña." aria-describedby="reglas-contraseña">
+                <div id="reglas-contraseña">{% include "partials/reglas_contraseña.html" %}</div>
+                {% include "partials/error_campo.html" with campo=form.nueva_contraseña %}
             </div>
 
-            <div class="mb-3">
-                <label for="confirmar_contraseña" class="form-label">Confirmar Nueva Contraseña</label>
-                <input id="confirmar_contraseña" type="password" name="confirmar_contraseña" class="form-control pe-5" required>
+            <div class="mb-3" data-campo>
+                <label for="confirmar_contraseña" class="form-label">Confirmar nueva contraseña</label>
+                <input id="confirmar_contraseña" type="password" name="confirmar_contraseña" class="form-control pe-5"
+                       autocomplete="new-password" required data-igual-a="nueva_contraseña"
+                       data-msg-igual="Las contraseñas nuevas no coinciden." data-msg-requerido="Repite la nueva contraseña.">
+                {% include "partials/error_campo.html" with campo=form.confirmar_contraseña %}
             </div>
 
             <div class="button-group">
-                <button type="submit" class="btn-guardar">Guardar</button>
+                <button type="submit" class="btn-guardar" data-texto-enviando="Guardando…">Guardar</button>
                 <a href="{% url 'perfil' %}" class="btn-cancelar">Cancelar</a>
             </div>
         </form>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const notif = "{{ request.GET.notif|default:'' }}";
-
-    if (notif.trim() !== "") {
-        const box = document.getElementById("notif-box");
-        box.classList.add("show");
-
-        setTimeout(() => {
-            box.classList.remove("show");
-        }, 3500);
-    }
-
-});
-</script>
+    </div>
 {% endblock %}

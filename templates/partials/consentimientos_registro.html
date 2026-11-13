@@ -1,18 +1,22 @@
 <!-- consentimientos (HU-01): separados y sin marcar de antemano; solo la política es obligatoria -->
-<fieldset class="consentimientos mb-3" id="declaracionEdad">
+<fieldset class="consentimientos mb-3" id="declaracionEdad" data-campo>
     <legend class="form-label fs-6 mb-1">Declaro que soy:</legend>
     {% for valor, texto in form.fields.declaracion_edad.choices %}
     <div class="form-check">
         <input class="form-check-input" type="radio" name="declaracion_edad" id="edad_{{ valor }}" value="{{ valor }}" required
+               data-msg-requerido="Debes declarar tu edad para crear tu cuenta."
                {% if form.declaracion_edad.value == valor %}checked{% endif %}>
         <label class="form-check-label" for="edad_{{ valor }}">{{ texto }}</label>
     </div>
     {% endfor %}
+    {% include "partials/error_campo.html" with campo=form.declaracion_edad %}
 </fieldset>
 <fieldset class="consentimientos mb-4">
     <legend class="visually-hidden">Consentimientos</legend>
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="aceptaPrivacidad" name="acepta_privacidad" value="on" required>
+    <div class="form-check" data-campo>
+        <input class="form-check-input" type="checkbox" id="aceptaPrivacidad" name="acepta_privacidad" value="on" required
+               data-msg-requerido="Debes aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta."
+               {% if form.acepta_privacidad.value %}checked{% endif %}>
         <label class="form-check-label" for="aceptaPrivacidad">
             Acepto los
             <a href="{% url 'terminos_condiciones' %}" target="_blank" rel="noopener">Términos y Condiciones</a>
@@ -20,9 +24,11 @@
             <a href="{% url 'politica_privacidad' %}" target="_blank" rel="noopener">Política de Privacidad</a>
             de Akaispace.
         </label>
+        {% include "partials/error_campo.html" with campo=form.acepta_privacidad %}
     </div>
     <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="autorizaNavegacion" name="autoriza_datos_navegacion" value="on">
+        <input class="form-check-input" type="checkbox" id="autorizaNavegacion" name="autoriza_datos_navegacion" value="on"
+               {% if form.autoriza_datos_navegacion.value %}checked{% endif %}>
         <label class="form-check-label" for="autorizaNavegacion">
             <span class="consentimiento-opcional">(Opcional)</span>
             Autorizo el uso de mis datos de navegación (productos visitados, carrito y compras)

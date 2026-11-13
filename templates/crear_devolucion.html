@@ -24,8 +24,10 @@
             <div class="col-md-3"></div>
 
         </div>
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" data-validar>
             {% csrf_token %}
+            <div class="row justify-content-center"><div class="col-md-11"><div data-resumen-errores hidden></div></div></div>
+            {% for error in formset.non_form_errors %}<div class="alert alert-danger" data-error-general>{{ error }}</div>{% endfor %}
 
             <div class="row justify-content-center">
 
@@ -45,8 +47,10 @@
                                 <div class="product-name" title="{{ producto.nombre }}">{{ producto.nombre }}</div>
                                 <div class="product-meta">#{{ producto.id }}</div>
                                 <div class="product-meta">Compraste: {{ cantidad_comprada }}</div>
-                                <label class="form-label">Cantidad a devolver:</label>
-                                <select name="cantidad" class="form-control" required>
+                                <div data-campo>
+                                <label class="form-label" for="cantidad">Cantidad a devolver:</label>
+                                <select name="cantidad" id="cantidad" class="form-control" required
+                                        data-msg-requerido="Indica cuántas unidades quieres devolver.">
                                     {% for n in cantidad_disponible|range_filter %}
                                         <option value="{{ n }}" 
                                             {% if form.cantidad.value|stringformat:"s" == n|stringformat:"s" %}selected{% endif %}>
@@ -54,20 +58,22 @@
                                         </option>
                                     {% endfor %}
                                 </select>
-                                {% if form.cantidad.errors %}
-                                    <div class="text-danger small mt-1">{{ form.cantidad.errors.0 }}</div>
-                                {% endif %}
+                                {% include "partials/error_campo.html" with campo=form.cantidad %}
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-2">
+                        <div class="mb-2" data-campo>
                             <label for="descripcion" class="form-label">Escribe aquí el motivo de la devolución:</label>
-                            <textarea class="form-control custom-textarea" 
-                                    id="descripcion" 
-                                    name="descripcion" 
-                                    rows="6" 
-                                    placeholder="Escribe tu motivo aquí" 
-                                    required>{{ form.descripcion.value|default_if_none:"" }}</textarea>
+                            <textarea class="form-control custom-textarea"
+                                    id="descripcion"
+                                    name="descripcion"
+                                    rows="6"
+                                    maxlength="{{ form.DESCRIPCION_MAXIMA }}"
+                                    placeholder="Escribe tu motivo aquí"
+                                    required data-contador
+                                    data-msg-requerido="Cuéntanos el motivo de la devolución.">{{ form.descripcion.value|default_if_none:"" }}</textarea>
+                            {% include "partials/error_campo.html" with campo=form.descripcion %}
                         </div>
 
                         <div class="mb-4">
@@ -135,7 +141,7 @@
                 <div class="col-md-4">
                     <div class="custom-card py-4">
 
-                        <button type="submit" class="btn-submit">
+                        <button type="submit" class="btn-submit" data-texto-enviando="Enviando…">
                             Enviar Solicitud <i class="fas fa-paper-plane"></i>
                         </button>
 

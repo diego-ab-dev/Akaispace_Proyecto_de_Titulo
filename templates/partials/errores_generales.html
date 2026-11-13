@@ -1,0 +1,1 @@
+{% comment %}Errores del formulario que no son de un campo (non_field_errors); van al resumen de formularios.js.{% endcomment %}{% for error in form.non_field_errors %}<div class="alert alert-danger" data-error-general>{{ error }}</div>{% endfor %}
