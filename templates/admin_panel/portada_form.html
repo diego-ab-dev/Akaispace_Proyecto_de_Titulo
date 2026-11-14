@@ -17,7 +17,7 @@
 <div class="portada">
     <a href="{% url 'admin_portada' %}" class="portada-volver"><i class='bx bx-arrow-back'></i> Volver a Portada</a>
 
-    <form method="post" enctype="multipart/form-data" class="portada-seccion portada-form" novalidate>
+    <form data-avisar-cambios method="post" enctype="multipart/form-data" class="portada-seccion portada-form" novalidate>
         {% csrf_token %}
         {% if form.non_field_errors %}
             <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>

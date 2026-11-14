@@ -4058,3 +4058,100 @@ class RecomendacionesCarritoTests(TestCase):  # HU-07: "Complementa tu compra" e
         self.assertTrue(respuesta.json()['success'])
         mostrada.refresh_from_db()
         self.assertIsNotNone(mostrada.clic_en)
+
+
+class CorreosDeCuentaTests(TestCase):  # bienvenida al crear la cuenta y aviso de seguridad al cambiar la contraseña
+    def test_bienvenida_al_registrarse(self):
+        from django.core import mail
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertTrue(self.client.post('/register/', RegisterTests.datos).json()['success'])
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual((correo.to, correo.subject), (['juan@example.com'], '¡Bienvenido/a a Akaispace!'))
+        self.assertIn('Juan Perez', correo.body)
+        self.assertIn('Ir a la tienda: http', correo.body)
+        self.assertIn('Ir a la tienda', correo.alternatives[0][0])
+        self.assertNotIn('Continuar con Google', correo.body)
+
+    def test_bienvenida_al_crear_la_cuenta_con_google(self):
+        from django.core import mail
+        with self.captureOnCommitCallbacks(execute=True):
+            LoginGoogleTests._registro_google(self, {'declaracion_edad': Usuario.MAYOR_18, 'acepta_privacidad': 'on'})
+        self.assertEqual([c.to for c in mail.outbox], [['ana@gmail.com']])
+        self.assertIn('Continuar con Google', mail.outbox[0].body)
+
+    def test_un_registro_rechazado_no_envia_nada(self):
+        from django.core import mail
+        datos = {k: v for k, v in RegisterTests.datos.items() if k != 'acepta_privacidad'}
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/register/', datos)
+        self.assertEqual(mail.outbox, [])
+
+    def test_iniciar_sesion_no_envia_correos(self):
+        from django.core import mail
+        crear_cliente()
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'Akaispace-2026!'})
+        self.assertEqual(mail.outbox, [])
+
+    def test_aviso_al_cambiar_la_contraseña_desde_el_perfil(self):
+        from django.core import mail
+        self.client.force_login(crear_cliente())
+        datos = {'contraseña_actual': 'Akaispace-2026!', 'nueva_contraseña': 'Nueva-Clave-2026!',
+                 'confirmar_contraseña': 'Nueva-Clave-2026!'}
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/cambiar/', datos)
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.subject, 'Se actualizó la contraseña de tu cuenta - Akaispace')
+        self.assertIn('desde tu perfil', correo.body)
+        self.assertIn('Recuperar mi cuenta: http://', correo.body)
+        self.assertIn('/recuperar-contrasena/', correo.body)
+
+    def test_un_cambio_rechazado_no_envia_aviso(self):
+        from django.core import mail
+        self.client.force_login(crear_cliente())
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/cambiar/', {'contraseña_actual': 'mala', 'nueva_contraseña': 'Nueva-Clave-2026!',
+                                           'confirmar_contraseña': 'Nueva-Clave-2026!'})
+        self.assertEqual(mail.outbox, [])
+
+    def test_aviso_al_restablecer_con_el_enlace_de_recuperacion(self):
+        from django.core import mail
+        usuario = crear_cliente()
+        prueba = RecuperarContraseñaTests(methodName='test_el_enlace_permite_crear_una_nueva_contraseña')
+        prueba.client, prueba.usuario = self.client, usuario
+        prueba.pedir_enlace()
+        formulario = self.client.get(prueba.enlace_del_correo(), follow=True)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(formulario.redirect_chain[-1][0],
+                             {'new_password1': 'NuevaClave-2027', 'new_password2': 'NuevaClave-2027'})
+        self.assertEqual(len(mail.outbox), 2)  # el enlace y el aviso
+        self.assertEqual(mail.outbox[-1].to, ['cliente@example.com'])
+        self.assertIn('con el enlace de recuperación', mail.outbox[-1].body)
+
+    def test_si_el_correo_falla_la_cuenta_se_crea_igual(self):
+        from unittest import mock
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=OSError('SES caído')), \
+                self.assertLogs('appPrincipal.correos', 'ERROR'), self.captureOnCommitCallbacks(execute=True):
+            respuesta = self.client.post('/register/', RegisterTests.datos)
+        self.assertTrue(respuesta.json()['success'])
+        self.assertTrue(Usuario.objects.filter(email='juan@example.com').exists())
+
+
+
+class CambiosSinGuardarTests(TestCase):  # el panel avisa antes de salir de un formulario con cambios sin guardar
+    def setUp(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+
+    def test_los_formularios_de_edicion_del_panel_tienen_el_aviso(self):
+        producto = crear_producto()
+        for url in ['/admin-panel/configuracion/', '/admin-panel/productos/agregar/',
+                    f'/admin-panel/productos/editar/{producto.id}/', '/admin-panel/ventas/registrar/']:
+            respuesta = self.client.get(url)
+            self.assertContains(respuesta, 'data-avisar-cambios', msg_prefix=url)
+            self.assertContains(respuesta, 'js/cambios_sin_guardar.js', msg_prefix=url)
+
+    def test_los_filtros_y_botones_sueltos_no_avisan(self):
+        respuesta = self.client.get('/admin-panel/productos/')
+        self.assertNotContains(respuesta, 'data-avisar-cambios')

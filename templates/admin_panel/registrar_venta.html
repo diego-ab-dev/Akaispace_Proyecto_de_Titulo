@@ -28,7 +28,7 @@
     </div>
     {% endif %}
 
-    <form method="post" id="form-venta" data-url-buscar="{% url 'buscar_productos_venta' %}" novalidate>
+    <form data-avisar-cambios method="post" id="form-venta" data-url-buscar="{% url 'buscar_productos_venta' %}" novalidate>
         {% csrf_token %}
         <div class="venta-presencial__grid">
             <section class="portada-seccion">

@@ -12,7 +12,7 @@
         <h1 class="page-title">Editar Producto</h1>
 
         <div class="form-card">
-            <form method="post" enctype="multipart/form-data" novalidate>
+            <form data-avisar-cambios method="post" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}

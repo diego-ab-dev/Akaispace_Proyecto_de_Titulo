@@ -13,7 +13,7 @@
 
         <p class="text-center text-muted small mb-4">Los campos marcados como opcionales se pueden completar después desde el perfil.</p>
 
-        <form method="post" id="formCrearUsuario" autocomplete="off" data-validar data-ajax>
+        <form data-avisar-cambios method="post" id="formCrearUsuario" autocomplete="off" data-validar data-ajax>
             {% csrf_token %}
             <div data-resumen-errores hidden></div>
 

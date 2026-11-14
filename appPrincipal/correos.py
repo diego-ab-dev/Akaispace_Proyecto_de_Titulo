@@ -7,14 +7,21 @@
 - Recepción de devolución: se envía cuando la tienda recibe el producto, e indica si el reembolso se hizo en Webpay
   o se gestionará a mano.
 - Recuperación de contraseña: la envía Django (PasswordResetView).
+- Bienvenida: una sola vez, al crear la cuenta (formulario o Google).
+- Contraseña actualizada: aviso de seguridad al cambiarla desde el perfil o restablecerla con el enlace de
+  recuperación, con un enlace para recuperar la cuenta si el cambio no lo hizo el cliente.
+
+Todos son correos de la cuenta o de una compra (transaccionales), no publicidad. No se avisa cada inicio de
+sesión: sería un correo en cada visita.
 """
 import logging
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.db import transaction
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.timezone import now
+from django.utils.timezone import localtime, now
 
 from appPrincipal import envios
 from appPrincipal.constants import CONDICIONES_COMPRA, POLITICA_RETRACTO, RESPONSABLE_DATOS
@@ -34,6 +41,54 @@ def _enviar(asunto, plantilla, contexto, destinatario):
         logger.exception("No se pudo enviar el correo '%s' a %s", asunto, destinatario)
         return False
     return True
+
+
+def _al_confirmar(funcion, *args):
+    """Envía el correo cuando la cuenta o el cambio ya quedaron guardados (si algo se deshace, no se envía).
+    Si el correo falla, _enviar lo deja en el log: el cliente nunca ve un error por esto."""
+    transaction.on_commit(lambda: funcion(*args))
+
+
+def _enviar_bienvenida(usuario, con_google):
+    contexto = {
+        'usuario': usuario,
+        'con_google': con_google,
+        'url_tienda': settings.SITIO_URL + reverse('home'),
+        'url_perfil': settings.SITIO_URL + reverse('perfil'),
+        'tienda': RESPONSABLE_DATOS,
+    }
+    enviado = _enviar("¡Bienvenido/a a Akaispace!", 'bienvenida', contexto, usuario.email)
+    if enviado:
+        logger.info("Correo de bienvenida enviado: usuario %s", usuario.pk)
+    return enviado
+
+
+def enviar_bienvenida(usuario, con_google=False):
+    _al_confirmar(_enviar_bienvenida, usuario, con_google)
+
+
+RESTABLECIDA = 'restablecida'
+CAMBIADA = 'cambiada'
+
+
+def _enviar_contraseña_actualizada(usuario, como):
+    contexto = {
+        'usuario': usuario,
+        'restablecida': como == RESTABLECIDA,
+        'fecha': localtime(now()),
+        'url_recuperar': settings.SITIO_URL + reverse('recuperar_contraseña'),
+        'tienda': RESPONSABLE_DATOS,
+    }
+    enviado = _enviar("Se actualizó la contraseña de tu cuenta - Akaispace", 'contraseña_actualizada',
+                      contexto, usuario.email)
+    if enviado:
+        logger.info("Aviso de contraseña actualizada enviado: usuario %s", usuario.pk)
+    return enviado
+
+
+def enviar_contraseña_actualizada(usuario, como=CAMBIADA):
+    """`como`: CAMBIADA (desde el perfil) o RESTABLECIDA (con el enlace de recuperación)."""
+    _al_confirmar(_enviar_contraseña_actualizada, usuario, como)
 
 
 def enviar_confirmacion_compra(venta):

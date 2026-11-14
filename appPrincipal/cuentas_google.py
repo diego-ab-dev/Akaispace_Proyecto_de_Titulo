@@ -14,6 +14,7 @@ from allauth.socialaccount.forms import SignupForm
 from django.urls import reverse
 from django.utils import timezone
 
+from appPrincipal import correos
 from appPrincipal.constants import POLITICA_PRIVACIDAD_VERSION
 from appPrincipal.forms import UsuarioCustomForm
 
@@ -61,3 +62,5 @@ class RegistroGoogleForm(SignupForm):
             user.datos_navegacion_autorizados_en = momento_consentimiento
         user.save(update_fields=['declaracion_edad', 'privacidad_aceptada_en', 'privacidad_version',
                                  'datos_navegacion_autorizados_en'])
+        # solo al crear la cuenta: si el correo de Google ya tenía cuenta, se inicia sesión sin pasar por aquí
+        correos.enviar_bienvenida(user, con_google=True)

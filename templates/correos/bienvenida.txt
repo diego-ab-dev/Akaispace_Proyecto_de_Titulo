@@ -1,0 +1,18 @@
+{% autoescape off %}¡Hola, {{ usuario.nombre }}! Te damos la bienvenida a Akaispace
+
+Tu cuenta quedó creada con el correo {{ usuario.email }}.{% if con_google %} Para entrar, usa el botón "Continuar con Google".{% endif %}
+A este correo te llegarán las confirmaciones de tus compras y los avisos de tus pedidos.
+
+Con tu cuenta puedes:
+- Comprar y pagar con Webpay, y retirar en la tienda o recibir en tu casa.
+- Seguir el estado de tus pedidos desde tu perfil.
+- Guardar tus productos favoritos y opinar sobre lo que compraste.
+
+Ir a la tienda: {{ url_tienda }}
+
+¿No creaste esta cuenta? Escríbenos a {{ tienda.correo_privacidad }} y la revisamos.
+
+--
+Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
+{% endautoescape %}

@@ -12,7 +12,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from appPrincipal import forms
+from appPrincipal import correos, forms
 from appPrincipal.constants import POLITICA_PRIVACIDAD_VERSION, REGIONES, REGIONES_CIUDADES
 from appPrincipal.models import Usuario
 from appPrincipal.seguridad import MENSAJE_LOGIN_INVALIDO
@@ -100,6 +100,7 @@ def register(request):
         # tras registrarse queda con la sesión iniciada, como en cualquier tienda en línea
         auth_login(request, usuario, backend='django.contrib.auth.backends.ModelBackend')
         logger.info("Registro: usuario %s", usuario.pk)
+        correos.enviar_bienvenida(usuario)
         return JsonResponse({'success': True, 'message': f'¡Bienvenido/a a Akaispace, {usuario.nombre}! Tu cuenta quedó creada.',
                              'redirect': reverse('home')})
 
@@ -140,6 +141,7 @@ class RestablecerContraseñaView(PasswordResetConfirmView):
         respuesta = super().form_valid(form)
         reset_axes(username=form.user.email)
         logger.info("Contraseña restablecida por correo: usuario %s", form.user.pk)
+        correos.enviar_contraseña_actualizada(form.user, correos.RESTABLECIDA)
         return respuesta
 
 

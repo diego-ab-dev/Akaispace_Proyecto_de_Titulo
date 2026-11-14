@@ -22,7 +22,7 @@
     <p class="informe-mensaje informe-mensaje--error" role="alert">No se registró la compra: {{ error }}</p>
     {% endif %}
 
-    <form method="post" id="form-compra" data-url-buscar="{% url 'buscar_productos_venta' %}" novalidate>
+    <form data-avisar-cambios method="post" id="form-compra" data-url-buscar="{% url 'buscar_productos_venta' %}" novalidate>
         {% csrf_token %}
         <div class="venta-presencial__grid">
             <section class="panel-informe">

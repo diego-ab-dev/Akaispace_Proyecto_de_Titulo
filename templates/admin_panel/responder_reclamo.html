@@ -42,7 +42,7 @@
             <p><strong>Venta asociada:</strong> No registrada</p>
             {% endif %}
 
-            <form method="post" class="respuesta-form">
+            <form data-avisar-cambios method="post" class="respuesta-form">
                 {% csrf_token %}
                 <label for="respuesta" class="form-label">Respuesta</label>
                 <textarea id="respuesta" name="respuesta" placeholder="Escribe tu respuesta aquí..." required>{{ reclamo.respuesta|default_if_none:'' }}</textarea>

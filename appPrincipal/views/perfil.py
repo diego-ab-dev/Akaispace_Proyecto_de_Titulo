@@ -7,6 +7,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from appPrincipal import correos
 from appPrincipal.constants import REGIONES, REGIONES_CIUDADES
 from appPrincipal.forms import DIRECCION_MAXIMA, CambiarContraseñaForm, EditarPerfilForm
 from appPrincipal.models import Devolucion, Opinion, Reclamo, Venta
@@ -51,6 +52,7 @@ def cambiar_contraseña(request):
             usuario.set_password(form.cleaned_data['nueva_contraseña'])
             usuario.save()
             update_session_auth_hash(request, usuario)
+            correos.enviar_contraseña_actualizada(usuario, correos.CAMBIADA)
             aviso = urlencode({'notif': 'Contraseña actualizada correctamente.', 'type': 'success'})
             return redirect(f"{reverse('perfil')}?{aviso}")
 

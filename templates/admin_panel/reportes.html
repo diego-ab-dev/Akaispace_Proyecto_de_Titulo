@@ -304,7 +304,7 @@
                 <p class="panel-informe__nota">Cada vez que saques o pongas dinero en la caja de la tienda.</p>
             </div>
         </header>
-        <form method="post" action="{% url 'registrar_movimiento_caja' %}" class="formulario-linea" novalidate>
+        <form data-avisar-cambios method="post" action="{% url 'registrar_movimiento_caja' %}" class="formulario-linea" novalidate>
             {% csrf_token %}
             <div class="campo">
                 <span class="campo__titulo">Tipo</span>
