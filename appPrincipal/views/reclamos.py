@@ -4,10 +4,12 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
 from appPrincipal.forms import ReclamoForm
+from appPrincipal.decorators import solo_clientes
 from appPrincipal.models import Reclamo, Venta
 
 
 @login_required
+@solo_clientes
 def crear_reclamo(request, compra_id):
     usuario = request.user
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)

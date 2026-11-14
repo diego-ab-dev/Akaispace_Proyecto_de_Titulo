@@ -3854,3 +3854,63 @@ class SubidaDeFotosTests(TestCase):  # solo fotos reales, de formato permitido y
         html = str(ImagenProductoForm()['imagen'])
         self.assertIn('accept="image/jpeg,image/png,image/webp,image/gif', html)
         self.assertIn('data-validacion="imagen"', html)
+
+
+class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compra ni opina como cliente
+    def setUp(self):
+        self.producto = crear_producto()
+        self.admin = crear_cliente('jefe@example.com', is_staff=True)
+        self.client.force_login(self.admin)
+
+    def test_puede_ver_la_tienda_sin_el_icono_del_carrito(self):
+        respuesta = self.client.get(f'/producto/{self.producto.id}/')
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertNotContains(respuesta, 'href="/ver_carrito/"')
+
+    def test_no_puede_agregar_al_carrito(self):
+        from .decorators import MENSAJE_SOLO_CLIENTES
+        from .models import Carrito
+        respuesta = self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1})
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertEqual(respuesta.json(), {'success': False, 'error': MENSAJE_SOLO_CLIENTES})
+        self.assertFalse(Carrito.objects.filter(usuario=self.admin, items__isnull=False).exists())
+
+    def test_carrito_pago_opinion_reclamo_y_devolucion_muestran_el_aviso(self):
+        venta = crear_venta(self.admin, self.producto)
+        for url in ['/ver_carrito/', '/seleccionar-pago/', f'/opinion/enviar/{self.producto.id}/',
+                    f'/crear_reclamo/{venta.id}/', f'/devolucion/crear/{venta.id}/{self.producto.id}/']:
+            respuesta = self.client.get(url)
+            self.assertEqual(respuesta.status_code, 403, url)
+            self.assertTemplateUsed(respuesta, 'solo_clientes.html')
+            self.assertContains(respuesta, 'Registrar venta', status_code=403)
+
+    def test_un_cliente_sigue_pudiendo_comprar(self):
+        self.client.force_login(crear_cliente())
+        self.assertTrue(self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1}).json()['success'])
+        respuesta = self.client.get('/ver_carrito/')
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'href="/ver_carrito/"')
+
+    def test_los_kpi_no_cuentan_al_admin(self):
+        from datetime import datetime
+        from django.utils import timezone
+        from .models import Carrito, ItemCarritoProducto, Recomendacion
+        from .reportes import kpi01, kpi03, kpi04, kpi05, mes_de
+        hoy = timezone.localdate()
+        mes = mes_de(hoy)
+        en_el_mes = timezone.make_aware(datetime(hoy.year, hoy.month, 1, 12))
+        cliente = crear_cliente()
+        for usuario in [self.admin, self.admin, cliente]:
+            crear_venta_en(en_el_mes, 1000, usuario=usuario)
+        crear_venta_en(en_el_mes, 1000, canal='tienda', metodo_pago='efectivo')  # presencial: sin usuario
+        for usuario in [self.admin, cliente]:
+            carrito = Carrito.objects.create(usuario=usuario)
+            ItemCarritoProducto.objects.create(carrito=carrito, producto=self.producto)
+            Recomendacion.objects.create(usuario=usuario, producto=self.producto, ubicacion='home', clic_en=en_el_mes)
+        Carrito.todos.update(creado_en=en_el_mes)
+        Recomendacion.objects.update(mostrada_en=en_el_mes)
+
+        self.assertEqual(kpi01(mes, None)['ventas_web'], 1)
+        self.assertEqual(kpi03(hoy)['clientes'], 1)
+        self.assertEqual(kpi04(mes)['con_productos'], 1)
+        self.assertEqual(kpi05(mes)['mostradas'], 1)

@@ -355,10 +355,17 @@ def nombre_mes(periodo):
     return f"{MESES_LARGOS[periodo.desde.month - 1]} {periodo.desde.year}"
 
 
+# Los KPI miden el comportamiento de los clientes: no cuentan lo que hagan las cuentas de administrador
+# (compras de prueba, carritos abandonados, clics en recomendaciones). Las ventas presenciales no tienen
+# usuario, así que siguen contando donde corresponda. Los reportes de ventas sí incluyen todo, porque es plata real.
+def _sin_admin(consulta):
+    return consulta.filter(Q(usuario__isnull=True) | Q(usuario__is_staff=False))
+
+
 def kpi01(mes, linea_base):
     """Ventas web adicionales del mes: ventas web confirmadas del mes − ventas web del último mes en la plataforma
     anterior. Sin línea base solo se informan las ventas web."""
-    ventas_web = ventas_del_periodo(mes).filter(canal=Venta.CANAL_WEB).count()
+    ventas_web = _sin_admin(ventas_del_periodo(mes).filter(canal=Venta.CANAL_WEB)).count()
     adicionales = None if linea_base is None else ventas_web - linea_base
     return {'ventas_web': ventas_web, 'linea_base': linea_base, 'valor': adicionales, 'meta': META_KPI01,
             'cumple': None if adicionales is None else adicionales >= META_KPI01}
@@ -368,7 +375,7 @@ def kpi03(hasta):
     """Tasa de recompra: clientes con dos o más compras / clientes con al menos una compra en los 6 meses que
     terminan en `hasta` (ventana móvil). Solo cuentan las ventas asociadas a un cliente con cuenta."""
     ventana = Periodo(hasta - relativedelta(months=6) + timedelta(days=1), hasta)
-    compras_por_cliente = (ventas_del_periodo(ventana).filter(usuario__isnull=False)
+    compras_por_cliente = (ventas_del_periodo(ventana).filter(usuario__isnull=False, usuario__is_staff=False)
                            .values('usuario').annotate(compras=Count('id')).values_list('compras', flat=True))
     clientes = len(compras_por_cliente)
     recurrentes = sum(1 for compras_cliente in compras_por_cliente if compras_cliente >= 2)
@@ -381,7 +388,7 @@ def kpi04(mes):
     """Conversión del carrito: carritos con pago confirmado / carritos con al menos un producto, de los carritos
     creados en el mes. Al pagarse, lo comprado sale del carrito, así que un carrito pagado cuenta como carrito con
     productos aunque hoy esté vacío."""
-    carritos = Carrito.todos.filter(creado_en__gte=mes.inicio, creado_en__lt=mes.fin)
+    carritos = Carrito.todos.filter(creado_en__gte=mes.inicio, creado_en__lt=mes.fin, usuario__is_staff=False)
     pagados = carritos.filter(convertido_en__isnull=False).count()
     sin_pagar_con_productos = carritos.filter(convertido_en__isnull=True, items__isnull=False).distinct().count()
     con_productos = pagados + sin_pagar_con_productos

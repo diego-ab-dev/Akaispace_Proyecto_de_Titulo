@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from appPrincipal import envios, pagos, webpay
+from appPrincipal.decorators import solo_clientes
 from appPrincipal.models import Carrito, Comprobante, PagoWebpay, Venta
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ def _volver_al_carrito(mensaje):
 
 
 @login_required
+@solo_clientes
 def seleccionar_pago(request):
     usuario = request.user
     carrito = Carrito.objects.filter(usuario=usuario).first()

@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 
 from appPrincipal import envios
 from appPrincipal.constants import REGIONES_CIUDADES
-from appPrincipal.decorators import login_required_json
+from appPrincipal.decorators import login_required_json, solo_clientes, solo_clientes_json
 from appPrincipal.forms import limpiar_direccion
 from appPrincipal.models import Carrito, InteraccionProducto, ItemCarritoProducto, Producto
 from appPrincipal.recomendaciones import registrar_interaccion
@@ -21,6 +21,7 @@ def _leer_entero(valor):
 
 
 @login_required_json
+@solo_clientes_json
 @require_POST
 def agregar_al_carrito(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
@@ -56,6 +57,7 @@ def agregar_al_carrito(request, producto_id):
 
 # los ítems del carrito se identifican por el producto: la clave primaria es (carrito, producto)
 @login_required_json
+@solo_clientes_json
 @require_POST
 def eliminar_del_carrito(request, producto_id):
     item = ItemCarritoProducto.objects.filter(producto_id=producto_id, carrito__vigente=True,
@@ -83,6 +85,7 @@ def _resumen_carrito(carrito, eliminados):
 
 
 @login_required_json
+@solo_clientes_json
 @require_POST
 def eliminar_seleccionados_carrito(request):
     ids = [_leer_entero(valor) for valor in request.POST.getlist('ids')]
@@ -101,6 +104,7 @@ def eliminar_seleccionados_carrito(request):
 
 
 @login_required_json
+@solo_clientes_json
 @require_POST
 def vaciar_carrito(request):
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
@@ -110,6 +114,7 @@ def vaciar_carrito(request):
 
 
 @login_required_json
+@solo_clientes_json
 def actualizar_cantidad_carrito(request):
     if request.method == 'POST':
         producto_id = _leer_entero(request.POST.get('producto_id'))
@@ -148,6 +153,7 @@ def actualizar_cantidad_carrito(request):
     return JsonResponse({'success': False})
 
 @login_required
+@solo_clientes
 def ver_carrito(request):
     usuario = request.user
 
@@ -177,6 +183,7 @@ def ver_carrito(request):
 
 
 @login_required_json
+@solo_clientes_json
 @require_POST
 def guardar_datos_envio(request):
     region = request.POST.get("region", "")

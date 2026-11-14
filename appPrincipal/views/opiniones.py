@@ -8,12 +8,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from appPrincipal.forms import OpinionForm
+from appPrincipal.decorators import solo_clientes
 from appPrincipal.models import Opinion, Producto, ProductoVenta
 
 logger = logging.getLogger(__name__)
 
 
 @login_required
+@solo_clientes
 def enviar_opinion(request, producto_id):
     usuario_actual = request.user
     producto = get_object_or_404(Producto, id=producto_id)

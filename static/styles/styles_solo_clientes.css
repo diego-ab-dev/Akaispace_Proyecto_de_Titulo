@@ -1,0 +1,30 @@
+/* aviso para el admin que intenta comprar u opinar (usa la tarjeta de styles_ya_opinaste.css) */
+.icon-admin {
+    background-color: #DCE8F1;
+    color: #4E84A8;
+}
+
+.acciones-admin {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.btn-principal {
+    background-color: #4E84A8;
+}
+
+.btn-principal:hover {
+    background-color: #3d6d8d;
+}
+
+.link-volver {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.link-volver:hover {
+    color: #1c253b;
+}

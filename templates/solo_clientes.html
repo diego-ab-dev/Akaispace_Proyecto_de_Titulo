@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Cuenta de administrador{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_ya_opinaste.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_solo_clientes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="message-card">
+    <div class="icon-circle icon-admin">
+        <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+    </div>
+    <h1>Estás en una cuenta de administrador</h1>
+    <p>Puedes recorrer la tienda para revisar cómo se ve, pero comprar, opinar, reclamar o pedir
+       devoluciones es solo para clientes. Las ventas del local se registran desde el panel.</p>
+
+    <div class="acciones-admin">
+        <a href="{% url 'registrar_venta' %}" class="btn-volver btn-principal">Registrar venta</a>
+        <a href="{% url 'admin_dashboard' %}" class="btn-volver">Ir al panel</a>
+    </div>
+    <a href="javascript:history.back()" class="link-volver">Volver atrás</a>
+</div>
+{% endblock %}

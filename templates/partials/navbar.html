@@ -111,9 +111,11 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
       <a href="/favorites" style="color: #FFFFFF;">
         <i class="fas fa-heart"></i>
       </a>
+      {% if not usuario.is_staff %}
       <a href="{% url 'ver_carrito' %}" style="color: #FFFFFF;">
         <i class="fas fa-shopping-cart"></i>
       </a>
+      {% endif %}
     </div>
     <div class="search-box">
       <i class='bx bx-search'></i>

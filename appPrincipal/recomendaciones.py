@@ -295,8 +295,8 @@ def marcar_clic(usuario, recomendacion_id):
 
 def tasa_de_clics(desde=None, hasta=None):
     """KPI-05: {'mostradas', 'clics', 'tasa'} de las recomendaciones mostradas desde `desde` y antes de `hasta`
-    (o todas). La tasa es un porcentaje, o None si no se ha mostrado ninguna."""
-    recomendaciones = Recomendacion.objects.all()
+    (o todas). La tasa es un porcentaje, o None si no se ha mostrado ninguna. No cuenta las cuentas de administrador."""
+    recomendaciones = Recomendacion.objects.filter(usuario__is_staff=False)
     if desde is not None:
         recomendaciones = recomendaciones.filter(mostrada_en__gte=desde)
     if hasta is not None:

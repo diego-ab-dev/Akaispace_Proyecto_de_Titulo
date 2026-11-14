@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from appPrincipal import reembolsos
+from appPrincipal.decorators import solo_clientes
 from appPrincipal.forms import ACCEPT_IMAGEN, IMAGEN_MAXIMA_MB, ImagenDevolucionFormSet, SolicitudDevolucionForm
 from appPrincipal.models import Devolucion, Producto, ProductoVenta, Venta
 
@@ -20,6 +21,7 @@ def _cantidad_ya_solicitada(compra, producto):
 
 
 @login_required
+@solo_clientes
 def crear_devolucion(request, compra_id, producto_id):
     usuario = request.user
     compra = get_object_or_404(Venta, id=compra_id, usuario=usuario)
