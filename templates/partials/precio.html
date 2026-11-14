@@ -1,0 +1,4 @@
+{% load custom_filters %}{% comment %}
+Precio del producto; si está en oferta muestra el precio anterior tachado y, con porcentaje=True, la píldora "-25%".
+Va dentro del elemento que ya da el tamaño y la fuente (h3, h4, span...). Usa styles/styles_precios.css.
+{% endcomment %}{% with pct=producto|descuento %}<span class="precio{% if pct %} precio--oferta{% endif %}">{% if pct %}<span class="precio-anterior"><span class="visually-hidden">Antes: </span>${{ producto.precio_anterior|formato_chileno }}</span>{% endif %}<span class="precio-linea"><span class="precio-actual{% if pct %} precio-actual--oferta{% endif %}">{% if pct %}<span class="visually-hidden">Ahora: </span>{% endif %}${{ producto.precio|formato_chileno }}</span>{% if pct and porcentaje %}<span class="precio-descuento">-{{ pct }}%</span>{% endif %}</span></span>{% endwith %}

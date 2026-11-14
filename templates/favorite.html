@@ -40,7 +40,7 @@
                         <h5 class="fw-bold mb-1 wishlist-item-title" title="{{ item.producto.nombre }}">
                             {{ item.producto.nombre }}
                         </h5>
-                        <p class="text-muted mb-1 fs-5">${{ item.producto.precio|formato_chileno }}</p>
+                        <p class="text-muted mb-1 fs-5">{% include "partials/precio.html" with producto=item.producto porcentaje=True %}</p>
 
                         <small class="text-muted">
                             Disponibilidad: 

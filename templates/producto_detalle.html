@@ -6,6 +6,15 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_prod_detalle.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_tarjetas_productos.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_compartir.css' %}">
+{# vista previa del enlace al compartirlo (WhatsApp, Facebook, X) #}
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="Akaispace">
+<meta property="og:title" content="{{ producto.nombre }} - ${{ producto.precio|formato_chileno }}{% with pct=producto|descuento %}{% if pct %} ({{ pct }}% de descuento){% endif %}{% endwith %}">
+<meta property="og:description" content="{{ producto.descripcion|default:producto.categoria_texto|striptags|truncatechars:160 }}">
+<meta property="og:url" content="{{ url_compartir }}">
+{% if imagen_compartir %}<meta property="og:image" content="{{ imagen_compartir }}">{% endif %}
+<meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 
 {% block navbar %}{% include "partials/navbar.html" with nav_clase="navbar-main" %}{% endblock %}
@@ -72,7 +81,10 @@
                 </div>
                 {% endif %}
 
-                <h3 class="fw-bold mb-3">${{ producto.precio|formato_chileno }}</h3>
+                <h3 class="fw-bold mb-3 precio-ficha">{% include "partials/precio.html" with producto=producto porcentaje=True %}</h3>
+                {% with ahorras=producto|ahorro %}{% if ahorras %}
+                <div class="precio-ahorro"><i class="fa-solid fa-tag" aria-hidden="true"></i> Ahorras ${{ ahorras|formato_chileno }}</div>
+                {% endif %}{% endwith %}
 
                 <div class="description-wrapper mb-4">
                     <div class="description-content" id="desc-content">
@@ -121,6 +133,39 @@
                         </button>
                     </div>
                 </form>
+
+                {% with texto_compartir="Mira este producto en Akaispace: "|add:producto.nombre %}
+                <div class="compartir" data-url="{{ url_compartir }}" data-titulo="{{ producto.nombre }}" data-texto="{{ texto_compartir }}">
+                    <span class="compartir-titulo">Compartir</span>
+                    <div class="compartir-botones">
+                        <a class="compartir-btn compartir-whatsapp" target="_blank" rel="noopener"
+                           href="https://wa.me/?text={{ texto_compartir|urlencode:'' }}%20{{ url_compartir|urlencode:'' }}"
+                           title="Compartir por WhatsApp" aria-label="Compartir por WhatsApp">
+                            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                        </a>
+                        <a class="compartir-btn compartir-facebook" target="_blank" rel="noopener"
+                           href="https://www.facebook.com/sharer/sharer.php?u={{ url_compartir|urlencode:'' }}"
+                           title="Compartir en Facebook" aria-label="Compartir en Facebook">
+                            <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+                        </a>
+                        <a class="compartir-btn compartir-x" target="_blank" rel="noopener"
+                           href="https://twitter.com/intent/tweet?text={{ texto_compartir|urlencode:'' }}&amp;url={{ url_compartir|urlencode:'' }}"
+                           title="Compartir en X" aria-label="Compartir en X">
+                            <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+                        </a>
+                        <button type="button" class="compartir-btn compartir-copiar" id="btn-copiar-enlace"
+                                title="Copiar enlace" aria-label="Copiar enlace">
+                            <i class="fa-solid fa-link" aria-hidden="true"></i>
+                        </button>
+                        {# en el celular abre el menú de compartir del teléfono (Instagram, Telegram, correo...) #}
+                        <button type="button" class="compartir-btn compartir-mas" id="btn-compartir-nativo" hidden
+                                title="Más opciones" aria-label="Más opciones para compartir">
+                            <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endwith %}
+
                 <div class="row mt-5 border-top pt-4 text-center g-2">
                     <div class="col-4 d-flex flex-column align-items-center">
                         <div class="icon-circle mb-2">
@@ -430,6 +475,54 @@
                 .catch(error => console.error('Error carrito:', error));
             });
         });
+
+        // compartir: copiar enlace y menú nativo del celular (si el navegador lo permite)
+        const compartir = document.querySelector('.compartir');
+        if (compartir) {
+            const datos = { title: compartir.dataset.titulo, text: compartir.dataset.texto, url: compartir.dataset.url };
+            const avisar = function (mensaje, tipo) {
+                if (!notifBox || !notifMsg) return;
+                notifMsg.innerText = mensaje;
+                notifBox.className = 'notif show ' + tipo;
+                setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
+            };
+
+            const btnCopiar = document.getElementById('btn-copiar-enlace');
+            btnCopiar.addEventListener('click', function () {
+                const copiado = () => {
+                    avisar('Enlace copiado. ¡Ya puedes pegarlo donde quieras!', 'success');
+                    btnCopiar.classList.add('copiado');
+                    btnCopiar.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i>';
+                    setTimeout(() => {
+                        btnCopiar.classList.remove('copiado');
+                        btnCopiar.innerHTML = '<i class="fa-solid fa-link" aria-hidden="true"></i>';
+                    }, 2000);
+                };
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(datos.url).then(copiado, () => avisar('No se pudo copiar el enlace.', 'error'));
+                } else {
+                    // navegadores sin la API del portapapeles (o sitio sin https)
+                    const campo = document.createElement('textarea');
+                    campo.value = datos.url;
+                    campo.setAttribute('readonly', '');
+                    campo.style.position = 'fixed';
+                    campo.style.opacity = '0';
+                    document.body.appendChild(campo);
+                    campo.select();
+                    const ok = document.execCommand('copy');
+                    document.body.removeChild(campo);
+                    ok ? copiado() : avisar('No se pudo copiar el enlace.', 'error');
+                }
+            });
+
+            const btnNativo = document.getElementById('btn-compartir-nativo');
+            if (navigator.share) {
+                btnNativo.hidden = false;
+                btnNativo.addEventListener('click', function () {
+                    navigator.share(datos).catch(() => {});  // si el usuario cierra el menú, no pasa nada
+                });
+            }
+        }
 
         //  zoom de Imagen
         const zoomContainer = document.querySelector('.zoom-container');

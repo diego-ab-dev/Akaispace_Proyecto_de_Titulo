@@ -19,7 +19,7 @@
                 <div class="card-rel-body">
                     <h6 class="text-truncate fw-bold text-dark" title="{{ rel.nombre }}">{{ rel.nombre }}</h6>
                     <p class="text-muted small mb-1">{{ rel.categoria_texto }}</p>
-                    <span class="fw-bold text-primary">${{ rel.precio|formato_chileno }}</span>
+                    <span class="fw-bold text-primary">{% include "partials/precio.html" with producto=rel porcentaje=True %}</span>
                 </div>
             </a>
         </div>

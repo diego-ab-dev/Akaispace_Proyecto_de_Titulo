@@ -95,6 +95,7 @@
                         {% elif forloop.counter <= 4 and page_obj.number == 1 and not filtros.activos %}
                             <span class="badge-overlay badge-new">Destacado</span>
                         {% endif %}{% endif %}
+                      {% with pct=producto|descuento %}{% if pct %}<span class="badge-oferta">-{{ pct }}%</span>{% endif %}{% endwith %}
 
                         <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
 
@@ -134,7 +135,7 @@
 
                         <p class="text-muted mb-2">{{ producto.categoria_texto }}</p>
 
-                        <h4 class="precioprod product-price fw-bold fs-4">${{ producto.precio|formato_chileno }}</h4>
+                        <h4 class="precioprod product-price fw-bold fs-4">{% include "partials/precio.html" with producto=producto %}</h4>
                       </div>
 
                       <a href="{% url 'producto_detalle' producto.id %}" class="btn-detalles">Ver Detalles</a>

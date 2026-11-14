@@ -26,8 +26,15 @@
 
             <div class="info-group">
                 <span class="info-label">Precio:</span>
-                <span class="info-value">${{ producto.precio|formato_chileno }}</span>
+                <span class="info-value">${{ producto.precio|formato_chileno }}{% with pct=producto|descuento %}{% if pct %}<span class="etiqueta-oferta">Oferta -{{ pct }}%</span>{% endif %}{% endwith %}</span>
             </div>
+
+            {% if producto|descuento %}
+            <div class="info-group">
+                <span class="info-label">Precio anterior:</span>
+                <span class="info-value"><s>${{ producto.precio_anterior|formato_chileno }}</s></span>
+            </div>
+            {% endif %}
 
             <div class="info-group">
                 <span class="info-label">Stock:</span>

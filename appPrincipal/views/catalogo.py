@@ -223,7 +223,15 @@ def producto_detalle(request, producto_id):
     if request.user.is_authenticated:
         es_favorito = Favorito.objects.filter(usuario=request.user, producto=producto).exists()
 
+    # botones de compartir y vista previa del enlace (Open Graph): siempre la URL limpia de la ficha,
+    # sin ?page= de las opiniones, y la imagen con dominio para que WhatsApp o Facebook la muestren
+    url_compartir = request.build_absolute_uri(reverse('producto_detalle', args=[producto.id]))
+    imagen = producto.imagen_principal
+    imagen_compartir = request.build_absolute_uri(imagen.url) if imagen else ''
+
     return render(request, "producto_detalle.html", {
+        "url_compartir": url_compartir,
+        "imagen_compartir": imagen_compartir,
         "producto": producto,
         "rango_cantidad": rango_cantidad,
         "opiniones": opiniones, 

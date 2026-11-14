@@ -3920,3 +3920,82 @@ class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compr
         self.assertEqual(kpi03(hoy)['clientes'], 1)
         self.assertEqual(kpi04(mes)['con_productos'], 1)
         self.assertEqual(kpi05(mes)['mostradas'], 1)
+
+
+class CompartirProductoTests(TestCase):  # botones de compartir y vista previa del enlace en la ficha
+    def test_la_ficha_trae_los_botones_y_la_vista_previa_con_la_url_limpia(self):
+        producto = crear_producto('Elden Ring', descripcion='Un mundo abierto enorme.')
+        respuesta = self.client.get(f'/producto/{producto.id}/?page=2')
+        url = f'http://testserver/producto/{producto.id}/'
+        self.assertContains(respuesta, 'https://wa.me/?text=Mira%20este%20producto%20en%20Akaispace%3A%20Elden%20Ring%20'
+                                       'http%3A%2F%2Ftestserver%2Fproducto%2F')
+        self.assertContains(respuesta, 'https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Ftestserver')
+        self.assertContains(respuesta, 'twitter.com/intent/tweet')
+        self.assertContains(respuesta, 'id="btn-copiar-enlace"')
+        self.assertContains(respuesta, f'<meta property="og:url" content="{url}">')
+        self.assertContains(respuesta, '<meta property="og:image" content="http://testserver/media/productos/silent.png">')
+        self.assertContains(respuesta, '<meta property="og:description" content="Un mundo abierto enorme.">')
+
+
+class OfertaProductoTests(TestCase):  # al rebajar el precio se muestra el anterior tachado y el % de descuento
+    def setUp(self):
+        self.producto = crear_producto('Elden Ring', genero='RPG', precio=40000)
+
+    def editar(self, precio, oferta):
+        from .forms import ProductoForm
+        p = self.producto
+        datos = {'nombre': p.nombre, 'precio': precio, 'stock': p.stock, 'stock_critico': p.stock_critico,
+                 'descripcion': '', 'categoria': p.categoria_id, 'plataforma': p.plataforma_id, 'genero': p.genero_id}
+        if oferta:
+            datos['mostrar_oferta'] = 'on'
+        form = ProductoForm(datos, instance=Producto.objects.get(pk=p.pk))
+        self.assertTrue(form.is_valid(), form.errors)
+        self.producto = form.save()
+        return self.producto
+
+    def test_bajar_el_precio_con_la_casilla_guarda_el_precio_anterior(self):
+        self.assertEqual(self.editar(30000, oferta=True).precio_anterior, 40000)
+        # una segunda rebaja se compara con el precio normal, no con el de la primera oferta
+        self.assertEqual(self.editar(20000, oferta=True).precio_anterior, 40000)
+
+    def test_sin_la_casilla_es_solo_una_correccion(self):
+        self.assertIsNone(self.editar(30000, oferta=False).precio_anterior)
+
+    def test_subir_el_precio_o_desmarcar_quita_la_oferta(self):
+        self.editar(30000, oferta=True)
+        self.assertIsNone(self.editar(45000, oferta=True).precio_anterior)
+        self.editar(30000, oferta=True)
+        self.assertIsNone(self.editar(30000, oferta=False).precio_anterior)
+
+    def test_porcentaje_redondeado_hacia_abajo(self):
+        from .templatetags.custom_filters import ahorro, descuento
+        self.producto.precio, self.producto.precio_anterior = 29990, 39990
+        self.assertEqual((descuento(self.producto), ahorro(self.producto)), (25, 10000))
+        self.producto.precio_anterior = 30000  # menos de 1%: no se anuncia oferta
+        self.assertEqual(descuento(self.producto), 0)
+        self.producto.precio_anterior = None
+        self.assertEqual((descuento(self.producto), ahorro(self.producto)), (0, 0))
+
+    def test_la_tienda_muestra_el_precio_tachado_y_el_porcentaje(self):
+        self.editar(30000, oferta=True)
+        ficha = self.client.get(f'/producto/{self.producto.id}/')
+        self.assertContains(ficha, 'class="precio-anterior"><span class="visually-hidden">Antes: </span>$40.000')
+        self.assertContains(ficha, '<span class="precio-descuento">-25%</span>')
+        self.assertContains(ficha, 'Ahorras $10.000')
+        catalogo = self.client.get('/menu/')
+        self.assertContains(catalogo, '<span class="badge-oferta">-25%</span>')
+        self.assertContains(catalogo, '$40.000')
+
+    def test_sin_oferta_se_ve_como_siempre(self):
+        ficha = self.client.get(f'/producto/{self.producto.id}/')
+        self.assertContains(ficha, '<span class="precio-actual">$40.000</span>')
+        self.assertNotContains(ficha, 'precio-descuento">')
+        self.assertNotContains(ficha, 'Ahorras')
+
+    def test_la_casilla_aparece_en_editar_producto(self):
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.editar(30000, oferta=True)
+        respuesta = self.client.get(f'/admin-panel/productos/editar/{self.producto.id}/')
+        self.assertContains(respuesta, 'data-precio-normal="40000"')
+        self.assertContains(respuesta, 'name="mostrar_oferta"')
+        self.assertContains(respuesta, 'checked')

@@ -85,7 +85,7 @@
                                     <div class="cantidad-stock">{{ item.producto.stock }} disponible{{ item.producto.stock|pluralize }}</div>
                                     <div class="cantidad-error" id="error-{{ item.producto_id }}" aria-live="polite"></div>
                                 </div>
-                                <div class="col">${{ item.producto.precio|formato_chileno }}</div>
+                                <div class="col">{% include "partials/precio.html" with producto=item.producto %}</div>
                                 <a href="#" class="btn-eliminar-item" 
                                 data-url="{% url 'eliminar_del_carrito' item.producto_id %}" 
                                 onclick="eliminarItem('{{ item.producto_id }}', this); return false;">✖</a>

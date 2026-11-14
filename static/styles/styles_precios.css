@@ -1,0 +1,139 @@
+/* precios con oferta (partials/precio.html): precio anterior tachado, precio nuevo y % de descuento */
+:root {
+    --oferta-rojo: #E0313E;
+    --oferta-rojo-suave: #FDECEE;
+    --precio-tachado: #8A909B;
+}
+
+.precio {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1em;
+    line-height: 1.15;
+}
+
+.precio-linea {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45em;
+}
+
+.precio-anterior {
+    font-size: 0.62em;
+    font-weight: 500;
+    color: var(--precio-tachado);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+}
+
+.precio-actual--oferta {
+    color: var(--oferta-rojo);
+}
+
+.precio-descuento {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28em 0.7em;
+    border-radius: 999px;
+    background-color: var(--oferta-rojo);
+    color: #fff;
+    font-size: 0.5em;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    box-shadow: 0 3px 8px rgba(224, 49, 62, 0.25);
+}
+
+/* centrado cuando la tarjeta centra el texto */
+.text-center .precio,
+.precio--centro {
+    align-items: center;
+}
+
+/* ficha del producto: "Ahorras $X" */
+.precio-ahorro {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    margin: -6px 0 16px;
+    padding: 0.35em 0.8em;
+    border-radius: 8px;
+    background-color: var(--oferta-rojo-suave);
+    color: var(--oferta-rojo);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* insignia sobre la foto en las tarjetas del catálogo (la de "Nuevo"/"¡Últimos!" va a la izquierda) */
+.badge-oferta {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 5;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background-color: var(--oferta-rojo);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 10px rgba(224, 49, 62, 0.35);
+}
+
+/* panel: casilla "Mostrar como oferta" en Editar producto */
+.oferta-box {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px dashed #cfd6de;
+    border-radius: 10px;
+    background-color: #f8fafc;
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.oferta-box.activa {
+    border: 1px solid #f3b8bd;
+    background-color: var(--oferta-rojo-suave);
+}
+
+.oferta-box .form-check-input:checked {
+    background-color: var(--oferta-rojo);
+    border-color: var(--oferta-rojo);
+}
+
+.oferta-label {
+    font-weight: 600;
+    color: #1C253B;
+    cursor: pointer;
+}
+
+.oferta-box .form-check-input:disabled ~ .oferta-label {
+    color: #9aa3ad;
+    cursor: default;
+}
+
+.oferta-ayuda {
+    margin: 8px 0 0;
+    font-size: 0.85rem;
+    color: #5b6573;
+    line-height: 1.6;
+}
+
+.oferta-ayuda .precio-anterior,
+.oferta-ayuda .precio-descuento {
+    font-size: 0.8rem;
+}
+
+/* panel: etiqueta en la lista de productos */
+.etiqueta-oferta {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: var(--oferta-rojo-suave);
+    color: var(--oferta-rojo);
+    font-size: 0.72rem;
+    font-weight: 700;
+    vertical-align: middle;
+}

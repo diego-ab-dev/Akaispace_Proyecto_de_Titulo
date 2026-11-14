@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static l10n %}
 
 {% block title %}Editar Producto{% endblock %}
 
@@ -41,6 +41,17 @@
                     <label class="form-label">Precio</label>
                     {{ form.precio }}
                     <div class="text-danger small">{{ form.precio.errors }}</div>
+
+                    {# oferta: al bajar el precio se marca sola; se desmarca si solo fue para corregir un error #}
+                    <div class="oferta-box" id="oferta-box" data-precio-normal="{{ form.precio_normal|default_if_none:0|unlocalize }}">
+                        <div class="form-check form-switch m-0">
+                            {{ form.mostrar_oferta }}
+                            <label class="form-check-label oferta-label" for="{{ form.mostrar_oferta.id_for_label }}">
+                                <i class="fa-solid fa-tag me-1" aria-hidden="true"></i>{{ form.mostrar_oferta.label }}
+                            </label>
+                        </div>
+                        <p class="oferta-ayuda" id="oferta-ayuda" aria-live="polite"></p>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -117,6 +128,43 @@
             };
             nombreInput.addEventListener('input', updateCounter);
             updateCounter();
+        }
+
+        // oferta: vista previa de cómo se verá el precio en la tienda
+        const ofertaBox = document.getElementById('oferta-box');
+        const precioInput = document.querySelector('input[name="precio"]');
+        const ofertaCheck = document.querySelector('input[name="mostrar_oferta"]');
+        const ofertaAyuda = document.getElementById('oferta-ayuda');
+        if (ofertaBox && precioInput && ofertaCheck) {
+            const normal = Number(ofertaBox.dataset.precioNormal) || 0;
+            const pesos = n => '$' + Number(n).toLocaleString('es-CL');
+            let tocada = false;  // si el admin la movió a mano, no se la cambiamos
+            ofertaCheck.addEventListener('change', () => { tocada = true; actualizarOferta(); });
+
+            function actualizarOferta() {
+                const precio = Number(precioInput.value);
+                const rebaja = normal > 0 && precioInput.value !== '' && precio >= 0 && precio < normal;
+                const pct = rebaja ? Math.floor((normal - precio) * 100 / normal) : 0;
+                ofertaCheck.disabled = !rebaja || pct < 1;
+                if (ofertaCheck.disabled) {
+                    ofertaCheck.checked = false;
+                } else if (!tocada) {
+                    ofertaCheck.checked = true;
+                }
+                ofertaBox.classList.toggle('activa', ofertaCheck.checked);
+
+                if (ofertaCheck.checked) {
+                    ofertaAyuda.innerHTML = 'En la tienda se verá: <span class="precio-anterior d-inline">' + pesos(normal) +
+                        '</span> <strong class="precio-actual--oferta">' + pesos(precio) +
+                        '</strong> <span class="precio-descuento">-' + pct + '%</span>';
+                } else if (!ofertaCheck.disabled) {
+                    ofertaAyuda.textContent = 'El precio baja, pero no se mostrará como oferta (útil si solo corriges un error).';
+                } else {
+                    ofertaAyuda.textContent = 'Para mostrar una oferta, baja el precio a menos de ' + pesos(normal) + '.';
+                }
+            }
+            precioInput.addEventListener('input', actualizarOferta);
+            actualizarOferta();
         }
 
         if(form) {

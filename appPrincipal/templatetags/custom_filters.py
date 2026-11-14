@@ -40,3 +40,20 @@ def param_replace(context, **kwargs):
 @register.filter
 def valor_absoluto(valor):
     return abs(valor) if isinstance(valor, (int, float)) else valor
+
+
+# Ofertas: el producto guarda su precio anterior cuando el admin lo rebaja (ver ProductoForm).
+# El % se redondea hacia abajo para no anunciar más descuento del real; bajo 1% no se muestra oferta.
+@register.filter
+def descuento(producto):
+    """Porcentaje de rebaja del producto (ej. 25), o 0 si no está en oferta."""
+    anterior, precio = getattr(producto, 'precio_anterior', None), getattr(producto, 'precio', None)
+    if not anterior or precio is None or anterior <= precio:
+        return 0
+    return (anterior - precio) * 100 // anterior
+
+
+@register.filter
+def ahorro(producto):
+    """Pesos que se ahorra el cliente con la oferta, o 0."""
+    return producto.precio_anterior - producto.precio if descuento(producto) else 0

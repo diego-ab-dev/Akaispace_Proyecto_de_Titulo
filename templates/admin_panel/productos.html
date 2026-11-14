@@ -68,7 +68,7 @@
                     </td>
                     <td>{{ producto.codigo_de_barra }}</td>
                     <td>{{ producto.nombre|truncatechars:25 }}</td>
-                    <td>${{ producto.precio|formato_chileno }}</td>
+                    <td>${{ producto.precio|formato_chileno }}{% with pct=producto|descuento %}{% if pct %}<span class="etiqueta-oferta" title="Antes ${{ producto.precio_anterior|formato_chileno }}">Oferta -{{ pct }}%</span>{% endif %}{% endwith %}</td>
                     <td>
                         {% if producto.stock == 0 %}
                             <span class="stock-out">Sin stock</span>

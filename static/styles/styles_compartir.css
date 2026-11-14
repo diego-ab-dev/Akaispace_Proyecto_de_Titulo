@@ -1,0 +1,78 @@
+/* botones de compartir de la ficha del producto */
+.compartir {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.compartir-titulo {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1C253B;
+    letter-spacing: 0.02em;
+}
+
+.compartir-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* se fijan todas las propiedades porque styles_prod_detalle.css le da estilos a todos los <button> */
+.compartir-btn,
+.compartir-btn:hover {
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    font-size: 1.05rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.compartir-btn {
+    background-color: #f0f4f8;
+    color: #1C253B;
+    transition: background-color 0.25s ease, color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.compartir-btn:hover,
+.compartir-btn:focus-visible {
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(28, 37, 59, 0.18);
+}
+
+.compartir-btn:focus-visible {
+    outline: 2px solid #4E84A8;
+    outline-offset: 2px;
+}
+
+.compartir-btn:active {
+    transform: translateY(0) scale(0.94);
+}
+
+/* al pasar el mouse cada botón toma el color de su red */
+.compartir-whatsapp:hover, .compartir-whatsapp:focus-visible { background-color: #25D366; }
+.compartir-facebook:hover, .compartir-facebook:focus-visible { background-color: #1877F2; }
+.compartir-x:hover, .compartir-x:focus-visible { background-color: #000; }
+.compartir-copiar:hover, .compartir-copiar:focus-visible,
+.compartir-mas:hover, .compartir-mas:focus-visible { background-color: #4E84A8; }
+
+.compartir-btn.copiado,
+.compartir-btn.copiado:hover {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.compartir-btn[hidden] {
+    display: none;
+}

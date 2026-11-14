@@ -455,6 +455,13 @@ class UsuarioForm(forms.ModelForm):
 
 # form de producto en admin
 class ProductoForm(forms.ModelForm):
+    # Oferta: al rebajar el precio, el precio de antes queda guardado y la tienda lo muestra tachado con el %.
+    # Si el cambio fue para corregir un error, el admin desmarca la casilla y no se anuncia rebaja.
+    mostrar_oferta = forms.BooleanField(
+        required=False, label='Mostrar como oferta',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+    )
+
     class Meta:
         model = Producto
         fields = [
@@ -482,8 +489,23 @@ class ProductoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['plataforma'].empty_label = 'Sin plataforma'
         self.fields['genero'].empty_label = 'Sin género'
+        # precio "normal" contra el que se compara la rebaja: el anterior si ya está en oferta, si no el actual.
+        # Se guarda aquí porque al validar el formulario la instancia ya toma el precio nuevo.
+        self.precio_normal = None
         if self.instance and self.instance.pk:
             self.fields['codigo_de_barra'].disabled = True
+            en_oferta = bool(self.instance.precio_anterior and self.instance.precio_anterior > self.instance.precio)
+            self.precio_normal = self.instance.precio_anterior if en_oferta else self.instance.precio
+            self.fields['mostrar_oferta'].initial = en_oferta
+
+    def save(self, commit=True):
+        producto = super().save(commit=False)
+        hay_rebaja = self.precio_normal is not None and producto.precio < self.precio_normal
+        producto.precio_anterior = self.precio_normal if hay_rebaja and self.cleaned_data.get('mostrar_oferta') else None
+        if commit:
+            producto.save()
+            self.save_m2m()
+        return producto
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')

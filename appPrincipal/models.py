@@ -267,6 +267,11 @@ class Producto(models.Model):
     )
     nombre = models.CharField(max_length=100, db_comment="Nombre comercial del producto.")
     precio = models.PositiveIntegerField(default=0, db_comment="Precio de venta en pesos chilenos, IVA incluido.")
+    precio_anterior = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Precio anterior",
+        db_comment="Precio antes de la rebaja; la tienda lo muestra tachado junto al % de descuento. "
+                   "NULL si el producto no está en oferta.",
+    )
     costo = models.PositiveIntegerField(
         null=True, blank=True, help_text="Costo unitario con IVA, para calcular la ganancia.",
         db_comment="Costo unitario vigente en pesos chilenos, IVA incluido. NULL si no se ha registrado; "
