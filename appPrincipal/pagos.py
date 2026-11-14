@@ -79,6 +79,16 @@ def crear_venta_presencial(items, canal, metodo_pago):
     return venta
 
 
+def validar_datos_comprador(usuario):
+    """Para comprar hacen falta RUT y teléfono (la tienda verifica quién retira y contacta para la entrega).
+    Las cuentas creadas con Google no los traen: se completan en "Tus datos" del carrito. Devuelve el
+    mensaje de error, o None si están."""
+    faltan = [dato for dato, valor in [('tu RUT', usuario.rut), ('tu teléfono', usuario.telefono)] if not valor]
+    if faltan:
+        return f"Completa {' y '.join(faltan)} en «Tus datos» para continuar con la compra."
+    return None
+
+
 def _nueva_orden_compra():
     return f"AKA{secrets.token_hex(6).upper()}"
 

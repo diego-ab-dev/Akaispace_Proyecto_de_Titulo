@@ -242,8 +242,19 @@ class RegisterTests(TestCase):
         self.assertRedirects(self.client.get('/register/'), '/', fetch_redirect_response=False)
 
 
+_ruts_de_prueba = iter(range(20_000_000, 30_000_000))
+
+
+def rut_de_prueba():
+    """Un RUT válido y distinto cada vez (desde el 20.000.000, lejos de los que escriben las pruebas)."""
+    from .forms import calcular_dv, normalizar_rut
+    cuerpo = str(next(_ruts_de_prueba))
+    return normalizar_rut(cuerpo + calcular_dv(cuerpo))
+
+
 def crear_cliente(email='cliente@example.com', password='Akaispace-2026!', **extra):
-    datos = {'nombre': 'Cliente Prueba', **extra}
+    # por defecto con RUT y teléfono, que son necesarios para comprar; rut='' o telefono='' para probar sin ellos
+    datos = {'nombre': 'Cliente Prueba', 'rut': rut_de_prueba(), 'telefono': '+56 9 12345678', **extra}
     return Usuario.objects.create_user(email=email, password=password, **datos)
 
 
@@ -895,7 +906,8 @@ class RegionesTests(TestCase):
         cliente.refresh_from_db()
         self.assertEqual((cliente.ciudad, cliente.direccion), ('Valdivia', 'Picarte 1'))
 
-        self.client.post('/guardar_datos_envio/', {'region': 'LOS LAGOS', 'ciudad': 'Osorno', 'direccion': 'Calle 2'})
+        self.client.post('/guardar_datos_envio/', {'region': 'LOS LAGOS', 'ciudad': 'Osorno', 'direccion': 'Calle 2',
+                                                   'telefono': '22223333'})
         cliente.refresh_from_db()
         self.assertEqual((cliente.region, cliente.ciudad), ('LOS LAGOS', 'Osorno'))
 
@@ -3744,15 +3756,15 @@ class FormulariosDeCuentaTests(TestCase):  # validación con mensajes por campo 
     def test_editar_perfil_valida_y_guarda_con_formato(self):
         cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1', telefono='+56 9 11111111')
         self.client.force_login(cliente)
-        respuesta = self.client.post('/editar/', {'telefono': '12', 'region': 'LOS RIOS', 'ciudad': 'Osorno',
-                                                  'direccion': '123'})
+        respuesta = self.client.post('/editar/', {'nombre': 'Cliente Prueba', 'telefono': '12', 'region': 'LOS RIOS',
+                                                  'ciudad': 'Osorno', 'direccion': '123'})
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(set(respuesta.context['form'].errors), {'telefono', 'ciudad', 'direccion'})
         cliente.refresh_from_db()
         self.assertEqual(cliente.ciudad, 'Valdivia')
 
-        respuesta = self.client.post('/editar/', {'telefono': '22223333', 'region': 'LOS LAGOS', 'ciudad': 'Osorno',
-                                                  'direccion': '  Calle   Nueva 45 '})
+        respuesta = self.client.post('/editar/', {'nombre': 'Cliente Prueba', 'telefono': '22223333', 'region': 'LOS LAGOS',
+                                                  'ciudad': 'Osorno', 'direccion': '  Calle   Nueva 45 '})
         self.assertRedirects(respuesta, '/perfil/?notif=Tus+datos+se+actualizaron+correctamente.&type=success',
                              fetch_redirect_response=False)
         cliente.refresh_from_db()
@@ -3762,7 +3774,8 @@ class FormulariosDeCuentaTests(TestCase):  # validación con mensajes por campo 
     def test_editar_perfil_no_acepta_ciudad_sin_region(self):
         cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1')
         self.client.force_login(cliente)
-        self.client.post('/editar/', {'telefono': '22223333', 'region': '', 'ciudad': 'Santiago', 'direccion': 'Calle 1'})
+        self.client.post('/editar/', {'nombre': 'Cliente Prueba', 'telefono': '22223333', 'region': '', 'ciudad': 'Santiago',
+                                      'direccion': 'Calle 1'})
         cliente.refresh_from_db()
         self.assertEqual(cliente.ciudad, 'Valdivia')
 
@@ -4155,3 +4168,91 @@ class CambiosSinGuardarTests(TestCase):  # el panel avisa antes de salir de un f
     def test_los_filtros_y_botones_sueltos_no_avisan(self):
         respuesta = self.client.get('/admin-panel/productos/')
         self.assertNotContains(respuesta, 'data-avisar-cambios')
+
+
+class DatosParaComprarTests(TestCase):  # RUT y teléfono obligatorios para comprar; el RUT se agrega una vez y queda fijo
+    def setUp(self):
+        from .models import Carrito, ItemCarritoProducto
+        self.producto = crear_producto()
+        # como una cuenta creada con Google: sin RUT, teléfono ni dirección
+        self.cliente = crear_cliente('ana@gmail.com', rut='', telefono='')
+        ItemCarritoProducto.objects.create(carrito=Carrito.objects.create(usuario=self.cliente), producto=self.producto)
+        self.client.force_login(self.cliente)
+
+    def test_sin_rut_ni_telefono_no_se_puede_pagar_ni_retirando_en_tienda(self):
+        from .models import PagoWebpay
+        respuesta, pago = iniciar_pago(self.client, envio='tienda')
+        self.assertIsNone(pago)
+        self.assertFalse(PagoWebpay.objects.exists())
+        self.assertIn('/ver_carrito/?', respuesta.url)
+        self.assertIn('Completa+tu+RUT+y+tu+tel%C3%A9fono', respuesta.url)
+
+    def test_solo_falta_el_telefono(self):
+        Usuario.objects.filter(pk=self.cliente.pk).update(rut=rut_de_prueba())
+        respuesta, pago = iniciar_pago(self.client, envio='tienda')
+        self.assertIsNone(pago)
+        self.assertIn('Completa+tu+tel%C3%A9fono', respuesta.url)
+
+    def test_completando_rut_y_telefono_en_el_carrito_ya_puede_retirar_en_tienda(self):
+        respuesta = self.client.post('/guardar_datos_envio/', {'rut': '11.111.111-1', 'telefono': '987654321',
+                                                               'region': '', 'ciudad': '', 'direccion': ''})
+        self.assertTrue(respuesta.json()['success'], respuesta.content)
+        self.cliente.refresh_from_db()
+        self.assertEqual((self.cliente.rut, self.cliente.telefono), ('11.111.111-1', '+56 9 87654321'))
+        _, pago = iniciar_pago(self.client, envio='tienda')
+        self.assertIsNotNone(pago)
+
+    def test_un_despacho_sigue_exigiendo_la_direccion(self):
+        Usuario.objects.filter(pk=self.cliente.pk).update(rut=rut_de_prueba(), telefono='+56 9 12345678')
+        respuesta, pago = iniciar_pago(self.client, envio='bluexpress')
+        self.assertIsNone(pago)
+        self.assertIn('direcci%C3%B3n', respuesta.url)
+
+    def test_el_carrito_valida_rut_y_telefono(self):
+        otro = crear_cliente('otro@example.com')
+        casos = [
+            ({'rut': '', 'telefono': '987654321'}, 'rut'),
+            ({'rut': '11.111.111-2', 'telefono': '987654321'}, 'rut'),        # dígito verificador malo
+            ({'rut': otro.rut, 'telefono': '987654321'}, 'rut'),               # de otra cuenta
+            ({'rut': '11.111.111-1', 'telefono': ''}, 'telefono'),
+            ({'rut': '11.111.111-1', 'telefono': '123'}, 'telefono'),
+            ({'rut': '11.111.111-1', 'telefono': '987654321', 'region': 'LOS RIOS'}, 'ciudad'),  # dirección a medias
+        ]
+        for datos, campo in casos:
+            respuesta = self.client.post('/guardar_datos_envio/', datos)
+            self.assertEqual(respuesta.status_code, 400, datos)
+            self.assertIn(campo, respuesta.json()['errors'], datos)
+        self.cliente.refresh_from_db()
+        self.assertIsNone(self.cliente.rut)
+
+    def test_el_rut_guardado_no_se_puede_cambiar_ni_desde_el_carrito_ni_desde_el_perfil(self):
+        Usuario.objects.filter(pk=self.cliente.pk).update(rut='11.111.111-1')
+        self.client.post('/guardar_datos_envio/', {'rut': '22.222.222-2', 'telefono': '987654321'})
+        self.client.post('/editar/', {'nombre': 'Ana Pérez', 'rut': '22.222.222-2', 'telefono': '987654321',
+                                      'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': 'Picarte 1'})
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.rut, '11.111.111-1')
+        self.assertContains(self.client.get('/editar/'), 'El RUT no se puede cambiar')
+
+    def test_en_el_perfil_se_agrega_el_rut_y_se_edita_el_nombre(self):
+        datos = {'nombre': '  Ana   Pérez ', 'rut': '111111111', 'telefono': '987654321',
+                 'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': 'Picarte 1'}
+        respuesta = self.client.post('/editar/', datos)
+        self.assertEqual(respuesta.status_code, 302)
+        self.cliente.refresh_from_db()
+        self.assertEqual((self.cliente.nombre, self.cliente.rut), ('Ana Pérez', '11.111.111-1'))
+
+    def test_en_el_perfil_el_rut_es_opcional_pero_si_se_escribe_se_valida(self):
+        datos = {'nombre': 'Ana Pérez', 'telefono': '987654321', 'region': 'LOS RIOS', 'ciudad': 'Valdivia',
+                 'direccion': 'Picarte 1'}
+        self.assertEqual(self.client.post('/editar/', {**datos, 'rut': ''}).status_code, 302)
+        respuesta = self.client.post('/editar/', {**datos, 'rut': '11.111.111-2'})
+        self.assertIn('rut', respuesta.context['form'].errors)
+        self.cliente.refresh_from_db()
+        self.assertIsNone(self.cliente.rut)
+
+    def test_el_carrito_muestra_lo_que_falta(self):
+        respuesta = self.client.get('/ver_carrito/')
+        self.assertContains(respuesta, 'Completa tus datos para comprar')
+        self.assertContains(respuesta, 'id="falta-rut"')
+        self.assertContains(respuesta, 'id="falta-telefono"')

@@ -136,15 +136,25 @@
             </div>
 
 
-            <div class="envio-box mt-3 p-3">
+            {# lo necesario para comprar: RUT y teléfono siempre; la dirección solo para los despachos #}
+            <div class="envio-box mt-3 p-3" id="datos-compra"
+                 data-tiene-rut="{% if usuario.rut %}1{% endif %}" data-tiene-telefono="{% if usuario.telefono %}1{% endif %}">
                 <div class="d-flex justify-content-between">
-                    <b>Tu dirección</b>
-                    <i class="fas fa-edit edit-icon" onclick="abrirModal()"></i>
+                    <b>Tus datos</b>
+                    <i class="fas fa-edit edit-icon" onclick="abrirModal()" role="button" tabindex="0"
+                       aria-label="Editar tus datos"></i>
                 </div>
 
+                <p><b>RUT:</b> <span id="envio-rut">{{ usuario.rut|default:'' }}</span>{% if not usuario.rut %}<span class="dato-faltante" id="falta-rut">Falta</span>{% endif %}</p>
+                <p><b>Teléfono:</b> <span id="envio-telefono">{{ usuario.telefono }}</span>{% if not usuario.telefono %}<span class="dato-faltante" id="falta-telefono">Falta</span>{% endif %}</p>
                 <p><b>Región:</b> <span id="envio-region">{{ usuario.region }}</span></p>
                 <p><b>Ciudad:</b> <span id="envio-ciudad">{{ usuario.ciudad }}</span></p>
                 <p><b>Dirección:</b> <span id="envio-direccion">{{ usuario.direccion }}</span></p>
+                {% if not usuario.rut or not usuario.telefono %}
+                <button type="button" class="btn-completar-datos" id="btn-completar-datos" onclick="abrirModal()">
+                    Completa tus datos para comprar
+                </button>
+                {% endif %}
             </div>
 
             {# HU-08: opciones de entrega; las que no aplican a la ciudad del cliente se ocultan (ver actualizarEntrega) #}
@@ -182,22 +192,47 @@
         <!--Modal para editar el envio-->
         <div id="modal-envio" class="modal-envio">
             <div class="modal-content-envio">
-                <h5><b>Editar datos de envío</b></h5>
+                <h5><b>Tus datos</b></h5>
+                <p class="modal-envio-ayuda">El RUT y el teléfono son necesarios para comprar. La dirección solo hace
+                    falta si eliges un despacho.</p>
+                <div class="modal-envio-error" id="modal-envio-error" role="alert" hidden></div>
 
-                <label>Región</label>
+                {% if usuario.rut %}
+                <label for="input-rut">RUT</label>
+                <input type="text" id="input-rut" value="{{ usuario.rut }}" readonly disabled>
+                <small class="modal-envio-nota">El RUT no se puede cambiar. Si está mal, escríbenos a {{ correo_tienda }}.</small>
+                {% else %}
+                <label for="input-rut">RUT</label>
+                <input type="text" id="input-rut" name="rut" placeholder="12.345.678-5" maxlength="12" autocomplete="off"
+                       data-formato="rut">
+                <small class="modal-envio-nota">Revísalo bien: una vez guardado no se puede cambiar.</small>
+                {% endif %}
+                <div class="campo-error-modal" data-error-de="rut"></div>
+
+                <label for="input-telefono">Teléfono</label>
+                <div class="telefono-modal">
+                    <span>+56 9</span>
+                    <input type="text" id="input-telefono" inputmode="numeric" autocomplete="tel-national" placeholder="12345678"
+                           maxlength="8" value="{{ usuario.telefono|slice:'-8:' }}">
+                </div>
+                <div class="campo-error-modal" data-error-de="telefono"></div>
+
+                <label for="input-region">Región</label>
                 <select id="input-region" onchange="cargarCiudades()"></select>
+                <div class="campo-error-modal" data-error-de="region"></div>
 
-                <label>Ciudad</label>
+                <label for="input-ciudad">Ciudad</label>
                 <select id="input-ciudad"></select>
+                <div class="campo-error-modal" data-error-de="ciudad"></div>
 
-
-                <label>Dirección</label>
+                <label for="input-direccion">Dirección</label>
                 <input type="text" id="input-direccion" maxlength="100">
                 <div class="text-end mb-3">
                     <small id="address-counter" class="text-muted" style="font-size: 0.75rem;">0/100</small>
                 </div>
+                <div class="campo-error-modal" data-error-de="direccion"></div>
 
-                <br><br>
+                <br>
 
                 <button onclick="guardarEnvio()" class="btn-save" style="background-color: #4e84a8;">Guardar</button>
                 <button onclick="cerrarModal()" class="btn-cancel" style="background-color: #1c253b;">Cancelar</button>
@@ -262,25 +297,24 @@
     // lista de regiones y ciudades para el modal (viene de appPrincipal/constants.py)
     const regionesCiudades = JSON.parse(document.getElementById('regiones-ciudades').textContent);
 
+    // la región y la ciudad pueden quedar vacías: solo hacen falta para los despachos
     function cargarRegiones() {
-    let selectRegion = document.getElementById("input-region");
-    selectRegion.innerHTML = "";
-
-    for (const region in regionesCiudades) {
-        selectRegion.innerHTML += `<option value="${region}">${region}</option>`;
+        const selectRegion = document.getElementById("input-region");
+        selectRegion.innerHTML = '<option value="">Selecciona una región</option>';
+        for (const region in regionesCiudades) {
+            selectRegion.innerHTML += `<option value="${region}">${region}</option>`;
+        }
     }
-      }
 
-      function cargarCiudades() {
-          let region = document.getElementById("input-region").value;
-          let selectCiudad = document.getElementById("input-ciudad");
-
-          selectCiudad.innerHTML = "";
-
-          regionesCiudades[region].forEach(ciudad => {
-              selectCiudad.innerHTML += `<option value="${ciudad}">${ciudad}</option>`;
-          });
-      }
+    function cargarCiudades() {
+        const region = document.getElementById("input-region").value;
+        const selectCiudad = document.getElementById("input-ciudad");
+        const ciudades = regionesCiudades[region] || [];
+        selectCiudad.innerHTML = `<option value="">${ciudades.length ? 'Selecciona una ciudad' : 'Primero elige una región'}</option>`;
+        ciudades.forEach(ciudad => {
+            selectCiudad.innerHTML += `<option value="${ciudad}">${ciudad}</option>`;
+        });
+    }
 
     // formato de pesos chilenos para los valores numericos
     function formatoChileno(valor) {
@@ -500,6 +534,12 @@
     if (formProceder) {
         formProceder.addEventListener('submit', function (e) {
             e.preventDefault();
+            // sin RUT o teléfono no se puede comprar (el servidor también lo revisa): se abren "Tus datos"
+            const datosCompra = document.getElementById('datos-compra');
+            if (datosCompra && (!datosCompra.dataset.tieneRut || !datosCompra.dataset.tieneTelefono)) {
+                abrirModal('Completa tu RUT y tu teléfono para continuar con la compra.');
+                return;
+            }
             if (!document.querySelector('input[name="envio"]:checked')) {
                 mostrarError('Elige cómo quieres recibir tu compra.');
                 return;
@@ -685,9 +725,22 @@
         });
     });
 
-        function abrirModal() {
+        function limpiarErroresModal() {
+            const errorGeneral = document.getElementById('modal-envio-error');
+            errorGeneral.hidden = true;
+            errorGeneral.textContent = '';
+            document.querySelectorAll('.campo-error-modal').forEach(elem => elem.textContent = '');
+        }
+
+        function abrirModal(aviso) {
             const modal = document.getElementById("modal-envio");
             modal.style.display = "flex";
+            limpiarErroresModal();
+            if (typeof aviso === 'string' && aviso) {
+                const errorGeneral = document.getElementById('modal-envio-error');
+                errorGeneral.textContent = aviso;
+                errorGeneral.hidden = false;
+            }
 
             let regionActual = document.getElementById("envio-region").innerText;
             let ciudadActual = document.getElementById("envio-ciudad").innerText;
@@ -732,27 +785,58 @@
 
         // guardar datos de envio cambiados
         function guardarEnvio() {
+            limpiarErroresModal();
             const data = new FormData();
+            const inputRut = document.getElementById("input-rut");
+            if (inputRut && !inputRut.disabled) data.append("rut", inputRut.value);
+            data.append("telefono", document.getElementById("input-telefono").value);
             data.append("region", document.getElementById("input-region").value);
             data.append("ciudad", document.getElementById("input-ciudad").value);
             data.append("direccion", document.getElementById("input-direccion").value);
-            data.append("csrfmiddlewaretoken", document.querySelector('[name=csrfmiddlewaretoken]').value);
 
-            fetch("/guardar_datos_envio/", {
+            fetch("{% url 'guardar_datos_envio' %}", {
                 method: "POST",
                 body: data,
+                headers: { 'X-CSRFToken': csrfCarrito || '{{ csrf_token }}' },
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
+                    document.getElementById("envio-rut").innerText = data.rut || '';
+                    document.getElementById("envio-telefono").innerText = data.telefono;
                     document.getElementById("envio-region").innerText = data.region;
                     document.getElementById("envio-ciudad").innerText = data.ciudad;
                     document.getElementById("envio-direccion").innerText = data.direccion;
+                    // el RUT ya quedó guardado: en adelante se muestra fijo
+                    if (inputRut && data.rut) {
+                        inputRut.value = data.rut;
+                        inputRut.disabled = true;
+                        inputRut.readOnly = true;
+                    }
+                    const datosCompra = document.getElementById('datos-compra');
+                    datosCompra.dataset.tieneRut = data.rut ? '1' : '';
+                    datosCompra.dataset.tieneTelefono = data.telefono ? '1' : '';
+                    ['falta-rut', 'falta-telefono', 'btn-completar-datos'].forEach(id => document.getElementById(id)?.remove());
                     cerrarModal();
                     actualizarEntrega();  // al cambiar de ciudad cambian las opciones de entrega
-                } else if (data.error) {
-                    mostrarError(data.error);
+                } else {
+                    const errores = data.errors || {};
+                    let porCampo = false;
+                    Object.keys(errores).forEach(campo => {
+                        const elem = document.querySelector(`.campo-error-modal[data-error-de="${campo}"]`);
+                        if (elem) { elem.textContent = errores[campo][0]; porCampo = true; }
+                    });
+                    if (!porCampo) {
+                        const errorGeneral = document.getElementById('modal-envio-error');
+                        errorGeneral.textContent = data.error || 'No pudimos guardar tus datos. Inténtalo de nuevo.';
+                        errorGeneral.hidden = false;
+                    }
                 }
+            })
+            .catch(() => {
+                const errorGeneral = document.getElementById('modal-envio-error');
+                errorGeneral.textContent = 'No pudimos guardar tus datos. Inténtalo de nuevo.';
+                errorGeneral.hidden = false;
             });
         }
 </script>

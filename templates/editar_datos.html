@@ -16,6 +16,30 @@
           <div data-resumen-errores hidden></div>
 
           <div class="mb-3" data-campo>
+              <label for="nombre" class="form-label">Nombre</label>
+              <input type="text" id="nombre" name="nombre" class="form-control" autocomplete="name"
+                  value="{{ form.nombre.value|default:'' }}" maxlength="{{ nombre_maximo }}" required
+                  data-validacion="nombre" data-msg-requerido="Ingresa tu nombre.">
+              {% include "partials/error_campo.html" with campo=form.nombre %}
+          </div>
+
+          {# el RUT se agrega una sola vez (las cuentas de Google no lo traen); después queda fijo #}
+          <div class="mb-3" data-campo>
+              <label for="rut" class="form-label">RUT</label>
+              {% if rut_guardado %}
+              <input type="text" id="rut" class="form-control" value="{{ rut_guardado }}" readonly disabled
+                  aria-describedby="ayuda-rut">
+              <small id="ayuda-rut" class="form-text">El RUT no se puede cambiar. Si está mal, escríbenos a {{ correo_tienda }}.</small>
+              {% else %}
+              <input type="text" id="rut" name="rut" class="form-control" placeholder="12.345.678-5" maxlength="12"
+                  autocomplete="off" value="{{ form.rut.value|default:'' }}"
+                  data-formato="rut" data-validacion="rut" aria-describedby="ayuda-rut">
+              <small id="ayuda-rut" class="form-text">Lo necesitas para comprar. Revísalo bien: una vez guardado no se puede cambiar.</small>
+              {% endif %}
+              {% include "partials/error_campo.html" with campo=form.rut %}
+          </div>
+
+          <div class="mb-3" data-campo>
               <label for="visiblePhone" class="form-label">Teléfono</label>
               <div class="input-group">
                   <span class="input-group-text">+56 9</span>

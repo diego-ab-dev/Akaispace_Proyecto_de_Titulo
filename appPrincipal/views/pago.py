@@ -34,9 +34,10 @@ def seleccionar_pago(request):
     if 'envio' in request.GET:
         request.session['metodo_envio'] = request.GET['envio']
     metodo_envio = request.session.get('metodo_envio')
-    error_envio = envios.validar_eleccion(metodo_envio, usuario)
-    if error_envio:
-        return _volver_al_carrito(error_envio)
+    # se valida en el servidor aunque el carrito ya lo revise: nadie paga sin RUT, teléfono ni dirección de despacho
+    error_datos = pagos.validar_datos_comprador(usuario) or envios.validar_eleccion(metodo_envio, usuario)
+    if error_datos:
+        return _volver_al_carrito(error_datos)
 
     for item in carrito.items.select_related('producto'):
         if item.producto.is_deleted or item.cantidad > item.producto.stock:

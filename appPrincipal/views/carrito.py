@@ -1,14 +1,14 @@
 """Carrito de compras."""
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
 from appPrincipal import envios
-from appPrincipal.constants import REGIONES_CIUDADES
+from appPrincipal.constants import REGIONES_CIUDADES, RESPONSABLE_DATOS
 from appPrincipal.decorators import login_required_json, solo_clientes, solo_clientes_json
-from appPrincipal.forms import limpiar_direccion
+from appPrincipal.forms import DatosCompraForm, errores_para_json
 from appPrincipal.models import Carrito, InteraccionProducto, ItemCarritoProducto, Producto
 from appPrincipal.recomendaciones import marcar_clic, registrar_interaccion
 from appPrincipal.views.catalogo import recomendaciones_carrito
@@ -185,6 +185,7 @@ def ver_carrito(request):
         "opciones_envio": envios.opciones_para_plantilla(),
         "envio_elegido": envio_elegido,
         "ciudad_tienda": envios.CIUDAD_TIENDA,
+        "correo_tienda": RESPONSABLE_DATOS['correo_privacidad'],
     })
 
 
@@ -192,24 +193,31 @@ def ver_carrito(request):
 @solo_clientes_json
 @require_POST
 def guardar_datos_envio(request):
-    region = request.POST.get("region", "")
-    ciudad = request.POST.get("ciudad", "")
-    if ciudad not in REGIONES_CIUDADES.get(region, []):
-        return JsonResponse({'success': False, 'error': 'La ciudad no corresponde a la región seleccionada.'}, status=400)
-    try:
-        direccion = limpiar_direccion(request.POST.get("direccion", ""))
-    except ValidationError as e:
-        return JsonResponse({'success': False, 'error': e.messages[0]}, status=400)
-
+    """"Tus datos" del carrito: RUT (si falta), teléfono y, para los despachos, la dirección."""
     usuario = request.user
-    usuario.region = region
-    usuario.ciudad = ciudad
-    usuario.direccion = direccion
-    usuario.save(update_fields=['region', 'ciudad', 'direccion'])
+    form = DatosCompraForm(request.POST, usuario=usuario)
+    if not form.is_valid():
+        errores = errores_para_json(form)
+        return JsonResponse({**errores, 'error': errores['message']}, status=400)
+
+    datos = form.cleaned_data
+    campos = ['telefono', 'region', 'ciudad', 'direccion']
+    if not usuario.rut:
+        campos.append('rut')  # se agrega una sola vez; después queda fijo
+    for campo in campos:
+        setattr(usuario, campo, datos[campo])
+    try:
+        usuario.save(update_fields=campos)
+    except IntegrityError:
+        mensaje = 'El RUT ya está registrado en otra cuenta.'
+        return JsonResponse({'success': False, 'error': mensaje, 'message': mensaje, 'errors': {'rut': [mensaje]}},
+                            status=400)
 
     return JsonResponse({
         'success': True,
-        'region': region,
-        'ciudad': ciudad,
-        'direccion': direccion,
+        'rut': usuario.rut,
+        'telefono': usuario.telefono,
+        'region': usuario.region,
+        'ciudad': usuario.ciudad,
+        'direccion': usuario.direccion,
     })

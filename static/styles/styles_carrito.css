@@ -1347,3 +1347,121 @@ footer {
   .card:has(.recos-carrito) .cart { border-bottom-left-radius: 0; }
   .card:has(.recos-carrito) .summary { border-bottom-right-radius: 0; }
 }
+
+/* ---- "Tus datos": RUT, teléfono y dirección para comprar ---- */
+.dato-faltante {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background-color: #FDECEE;
+  color: #C0262F;
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+#carrito-container .btn-completar-datos {
+  width: 100%;
+  margin-top: 8px;
+  padding: 0.6em 1em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #C0262F;
+  background-color: #FDECEE;
+  border: 1px dashed #F0A7AD;
+  border-radius: 8px;
+}
+
+#carrito-container .btn-completar-datos:hover {
+  color: #fff;
+  background-color: #C0262F;
+}
+
+.modal-envio {
+  z-index: 1050;
+  padding: 16px;
+}
+
+.modal-content-envio {
+  max-width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.modal-content-envio label {
+  display: block;
+  margin: 6px 0 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1C253B;
+}
+
+.modal-content-envio select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-content-envio input:disabled {
+  background-color: #F1F3F5;
+  color: #555;
+}
+
+.modal-envio-ayuda {
+  margin: 4px 0 10px;
+  font-size: 0.8rem;
+  color: #6B7280;
+  line-height: 1.4;
+}
+
+.modal-envio-nota {
+  display: block;
+  margin: -6px 0 4px;
+  font-size: 0.74rem;
+  color: #6B7280;
+}
+
+.modal-envio-error {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #FDECEE;
+  color: #B10000;
+  font-size: 0.85rem;
+}
+
+.campo-error-modal {
+  min-height: 0;
+  margin: -4px 0 6px;
+  font-size: 0.78rem;
+  color: #B10000;
+}
+
+.campo-error-modal:empty {
+  margin: 0;
+}
+
+.telefono-modal {
+  display: flex;
+  align-items: stretch;
+}
+
+.telefono-modal span {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-right: 0;
+  border-radius: 4px 0 0 4px;
+  background-color: #F1F3F5;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.telefono-modal input {
+  border-radius: 0 4px 4px 0;
+}

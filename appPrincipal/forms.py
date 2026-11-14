@@ -128,6 +128,19 @@ def _correo_o_rut_en_uso(campo, valor, mensajes):
                               code='duplicado')
 
 
+def rut_para_completar(valor):
+    """RUT que un cliente agrega a su cuenta (las de Google no lo traen). Una vez guardado queda fijo:
+    para corregirlo hay que escribir a la tienda."""
+    if not (valor or '').strip():
+        raise ValidationError('Ingresa tu RUT.', code='required')
+    rut = normalizar_rut(valor)
+    _correo_o_rut_en_uso('rut', rut, {
+        'registrado': 'El RUT ya está registrado en otra cuenta.',
+        'eliminado': 'Este RUT pertenece a un usuario eliminado. No puede volver a usarse.',
+    })
+    return rut
+
+
 class DatosCuentaForm(forms.Form):
     """Datos personales de una cuenta nueva (registro del cliente y creación desde el panel)."""
     telefono_requerido = True
@@ -252,13 +265,32 @@ class CrearUsuarioAdminForm(DatosCuentaForm, ContraseñaNuevaMixin):
             self.fields[campo].error_messages['required'] = mensaje
 
 
-# datos de contacto y despacho que el cliente edita en su perfil
+# datos que el cliente edita en su perfil. El RUT solo se puede agregar si la cuenta no lo tiene
+# (las creadas con Google); una vez guardado queda fijo.
 class EditarPerfilForm(forms.Form):
+    nombre = forms.CharField(max_length=NOMBRE_MAXIMO, strip=False, error_messages={
+        'required': 'Ingresa tu nombre.', 'max_length': f'El nombre puede tener hasta {NOMBRE_MAXIMO} caracteres.'})
+    rut = forms.CharField(max_length=12, required=False)
     telefono = forms.CharField(max_length=20, error_messages={'required': 'Ingresa tu teléfono.'})
     region = forms.ChoiceField(choices=REGIONES, error_messages={
         'required': 'Selecciona tu región.', 'invalid_choice': 'Selecciona una región de la lista.'})
     ciudad = forms.CharField(max_length=100, error_messages={'required': 'Selecciona tu ciudad.'})
     direccion = forms.CharField(max_length=200, strip=False, error_messages={'required': 'Ingresa tu dirección.'})
+
+    def __init__(self, *args, usuario, **kwargs):
+        self.usuario = usuario
+        super().__init__(*args, **kwargs)
+        if usuario.rut:
+            self.fields['rut'].disabled = True  # lo que llegue por POST se ignora
+
+    def clean_nombre(self):
+        return limpiar_nombre(self.cleaned_data['nombre'])
+
+    def clean_rut(self):
+        if self.usuario.rut:
+            return self.usuario.rut
+        valor = self.cleaned_data['rut']
+        return rut_para_completar(valor) if valor.strip() else ''  # en el perfil es opcional; al comprar no
 
     def clean_telefono(self):
         return normalizar_telefono(self.cleaned_data['telefono'])
@@ -270,6 +302,45 @@ class EditarPerfilForm(forms.Form):
         cleaned_data = super().clean()
         if 'ciudad' not in self.errors:
             validar_region_y_ciudad(self)
+        return cleaned_data
+
+
+# "Tus datos" en el carrito: lo que hace falta para comprar. RUT (si la cuenta no lo tiene) y teléfono son
+# obligatorios; la dirección solo hace falta para los despachos, así que puede quedar vacía si se retira en tienda.
+class DatosCompraForm(forms.Form):
+    rut = forms.CharField(max_length=12, required=False)
+    telefono = forms.CharField(max_length=20, required=False)
+    region = forms.ChoiceField(choices=REGIONES, required=False,
+                               error_messages={'invalid_choice': 'Selecciona una región de la lista.'})
+    ciudad = forms.CharField(max_length=100, required=False)
+    direccion = forms.CharField(max_length=200, required=False, strip=False)
+
+    def __init__(self, *args, usuario, **kwargs):
+        self.usuario = usuario
+        super().__init__(*args, **kwargs)
+
+    def clean_rut(self):
+        return self.usuario.rut or rut_para_completar(self.cleaned_data['rut'])
+
+    def clean_telefono(self):
+        telefono = self.cleaned_data['telefono']
+        if not telefono.strip():
+            raise ValidationError('Ingresa tu teléfono.', code='required')
+        return normalizar_telefono(telefono)
+
+    def clean_direccion(self):
+        direccion = self.cleaned_data['direccion']
+        return limpiar_direccion(direccion) if direccion.strip() else ''
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if 'ciudad' in self.errors or 'direccion' in self.errors:
+            return cleaned_data
+        hay_ubicacion = any(cleaned_data.get(campo) for campo in ['region', 'ciudad', 'direccion'])
+        if hay_ubicacion:
+            validar_region_y_ciudad(self)
+            if not cleaned_data.get('direccion'):
+                self.add_error('direccion', 'Ingresa tu dirección.')
         return cleaned_data
 
 
