@@ -1296,6 +1296,7 @@ class Recomendacion(models.Model):
     UBICACIONES = [
         ('home', 'Página principal'),
         ('ficha', 'Ficha de producto'),
+        ('carrito', 'Carrito de compras'),
     ]
     id = models.BigAutoField(primary_key=True, db_comment="Identificador de la recomendación mostrada.")
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='recomendaciones',
@@ -1303,7 +1304,7 @@ class Recomendacion(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='recomendaciones',
                                  db_comment="Producto recomendado (FK a producto).")
     ubicacion = models.CharField(max_length=10, choices=UBICACIONES, verbose_name="Ubicación",
-                                 db_comment="Página donde se mostró (HU-07). Valores: home, ficha.")
+                                 db_comment="Página donde se mostró (HU-07). Valores: home, ficha, carrito.")
     posicion = models.PositiveSmallIntegerField(default=1, verbose_name="Posición",
                                                 db_comment="Posición dentro de la lista de recomendaciones, desde 1.")
     mostrada_en = models.DateTimeField(auto_now_add=True, db_index=True,

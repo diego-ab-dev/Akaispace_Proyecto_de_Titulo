@@ -10,7 +10,8 @@ from appPrincipal.constants import REGIONES_CIUDADES
 from appPrincipal.decorators import login_required_json, solo_clientes, solo_clientes_json
 from appPrincipal.forms import limpiar_direccion
 from appPrincipal.models import Carrito, InteraccionProducto, ItemCarritoProducto, Producto
-from appPrincipal.recomendaciones import registrar_interaccion
+from appPrincipal.recomendaciones import marcar_clic, registrar_interaccion
+from appPrincipal.views.catalogo import recomendaciones_carrito
 
 
 def _leer_entero(valor):
@@ -47,6 +48,10 @@ def agregar_al_carrito(request, producto_id):
         ItemCarritoProducto.objects.create(carrito=carrito, producto=producto, cantidad=cantidad)
     # HU-07: historial para las recomendaciones (solo si el cliente lo autorizó)
     registrar_interaccion(request.user, producto, InteraccionProducto.CARRITO)
+    # KPI-05: agregarlo desde una recomendación del carrito cuenta como clic en ella
+    recomendacion_id = _leer_entero(request.POST.get('recomendacion'))
+    if recomendacion_id:
+        marcar_clic(request.user, recomendacion_id)
 
     return JsonResponse({
         'success': True,
@@ -172,6 +177,7 @@ def ver_carrito(request):
         envio_elegido = None
 
     return render(request, "carrito.html", {
+        "recomendaciones": recomendaciones_carrito(request),
         "productos": items,
         "total": total,
         "total_items": total_items,

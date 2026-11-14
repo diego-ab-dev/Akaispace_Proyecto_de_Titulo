@@ -3999,3 +3999,62 @@ class OfertaProductoTests(TestCase):  # al rebajar el precio se muestra el anter
         self.assertContains(respuesta, 'data-precio-normal="40000"')
         self.assertContains(respuesta, 'name="mostrar_oferta"')
         self.assertContains(respuesta, 'checked')
+
+
+class RecomendacionesCarritoTests(TestCase):  # HU-07: "Complementa tu compra" en el carrito
+    def setUp(self):
+        from .models import ConfiguracionSitio
+        from .recomendaciones import calcular_similitudes
+        self.elden = crear_producto('Elden Ring', genero='RPG')
+        self.demons = crear_producto("Demon's Souls", genero='RPG')                         # similar (juego PS5)
+        self.control = crear_producto('DualSense', categoria='Accesorios', plataforma='ps5')  # complemento exacto
+        self.camara = crear_producto('Cámara PS4', categoria='Accesorios', plataforma='ps4')  # misma familia
+        self.joycon = crear_producto('Joy-Con', categoria='Accesorios', plataforma='switch')  # otra familia
+        self.sin_stock = crear_producto('Headset PS5', stock=0, categoria='Accesorios', plataforma='ps5')
+        calcular_similitudes()
+        configuracion = ConfiguracionSitio.actual()
+        configuracion.mostrar_recomendaciones = True
+        configuracion.save()
+        self.cliente = crear_cliente()
+        self.client.force_login(self.cliente)
+
+    def llevar(self, *productos):
+        from .models import Carrito, ItemCarritoProducto
+        carrito, _ = Carrito.objects.get_or_create(usuario=self.cliente)
+        for producto in productos:
+            ItemCarritoProducto.objects.create(carrito=carrito, producto=producto)
+
+    def test_primero_los_complementos_de_la_misma_familia_y_despues_los_similares(self):
+        from .recomendaciones import COMPLEMENTOS, recomendar_para_carrito
+        self.llevar(self.elden)
+        recomendaciones = recomendar_para_carrito(self.cliente)
+        self.assertEqual(recomendaciones.tipo, COMPLEMENTOS)
+        self.assertEqual(recomendaciones.productos[:3], [self.control, self.camara, self.demons])
+        self.assertNotIn(self.elden, recomendaciones.productos)       # ya está en el carrito
+        self.assertNotIn(self.sin_stock, recomendaciones.productos)
+
+    def test_con_el_carrito_vacio_muestra_lo_mas_vendido(self):
+        from .recomendaciones import MAS_VENDIDOS, recomendar_para_carrito
+        self.assertEqual(recomendar_para_carrito(self.cliente).tipo, MAS_VENDIDOS)
+
+    def test_se_ven_en_el_carrito_solo_si_estan_activadas(self):
+        from .models import ConfiguracionSitio
+        self.llevar(self.elden)
+        respuesta = self.client.get('/ver_carrito/')
+        self.assertContains(respuesta, 'Complementa tu compra')
+        self.assertContains(respuesta, 'DualSense')
+        ConfiguracionSitio.objects.update(mostrar_recomendaciones=False)
+        self.assertNotContains(self.client.get('/ver_carrito/'), 'class="recos-carrito"')
+
+    def test_kpi05_registra_el_carrito_y_agregar_cuenta_como_clic(self):
+        from django.utils import timezone
+        from .models import Recomendacion
+        Usuario.objects.filter(pk=self.cliente.pk).update(datos_navegacion_autorizados_en=timezone.now())
+        self.llevar(self.elden)
+        self.client.get('/ver_carrito/')
+        mostrada = Recomendacion.objects.get(producto=self.control)
+        self.assertEqual((mostrada.ubicacion, mostrada.posicion), ('carrito', 1))
+        respuesta = self.client.post(f'/agregar/{self.control.id}/', {'cantidad': 1, 'recomendacion': mostrada.id})
+        self.assertTrue(respuesta.json()['success'])
+        mostrada.refresh_from_db()
+        self.assertIsNotNone(mostrada.clic_en)

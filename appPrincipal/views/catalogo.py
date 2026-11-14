@@ -9,7 +9,8 @@ from django.urls import reverse
 
 from appPrincipal.models import (Categoria, ConfiguracionSitio, Favorito, Genero, InteraccionProducto, Plataforma,
                                  Producto)
-from appPrincipal.recomendaciones import marcar_clic, recomendar, registrar_interaccion, registrar_mostradas
+from appPrincipal.recomendaciones import (marcar_clic, recomendar, recomendar_para_carrito, registrar_interaccion,
+                                          registrar_mostradas)
 
 
 def productos_para_listado(productos):
@@ -105,11 +106,22 @@ def recomendaciones_para(request, producto=None):
     a clic_recomendacion, que marca el clic antes de abrir la ficha."""
     if not ConfiguracionSitio.actual().mostrar_recomendaciones:
         return None
-    recomendaciones = recomendar(request.user, producto)
+    return _preparar_recomendaciones(request, recomendar(request.user, producto), 'ficha' if producto else 'home')
+
+
+def recomendaciones_carrito(request):
+    """HU-07: "Complementa tu compra" en el carrito, o None si el admin no activó las recomendaciones."""
+    if not ConfiguracionSitio.actual().mostrar_recomendaciones:
+        return None
+    return _preparar_recomendaciones(request, recomendar_para_carrito(request.user), 'carrito')
+
+
+def _preparar_recomendaciones(request, recomendaciones, ubicacion):
     prefetch_related_objects(recomendaciones.productos, 'categoria', 'plataforma', 'imagenes_producto')
-    mostradas = registrar_mostradas(request.user, recomendaciones.productos, 'ficha' if producto else 'home')
+    mostradas = registrar_mostradas(request.user, recomendaciones.productos, ubicacion)
     for recomendado, mostrada in zip(recomendaciones.productos, mostradas):
         recomendado.url_recomendacion = reverse('clic_recomendacion', args=[mostrada.id])
+        recomendado.id_recomendacion = mostrada.id  # el botón "Agregar" del carrito también cuenta como clic
     return recomendaciones
 
 

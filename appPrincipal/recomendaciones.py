@@ -11,6 +11,9 @@ están en notebooks/hu07_similitud_productos.ipynb.
   personalizadas si autorizó sus datos de navegación y tiene historial; si no, los similares al producto
   de la ficha, o los más vendidos en la página principal. En la ficha, las personalizadas mezclan el
   historial con el producto que se está viendo.
+- recomendar_para_carrito(): "Complementa tu compra" en el carrito: productos de la misma familia de
+  plataforma pero de otra categoría (ej. accesorios PlayStation para un juego de PS5), luego similares y
+  luego los más vendidos.
 - registrar_mostradas() y marcar_clic(): registran las recomendaciones mostradas y sus clics (KPI-05), solo
   de clientes que autorizaron sus datos de navegación; tasa_de_clics() calcula el KPI.
 - eliminar_navegacion_antigua(): aplica el plazo de conservación de la política de privacidad (24 meses).
@@ -59,10 +62,12 @@ CONSERVACION_NAVEGACION = timedelta(days=730)
 PERSONALIZADAS = 'personalizadas'
 SIMILARES = 'similares'
 MAS_VENDIDOS = 'mas_vendidos'
+COMPLEMENTOS = 'complementos'
 TITULOS = {
     PERSONALIZADAS: 'Recomendado para ti',
     SIMILARES: 'Productos similares',
     MAS_VENDIDOS: 'Lo más vendido',
+    COMPLEMENTOS: 'Complementa tu compra',
 }
 
 
@@ -265,6 +270,59 @@ def recomendar(usuario, producto=None, cantidad=CANTIDAD_RECOMENDACIONES):
     if producto:
         return Recomendaciones(SIMILARES, _similares(producto, excluidos, vendidos, cantidad))
     return Recomendaciones(MAS_VENDIDOS, _mas_vendidos(excluidos, vendidos, cantidad))
+
+
+def _complementos(en_carrito, excluidos, vendidos):
+    """Productos de la misma familia de plataforma que lo del carrito, pero de otra categoría (ej. con un juego
+    de PS5, accesorios o consolas PlayStation). Primero los de la misma plataforma exacta, luego los más vendidos.
+    Es una regla simple en vez de "comprados juntos", que necesitaría muchas más ventas para funcionar."""
+    pares = {(p.categoria_id, p.plataforma.familia) for p in en_carrito if p.plataforma_id}
+    if not pares:
+        return []
+    plataformas = {p.plataforma_id for p in en_carrito if p.plataforma_id}
+    candidatos = (Producto.objects.filter(stock__gt=0, plataforma__familia__in={familia for _, familia in pares})
+                  .exclude(id__in=excluidos).select_related('plataforma'))
+    complementos = [c for c in candidatos if (c.categoria_id, c.plataforma.familia) not in pares]
+    return sorted(complementos, key=lambda c: (c.plataforma_id not in plataformas, -vendidos.get(c.id, 0), c.id))
+
+
+def _similares_a_varios(productos, excluidos, vendidos):
+    """Similares a cualquiera de `productos`; si un producto es similar a varios, cuenta su mejor puntaje."""
+    mejores = {}
+    for similar in (SimilitudProducto.objects.filter(producto__in=productos, producto_similar__is_deleted=False,
+                                                     producto_similar__stock__gt=0)
+                    .exclude(producto_similar__in=excluidos).select_related('producto_similar')):
+        actual = mejores.get(similar.producto_similar_id)
+        if actual is None or similar.puntaje > actual.puntaje:
+            mejores[similar.producto_similar_id] = similar
+    ordenados = sorted(mejores.values(), key=lambda s: (-s.puntaje, -vendidos.get(s.producto_similar_id, 0),
+                                                         s.producto_similar_id))
+    return [similar.producto_similar for similar in ordenados]
+
+
+def recomendar_para_carrito(usuario, cantidad=CANTIDAD_RECOMENDACIONES):
+    """Recomendaciones del carrito: complementos de lo que lleva, luego similares y, si faltan, los más
+    vendidos. Nunca lo que ya está en el carrito ni productos sin stock; con consentimiento, tampoco lo que
+    el cliente ya compró. Se basa en lo que hay en el carrito ahora (como la ficha en el producto que se ve),
+    no en el historial de navegación. Con el carrito vacío muestra los más vendidos."""
+    vendidos = unidades_vendidas()
+    carrito = Carrito.objects.filter(usuario=usuario).first()
+    en_carrito = [item.producto for item in carrito.items.select_related('producto__plataforma')] if carrito else []
+    excluidos = {producto.id for producto in en_carrito}
+    if autorizo_datos_navegacion(usuario):
+        excluidos |= _historial(usuario)[1]
+    if not en_carrito:
+        return Recomendaciones(MAS_VENDIDOS, _mas_vendidos(excluidos, vendidos, cantidad))
+
+    elegidos = []
+    for producto in (_complementos(en_carrito, excluidos, vendidos)
+                     + _similares_a_varios(en_carrito, excluidos, vendidos)
+                     + _mas_vendidos(excluidos, vendidos, cantidad)):
+        if producto.id not in {p.id for p in elegidos}:
+            elegidos.append(producto)
+        if len(elegidos) == cantidad:
+            break
+    return Recomendaciones(COMPLEMENTOS, elegidos)
 
 
 # --- KPI-05: recomendaciones mostradas y clics ---

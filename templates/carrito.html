@@ -204,6 +204,36 @@
             </div>
         </div>
         </div>
+
+        {# HU-07: recomendaciones del carrito (complementos de lo que lleva); se activan en Configuración del panel #}
+        {% if recomendaciones and recomendaciones.productos %}
+        <section class="recos-carrito" aria-labelledby="recos-carrito-titulo">
+            <div class="recos-cabecera">
+                <h5 id="recos-carrito-titulo">{{ recomendaciones.titulo }}</h5>
+                {% if productos %}<span class="recos-sub">Elegidos según lo que llevas en tu carrito</span>{% endif %}
+            </div>
+            <div class="recos-grid">
+                {% for rec in recomendaciones.productos %}
+                <article class="reco-card">
+                    {% with pct=rec|descuento %}{% if pct %}<span class="reco-badge">-{{ pct }}%</span>{% endif %}{% endwith %}
+                    <a class="reco-link" href="{% if rec.url_recomendacion %}{{ rec.url_recomendacion }}{% else %}{% url 'producto_detalle' rec.id %}{% endif %}">
+                        <div class="reco-img">
+                            {% if rec.imagen_principal %}<img src="{{ rec.imagen_principal.url }}" alt="{{ rec.nombre }}" loading="lazy">{% endif %}
+                        </div>
+                        <span class="reco-nombre" title="{{ rec.nombre }}">{{ rec.nombre }}</span>
+                        <span class="reco-categoria">{{ rec.categoria_texto }}</span>
+                    </a>
+                    <div class="reco-precio">{% include "partials/precio.html" with producto=rec %}</div>
+                    <button type="button" class="reco-agregar" data-url="{% url 'agregar_al_carrito' rec.id %}"
+                            data-recomendacion="{{ rec.id_recomendacion|default:'' }}"
+                            aria-label="Agregar {{ rec.nombre }} al carrito">
+                        <i class="fas fa-cart-plus" aria-hidden="true"></i> Agregar
+                    </button>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
     </div>
 </div>
 
@@ -622,6 +652,38 @@
     });
 
     actualizarSeleccion();
+
+    // ---- "Complementa tu compra": agregar una recomendación sin salir del carrito ----
+    // Primero se guardan las cantidades pendientes y después se recarga, para que la lista, los totales y
+    // las recomendaciones (que ya no deben incluir lo agregado) queden al día.
+    document.querySelectorAll('.reco-agregar').forEach(boton => {
+        boton.addEventListener('click', function () {
+            const datos = new FormData();
+            datos.append('cantidad', '1');
+            if (this.dataset.recomendacion) datos.append('recomendacion', this.dataset.recomendacion);
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Agregando';
+
+            fetch(this.dataset.url, {
+                method: 'POST',
+                body: datos,
+                headers: { 'X-CSRFToken': csrfCarrito || '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.error || 'No se pudo agregar el producto.');
+                this.classList.add('agregado');
+                this.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i> Agregado';
+                const inputs = Array.from(document.querySelectorAll('.input-cantidad'));
+                return Promise.all(inputs.map(guardarAhora)).then(() => setTimeout(() => window.location.reload(), 500));
+            })
+            .catch(error => {
+                mostrarError(error.message || 'No se pudo agregar el producto.');
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-cart-plus" aria-hidden="true"></i> Agregar';
+            });
+        });
+    });
 
         function abrirModal() {
             const modal = document.getElementById("modal-envio");
