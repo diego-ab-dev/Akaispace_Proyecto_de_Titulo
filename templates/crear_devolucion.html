@@ -78,61 +78,54 @@
 
                         <div class="mb-4">
                             <label class="form-label">Adjuntar fotos (opcional, máximo 3):</label>
+                            <p class="text-muted small mb-2">JPG, PNG, WEBP o GIF, de hasta {{ imagen_maxima_mb }} MB cada una. Haz clic en una foto elegida para verla en grande.</p>
 
                             {{ formset.management_form }}
+                            {# los avisos de las fotos van bajo la fila completa, para no correr los recuadros #}
+                            <div class="fotos-evidencia" data-campo>
                             <div class="evidencia-container">
 
-                                <div class="d-flex flex-column align-items-center" style="width: 100px;">
+                                <div class="d-flex flex-column align-items-center foto-evidencia">
                                     {% with form_imagen=formset.forms.0 %}
-                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen1" accept="image/*" hidden>
-                                    <div class="evidencia-box" id="box_imagen1">
+                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen1" hidden
+                                           accept="{{ accept_imagen }}" data-validacion="imagen" data-max-mb="{{ imagen_maxima_mb }}">
+                                    <div class="evidencia-box" id="box_imagen1" role="button" tabindex="0" aria-label="Elegir foto 1">
                                         <div class="box-content">
                                             <i class="fas fa-camera"></i>
                                             <span>Foto 1</span>
                                         </div>
                                     </div>
-                                    {% if form_imagen.imagen.errors %}
-                                        <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
-                                            {{ form_imagen.imagen.errors.0 }}
-                                        </div>
-                                    {% endif %}
                                     {% endwith %}
                                 </div>
 
-                                <div class="d-flex flex-column align-items-center" style="width: 100px;">
+                                <div class="d-flex flex-column align-items-center foto-evidencia">
                                     {% with form_imagen=formset.forms.1 %}
-                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen2" accept="image/*" hidden>
-                                    <div class="evidencia-box" id="box_imagen2">
+                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen2" hidden
+                                           accept="{{ accept_imagen }}" data-validacion="imagen" data-max-mb="{{ imagen_maxima_mb }}">
+                                    <div class="evidencia-box" id="box_imagen2" role="button" tabindex="0" aria-label="Elegir foto 2">
                                         <div class="box-content">
                                             <i class="fas fa-camera"></i>
                                             <span>Foto 2</span>
                                         </div>
                                     </div>
-                                    {% if form_imagen.imagen.errors %}
-                                        <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
-                                            {{ form_imagen.imagen.errors.0 }}
-                                        </div>
-                                    {% endif %}
                                     {% endwith %}
                                 </div>
 
-                                <div class="d-flex flex-column align-items-center" style="width: 100px;">
+                                <div class="d-flex flex-column align-items-center foto-evidencia">
                                     {% with form_imagen=formset.forms.2 %}
-                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen3" accept="image/*" hidden>
-                                    <div class="evidencia-box" id="box_imagen3">
+                                    <input type="file" name="{{ form_imagen.imagen.html_name }}" id="input_imagen3" hidden
+                                           accept="{{ accept_imagen }}" data-validacion="imagen" data-max-mb="{{ imagen_maxima_mb }}">
+                                    <div class="evidencia-box" id="box_imagen3" role="button" tabindex="0" aria-label="Elegir foto 3">
                                         <div class="box-content">
                                             <i class="fas fa-camera"></i>
                                             <span>Foto 3</span>
                                         </div>
                                     </div>
-                                    {% if form_imagen.imagen.errors %}
-                                        <div class="text-danger mt-1 text-center" style="font-size: 0.7rem; line-height: 1.1;">
-                                            {{ form_imagen.imagen.errors.0 }}
-                                        </div>
-                                    {% endif %}
                                     {% endwith %}
                                 </div>
 
+                            </div>
+                            {% for form_imagen in formset.forms %}{% include "partials/error_campo.html" with campo=form_imagen.imagen %}{% endfor %}
                             </div>
                         </div>
                     </div>
@@ -162,87 +155,155 @@
         </form>
     </div>
 
+<!-- vista grande de una foto elegida, antes de enviar la solicitud -->
+<div class="modal fade" id="modalFotoEvidencia" tabindex="-1" aria-labelledby="tituloFotoEvidencia" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloFotoEvidencia">Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img alt="" class="foto-evidencia-grande" id="imagenFotoEvidencia">
+                <p class="text-muted small mt-2 mb-0 nombre-foto-evidencia" id="nombreFotoEvidencia"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger me-auto" id="quitarFotoEvidencia">
+                    <i class="fas fa-trash-can me-1" aria-hidden="true"></i> Quitar foto
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="cambiarFotoEvidencia">
+                    <i class="fas fa-arrows-rotate me-1" aria-hidden="true"></i> Cambiar foto
+                </button>
+                <button type="button" class="btn btn-primary btn-cerrar-foto" data-bs-dismiss="modal">Listo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    const modalElemento = document.getElementById("modalFotoEvidencia");
+    const modal = new bootstrap.Modal(modalElemento);
+    const imagenGrande = document.getElementById("imagenFotoEvidencia");
+    let fotoAbierta = null;  // la foto que se está viendo en el modal
 
-    function configurarCargaImagen(inputId, boxId, labelText) {
-        const input = document.getElementById(inputId);
-        const box = document.getElementById(boxId);
+    function configurarFoto(numero) {
+        const input = document.getElementById("input_imagen" + numero);
+        const box = document.getElementById("box_imagen" + numero);
+        const etiqueta = "Foto " + numero;
+        let urlVistaPrevia = null;
+        let animacion = null;
 
-        box.addEventListener("click", () => {
-            if (!box.querySelector('.preview-img')) {
-                input.click();
+        // el recuadro siempre muestra lo que de verdad se va a enviar
+        function mostrarVacio() {
+            clearInterval(animacion);
+            if (urlVistaPrevia) URL.revokeObjectURL(urlVistaPrevia);
+            urlVistaPrevia = null;
+            box.classList.remove("con-foto");
+            box.setAttribute("aria-label", "Elegir " + etiqueta.toLowerCase());
+            box.innerHTML = '<div class="box-content"><i class="fas fa-camera" aria-hidden="true"></i>' +
+                            '<span>' + etiqueta + '</span></div>';
+        }
+
+        function mostrarFoto(archivo) {
+            clearInterval(animacion);
+            if (urlVistaPrevia) URL.revokeObjectURL(urlVistaPrevia);
+            urlVistaPrevia = URL.createObjectURL(archivo);
+            box.classList.remove("con-foto");
+            box.innerHTML = '<div class="upload-progress"></div>';
+            const barra = box.querySelector(".upload-progress");
+            let ancho = 0;
+            animacion = setInterval(() => {
+                ancho += 20;
+                barra.style.width = ancho + "%";
+                if (ancho < 100) return;
+                clearInterval(animacion);
+                box.classList.add("con-foto");
+                box.setAttribute("aria-label", "Ver " + etiqueta.toLowerCase() + " en grande");
+                box.innerHTML =
+                    '<img src="' + urlVistaPrevia + '" class="preview-img" alt="">' +
+                    '<span class="ver-foto" aria-hidden="true"><i class="fas fa-magnifying-glass-plus"></i> Ver</span>' +
+                    '<button type="button" class="remove-btn" aria-label="Quitar ' + etiqueta.toLowerCase() + '">&times;</button>';
+                box.querySelector(".remove-btn").addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    quitar();
+                });
+            }, 100);
+        }
+
+        function quitar() {
+            input.value = "";
+            mostrarVacio();
+            box.focus();
+        }
+
+        // revisa el archivo elegido o arrastrado; si no sirve, el recuadro vuelve a quedar vacío
+        function usarArchivoDelInput() {
+            const archivo = input.files[0];
+            if (archivo && Formularios.revisarImagen(input)) {
+                mostrarFoto(archivo);
+            } else {
+                mostrarVacio();
             }
+        }
+
+        function abrir() {
+            if (!box.classList.contains("con-foto")) {
+                input.click();
+                return;
+            }
+            fotoAbierta = { input: input, quitar: quitar };
+            document.getElementById("tituloFotoEvidencia").textContent = etiqueta;
+            document.getElementById("nombreFotoEvidencia").textContent = input.files[0] ? input.files[0].name : "";
+            imagenGrande.src = urlVistaPrevia;
+            imagenGrande.alt = etiqueta + " elegida para la devolución";
+            modal.show();
+        }
+
+        box.addEventListener("click", abrir);
+        box.addEventListener("keydown", (e) => {
+            if (e.target !== box || (e.key !== "Enter" && e.key !== " ")) return;
+            e.preventDefault();
+            abrir();
         });
 
         box.addEventListener("dragover", (e) => {
             e.preventDefault();
             box.classList.add("dragover");
         });
-
-        box.addEventListener("dragleave", () => {
-            box.classList.remove("dragover");
-        });
-
+        box.addEventListener("dragleave", () => box.classList.remove("dragover"));
         box.addEventListener("drop", (e) => {
             e.preventDefault();
             box.classList.remove("dragover");
-
-            const file = e.dataTransfer.files[0];
-            if (!file) return;
-
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            input.files = dataTransfer.files;
-
-            procesarVistaPrevia(box, file, input, labelText);
+            const archivo = e.dataTransfer.files[0];
+            if (!archivo) return;
+            const transferencia = new DataTransfer();
+            transferencia.items.add(archivo);
+            input.files = transferencia.files;
+            // al arrastrar no se aplica el filtro del explorador de archivos: se revisa aquí
+            usarArchivoDelInput();
         });
 
-        input.addEventListener("change", function () {
-            const file = this.files[0];
-            if (!file) return;
-            procesarVistaPrevia(box, file, input, labelText);
-        });
+        input.addEventListener("change", usarArchivoDelInput);
     }
 
-    function procesarVistaPrevia(box, file, input, labelText) {
-        const imgURL = URL.createObjectURL(file);
+    [1, 2, 3].forEach(configurarFoto);
 
-        box.innerHTML = `<div class="upload-progress"></div>`;
-        const progressBar = box.querySelector(".upload-progress");
-
-        let width = 0;
-        const interval = setInterval(() => {
-            width += 20;
-            progressBar.style.width = width + "%";
-
-            if (width >= 100) {
-                clearInterval(interval);
-
-                box.innerHTML = `
-                    <img src="${imgURL}" class="preview-img">
-                    <button type="button" class="remove-btn">&times;</button>
-                `;
-
-                box.querySelector(".remove-btn").addEventListener("click", (e) => {
-                    e.stopPropagation(); 
-                    input.value = ""; 
-
-                    box.innerHTML = `
-                        <div class="box-content">
-                            <i class="fas fa-camera"></i>
-                            <span>${labelText}</span>
-                        </div>
-                    `;
-                });
-            }
-        }, 100);
-    }
-
-    configurarCargaImagen("input_imagen1", "box_imagen1", "Foto 1");
-    configurarCargaImagen("input_imagen2", "box_imagen2", "Foto 2");
-    configurarCargaImagen("input_imagen3", "box_imagen3", "Foto 3");
-
+    document.getElementById("quitarFotoEvidencia").addEventListener("click", () => {
+        const foto = fotoAbierta;
+        modal.hide();
+        if (foto) foto.quitar();
+    });
+    document.getElementById("cambiarFotoEvidencia").addEventListener("click", () => {
+        const foto = fotoAbierta;
+        modal.hide();
+        if (foto) foto.input.click();
+    });
+    modalElemento.addEventListener("hidden.bs.modal", () => {
+        imagenGrande.removeAttribute("src");
+        fotoAbierta = null;
+    });
 });
 </script>
+
 {% endblock %}

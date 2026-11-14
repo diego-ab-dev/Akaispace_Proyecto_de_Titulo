@@ -37,7 +37,7 @@
                     {{ campo }}
                 {% endif %}
                 {% if campo.help_text %}<div class="form-text">{{ campo.help_text }}</div>{% endif %}
-                {% if campo.errors %}<div class="text-danger small mt-1">{{ campo.errors.0 }}</div>{% endif %}
+                {% include "partials/error_campo.html" %}
             </div>
             {% endfor %}
         </div>

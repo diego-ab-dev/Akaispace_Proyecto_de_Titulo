@@ -154,6 +154,7 @@
 .mensaje-error,
 [data-error-de] {
     display: block;
+    overflow-wrap: anywhere;  /* un nombre de archivo largo no ensancha el formulario */
     font-size: 0.82rem;
     margin-top: 0.3rem;
 }

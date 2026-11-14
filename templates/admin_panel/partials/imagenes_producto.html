@@ -3,7 +3,8 @@ Imágenes del producto (formset de ImagenProducto, hasta 6). Se incluye con `for
 El radio "principal" indica qué espacio es la imagen principal; si se deja vacío, la principal es la primera.
 {% endcomment %}
 <div class="images-section mt-4 mb-4">
-    <h6 class="mb-3" style="color: #4f81a1; font-weight: bold;">Imágenes (hasta 6)</h6>
+    <h6 class="mb-1" style="color: #4f81a1; font-weight: bold;">Imágenes (hasta 6)</h6>
+    <p class="form-text mt-0 mb-3">JPG, PNG, WEBP o GIF, de hasta {{ imagen_maxima_mb|default:8 }} MB cada una.</p>
 
     <div>
         {{ formset.management_form }}
@@ -53,10 +54,12 @@ El radio "principal" indica qué espacio es la imagen principal; si se deja vac�
             </div>
         </div>
 
-        <div class="input-group custom-file-input">
-            {{ form_imagen.imagen }}
+        <div data-campo>
+            <div class="input-group custom-file-input">
+                {{ form_imagen.imagen }}
+            </div>
+            {% include "partials/error_campo.html" with campo=form_imagen.imagen %}
         </div>
-        <div class="text-danger small mt-1">{{ form_imagen.imagen.errors }}</div>
     </div>
     {% endfor %}
 </div>

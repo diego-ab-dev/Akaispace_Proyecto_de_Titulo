@@ -3803,3 +3803,54 @@ class FormulariosDeCuentaTests(TestCase):  # validación con mensajes por campo 
         for url in ['/editar/', '/cambiar/']:
             respuesta = self.client.get(url)
             self.assertContains(respuesta, 'data-validar')
+
+
+class SubidaDeFotosTests(TestCase):  # solo fotos reales, de formato permitido y de peso razonable
+    def foto(self, nombre, formato='PNG', relleno=0, tipo='image/png'):
+        import io
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        datos = io.BytesIO()
+        Image.new('RGB', (4, 4), 'blue').save(datos, formato)
+        return SimpleUploadedFile(nombre, datos.getvalue() + b'\0' * relleno, content_type=tipo)
+
+    def formularios(self, archivo_fn):
+        from .forms import DestacadoForm, ImagenDevolucionForm, ImagenProductoForm
+        from .models import Destacado
+        portada = DestacadoForm({'seccion': Destacado.SECCION_LANZAMIENTOS, 'titulo': 't', 'orden': 0},
+                                {'imagen': archivo_fn()})
+        return [ImagenDevolucionForm({}, {'imagen': archivo_fn()}), ImagenProductoForm({}, {'imagen': archivo_fn()}),
+                portada]
+
+    def test_rechaza_lo_que_no_es_foto_aunque_tenga_nombre_de_foto(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        casos = [lambda: SimpleUploadedFile('nota.txt', b'hola', 'text/plain'),
+                 lambda: SimpleUploadedFile('falso.jpg', b'no soy una imagen', 'image/jpeg'),
+                 lambda: SimpleUploadedFile('x.png', b'<script>alert(1)</script>', 'image/png'),
+                 lambda: self.foto('foto.txt'),
+                 lambda: self.foto('foto.bmp', 'BMP', tipo='image/bmp'),
+                 lambda: self.foto('foto.tif', 'TIFF', tipo='image/tiff')]
+        for caso in casos:
+            for form in self.formularios(caso):
+                form.is_valid()
+                self.assertIn('imagen', form.errors, (caso().name, type(form).__name__))
+
+    def test_rechaza_fotos_de_mas_de_8_mb(self):
+        for form in self.formularios(lambda: self.foto('grande.png', relleno=9 * 1024 * 1024)):
+            form.is_valid()
+            self.assertIn('el máximo es 8 MB', form.errors['imagen'][0])
+
+    def test_acepta_fotos_validas_y_corrige_la_extension(self):
+        for formato, nombre in [('JPEG', 'a.jpg'), ('PNG', 'b.png'), ('WEBP', 'c.webp'), ('GIF', 'd.gif')]:
+            for form in self.formularios(lambda: self.foto(nombre, formato)):
+                form.is_valid()
+                self.assertNotIn('imagen', form.errors, (nombre, type(form).__name__))
+        form = self.formularios(lambda: self.foto('png_disfrazado.jpg', 'PNG'))[0]
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['imagen'].name, 'png_disfrazado.png')
+
+    def test_los_campos_de_foto_filtran_el_explorador_de_archivos(self):
+        from .forms import ImagenProductoForm
+        html = str(ImagenProductoForm()['imagen'])
+        self.assertIn('accept="image/jpeg,image/png,image/webp,image/gif', html)
+        self.assertIn('data-validacion="imagen"', html)

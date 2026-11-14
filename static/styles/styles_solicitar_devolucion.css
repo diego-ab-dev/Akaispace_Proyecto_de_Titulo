@@ -244,3 +244,92 @@ hr {
     gap: 5px;
     pointer-events: none; 
 }
+/* cada foto: el aviso de error queda bajo su recuadro */
+.foto-evidencia {
+    width: 100px;
+}
+
+.foto-evidencia {
+    flex: 0 0 100px;
+}
+
+input.is-invalid + .evidencia-box {
+    border-color: #dc3545;
+}
+
+/* en celulares angostos los 3 recuadros se achican un poco para caber dentro de la tarjeta */
+@media (max-width: 420px) {
+    .evidencia-container {
+        gap: 10px;
+    }
+
+    .foto-evidencia {
+        flex-basis: 84px;
+        width: 84px;
+    }
+
+    .evidencia-box {
+        width: 84px;
+        height: 84px;
+    }
+}
+
+/* foto elegida: se puede abrir en grande */
+.evidencia-box:focus-visible {
+    outline: 2px solid #4E84A8;
+    outline-offset: 2px;
+}
+
+.evidencia-box.con-foto {
+    cursor: zoom-in;
+}
+
+.ver-foto {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 3px 0;
+    background: rgba(15, 22, 56, 0.65);
+    border-radius: 0 0 6px 6px;
+    color: #fff;
+    font-size: 0.72rem;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+.evidencia-box.con-foto:hover .ver-foto,
+.evidencia-box.con-foto:focus-visible .ver-foto {
+    opacity: 1;
+}
+
+/* en pantallas táctiles no hay "hover": la etiqueta queda siempre a la vista */
+@media (hover: none) {
+    .ver-foto {
+        opacity: 1;
+    }
+}
+
+.foto-evidencia-grande {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.nombre-foto-evidencia {
+    overflow-wrap: anywhere;
+}
+
+.btn-cerrar-foto {
+    background-color: #4E84A8;
+    border-color: #4E84A8;
+}
+
+.btn-cerrar-foto:hover,
+.btn-cerrar-foto:focus {
+    background-color: #4a6f8a;
+    border-color: #4a6f8a;
+}

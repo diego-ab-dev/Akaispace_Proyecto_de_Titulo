@@ -9,7 +9,7 @@
 //   cursor al primero con error. Si hay errores, el formulario no se envía. Arriba del formulario
 //   ([data-resumen-errores]) solo aparece un aviso breve para lo que no es de un campo y el de éxito.
 // - Los mensajes salen de los atributos del campo: required, type="email", minlength, maxlength, pattern,
-//   min, max, y de data-validacion="rut|nombre|telefono", data-igual-a="id de otro campo".
+//   min, max, y de data-validacion="rut|nombre|telefono|contraseña|imagen", data-igual-a="id de otro campo".
 //   Se pueden cambiar con data-msg-requerido, data-msg-formato y data-msg-igual.
 // - Con data-ajax el formulario se envía con fetch y espera JSON {success, message, errors, redirect};
 //   los errores del servidor ({campo: [mensajes]}) se muestran igual que los del navegador.
@@ -67,6 +67,39 @@
         },
     };
 
+    // fotos: mismas reglas que validar_imagen() en forms.py (el servidor además abre el archivo
+    // para confirmar que de verdad es una imagen)
+    const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const EXTENSIONES_IMAGEN = /\.(jpe?g|png|webp|gif)$/i;
+
+    function mensajeImagen(input) {
+        const maximoMb = Number(input.dataset.maxMb) || 8;
+        for (const archivo of Array.from(input.files || [])) {
+            if (!TIPOS_IMAGEN.includes(archivo.type) || !EXTENSIONES_IMAGEN.test(archivo.name)) {
+                const nombre = archivo.name.length > 40 ? archivo.name.slice(0, 28) + '…' + archivo.name.slice(-9) : archivo.name;
+                return '"' + nombre + '" no es una foto (JPG, PNG, WEBP o GIF).';
+            }
+            if (archivo.size > maximoMb * 1024 * 1024) {
+                return 'La foto pesa ' + (archivo.size / 1024 / 1024).toFixed(1) + ' MB; el máximo es ' + maximoMb + ' MB.';
+            }
+        }
+        return '';
+    }
+
+    // revisa la foto apenas se elige o se arrastra; si no sirve, avisa y la quita del campo
+    function revisarImagen(input) {
+        // sin archivo no hay nada que revisar (y se conserva el aviso de una foto recién rechazada)
+        if (!input.files || input.files.length === 0) return false;
+        const mensaje = mensajeImagen(input);
+        if (mensaje) {
+            input.value = '';
+            mostrarError(input, mensaje);
+            return false;
+        }
+        limpiarError(input);
+        return true;
+    }
+
     function esTexto(control) {
         return control.tagName === 'TEXTAREA' ||
             (control.tagName === 'INPUT' && !['checkbox', 'radio', 'file', 'hidden'].includes(control.type));
@@ -93,6 +126,10 @@
             return requerido && !marcado ? ((conMensaje && conMensaje.dataset.msgRequerido) || 'Selecciona una opción.') : '';
         }
 
+        if (control.type === 'file' && d.validacion === 'imagen') {
+            const mensaje = mensajeImagen(control);
+            if (mensaje) return mensaje;
+        }
         if (v.badInput) return d.msgFormato || 'Escribe un número válido.';
         const valor = esTexto(control) ? control.value.trim() : control.value;
         const vacio = control.type === 'checkbox' ? !control.checked : (control.type === 'file' ? control.files.length === 0 : valor === '');
@@ -424,7 +461,14 @@
         if (evento.target.dataset) evento.target.dataset.editado = '1';
         revisarEnVivo(evento);
     });
-    document.addEventListener('change', revisarEnVivo);
+    document.addEventListener('change', function (evento) {
+        const control = evento.target;
+        if (control.type === 'file' && control.dataset.validacion === 'imagen' && control.name) {
+            revisarImagen(control);
+            return;
+        }
+        revisarEnVivo(evento);
+    });
     document.addEventListener('focusout', revisarEnVivo);
 
     // ---------- extras ----------
@@ -543,6 +587,7 @@
         mostrarErrores: mostrarErroresServidor,
         mostrarExito: mostrarExito,
         rutValido: rutValido,
+        revisarImagen: revisarImagen,
     };
 
     if (document.readyState === 'loading') {

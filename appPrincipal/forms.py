@@ -3,6 +3,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from .constants import REGIONES, REGIONES_CIUDADES
 from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto,
                      MovimientoCaja, Opinion, Producto, Usuario, youtube_embed_url)
@@ -370,17 +371,48 @@ class SolicitudDevolucionForm(forms.Form):
 
 
 # fotos de evidencia de la devolución: hasta 3, todas opcionales
+# ---------- fotos que se suben (devoluciones, productos y portada) ----------
+# Se acepta solo lo que el navegador muestra como foto. El formato real se revisa abriendo el archivo
+# con Pillow (forms.ImageField), no por el nombre ni por el tipo que declara el navegador, que se pueden
+# falsear; un .txt renombrado a .jpg no pasa.
+FORMATOS_IMAGEN = {'JPEG': '.jpg', 'PNG': '.png', 'WEBP': '.webp', 'GIF': '.gif'}
+EXTENSIONES_IMAGEN = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+IMAGEN_MAXIMA_MB = 8
+MENSAJE_FORMATO_IMAGEN = 'Solo se aceptan fotos JPG, PNG, WEBP o GIF.'
+ACCEPT_IMAGEN = 'image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif'
+# atributos del <input type="file">: filtran el explorador de archivos y static/js/formularios.js
+# avisa apenas se elige un archivo que no sirve (la validación que vale es validar_imagen)
+ATRIBUTOS_IMAGEN = {'accept': ACCEPT_IMAGEN, 'data-validacion': 'imagen', 'data-max-mb': str(IMAGEN_MAXIMA_MB)}
+ERRORES_IMAGEN = {'invalid_image': f'El archivo no es una foto válida. {MENSAJE_FORMATO_IMAGEN}',
+                  'invalid_extension': MENSAJE_FORMATO_IMAGEN}
+
+
+def validar_imagen(imagen):
+    """Valida una foto recién subida: formato real, extensión y peso. Deja la extensión del archivo
+    igual a su formato real (un PNG llamado foto.jpg se guarda como foto.png)."""
+    if not isinstance(imagen, UploadedFile):
+        return imagen  # foto que ya estaba guardada (edición sin cambiarla)
+    formato = getattr(getattr(imagen, 'image', None), 'format', None)
+    nombre, extension = os.path.splitext(imagen.name)
+    if formato not in FORMATOS_IMAGEN or extension.lower() not in EXTENSIONES_IMAGEN:
+        raise ValidationError(MENSAJE_FORMATO_IMAGEN, code='formato_imagen')
+    if imagen.size > IMAGEN_MAXIMA_MB * 1024 * 1024:
+        raise ValidationError(
+            f'La foto pesa {imagen.size / 1024 / 1024:.1f} MB; el máximo es {IMAGEN_MAXIMA_MB} MB.',
+            code='imagen_pesada')
+    imagen.name = (nombre or 'imagen') + FORMATOS_IMAGEN[formato]
+    return imagen
+
+
+# fotos de evidencia de la devolución: hasta 3, todas opcionales
 class ImagenDevolucionForm(forms.ModelForm):
     class Meta:
         model = ImagenDevolucion
         fields = ['imagen']
-        error_messages = {'imagen': {'invalid_image': 'Archivo no válido. Solo imágenes (JPG, PNG).'}}
+        error_messages = {'imagen': ERRORES_IMAGEN}
 
     def clean_imagen(self):
-        imagen = self.cleaned_data.get('imagen')
-        if imagen and os.path.splitext(imagen.name)[1].lower() not in ['.jpg', '.jpeg', '.png', '.webp']:
-            raise forms.ValidationError("Formato no permitido.")
-        return imagen
+        return validar_imagen(self.cleaned_data.get('imagen'))
 
 
 ImagenDevolucionFormSet = forms.inlineformset_factory(
@@ -495,19 +527,11 @@ class ImagenProductoForm(forms.ModelForm):
     class Meta:
         model = ImagenProducto
         fields = ['imagen']
-        widgets = {'imagen': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})}
+        widgets = {'imagen': forms.FileInput(attrs={'class': 'form-control', **ATRIBUTOS_IMAGEN})}
+        error_messages = {'imagen': ERRORES_IMAGEN}
 
     def clean_imagen(self):
-        imagen = self.cleaned_data.get('imagen')
-        if imagen and hasattr(imagen, 'content_type'):
-            if not imagen.content_type.startswith('image/'):
-                raise forms.ValidationError("El archivo subido no es una imagen válida.")
-            extensiones_validas = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
-            ext = os.path.splitext(imagen.name)[1].lower()
-            if ext not in extensiones_validas:
-                raise forms.ValidationError(
-                    f"Formato no permitido ({ext}). Solo se aceptan: {', '.join(extensiones_validas)}")
-        return imagen
+        return validar_imagen(self.cleaned_data.get('imagen'))
 
 
 class BaseImagenProductoFormSet(forms.BaseInlineFormSet):
@@ -560,20 +584,25 @@ class DestacadoForm(forms.ModelForm):
             'producto': forms.Select(attrs={'class': 'form-select'}),
             'titulo': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '80'}),
             'texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'maxlength': '400'}),
-            'imagen': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'imagen': forms.ClearableFileInput(attrs={'class': 'form-control', **ATRIBUTOS_IMAGEN}),
             'etiqueta': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '20'}),
             'video_url': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.youtube.com/watch?v=...'}),
             'orden': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+        error_messages = {'imagen': ERRORES_IMAGEN}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['producto'].queryset = Producto.objects.select_related('categoria', 'plataforma').order_by('nombre')
         self.fields['producto'].empty_label = 'Sin producto'
+        self.fields['imagen'].help_text += f' JPG, PNG, WEBP o GIF, de hasta {IMAGEN_MAXIMA_MB} MB.'
         self.fields['producto'].label_from_instance = lambda p: (
             f"{p.nombre} · {p.categoria_texto} · Cód. {p.codigo_de_barra or 'sin código'}"
         )
+
+    def clean_imagen(self):
+        return validar_imagen(self.cleaned_data.get('imagen'))
 
     def clean_video_url(self):
         video_url = self.cleaned_data.get('video_url', '')

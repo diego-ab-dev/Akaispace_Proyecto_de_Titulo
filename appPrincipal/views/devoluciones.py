@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from appPrincipal import reembolsos
-from appPrincipal.forms import ImagenDevolucionFormSet, SolicitudDevolucionForm
+from appPrincipal.forms import ACCEPT_IMAGEN, IMAGEN_MAXIMA_MB, ImagenDevolucionFormSet, SolicitudDevolucionForm
 from appPrincipal.models import Devolucion, Producto, ProductoVenta, Venta
 
 
@@ -71,6 +71,8 @@ def crear_devolucion(request, compra_id, producto_id):
         'cantidad_disponible': disponible,
         'form': form,
         'formset': formset,
+        'accept_imagen': ACCEPT_IMAGEN,
+        'imagen_maxima_mb': IMAGEN_MAXIMA_MB,
     })
 
 
