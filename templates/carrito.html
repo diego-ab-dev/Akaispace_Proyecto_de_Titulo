@@ -27,7 +27,7 @@
                             <h4 style="white-space: nowrap;"><b>Carrito de Compras</b></h4>
                         </div>
                         <div class="col align-self-center text-right text-muted">
-                            <span id="total-items-count-summary">{{ total_items }}</span> items
+                            <span id="total-items-count-summary">{{ total_items }} ítem{{ total_items|pluralize }}</span>
                         </div>
                     </div>
                 </div>
@@ -74,7 +74,8 @@
                                         <input type="hidden" name="producto_id" value="{{ item.producto_id }}">
                                         {# la cantidad solo cambia con los botones (no se escribe), así nunca pasa del stock #}
                                         <input type="hidden" name="cantidad" class="input-cantidad" value="{{ item.cantidad }}"
-                                               data-item="{{ item.producto_id }}" data-confirmada="{{ item.cantidad }}" data-stock="{{ item.producto.stock }}">
+                                               data-item="{{ item.producto_id }}" data-confirmada="{{ item.cantidad }}" data-stock="{{ item.producto.stock }}"
+                                               data-precio="{{ item.producto.precio|default:0 }}">
                                         <div class="cantidad-stepper">
                                             <button type="button" class="btn-cantidad" data-paso="-1" aria-label="Quitar una unidad">&minus;</button>
                                             <span class="cantidad-valor" aria-live="polite">{{ item.cantidad }}</span>
@@ -109,22 +110,22 @@
             <hr>
             <div class="row">
                 <div class="col total-items-text">
-                    <span id="total-items-count">{{ total_items }}</span> ítems
+                    <span id="total-items-count">{{ total_items }} ítem{{ total_items|pluralize }}</span>
                 </div>
                 <div class="col text-right" id="subtotal-resumen">
                     ${{ total|formato_chileno }}
                 </div>
             </div>
             {% if productos %}
+            {# lo que solo existe con productos; al vaciar el carrito se reemplaza por el aviso (mostrarCarritoVacio) #}
+            <div id="resumen-compra">
             <div class="row">
                 <div class="col">Envío</div>
                 <div class="col text-right" id="envio-resumen">Por elegir</div>
             </div>
-            {% endif %}
 
             <hr>
 
-            {% if productos %}
             <div class="row">
                 <div class="col"><b>Total</b></div>
                 <div class="col text-right">
@@ -133,10 +134,8 @@
                     </b>
                 </div>
             </div>
-            {% endif %}
 
 
-            {% if productos %}
             <div class="envio-box mt-3 p-3">
                 <div class="d-flex justify-content-between">
                     <b>Tu dirección</b>
@@ -147,9 +146,7 @@
                 <p><b>Ciudad:</b> <span id="envio-ciudad">{{ usuario.ciudad }}</span></p>
                 <p><b>Dirección:</b> <span id="envio-direccion">{{ usuario.direccion }}</span></p>
             </div>
-            {% endif %}
 
-            {% if productos %}
             {# HU-08: opciones de entrega; las que no aplican a la ciudad del cliente se ocultan (ver actualizarEntrega) #}
             <div class="entrega-box mt-3">
                 <b>¿Cómo quieres recibir tu compra?</b>
@@ -168,16 +165,15 @@
                 {% endfor %}
                 <p class="entrega-nota" id="entrega-nota"></p>
             </div>
-            {% endif %}
 
-            {% if productos %}
-                <form method="GET" action="{% url 'seleccionar_pago' %}" id="form-proceder">
+            <form method="GET" action="{% url 'seleccionar_pago' %}" id="form-proceder">
                     <button type="submit">
                         <span class="transition"></span>
                         <span class="gradient"></span>
                         <span class="label" style="white-space: nowrap;">Proceder a la compra</span>
                     </button>
                 </form>
+            </div>
             {% else %}
             <p class="text-muted mt-3 text-center">Tu carrito está vacío.</p>
             {% endif %}
@@ -342,6 +338,35 @@
     }, 3000);
     }
 
+    // ---- contadores y totales ----
+    // Se calculan con lo que se ve en pantalla (cantidad de cada fila × su precio), así cambian al
+    // instante con cada clic y nunca quedan desfasados si una respuesta del servidor llega tarde.
+    // El servidor vuelve a calcular todo al pagar.
+    function textoItems(cantidad) {
+        return cantidad + (cantidad === 1 ? ' ítem' : ' ítems');
+    }
+
+    function recalcularResumen() {
+        const inputs = Array.from(document.querySelectorAll('.input-cantidad'));
+        const totalItems = inputs.reduce((suma, input) => suma + parseInt(input.value, 10), 0);
+        const subtotal = inputs.reduce((suma, input) =>
+            suma + parseInt(input.value, 10) * parseInt(input.dataset.precio || '0', 10), 0);
+
+        ['total-items-count', 'total-items-count-summary'].forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) elem.textContent = textoItems(totalItems);
+        });
+        const subtotalElem = document.getElementById('subtotal-resumen');
+        if (subtotalElem) subtotalElem.textContent = formatoChileno(subtotal);
+        subtotalActual = subtotal;
+
+        if (inputs.length === 0) {
+            mostrarCarritoVacio();
+            return;
+        }
+        actualizarEntrega();
+    }
+
     // ---- cantidades del carrito ----
     // La cantidad cambia solo con los botones - / + (no se escribe), así que nunca pasa del stock.
     // Se guarda en el servidor medio segundo después del último clic: varios clics seguidos son un solo guardado.
@@ -366,6 +391,13 @@
         if (elem) elem.textContent = mensaje;  // la fila pudo haberse eliminado mientras tanto
     }
 
+    function volverACantidadGuardada(input, mensaje) {
+        if (!input.isConnected) return;  // la fila se eliminó mientras tanto
+        mostrarCantidad(input, parseInt(input.dataset.confirmada, 10));
+        marcarError(input, mensaje);
+        recalcularResumen();
+    }
+
     function actualizarCantidad(input) {
         const form = input.form;
         const formData = new FormData(form);
@@ -379,29 +411,15 @@
         .then(data => {
             if (data.success) {
                 input.dataset.confirmada = formData.get('cantidad');
-
-                const mainCount = document.getElementById('total-items-count');
-                if (mainCount) mainCount.textContent = data.total_items;
-
-                const summaryCount = document.getElementById('total-items-count-summary');
-                if (summaryCount) summaryCount.textContent = data.total_items;
-
-                const subtotalElem = document.getElementById('subtotal-resumen');
-                if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
-
-                subtotalActual = data.total;
-                actualizarEntrega();
                 return true;
             }
             // el servidor la rechazó (por ejemplo el stock bajó mientras tanto): se vuelve a la guardada
-            mostrarCantidad(input, parseInt(input.dataset.confirmada, 10));
-            marcarError(input, data.error || 'No se pudo actualizar la cantidad.');
+            volverACantidadGuardada(input, data.error || 'No se pudo actualizar la cantidad.');
             return false;
         })
         .catch(error => {
             console.error('Error:', error);
-            mostrarCantidad(input, parseInt(input.dataset.confirmada, 10));
-            marcarError(input, 'No se pudo actualizar la cantidad. Inténtalo de nuevo.');
+            volverACantidadGuardada(input, 'No se pudo actualizar la cantidad. Inténtalo de nuevo.');
             return false;
         })
         .finally(() => {
@@ -441,6 +459,7 @@
             const nueva = Math.max(Math.min(parseInt(input.value, 10) + parseInt(this.dataset.paso, 10), stock), 1);
             mostrarCantidad(input, nueva);
             marcarError(input, '');
+            recalcularResumen();
             clearTimeout(temporizadores.get(input.dataset.item));
             temporizadores.set(input.dataset.item, setTimeout(() => guardarAhora(input), 500));
         });
@@ -470,22 +489,25 @@
     // el token se lee antes de borrar filas, porque cada fila trae su propio csrfmiddlewaretoken
     const csrfCarrito = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
 
+    // deja la página igual a la de un carrito que ya estaba vacío al entrar (con su título y contador)
     function mostrarCarritoVacio() {
-        const container = document.querySelector('.cart');
-        if (container) container.innerHTML = '<div class="text-center py-5"> <h5 class="text-muted">Tu carrito está vacío.</h5> <a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a> </div>';
-
-        const resumen = document.querySelector('.summary');
-        if (resumen) {
-            resumen.innerHTML = `
-                <div><h5><b>Resumen</b></h5></div>
-                <hr>
-                <p class="text-muted text-center">Tu carrito está vacío.</p>
-            `;
+        document.querySelector('.acciones-carrito')?.remove();
+        const lista = document.querySelector('.products-scroll-container');
+        if (lista) {
+            lista.innerHTML = '<div class="text-center py-5"><h5 class="text-muted">Tu carrito está vacío.</h5>' +
+                              '<a href="/menu" class="btn btn-explorar mt-3">Explorar Productos</a></div>';
+        }
+        const resumenCompra = document.getElementById('resumen-compra');
+        if (resumenCompra) {
+            const aviso = document.createElement('p');
+            aviso.className = 'text-muted mt-3 text-center';
+            aviso.textContent = 'Tu carrito está vacío.';
+            resumenCompra.replaceWith(aviso);
         }
     }
 
     // saca del carrito (en pantalla) los ítems que el servidor confirmó como eliminados
-    function quitarItems(ids, data) {
+    function quitarItems(ids) {
         ids.forEach(id => {
             // si había un cambio de cantidad esperando para guardarse, ya no se envía
             clearTimeout(temporizadores.get(String(id)));
@@ -493,20 +515,7 @@
             const row = document.getElementById(`item-${id}`);
             if (row) row.remove();
         });
-
-        ['total-items-count', 'total-items-count-summary'].forEach(id => {
-            const elem = document.getElementById(id);
-            if (elem) elem.textContent = data.total_items;
-        });
-
-        if (data.total_items === 0) {
-            mostrarCarritoVacio();
-            return;
-        }
-        const subtotalElem = document.getElementById('subtotal-resumen');
-        if (subtotalElem) subtotalElem.textContent = formatoChileno(data.total);
-        subtotalActual = data.total;
-        actualizarEntrega();
+        recalcularResumen();
         actualizarSeleccion();
     }
 
@@ -522,7 +531,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                quitarItems(data.eliminados || ids, data);
+                quitarItems(data.eliminados || ids);
             } else {
                 mostrarError(data.error || 'No se pudieron eliminar los productos.');
             }

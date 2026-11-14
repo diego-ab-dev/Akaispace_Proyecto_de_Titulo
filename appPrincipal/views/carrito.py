@@ -35,7 +35,7 @@ def agregar_al_carrito(request, producto_id):
 
     if en_carrito + cantidad > producto.stock:
         disponibles = max(producto.stock - en_carrito, 0)
-        mensaje = (f"Solo puedes agregar {disponibles} unidad(es) más de {producto.nombre}."
+        mensaje = (f"Solo puedes agregar {disponibles} unidad{'es' if disponibles != 1 else ''} más de {producto.nombre}."
                    if disponibles else f"No hay más stock disponible de {producto.nombre}.")
         return JsonResponse({'success': False, 'error': mensaje})
 
@@ -124,7 +124,9 @@ def actualizar_cantidad_carrito(request):
         if nueva_cantidad > producto.stock:
             return JsonResponse({
                 'success': False,
-                'error': f"Solo hay {producto.stock} unidades disponibles de {producto.nombre}."
+                'error': (f"Solo queda 1 unidad disponible de {producto.nombre}." if producto.stock == 1 else
+                          f"Solo hay {producto.stock} unidades disponibles de {producto.nombre}." if producto.stock else
+                          f"{producto.nombre} ya no tiene stock disponible.")
             })
 
         if nueva_cantidad > 0:
