@@ -3862,6 +3862,12 @@ class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compr
         self.admin = crear_cliente('jefe@example.com', is_staff=True)
         self.client.force_login(self.admin)
 
+    def test_el_panel_tiene_un_enlace_a_la_tienda(self):
+        from django.urls import reverse
+        respuesta = self.client.get(reverse('admin_dashboard'))
+        self.assertContains(respuesta, f'href="{reverse("home")}" class="nav_link"')
+        self.assertContains(respuesta, 'Ir a la tienda')
+
     def test_puede_ver_la_tienda_sin_el_icono_del_carrito(self):
         respuesta = self.client.get(f'/producto/{self.producto.id}/')
         self.assertEqual(respuesta.status_code, 200)

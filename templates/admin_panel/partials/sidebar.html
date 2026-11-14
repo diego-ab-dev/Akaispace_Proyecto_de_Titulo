@@ -52,10 +52,16 @@
                 </a>
             </div>
         </div>
-        <a href="{% url 'logout' %}" class="nav_link">
-            <i class='bx bx-log-out nav_icon'></i>
-            <span class="nav_name">Salir</span>
-        </a>
+        <div>
+            <a href="{% url 'home' %}" class="nav_link" title="Ver la tienda como la ven los clientes">
+                <i class='bx bx-store nav_icon'></i>
+                <span class="nav_name">Ir a la tienda</span>
+            </a>
+            <a href="{% url 'logout' %}" class="nav_link">
+                <i class='bx bx-log-out nav_icon'></i>
+                <span class="nav_name">Salir</span>
+            </a>
+        </div>
     </nav>
 </div>
 {% endwith %}
