@@ -22,7 +22,7 @@
                     {% for n in "12345" %}
                     <input type="radio" class="visually-hidden estrella-radio" name="puntuacion" id="estrella{{ n }}" value="{{ n }}" required
                            data-msg-requerido="Elige una puntuación de 1 a 5 estrellas."
-                           {% if form.is_bound %}{% if form.puntuacion.value|stringformat:"s" == n %}checked{% endif %}{% elif n == "5" %}checked{% endif %}>
+                           {% if form.is_bound and form.puntuacion.value|stringformat:"s" == n %}checked{% endif %}>
                     <label for="estrella{{ n }}" class="star-label" title="{{ n }} estrella{{ n|pluralize }}">
                         <i class="fa-solid fa-star star-icon" data-value="{{ n }}" aria-hidden="true"></i>
                         <span class="visually-hidden">{{ n }} estrella{{ n|pluralize }}</span>
@@ -49,19 +49,34 @@
     </div>
 
 <script>
-    // pinta las estrellas hasta la puntuación elegida (los radios son los que se envían)
+    // las estrellas parten vacías; se pintan hasta la puntuación elegida (los radios son los que se envían)
+    // y al pasar el mouse muestran una vista previa de la nota
     (function () {
+        const contenedor = document.getElementById('starContainer');
         const radios = document.querySelectorAll('.estrella-radio');
+        const etiquetas = document.querySelectorAll('.star-label');
         const estrellas = document.querySelectorAll('.star-icon');
-        function pintar() {
-            const elegido = document.querySelector('.estrella-radio:checked');
-            const valor = elegido ? Number(elegido.value) : 0;
+
+        function pintarHasta(valor, esVistaPrevia) {
             estrellas.forEach(function (estrella) {
-                estrella.classList.toggle('active', Number(estrella.dataset.value) <= valor);
+                const encendida = Number(estrella.dataset.value) <= valor;
+                estrella.classList.toggle('active', encendida && !esVistaPrevia);
+                estrella.classList.toggle('preview', encendida && esVistaPrevia);
             });
         }
-        radios.forEach(function (radio) { radio.addEventListener('change', pintar); });
-        pintar();
+        function pintarElegida() {
+            const elegido = document.querySelector('.estrella-radio:checked');
+            pintarHasta(elegido ? Number(elegido.value) : 0, false);
+        }
+
+        radios.forEach(function (radio) { radio.addEventListener('change', pintarElegida); });
+        etiquetas.forEach(function (etiqueta) {
+            etiqueta.addEventListener('mouseenter', function () {
+                pintarHasta(Number(etiqueta.querySelector('.star-icon').dataset.value), true);
+            });
+        });
+        contenedor.addEventListener('mouseleave', pintarElegida);
+        pintarElegida();
     })();
 </script>
 {% endblock %}

@@ -57,12 +57,18 @@ h1 {
 
 .star-icon {
     font-size: 2rem;
-    color: #ddd; 
-    transition: color 0.2s;
+    color: #ddd;
+    transition: color 0.2s, transform 0.15s;
 }
 
-.star-icon.active {
-    color: #E3C938; 
+.star-icon.active,
+.star-icon.preview {
+    color: #E3C938;
+}
+
+/* vista previa al pasar el mouse: mismo color, un poco más grande */
+.star-icon.preview {
+    transform: scale(1.12);
 }
 
 .comment-label {
