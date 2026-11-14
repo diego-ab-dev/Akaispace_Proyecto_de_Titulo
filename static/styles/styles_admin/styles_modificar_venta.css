@@ -58,10 +58,11 @@
     background-color: #4E84A8; 
     color: white;
     border: none;
-    padding: 10px 40px;
+    padding: 10px 16px;
     border-radius: 20px;
     font-weight: 700;
     width: 45%;
+    white-space: nowrap;
 }
 .btn-guardar:hover { background-color: #4a6f8a; color: white; }
 
@@ -69,11 +70,12 @@
     background-color: #1C253B;
     color: white;
     border: none;
-    padding: 10px 40px;
+    padding: 10px 16px;
     border-radius: 20px;
     font-weight: 700;
     text-decoration: none;
     text-align: center;
     width: 45%;
+    white-space: nowrap;
 }
 .btn-cancelar:hover { background-color: #344266; color: white; }

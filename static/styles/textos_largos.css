@@ -11,6 +11,14 @@ body {
     overflow-wrap: break-word;
 }
 
+/* los botones llevan textos de la interfaz ("Guardar", "Cancelar"), no datos: nunca se parten letra por letra */
+button,
+.btn,
+input[type="submit"],
+input[type="button"] {
+    overflow-wrap: normal;
+}
+
 /* para datos que el usuario escribe (nombres, correos, títulos): se cortan donde haga falta, también dentro
    de filas flex y celdas, y la caja puede achicarse */
 .texto-largo {

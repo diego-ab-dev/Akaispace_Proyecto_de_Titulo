@@ -1440,8 +1440,9 @@ footer {
   color: #B10000;
 }
 
+/* sin error no se muestra nada (el ícono de error de styles_formularios.css va en el ::before) */
 .campo-error-modal:empty {
-  margin: 0;
+  display: none;
 }
 
 .telefono-modal {

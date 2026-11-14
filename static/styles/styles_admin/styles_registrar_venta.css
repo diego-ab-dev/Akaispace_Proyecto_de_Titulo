@@ -184,6 +184,7 @@
 
 @media (max-width: 992px) {
     .venta-presencial__grid {
-        grid-template-columns: 1fr;
+        /* minmax(0, ...): la columna puede achicarse aunque haya una palabra muy larga */
+        grid-template-columns: minmax(0, 1fr);
     }
 }
