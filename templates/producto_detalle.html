@@ -51,13 +51,13 @@
             </div>
 
             <div class="col-md-7 ps-md-5">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h2 class="text-description fw-bold mb-1">{{ producto.nombre }}</h2>
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="min-w-0">
+                        <h2 class="text-description fw-bold mb-1 texto-largo">{{ producto.nombre }}</h2>
                         <nav aria-label="breadcrumb" class="mb-3">
                             <ol class="breadcrumb" style="background: transparent; padding: 0; margin: 0;">
                                 <li class="breadcrumb-item"><a href="/menu" class="text-decoration-none text-muted small">Inicio</a></li>
-                                <li class="breadcrumb-item active small" aria-current="page" style="color: #4E84A8; font-weight: 600;">{{ producto.nombre }}</li>
+                                <li class="breadcrumb-item active small texto-largo" aria-current="page" style="color: #4E84A8; font-weight: 600;">{{ producto.nombre }}</li>
                             </ol>
                         </nav>
                         <p class="text-muted mb-2">{{ producto.categoria_texto }}</p>
@@ -114,7 +114,7 @@
                 <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-agregar">
                     {% csrf_token %}
                     <div class="d-flex align-items-end gap-3">
-                        <div class="w-25">
+                        <div class="w-25 flex-shrink-0" style="min-width: 6.5rem;">
                             <label for="cantidad" class="form-label fw-bold">Cantidad:</label>
                             <select id="cantidad" name="cantidad" class="form-select">
                                 {% for i in rango_cantidad %}
@@ -246,13 +246,13 @@
                     {% if opiniones %}
                         {% for op in opiniones %}
                         <div class="mb-4 border-bottom pb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; color: #1C253B; font-weight: bold; background-color: #ffffff;">
+                            <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+                                <div class="d-flex align-items-center min-w-0">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 40px; height: 40px; color: #1C253B; font-weight: bold; background-color: #ffffff;">
                                         {{ op.usuario.nombre|slice:":1"|upper }}
                                     </div>
-                                    <div>
-                                        <h6 class="mb-0 fw-bold text-dark">{{ op.usuario.nombre }}</h6>
+                                    <div class="min-w-0">
+                                        <h6 class="mb-0 fw-bold text-dark una-linea" title="{{ op.usuario.nombre }}">{{ op.usuario.nombre }}</h6>
                                         <div class="text-warning small">
                                             {% with ''|center:5 as range %}
                                             {% for _ in range %}

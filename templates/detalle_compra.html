@@ -29,10 +29,10 @@
                 {% for item in compra.producto_venta.all %}
                 <div class="product-item">
 
-                    <div class="product-left">
+                    <div class="product-left min-w-0">
                         <img src="{{ item.producto.imagen_principal.url }}" class="mini-img">
 
-                        <div>
+                        <div class="min-w-0">
                             <span class="product-name" title="{{ item.producto.nombre }}">{{ item.producto.nombre }}</span>
                             <div class="product-quantity">
                                 Cantidad: <strong>{{ item.cantidad }}</strong>
@@ -160,8 +160,8 @@
                         </span>
                     </div>
                     {% if compra.lleva_seguimiento %}
-                    <p><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
-                    <p><strong>Transportista:</strong> {{ compra.datos_envio.transportista|default:"No asignado" }}</p>
+                    <p class="texto-largo"><strong>Número de Seguimiento:</strong> {{ compra.datos_envio.numero_seguimiento|default:"No asignado" }}</p>
+                    <p class="texto-largo"><strong>Transportista:</strong> {{ compra.datos_envio.transportista|default:"No asignado" }}</p>
                     {% endif %}
                 </div>
             {% endif %}

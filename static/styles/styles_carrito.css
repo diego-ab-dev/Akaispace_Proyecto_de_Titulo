@@ -1465,3 +1465,15 @@ footer {
 .telefono-modal input {
   border-radius: 0 4px 4px 0;
 }
+
+/* en el carrito el navbar también lleva el buscador: con un nombre largo, el saludo se achica un poco
+   más para que el ícono del carrito no quede fuera de la pantalla */
+.nav-extras .menu .link span.user-name-limit {
+    max-width: 120px;
+}
+
+@media (max-width: 1400px) {
+    .nav-extras .menu .link span.user-name-limit {
+        max-width: 90px;
+    }
+}

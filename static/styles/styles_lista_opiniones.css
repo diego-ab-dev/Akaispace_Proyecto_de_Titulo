@@ -228,3 +228,8 @@ h1 {
     transform: translateY(-3px);
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
+
+/* nombres de producto sin espacios: se cortan en vez de salirse */
+.product-name {
+    overflow-wrap: anywhere;
+}

@@ -3,7 +3,7 @@
 {% with n=request.resolver_match.url_name %}
 <header class="header" id="header">
     <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
-    <div><h4>{{ request.user.nombre }}</h4></div>
+    <div class="min-w-0"><h4 class="una-linea" title="{{ request.user.nombre }}">{{ request.user.nombre }}</h4></div>
 </header>
 <!--navbar lateral-->
 <div class="l-navbar" id="nav-bar">

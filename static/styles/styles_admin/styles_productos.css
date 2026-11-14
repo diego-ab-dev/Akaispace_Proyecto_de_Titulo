@@ -415,3 +415,14 @@ body.modal-open {
     color: #adb5bd;
     cursor: default;
 }
+
+/* en pantallas angostas el buscador y el botón "Agregar" bajan a otra línea en vez de salirse */
+.product-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* el buscador también baja de línea en pantallas angostas */
+.search-form {
+    flex-wrap: wrap;
+}

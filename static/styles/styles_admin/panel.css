@@ -172,3 +172,9 @@ a{text-decoration: none}
 .l-navbar .nav_link {
     margin-bottom: 0.6rem;
 }
+
+/* nombre del admin en el encabezado: una línea con "…" que no tapa el botón del menú */
+.header h4.una-linea {
+    max-width: calc(100vw - 180px);
+    margin: 0;
+}

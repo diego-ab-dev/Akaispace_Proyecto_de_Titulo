@@ -726,7 +726,7 @@ h5 {
   font-size: 15px;
 }
 
-label,
+.add label,
 .add span,
 .color span {
   width: 25px;

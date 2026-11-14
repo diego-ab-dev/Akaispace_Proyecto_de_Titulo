@@ -393,3 +393,31 @@ body.modal-open {
 .page-item:last-child .page-link {
     border-radius: 50% !important;
 }
+/* en pantallas angostas los filtros y el botón "Agregar Usuario" bajan a otra línea en vez de salirse */
+.product-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* correo en la tabla de usuarios: una línea con "…" (el completo está en el title y en el detalle) */
+.celda-correo {
+    max-width: 240px;
+}
+
+/* el buscador también baja de línea en pantallas angostas */
+.search-form {
+    flex-wrap: wrap;
+}
+
+/* buscador de usuarios: sus campos bajan de línea en pantallas angostas */
+.product-actions form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 100%;
+}
+
+.product-actions form input,
+.product-actions form select {
+    max-width: 100%;
+}

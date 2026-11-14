@@ -18,7 +18,7 @@
             </div>
 
             <div class="col-md-6 text-center">
-                <h1 class="page-title m-0">Producto Seleccionado para Devolución - {{ producto.nombre }}</h1>
+                <h1 class="page-title m-0 texto-largo">Producto Seleccionado para Devolución - {{ producto.nombre }}</h1>
             </div>
 
             <div class="col-md-3"></div>
@@ -43,8 +43,8 @@
                                 {% endif %}
                             </div>
 
-                            <div>
-                                <div class="product-name" title="{{ producto.nombre }}">{{ producto.nombre }}</div>
+                            <div class="min-w-0">
+                                <div class="product-name texto-largo" title="{{ producto.nombre }}">{{ producto.nombre }}</div>
                                 <div class="product-meta">#{{ producto.id }}</div>
                                 <div class="product-meta">Compraste: {{ cantidad_comprada }}</div>
                                 <div data-campo>

@@ -11,9 +11,9 @@
 <div class="informe" style="max-width: 1000px">
     <a href="{% url 'admin_compras' %}" class="informe-volver"><i class='bx bx-arrow-back' aria-hidden="true"></i> Volver a compras</a>
     <header class="informe-cabecera">
-        <div>
+        <div class="min-w-0">
             <h1>Compra N.º {{ compra.id }}</h1>
-            <p>{{ compra.proveedor.nombre }}{% if compra.proveedor.rut %} · RUT {{ compra.proveedor.rut }}{% endif %} · {{ compra.fecha|date:"d/m/Y" }}</p>
+            <p class="texto-largo">{{ compra.proveedor.nombre }}{% if compra.proveedor.rut %} · RUT {{ compra.proveedor.rut }}{% endif %} · {{ compra.fecha|date:"d/m/Y" }}</p>
         </div>
         {% if compra.estado == 'pendiente' %}
         <div class="informe-acciones">

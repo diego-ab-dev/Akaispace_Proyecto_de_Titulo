@@ -484,3 +484,24 @@ body {
     font-weight: 700;
     color: #1C253B;
 }
+
+/* nombres de producto sin espacios: se cortan dentro de sus 2 líneas en vez de salirse */
+.product-name {
+    overflow-wrap: anywhere;
+}
+
+/* en celular el nombre del producto no puede ser más ancho que su fila */
+.product-name {
+    max-width: min(300px, 100%);
+}
+
+/* si no hay espacio (celular o nombres largos), los botones "Opinar" / "Devolver" bajan a otra línea
+   en vez de aplastar la columna del producto */
+.product-item {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.product-left {
+    flex: 1 1 220px;
+}

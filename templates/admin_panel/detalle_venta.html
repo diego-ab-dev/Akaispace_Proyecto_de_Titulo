@@ -45,8 +45,8 @@
 
                 <div class="data-row"><span class="data-label">Canal:</span> {{ venta.get_canal_display }}</div>
                 {% if venta.usuario %}
-                <div class="data-row"><span class="data-label">Nombre:</span> {{ venta.usuario.nombre }}</div>
-                <div class="data-row"><span class="data-label">Correo:</span> {{ venta.usuario.email }}</div>
+                <div class="data-row texto-largo"><span class="data-label">Nombre:</span> {{ venta.usuario.nombre }}</div>
+                <div class="data-row texto-largo"><span class="data-label">Correo:</span> {{ venta.usuario.email }}</div>
                 <div class="data-row"><span class="data-label">RUT:</span> {{ venta.usuario.rut|default:"No especificado" }}</div>
                 <div class="data-row"><span class="data-label">Teléfono:</span> {{ venta.usuario.telefono }}</div>
                 <div class="data-row">
@@ -99,7 +99,7 @@
                 <div class="data-row mt-3"><span class="data-label">Anulada el:</span> <span>{{ venta.anulada_en|date:"d/m/Y - H:i" }}</span></div>
                 {% endif %}
                 <div class="data-row"><span class="data-label">Anulada por:</span> <span>{{ venta.anulada_por.nombre|default:"No registrado" }}</span></div>
-                <div class="data-row"><span class="data-label">Motivo:</span> <span>{{ venta.motivo_anulacion|default:"No registrado" }}</span></div>
+                <div class="data-row texto-largo"><span class="data-label">Motivo:</span> <span>{{ venta.motivo_anulacion|default:"No registrado" }}</span></div>
                 {% endif %}
             </div>
 
@@ -150,11 +150,11 @@
                 </div>
 
                 {% if venta.lleva_seguimiento %}
-                <div class="data-row">
+                <div class="data-row texto-largo">
                     <span class="data-label">Transportista:</span>
                     <span class="fw-bold">{{ venta.datos_envio.transportista|default:"Por definir" }}</span>
                 </div>
-                <div class="data-row">
+                <div class="data-row texto-largo">
                     <span class="data-label">Número de Seguimiento:</span>
                     <span class="text-primary">{{ venta.datos_envio.numero_seguimiento|default:"No asignado" }}</span>
                 </div>

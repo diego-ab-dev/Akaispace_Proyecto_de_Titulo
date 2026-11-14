@@ -305,3 +305,13 @@ h1 {
     height: 100%;              
     opacity: 0.7;             
 }
+/* montos grandes en celular: no se salen de su columna */
+.refund-amount {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 576px) {
+    .refund-amount {
+        font-size: 1rem;
+    }
+}

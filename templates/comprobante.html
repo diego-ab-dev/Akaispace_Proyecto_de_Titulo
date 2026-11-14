@@ -21,7 +21,7 @@
             <p>Fecha de compra: {{ venta.fecha|date:"d/m/Y H:i" }}</p> </div>
     </div>
 
-    <div class="info-cliente">
+    <div class="info-cliente texto-largo">
         {% if venta.usuario %}
         <strong>Cliente:</strong> {{ venta.usuario.nombre }}<br>
         <strong>RUT:</strong> {{ venta.usuario.rut|default:"No especificado" }}<br>

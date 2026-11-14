@@ -134,8 +134,8 @@
           </div>
         </div>
         <div class="col-md-6{% if forloop.counter|divisibleby:2 %} order-2 order-md-1{% endif %}">
-          <h2 class="fw-bold mb-3 text-dark">{{ lanzamiento.titulo }}</h2>
-          <p class="text-dark" style="text-align: justify;">{{ lanzamiento.texto }}</p>
+          <h2 class="fw-bold mb-3 text-dark texto-largo">{{ lanzamiento.titulo }}</h2>
+          <p class="text-dark texto-largo" style="text-align: justify;">{{ lanzamiento.texto }}</p>
           {% if lanzamiento.producto_disponible %}
           <a href="{% url 'producto_detalle' lanzamiento.producto_disponible.id %}" class="btn-product-cta">Ver Producto</a>
           {% else %}

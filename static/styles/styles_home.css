@@ -1037,3 +1037,14 @@ footer {
   animation-play-state: paused;
 }
 /*Fin de animaciones para los elementos en home*/
+
+/* el nombre de la red social baja de línea en pantallas angostas */
+.social-item > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* el video de "Nuevos lanzamientos" (iframe de 560 px) se ajusta al ancho del celular */
+.video-placeholder iframe {
+  max-width: 100%;
+}

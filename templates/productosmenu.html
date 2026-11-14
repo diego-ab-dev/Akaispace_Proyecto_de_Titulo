@@ -25,9 +25,9 @@
         <div class="mask flex-center">
           <div class="container">
             <div class="row align-items-center">
-              <div class="col-md-7 col-12 order-md-1 order-2">
-                <h4 class="textcarrousel text-dark">{{ slide.titulo }}</h4>
-                <p class="parrafos-carrousel text-dark">{{ slide.texto }}</p>
+              <div class="col-md-7 col-12 order-md-1 order-2 min-w-0">
+                <h4 class="textcarrousel text-dark texto-largo">{{ slide.titulo }}</h4>
+                <p class="parrafos-carrousel text-dark texto-largo">{{ slide.texto }}</p>
                 {% if slide.producto_disponible %}
                 <a class="btn-comprar" href="{% url 'producto_detalle' slide.producto_disponible.id %}">Ver Producto</a>
                 {% else %}

@@ -45,6 +45,7 @@
         {% if mensaje %}
             <p style="color: red; font-weight: bold;">{{ mensaje }}</p>
         {% else %}
+            <div class="table-responsive">
             <table>
                 <tr>
                     <th>ID</th>
@@ -59,7 +60,7 @@
                 <tr>
                     <td>{{ usuario.id }}</td>
                     <td>{{ usuario.nombre|truncatechars:30 }}</td>
-                    <td>{{ usuario.email }}</td>
+                    <td><span class="una-linea celda-correo" title="{{ usuario.email }}">{{ usuario.email }}</span></td>
                     <td>{{ usuario.rut|default:"No especificado" }}</td>
                     <td>{{ usuario.telefono }}</td>
                     <td>{{ usuario.is_staff|yesno:"Sí,No" }}</td>
@@ -70,6 +71,7 @@
                 </tr>
                 {% endfor %}
             </table>
+            </div>
         {% endif %}
         <!-- Paginacion -->
         <div class="pagination-wrapper d-flex justify-content-center">
