@@ -18,7 +18,8 @@ body {
 
 .tabla-productos { width: 100%; font-size: 12px; margin-bottom: 10px; }
 .tabla-productos td { padding: 2px 0; }
-.precio { text-align: right; }
+/* td.precio: la clase global .precio (styles_precios.css) es inline-flex y sacaba la celda de la tabla */
+.tabla-productos td.precio { display: table-cell; text-align: right; }
 
 .totales { border-top: 1px dashed #000; padding-top: 5px; font-size: 14px; }
 .row-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-top: 5px;}
@@ -35,4 +36,41 @@ body {
     body { background: none; }
     .btn-print { display: none; }
     .boleta-container { box-shadow: none; width: 100%; margin: 0; padding: 0; }
+}
+/* ============ Comprobante responsive ============
+   en escritorio la boleta mide lo mismo que antes (380px + relleno); en celulares ocupa el ancho disponible sin salirse */
+.boleta-container {
+    box-sizing: border-box;
+    width: 420px;
+    max-width: 100%;
+}
+
+@media (max-width: 575px) {
+    body {
+        margin: 0;
+        padding: 16px 12px;
+    }
+    .boleta-container {
+        width: 100%;
+        max-width: 420px;
+        padding: 16px;
+    }
+    .tabla-productos td {
+        overflow-wrap: anywhere;
+    }
+    .tabla-productos .precio {
+        white-space: nowrap;
+        padding-left: 8px;
+        vertical-align: top;
+    }
+    .info-cliente {
+        overflow-wrap: anywhere;
+    }
+    .btn-print {
+        padding: 12px;
+    }
+}
+
+@media print {
+    body { padding: 0; }
 }
