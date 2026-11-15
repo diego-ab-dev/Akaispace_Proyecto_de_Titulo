@@ -30,13 +30,13 @@
       <h1 class="anim-down fw-bold fst-italic text-center">Bienvenido a Akaispace</h1>
       <div class="containerparrafo container">
         <div class="row">
-          <div class="col-md-6">
-            <p class="anim-up fs-5 lead text-dark" style="text-align: justify;">
+          <div class="col-lg-6">
+            <p class="anim-up fs-5 lead text-dark texto-justificado">
               Akaispace es una tienda de videojuegos y accesorios ubicada en Valdivia, que ofrece una amplia selección de títulos para todas las plataformas y edades. Desde los últimos lanzamientos hasta clásicos retro, Akaispace tiene algo para cada tipo de jugador. Destacamos por ofrecer información clara, recomendaciones y una experiencia amigable para quienes buscan explorar el mundo gamer.
             </p>
           </div>
-          <div class="col-md-6">
-            <p class="anim-up fs-5 lead text-dark" style="text-align: justify;">
+          <div class="col-lg-6">
+            <p class="anim-up fs-5 lead text-dark texto-justificado">
               Además de su tienda online, Akaispace cuenta con un local físico en la Galería Caupolicán 544, Local 26, donde puedes visitarnos, conocer nuestros productos y recibir recomendaciones de nuestro equipo. Su origen valdiviano ha impulsado una fuerte conexión con la comunidad gamer local y, a través de la tienda online, llega a jugadores de todo Chile que buscan calidad, variedad y una experiencia única.
             </p>
           </div>
@@ -54,7 +54,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-sm-12 col-md-6 col-lg-4 mb-4">
+        <div class="col-12 col-md-4 mb-4">
           <a href="{% url 'register' %}" class="text-decoration-none">
             <div class="card anim-up text-dark card-has-bg click-col"
               style="background-image:url('https://www.ifema.es/img/xl/lista-principales-torneos-esports-equipos/lista-principales-torneos-esports-y-sus-equipos.jpeg');">
@@ -71,7 +71,7 @@
           </a>
 
         </div>
-        <div class="col-sm-12 col-md-6 col-lg-4 mb-4">
+        <div class="col-12 col-md-4 mb-4">
           <a href="/menu" class="text-decoration-none">
             <div class="card anim-up  text-dark card-has-bg click-col"
               style="background-image:url('https://i.blogs.es/9458c1/original/650_1200.jpeg');">
@@ -89,7 +89,7 @@
         </div>
 
 
-        <div class="col-sm-12 col-md-6 col-lg-4 mb-4">
+        <div class="col-12 col-md-4 mb-4">
           <a href="#redes" class="text-decoration-none">
             <div class="card anim-up text-dark card-has-bg click-col"
               style="background-image:url('https://www.inci.gov.co/sites/default/files/styles/imagen_internas_1110x624_/public/2023-07/redes-sociales.jpg?itok=OoLVhkYTs');">
@@ -135,7 +135,7 @@
         </div>
         <div class="col-md-6{% if forloop.counter|divisibleby:2 %} order-2 order-md-1{% endif %}">
           <h2 class="fw-bold mb-3 text-dark texto-largo">{{ lanzamiento.titulo }}</h2>
-          <p class="text-dark texto-largo" style="text-align: justify;">{{ lanzamiento.texto }}</p>
+          <p class="text-dark texto-largo texto-justificado">{{ lanzamiento.texto }}</p>
           {% if lanzamiento.producto_disponible %}
           <a href="{% url 'producto_detalle' lanzamiento.producto_disponible.id %}" class="btn-product-cta">Ver Producto</a>
           {% else %}
@@ -224,7 +224,7 @@
 
           <div class="col-md-7 mb-4 mb-md-0">
             <h2 class="fw-bold mb-3 text-dark">Nuestras Redes</h2>
-            <p class="text-muted mb-4" style="text-align: justify;">
+            <p class="text-muted mb-4 texto-justificado">
               ¿Buscas un juego específico o tienes dudas sobre tu pedido? Conéctate con nosotros a través de nuestras redes sociales. Estamos activos para responder tus consultas, ayudarte con tus compras y mantenerte informado sobre nuestros nuevos stocks.
             </p>
 

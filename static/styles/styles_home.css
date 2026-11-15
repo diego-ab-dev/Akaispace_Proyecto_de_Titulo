@@ -76,7 +76,12 @@ button:hover .arrow:before {
 /*Fondo de principal oscuro*/
 #fondo {
   background-image: url("../images/home_fondo.jpg");
-  padding: 50vh 10vw;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 90px 16px 40px;
   text-align: center;
   background-position: center center;
   background-size: cover;
@@ -98,19 +103,14 @@ button:hover .arrow:before {
   position: relative;
   padding: 5px;
   color: #ffffff;
-  font-size: x-large;
+  font-size: clamp(1.05rem, 0.9rem + 1vw, 1.5rem);
 }
 
 #fondo h1 {
   color: #ffffff;
   position: relative;
-  font-size: 100px;
-}
-
-@media (max-width: 768px) {
-  #fondo h1 {
-    font-size: 50px;
-  }
+  font-size: clamp(2.75rem, 1.5rem + 7vw, 6.25rem);
+  overflow-wrap: anywhere;
 }
 
 /*Parrafos de Akaispace*/
@@ -130,21 +130,36 @@ button:hover .arrow:before {
 }
 
 .cont {
-  padding-top: 150px;
+  padding-top: clamp(60px, 10vw, 150px);
+}
+
+#hero > h1 {
+  font-size: clamp(1.75rem, 1.2rem + 2.5vw, 2.5rem);
 }
 
 .lead {
   color: #aaa;
 }
+
+/* separación entre secciones: solo vertical, el ancho lo da .container */
 .wrapper {
-  margin: 10vh;
+  margin: 10vh 0;
 }
 
-.lead {
-  color: #aaa;
+/* el texto justificado deja huecos grandes en pantallas angostas */
+.texto-justificado {
+  text-align: left;
 }
-.wrapper {
-  margin: 10vh;
+
+@media (min-width: 992px) {
+  .texto-justificado {
+    text-align: justify;
+  }
+}
+
+/* los links #nosotros, #local y #redes no quedan tapados por el navbar fijo */
+html {
+  scroll-padding-top: 80px;
 }
 
 .card {
@@ -155,12 +170,12 @@ button:hover .arrow:before {
   min-height: 450px;
   box-shadow: 0 0 15px 0 rgba(44, 46, 51, 0.2);
 
-  @media (max-width: 768px) {
-    min-height: 350px;
+  @media (max-width: 991px) {
+    min-height: 360px;
   }
 
-  @media (max-width: 420px) {
-    min-height: 300px;
+  @media (max-width: 767px) {
+    min-height: 260px;
   }
 
   &.card-has-bg {
@@ -238,7 +253,6 @@ button:hover .arrow:before {
 
 .video-placeholder {
   width: 100%;
-  height: 250px; 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -265,9 +279,9 @@ button:hover .arrow:before {
   transform: translateY(-2px);
 }
 
-@media (max-width: 768px) {
-  .video-placeholder {
-    height: 200px;
+@media (max-width: 767px) {
+  .btn-product-cta {
+    margin-bottom: 8px;
   }
 }
 /* Fin de Estilos para la sección de Productos Nuevos / Videos */
@@ -323,6 +337,14 @@ button:hover .arrow:before {
 @media (max-width: 768px) {
   .card-redes-simple {
     padding: 20px;
+  }
+  .social-item i {
+    font-size: 2rem;
+    width: 40px;
+    margin-right: 12px;
+  }
+  .social-item span {
+    font-size: 1rem;
   }
   .redes-image-placeholder {
     height: 200px;
@@ -424,6 +446,13 @@ button:hover .arrow:before {
     padding: 20px;
   }
 }
+
+@media (max-width: 575px) {
+  .local-mapa,
+  .local-mapa iframe {
+    min-height: 240px;
+  }
+}
 /* Fin de seccion del Local */
 
 /* Boton de subir */
@@ -487,6 +516,22 @@ button:hover .arrow:before {
   100% {
     width: 4.6rem;
     height: 4.6rem;
+  }
+}
+@media (max-width: 768px) {
+  .go-top-container {
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+  .show .go-top-button {
+    width: 3.4rem;
+    height: 3.4rem;
+    animation: none;
+  }
+  .go-top-button img {
+    width: 2.9rem;
   }
 }
 /*fin del boton de subir*/
@@ -562,7 +607,15 @@ footer {
   overflow-wrap: anywhere;
 }
 
-/* el video de "Nuevos lanzamientos" (iframe de 560 px) se ajusta al ancho del celular */
+/* el video de "Nuevos lanzamientos" (iframe de 560 x 315) se ajusta al ancho de la columna manteniendo 16:9 */
 .video-placeholder iframe {
-  max-width: 100%;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.video-placeholder img {
+  max-height: 360px;
+  object-fit: contain;
 }
