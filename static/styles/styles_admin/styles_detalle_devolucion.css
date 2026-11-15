@@ -224,3 +224,21 @@ body {
     word-break: break-word;
     cursor: help;
 }
+
+/* ============ Responsive (celular) ============
+   "Volver Atrás" arriba y el título debajo (ver la plantilla), menos relleno y textos largos que no se salen */
+@media (max-width: 767px) {
+    .main-container {
+        padding: 16px 12px 32px;
+    }
+    .page-header h1 {
+        font-size: 1.4rem;
+    }
+    .detail-card {
+        padding: 18px 16px;
+    }
+    .detail-card,
+    .text-content {
+        overflow-wrap: anywhere;
+    }
+}

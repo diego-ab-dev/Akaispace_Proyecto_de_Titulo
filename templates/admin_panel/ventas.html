@@ -103,7 +103,7 @@
 
 
     <div class="table-responsive">
-        <table>
+        <table class="tabla-tarjetas">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -119,11 +119,11 @@
             <tbody>
                 {% for venta in ventas %}
                 <tr>
-                    <td>{{ venta.id }}</td>
-                    <td>{{ venta.usuario.nombre|default:"Sin cuenta"|truncatechars:30 }}</td>
-                    <td>{{ venta.get_canal_display }}</td>
-                    <td>${{ venta.total|formato_chileno }}</td>
-                     <td>
+                    <td data-label="ID">{{ venta.id }}</td>
+                    <td data-label="Usuario">{{ venta.usuario.nombre|default:"Sin cuenta"|truncatechars:30 }}</td>
+                    <td data-label="Canal">{{ venta.get_canal_display }}</td>
+                    <td data-label="Total">${{ venta.total|formato_chileno }}</td>
+                     <td data-label="Producto/s">
                         <ul class="list-unstyled mb-0">
                             {% for producto_venta in venta.producto_venta.all %}
                             <li class="d-flex align-items-center">
@@ -135,12 +135,12 @@
                             {% endfor %}
                         </ul>
                     </td>
-                    <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
-                    <td>
+                    <td data-label="Fecha">{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Estado">
                         {% include "partials/estado_envio.html" with venta=venta %}
                     </td>
 
-                    <td>
+                    <td class="celda-acciones" data-label="">
                         <a href="{% url 'detalle_venta' venta.id %}" class="btn-responder btn">Ver Detalles</a>
                     </td>
                 </tr>

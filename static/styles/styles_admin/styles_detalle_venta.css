@@ -312,3 +312,49 @@ body {
 .estado-listo-retiro { color: #0a8fa8; font-weight: bold; }      
 .estado-entregado { color: #198754; font-weight: bold; }     
 .estado-anulada { color: #dc3545; font-weight: bold; }  
+
+/* ============ Detalle de venta responsive ============
+   tarjetas lado a lado si caben (como antes); en celular una bajo otra, con menos relleno,
+   el título arriba y "Ver comprobante" debajo, y cada dato con su etiqueta sin pegarse al valor */
+.data-row {
+    gap: 12px;
+}
+.data-row > .data-label {
+    flex-shrink: 0;
+}
+.data-row > span:last-child {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+    .page-container {
+        padding: 16px 12px 32px;
+        min-height: 0;
+    }
+    .venta-header {
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .venta-title {
+        font-size: 1.6rem;
+    }
+    .cards-container {
+        gap: 16px;
+    }
+    .info-card {
+        min-width: 0;
+        flex-basis: 100%;
+        padding: 18px 16px;
+    }
+    .card-title {
+        font-size: 1.15rem;
+        margin-bottom: 16px;
+    }
+    .custom-toast {
+        left: 12px;
+        right: 12px;
+        text-align: center;
+    }
+}

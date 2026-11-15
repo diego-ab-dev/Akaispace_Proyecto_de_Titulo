@@ -63,7 +63,7 @@
     </div>
     {% endfor %}
         <div class="table-responsive">
-            <table>
+            <table class="tabla-tarjetas">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -78,16 +78,16 @@
                 <tbody>
                     {% for devolucion in devoluciones %}
                     <tr>
-                        <td>{{ devolucion.id }}</td>
-                        <td>{{ devolucion.usuario.nombre|truncatechars:20 }}</td>
-                        <td>
+                        <td data-label="ID">{{ devolucion.id }}</td>
+                        <td data-label="Cliente">{{ devolucion.usuario.nombre|truncatechars:20 }}</td>
+                        <td data-label="Producto Asociado">
                             <span class="admin-devolucion-name" title="{{ devolucion.producto.nombre }}">
                                 {{ devolucion.producto.nombre }}
                             </span>
                         </td>
-                        <td>{{ devolucion.motivo|truncatechars:30 }}</td>
-                        <td>{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</td>
-                        <td>
+                        <td data-label="Motivo">{{ devolucion.motivo|truncatechars:30 }}</td>
+                        <td data-label="Fecha">{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+                        <td data-label="Estado">
                             <span class="badge
                                 {% if devolucion.estado == 'Pendiente' %}
                                     bg-warning text-dark
@@ -105,7 +105,7 @@
                             </span>
 
                         </td>
-                        <td>
+                        <td class="celda-acciones" data-label="">
                             {% if devolucion.estado == 'Pendiente' %}
                                 <a href="{% url 'responder_devolucion' devolucion.id %}" class="btn-responder btn btn-sm">
                                     Responder

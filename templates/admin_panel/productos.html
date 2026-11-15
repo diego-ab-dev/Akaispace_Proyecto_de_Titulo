@@ -42,7 +42,7 @@
             </div>
         {% endif %}
         <div class="table-responsive">
-        <table>
+        <table class="tabla-tarjetas">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -59,27 +59,27 @@
             <tbody>
                 {% for producto in productos %}
                 <tr>
-                    <td>{{producto.id}}</td>
-                    <td>
+                    <td data-label="ID">{{producto.id}}</td>
+                    <td data-label="Imagen">
                         {% if producto.imagen_principal %}
                             <img src="{{ producto.imagen_principal.url }}" alt="Imagen de {{ producto.nombre }}" class="product-img">
                         {% else %}
                             <span>Sin imagen</span>
                         {% endif %}
                     </td>
-                    <td>{{ producto.codigo_de_barra }}</td>
-                    <td>{{ producto.nombre|truncatechars:25 }}</td>
-                    <td>${{ producto.precio|formato_chileno }}{% with pct=producto|descuento %}{% if pct %}<span class="etiqueta-oferta" title="Antes ${{ producto.precio_anterior|formato_chileno }}">Oferta -{{ pct }}%</span>{% endif %}{% endwith %}</td>
-                    <td>
+                    <td data-label="Código de Barras">{{ producto.codigo_de_barra }}</td>
+                    <td data-label="Nombre">{{ producto.nombre|truncatechars:25 }}</td>
+                    <td data-label="Precio">${{ producto.precio|formato_chileno }}{% with pct=producto|descuento %}{% if pct %}<span class="etiqueta-oferta" title="Antes ${{ producto.precio_anterior|formato_chileno }}">Oferta -{{ pct }}%</span>{% endif %}{% endwith %}</td>
+                    <td data-label="Stock">
                         {% if producto.stock == 0 %}
                             <span class="stock-out">Sin stock</span>
                         {% else %}
                             {{ producto.stock }}
                         {% endif %}
                     </td>
-                    <td>{{ producto.categoria_texto }}</td>
-                    <td>{{ producto.genero|default:"-" }}</td>
-                    <td>
+                    <td data-label="Categoría">{{ producto.categoria_texto }}</td>
+                    <td data-label="Género">{{ producto.genero|default:"-" }}</td>
+                    <td class="celda-acciones" data-label="">
                         <a href="{% url 'editar_producto' producto.id %}" class="btn-edit">Editar</a>|
                         <a href="{% url 'eliminar_producto' producto.id %}" onclick="confirmarEliminacion(event, this)" style="color: red;">Eliminar</a> |
                         <a href="{% url 'detalle_producto' producto.id %}" class="btn-more">Ver Más</a>

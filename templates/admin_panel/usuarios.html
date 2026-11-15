@@ -46,7 +46,7 @@
             <p style="color: red; font-weight: bold;">{{ mensaje }}</p>
         {% else %}
             <div class="table-responsive">
-            <table>
+            <table class="tabla-tarjetas">
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
@@ -58,13 +58,13 @@
                 </tr>
                 {% for usuario in usuarios %}
                 <tr>
-                    <td>{{ usuario.id }}</td>
-                    <td>{{ usuario.nombre|truncatechars:30 }}</td>
-                    <td><span class="una-linea celda-correo" title="{{ usuario.email }}">{{ usuario.email }}</span></td>
-                    <td>{{ usuario.rut|default:"No especificado" }}</td>
-                    <td>{{ usuario.telefono }}</td>
-                    <td>{{ usuario.is_staff|yesno:"Sí,No" }}</td>
-                    <td>
+                    <td data-label="ID">{{ usuario.id }}</td>
+                    <td data-label="Nombre">{{ usuario.nombre|truncatechars:30 }}</td>
+                    <td data-label="Email"><span class="una-linea celda-correo" title="{{ usuario.email }}">{{ usuario.email }}</span></td>
+                    <td data-label="Rut">{{ usuario.rut|default:"No especificado" }}</td>
+                    <td data-label="Teléfono">{{ usuario.telefono }}</td>
+                    <td data-label="¿Es Administrador?">{{ usuario.is_staff|yesno:"Sí,No" }}</td>
+                    <td class="celda-acciones" data-label="">
                         <a href="{% url 'eliminar_usuario' usuario.id %}" onclick="confirmarEliminacion(event, this)" style="color: red;">Eliminar</a> |
                         <a href="{% url 'detalle_usuario' usuario.id %}" class="btn-more">Ver Más</a>
                     </td>

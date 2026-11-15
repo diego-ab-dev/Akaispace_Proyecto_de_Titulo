@@ -864,3 +864,19 @@ a.lista-informe__texto:hover {
     background-color: var(--acento);
     border-color: var(--acento);
 }
+
+/* ============ Tablas de informes en celular ============
+   la tabla se desliza de lado dentro de su recuadro (.tabla-contenedor) en vez de partir los nombres
+   palabra por palabra; los montos no se cortan */
+@media (max-width: 767px) {
+    .tabla-contenedor .tabla-informe td:first-child {
+        min-width: 150px;
+    }
+    .tabla-contenedor .tabla-informe .num {
+        white-space: nowrap;
+    }
+    .informe-pestanas {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+}

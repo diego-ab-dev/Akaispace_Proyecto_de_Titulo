@@ -261,3 +261,46 @@ textarea:focus {
         max-width: 200px;
     }
 }
+
+/* ============ Responder devolución responsive ============
+   en celular el título deja de flotar sobre la tarjeta (en 2 líneas quedaba cortado arriba),
+   la tarjeta tiene menos relleno y Aprobar / Rechazar caben lado a lado */
+@media (max-width: 767px) {
+    body {
+        padding: 16px 12px 40px;
+    }
+    .page-title {
+        position: static;
+        font-size: 1.4rem;
+        margin-bottom: 16px;
+    }
+    .response-card {
+        padding: 20px 16px;
+    }
+    .info-section > .d-flex:first-child {
+        flex-wrap: wrap;
+        gap: 4px 12px;
+    }
+    .radio-group {
+        gap: 10px;
+    }
+    .radio-option {
+        min-width: 0;
+        padding: 10px 8px;
+        gap: 6px;
+    }
+    .btn-row {
+        gap: 10px;
+    }
+    .btn-guardar,
+    .btn-cancelar {
+        padding: 12px 10px;
+    }
+    .context-prod-name {
+        max-width: 100%;
+    }
+    .close-btn {
+        top: 12px;
+        right: 18px;
+    }
+}
