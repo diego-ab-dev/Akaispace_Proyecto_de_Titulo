@@ -12,31 +12,31 @@
 <!--fin del nav-->
 
 
-    <main class="py-5">
+    <main class="favoritos-main">
         <div class="container">
 
-            <div class="d-flex justify-content-between align-items-center mb-4">
-            <a href="/menu" class="text-dark text-decoration-none fw-bold">
+            <div class="fav-encabezado d-flex justify-content-between align-items-center mb-4">
+            <a href="/menu" class="fav-volver text-dark text-decoration-none fw-bold">
                 <i class="fas fa-arrow-left me-2"></i> Volver Atrás
             </a>
-            <h2 class="fw-bold text-center flex-grow-1 mb-0">Productos Favoritos</h2>
+            <h2 class="fav-titulo fw-bold text-center flex-grow-1 mb-0">Productos Favoritos</h2>
 
-            <button type="button" class="btn p-0 border-0 text-danger fs-4" title="Borrar Seleccionados" onclick="eliminarSeleccionados()" style="cursor: pointer; background: none;">
+            <button type="button" class="fav-borrar btn p-0 border-0 text-danger fs-4" title="Borrar Seleccionados" aria-label="Borrar seleccionados" onclick="eliminarSeleccionados()" style="cursor: pointer; background: none;">
                 <i class="far fa-trash-alt"></i>
             </button>
             </div>
 
-            <div class="wishlist-container rounded border p-4 shadow-sm" style="background-color: #fafafa;">
+            <div class="wishlist-container rounded border p-3 p-sm-4 shadow-sm" style="background-color: #fafafa;">
 
             {% if page_obj %}
                 {% for item in page_obj %}
                 <div id="item-{{ item.producto_id }}" class="wishlist-item d-flex align-items-center py-4 border-bottom position-relative">
 
-                    <div class="item-image me-4 bg-light rounded d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
-                        <img src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}" class="img-fluid" style="max-height: 80px;">
+                    <div class="item-image me-4 bg-light rounded d-flex align-items-center justify-content-center flex-shrink-0">
+                        <img src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}" class="img-fluid">
                     </div>
 
-                    <div class="item-details flex-grow-1">
+                    <div class="item-details flex-grow-1 min-w-0">
                         <h5 class="fw-bold mb-1 wishlist-item-title" title="{{ item.producto.nombre }}">
                             {{ item.producto.nombre }}
                         </h5>
@@ -50,7 +50,7 @@
                         </small>
                     </div>
 
-                    <div class="item-actions me-5">
+                    <div class="item-actions me-5 flex-shrink-0">
                         {% if item.producto.stock > 0 %}
                             <a href="{% url 'producto_detalle' item.producto.id %}" class="btn btn-dark rounded-pill px-4 d-flex align-items-center gap-2">
                                 Ver Producto <i class="far fa-eye"></i>
@@ -59,7 +59,7 @@
                     </div>
 
                     <div class="item-check position-absolute top-0 end-0 mt-3 me-3">
-                        <input class="form-check-input border-dark check-item" type="checkbox" value="{{ item.producto_id }}" id="check{{ item.producto_id }}">
+                        <input class="form-check-input border-dark check-item" type="checkbox" value="{{ item.producto_id }}" id="check{{ item.producto_id }}" aria-label="Seleccionar {{ item.producto.nombre }}">
                     </div>
 
                 </div>
