@@ -6,127 +6,6 @@
     overflow-x: hidden;
   }
 
- /* botones de la página */
- button {
-  --primary-color: #FFFFFF;
-  --secondary-color: #000000;
-  --hover-color: #d3d1d1;
-  --arrow-width: 10px;
-  --arrow-stroke: 2px;
-  box-sizing: border-box;
-  border: 0;
-  border-radius: 10px;
-  color: var(--secondary-color);
-  background: var(--primary-color);
-  display: flex;
-  padding: 10px;
-  transition: 0.2s background;
-  align-items: center;
-  gap: 0.6em;
-  font-weight: bold;
-}
-
-button .arrow-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-button .arrow {
-  margin-top: 1px;
-  width: var(--arrow-width);
-  background: var(--primary-color);
-  height: var(--arrow-stroke);
-  position: relative;
-  transition: 0.2s;
-}
-
-button .arrow::before {
-  content: "";
-  box-sizing: border-box;
-  position: absolute;
-  border: solid var(--secondary-color);
-  border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
-  display: inline-block;
-  top: -3px;
-  right: 3px;
-  transition: 0.2s;
-  padding: 3px;
-  transform: rotate(-45deg);
-}
-
-button:hover {
-  background-color: var(--hover-color);
-}
-
-button:hover .arrow {
-  background: var(--secondary-color);
-}
-
-button:hover .arrow:before {
-  right: 0;
-}
-
-.buttonlogreg {
-  --primary-color: #9c9592;
-  --secondary-color: #fff;
-  --hover-color: #6e6e6e;
-  --arrow-width: 10px;
-  --arrow-stroke: 2px;
-  box-sizing: border-box;
-  border: 0;
-  border-radius: 10px;
-  color: var(--secondary-color);
-  background: var(--primary-color);
-  display: flex;
-  padding: 10px;
-  transition: 0.2s background;
-  align-items: center;
-  gap: 0.6em;
-  font-weight: bold;
-}
-
-.buttonlogreg .arrow-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.buttonlogreg .arrow {
-  margin-top: 1px;
-  width: var(--arrow-width);
-  background: var(--primary-color);
-  height: var(--arrow-stroke);
-  position: relative;
-  transition: 0.2s;
-}
-
-.buttonlogreg .arrow::before {
-  content: "";
-  box-sizing: border-box;
-  position: absolute;
-  border: solid var(--secondary-color);
-  border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
-  display: inline-block;
-  top: -3px;
-  right: 3px;
-  transition: 0.2s;
-  padding: 3px;
-  transform: rotate(-45deg);
-}
-
-.buttonlogreg:hover {
-  background-color: var(--hover-color);
-}
-
-.buttonlogreg:hover .arrow {
-  background: var(--secondary-color);
-}
-
-.buttonlogreg:hover .arrow:before {
-  right: 0;
-}
-  
 .contdet {
     max-width: 75%;
     margin: 5% auto;
@@ -576,6 +455,7 @@ h2, h3, h5 {
 }
 
 .btn-ver-mas {
+    gap: 0.6em;
     background: transparent;
     border: none;
     color: #4E84A8; 
@@ -636,7 +516,6 @@ h2, h3, h5 {
     .service-subtext { display: none;}
     .icon-circle { width: 40px; height: 40px; font-size: 1rem; }
 }
-
 
 /* ============ Ficha responsive ============
    escritorio (>= 992px): imagen y datos lado a lado | tablet y celular: uno debajo del otro */

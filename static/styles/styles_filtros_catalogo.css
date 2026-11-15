@@ -82,6 +82,9 @@
 }
 
 .btn-filtrar {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
     background-color: #4E84A8;
     color: #ffffff;
     border: none;

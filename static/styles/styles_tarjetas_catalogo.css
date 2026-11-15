@@ -211,3 +211,29 @@
     font-size: 0.85rem;
   }
 }
+
+/* botones de la tarjeta: antes tomaban borde, negrita y espacio de una regla global "button" de cada página */
+.section-products .btn-carrito {
+  border: 0;
+  font-weight: bold;
+  gap: 0.6em;
+}
+
+/* íconos que aparecen sobre la imagen al pasar el mouse (carrito, favorito, ver) */
+.section-products .btn-icon {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #000000;
+  font-weight: bold;
+  transition: 0.2s background;
+}
+
+.section-products .btn-icon:hover {
+  background-color: #d3d1d1;
+}

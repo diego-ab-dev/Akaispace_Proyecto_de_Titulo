@@ -241,7 +241,6 @@
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            console.log("Agregando al carrito...");
 
             const url = this.action;
             const formData = new FormData(this);
@@ -274,7 +273,6 @@
         });
     });
 
-    console.log("Cargando lógica de favoritos...");
     const favForms = document.querySelectorAll('.form-favorito');
 
     favForms.forEach(form => {

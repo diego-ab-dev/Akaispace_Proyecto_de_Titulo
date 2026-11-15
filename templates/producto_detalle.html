@@ -348,7 +348,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        console.log("DOM Cargado - Iniciando Scripts");
 
         // miniatura inicial
         const firstThumb = document.querySelector('.option img');
@@ -358,14 +357,6 @@
 
         const notifBox = document.getElementById('notif-box');
         const notifMsg = document.getElementById('notif-msg');
-
-        // cantidad
-        const cantidadSelect = document.querySelector('#cantidad');
-        if(cantidadSelect) {
-            cantidadSelect.addEventListener('change', function() {
-                console.log('Cantidad seleccionada:', this.value);
-            });
-        }
 
         // descripción
         const descContent = document.getElementById('desc-content');
@@ -434,12 +425,10 @@
 
         // carrito de compras 
         const cartForms = document.querySelectorAll('.form-agregar');
-        console.log("Formularios de carrito encontrados:", cartForms.length); 
 
         cartForms.forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault(); 
-                console.log("Enviando carrito..."); 
 
                 const url = this.action;
                 const formData = new FormData(this);
@@ -451,7 +440,6 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Respuesta servidor:", data); 
                     if (data.success) {
                         if(notifMsg) notifMsg.innerText = data.message;
                         if(notifBox) {

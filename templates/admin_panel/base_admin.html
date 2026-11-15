@@ -8,6 +8,7 @@ El bloque `encabezado` va antes del header (por ejemplo el <h1> de la sección).
 {% block librerias %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'styles/styles_admin/panel.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_boton_subir.css' %}">
 {% endblock %}
 
 {% block body_attrs %} id="body-pd" style="background-color:#EEF1F4;"{% endblock %}
@@ -18,5 +19,7 @@ El bloque `encabezado` va antes del header (por ejemplo el <h1> de la sección).
 {% endblock %}
 
 {% block scripts %}
+{% include "partials/boton_subir.html" %}
 <script src="{% static 'js/panel_admin.js' %}"></script>
+<script src="{% static 'js/boton_subir.js' %}"></script>
 {% endblock %}

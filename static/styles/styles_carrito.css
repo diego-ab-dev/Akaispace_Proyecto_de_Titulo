@@ -327,19 +327,6 @@ a:hover {
     cursor: help;                
 }
 
-/*footer*/
-footer {
-  background-color: #1C253B;
-  color: #ffffff;
-  height: auto;
-  padding-bottom: 50px;
-  padding-top: 20px;
-}
-/*enlaces rapidos del footer*/
-.footerli {
-  text-decoration: none;
-}
-
 .cantidad-stepper {
     display: inline-flex;
     align-items: center;
