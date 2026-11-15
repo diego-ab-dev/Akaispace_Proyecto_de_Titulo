@@ -637,3 +637,134 @@ h2, h3, h5 {
     .icon-circle { width: 40px; height: 40px; font-size: 1rem; }
 }
 
+
+/* ============ Ficha responsive ============
+   escritorio (>= 992px): imagen y datos lado a lado | tablet y celular: uno debajo del otro */
+.ficha-producto {
+  margin-top: 100px;
+  margin-bottom: 50px;
+}
+
+.ficha-caja {
+  background-color: #fafafa;
+  padding: 3rem;
+}
+
+/* imagen principal: cuadrada y del ancho de su columna (máx. 500 px) */
+.zoom-container {
+  height: auto;
+  aspect-ratio: 1 / 1;
+  max-height: 500px;
+}
+
+/* miniaturas en una sola fila; si no caben se deslizan de lado en vez de salirse de la columna */
+.ficha-miniaturas {
+  display: flex;
+  gap: 8px;
+  justify-content: safe center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 4px 8px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #4E84A8 transparent;
+}
+
+.ficha-miniaturas img {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+/* texto justificado solo con columnas anchas (en angostas deja huecos grandes) */
+.texto-justificado {
+  text-align: left;
+}
+
+@media (min-width: 992px) {
+  .texto-justificado {
+    text-align: justify;
+  }
+}
+
+/* ruta "Inicio / producto": el nombre largo se corta con ... en una sola línea */
+.ficha-producto .breadcrumb {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.ficha-producto .breadcrumb-item.active {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* paginación de opiniones: baja de línea si hay muchas páginas */
+#seccion-opiniones .pagination {
+  flex-wrap: wrap;
+  gap: 4px 0;
+}
+
+/* en pantallas táctiles no hay "hover": la imagen no queda ampliada al tocarla */
+@media (hover: none) {
+  .zoom-container {
+    cursor: default;
+  }
+  .zoom-container:hover .zoom-image {
+    transform: none;
+  }
+}
+
+@media (max-width: 991px) {
+  .ficha-caja {
+    padding: 2rem;
+  }
+  .zoom-container {
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 575px) {
+  .ficha-producto {
+    margin-top: 80px;
+    margin-bottom: 30px;
+  }
+  .ficha-caja {
+    padding: 1rem;
+    border-radius: 12px !important;
+  }
+  /* el recuadro ocupa el ancho de la pantalla con 12 px a los lados */
+  .ficha-producto > .container,
+  .ficha-producto > .container.mt-4 {
+    max-width: calc(100% - 24px);
+  }
+  .ficha-producto .text-description.fw-bold {
+    font-size: 1.5rem;
+  }
+  .ficha-miniaturas img,
+  .option img {
+    width: 58px;
+    height: 58px;
+    padding: 4px;
+  }
+  .precio-ficha {
+    font-size: 1.6rem;
+  }
+  /* cantidad y botón: el botón ocupa el resto del ancho */
+  .form-agregar .CartBtn {
+    width: auto;
+    min-width: 0;
+    height: 46px;
+  }
+  .form-agregar .CartBtn .text {
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  .form-agregar .w-25 {
+    min-width: 5.5rem !important;
+  }
+  #seccion-opiniones .text-coment {
+    padding-left: 0 !important;
+    margin-top: 4px;
+  }
+}
