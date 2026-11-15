@@ -964,6 +964,19 @@ class ErroresInternosTests(TestCase):
         self.assertFalse(Favorito.objects.exists())
 
 
+class FavoritosTests(TestCase):
+    def test_favorito_sin_stock_enlaza_a_su_ficha(self):
+        from .models import Favorito
+        cliente = crear_cliente()
+        agotado = crear_producto('Juego agotado', stock=0)
+        Favorito.objects.create(usuario=cliente, producto=agotado)
+        self.client.force_login(cliente)
+        respuesta = self.client.get('/favorites/')
+        self.assertContains(respuesta, 'Sin Stock')
+        self.assertContains(respuesta, f'href="/producto/{agotado.id}/" class="fav-enlace-nombre"')
+        self.assertEqual(self.client.get(f'/producto/{agotado.id}/').status_code, 200)
+
+
 class PaginasDeErrorTests(TestCase):  # 404 propia con navbar y footer; 500 sin contexto
     def test_url_inexistente_muestra_la_404_de_la_tienda(self):
         respuesta = self.client.get('/esta-pagina-no-existe/')

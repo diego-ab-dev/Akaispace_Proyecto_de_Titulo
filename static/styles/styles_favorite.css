@@ -189,6 +189,27 @@ main {
     white-space: nowrap;
 }
 
+/* la imagen y el nombre llevan a la ficha (también si el producto está sin stock) */
+.fav-enlace-imagen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.fav-enlace-nombre {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.fav-enlace-nombre:hover,
+.fav-enlace-nombre:focus-visible {
+    color: #4E84A8;
+    text-decoration: underline;
+}
+
 /* tablet: menos separación para que el nombre tenga espacio */
 @media (max-width: 991px) {
     .wishlist-item .item-image {
