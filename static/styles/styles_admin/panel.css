@@ -201,6 +201,9 @@ a{text-decoration: none}
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
     #body-pd .l-navbar {
+        /* siempre sobre el fondo oscuro (z-index 1025): algunas hojas antiguas (ventas, reclamos,
+           devoluciones) bajan el menú a z-index 100 y el fondo lo tapaba, sin dejar tocar nada */
+        z-index: 1030;
         left: calc(-1 * (var(--nav-width) + 170px));
         width: calc(var(--nav-width) + 156px);
         max-width: 85vw;
