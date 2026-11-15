@@ -140,3 +140,74 @@
     padding-right: 104px;
   }
 }
+
+/* paginación: los círculos nunca se aplastan; el recuadro usa el ancho disponible en vez de 150 px fijos por lado */
+.pagination-wrapper .page-item,
+.pagination-wrapper .page-nav {
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+}
+
+@media (max-width: 991px) {
+  .pagination-wrapper {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: calc(100% - 32px);
+    width: fit-content;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@media (max-width: 575px) {
+  .pagination-wrapper {
+    gap: 6px;
+    margin-top: 24px;
+    margin-bottom: 40px;
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+  .pagination-wrapper .page-item,
+  .pagination-wrapper .page-nav {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+  }
+  .pagination-wrapper .page-nav i {
+    font-size: 1.2rem;
+  }
+  .pagination-wrapper .page-dots {
+    font-size: 1.1rem;
+  }
+}
+
+/* en celular solo se ven la primera, la última y las vecinas de la actual (page-lejos se oculta y lo
+   reemplaza un "..."); si quedan dos "..." seguidos se muestra uno */
+.pagination-wrapper .page-dots-movil {
+  display: none;
+}
+
+@media (max-width: 575px) {
+  .pagination-wrapper .page-lejos {
+    display: none;
+  }
+  .pagination-wrapper .page-dots-movil {
+    display: inline;
+  }
+  .pagination-wrapper .page-dots + .page-dots {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .pagination-wrapper {
+    gap: 3px;
+    padding: 8px;
+  }
+  .pagination-wrapper .page-item,
+  .pagination-wrapper .page-nav {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+  }
+}

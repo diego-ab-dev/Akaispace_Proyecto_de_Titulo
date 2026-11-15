@@ -179,7 +179,8 @@
               {% if num == page_obj.number %}
                   <span class="page-item active">{{ num }}</span>
               {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-                  <a href="?{% param_replace page=num %}" class="page-item">{{ num }}</a>
+                  {# en celular se ocultan las páginas a 2 de distancia (page-lejos) y se marcan con ... #}
+                  {% if num == page_obj.number|add:'-2' and num != 1 %}<span class="page-dots page-dots-movil">...</span>{% endif %}<a href="?{% param_replace page=num %}" class="page-item{% if num == page_obj.number|add:'-2' and num != 1 or num == page_obj.number|add:'2' and num != page_obj.paginator.num_pages %} page-lejos{% endif %}">{{ num }}</a>{% if num == page_obj.number|add:'2' and num != page_obj.paginator.num_pages %}<span class="page-dots page-dots-movil">...</span>{% endif %}
               {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
                   <span class="page-dots">...</span>
               {% endif %}
