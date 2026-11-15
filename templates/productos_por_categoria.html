@@ -54,8 +54,6 @@
     <span id="notif-msg">{{ request.GET.notif }}</span>
 </div>
 
-
-
   <div class="main-container">
       <section class="section-products">
         <div class="container">
@@ -196,34 +194,7 @@
       </div>
     </div>
 
-      <!--Boton para ir hacia arriba-->
-      <div class="go-top-container">
-        <div class="go-top-button">
-          <img src="{% static 'images/navegar-flecha-hacia-arriba.png' %}" alt="">
-        </div>
-      </div>
-
-
 <script>
-      // boton de ir arriba
-      window.onscroll = function () {
-      console.log(document.documentElement.scrollTop);
-      if (document.documentElement.scrollTop > 100) {
-        document.querySelector('.go-top-container').classList.add('show');
-
-      }
-      else {
-        document.querySelector('.go-top-container').classList.remove('show');
-      }
-    }
-
-    document.querySelector('.go-top-container').addEventListener('click', () => {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    });
-
     function isVisible(elm) {
       var rect = elm.getBoundingClientRect();
       var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);

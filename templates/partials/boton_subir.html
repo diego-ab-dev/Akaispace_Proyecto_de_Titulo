@@ -1,0 +1,12 @@
+{% comment %}
+Botón "volver arriba" de la tienda (lo incluye base_tienda.html en todas sus páginas).
+Aparece al bajar y el anillo muestra cuánto se ha recorrido. Estilos: styles/styles_boton_subir.css,
+lógica: js/boton_subir.js. En páginas cortas nunca aparece.
+{% endcomment %}
+<button type="button" class="boton-subir" id="boton-subir" aria-label="Volver arriba" title="Volver arriba" tabindex="-1">
+  <svg class="boton-subir-anillo" viewBox="0 0 52 52" aria-hidden="true">
+    <circle class="boton-subir-pista" cx="26" cy="26" r="23"></circle>
+    <circle class="boton-subir-progreso" cx="26" cy="26" r="23" pathLength="100"></circle>
+  </svg>
+  <i class="fas fa-chevron-up" aria-hidden="true"></i>
+</button>

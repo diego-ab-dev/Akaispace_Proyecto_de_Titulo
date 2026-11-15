@@ -88,7 +88,6 @@
           </a>
         </div>
 
-
         <div class="col-12 col-md-4 mb-4">
           <a href="#redes" class="text-decoration-none">
             <div class="card anim-up text-dark card-has-bg click-col"
@@ -108,7 +107,6 @@
       </div>
     </div>
   </section>
-
 
 {# Apartado de Nuevos Lanzamientos: se edita en el panel de administración (Portada > Nuevos lanzamientos) #}
 {% if portada.lanzamientos %}
@@ -154,7 +152,6 @@
   {% include "partials/tarjetas_productos.html" with productos=recomendaciones.productos titulo=recomendaciones.titulo %}
 </section>
 {% endif %}
-
 
 <!--Local fisico: mapa y horarios-->
 <a name="local" id="local"></a>
@@ -213,7 +210,6 @@
     </div>
   </section>
 
-
 <!--redes sociales-->
 <a name="redes" id="redes"></a>
   <section class="wrapper paused">
@@ -260,34 +256,7 @@
     </div>
   </section>
 
-
-<!--Boton para ir hacia arriba-->
-<div class="go-top-container">
-  <div class="go-top-button">
-    <img src="{% static 'images/navegar-flecha-hacia-arriba.png' %}" alt="">
-  </div>
-</div>
-
-<!--Script para el boton de ir hacia arriba-->
 <script>
-  window.onscroll = function () {
-    console.log(document.documentElement.scrollTop);
-    if (document.documentElement.scrollTop > 100) {
-      document.querySelector('.go-top-container').classList.add('show');
-
-    }
-    else {
-      document.querySelector('.go-top-container').classList.remove('show');
-    }
-  }
-
-  document.querySelector('.go-top-container').addEventListener('click', () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  });
-
   function isVisible(elm) {
     var rect = elm.getBoundingClientRect();
     var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);

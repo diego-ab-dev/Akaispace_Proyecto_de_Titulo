@@ -1,0 +1,104 @@
+/* Botón "volver arriba" (templates/partials/boton_subir.html). Mismo azul del navbar con el acento cian:
+   el anillo se llena según cuánto se ha bajado en la página. */
+.boton-subir {
+  --subir-tam: 52px;
+  --subir-fondo: #1C253B;
+  --subir-acento: #00D2D5;
+  position: fixed;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 90;
+  width: var(--subir-tam);
+  height: var(--subir-tam);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--subir-fondo);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(28, 37, 59, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px) scale(0.9);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.boton-subir.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.boton-subir:hover {
+  background: #344266;
+  box-shadow: 0 8px 22px rgba(28, 37, 59, 0.45);
+}
+
+.boton-subir:hover i {
+  transform: translateY(-2px);
+}
+
+.boton-subir:active {
+  transform: scale(0.94);
+}
+
+.boton-subir:focus-visible {
+  outline: 3px solid var(--subir-acento);
+  outline-offset: 3px;
+}
+
+.boton-subir i {
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+/* anillo de progreso */
+.boton-subir-anillo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.boton-subir-anillo circle {
+  fill: none;
+  stroke-width: 3;
+}
+
+.boton-subir-pista {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+
+.boton-subir-progreso {
+  stroke: var(--subir-acento);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* celular: más chico y más pegado a la esquina */
+@media (max-width: 575px) {
+  .boton-subir {
+    --subir-tam: 44px;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton-subir,
+  .boton-subir i,
+  .boton-subir-progreso {
+    transition: none;
+  }
+}

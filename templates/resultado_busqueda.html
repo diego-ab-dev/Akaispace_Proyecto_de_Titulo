@@ -51,11 +51,9 @@
     <!--Nav de la web-->
     <!--fin del nav-->
 
-
     <div id="notif-box" class="notif {{ request.GET.type }}">
         <span id="notif-msg">{{ request.GET.notif }}</span>
     </div>
-
 
         <section class="section-products">
           <div class="container">
@@ -165,7 +163,6 @@
           </div>
         </section>
 
-
         <!-- Paginacion -->
       <div class="pagination-wrapper">
           {% if page_obj.has_previous %}
@@ -204,41 +201,12 @@
           {% endif %}
       </div>
 
-
-      <!--Boton para ir hacia arriba-->
-      <div class="go-top-container">
-        <div class="go-top-button">
-          <img src="{% static 'images/navegar-flecha-hacia-arriba.png' %}" alt="">
-        </div>
-      </div>
-
-
 <script>
-    // boton de subir
-    window.onscroll = function () {
-      console.log(document.documentElement.scrollTop);
-      if (document.documentElement.scrollTop > 100) {
-        document.querySelector('.go-top-container').classList.add('show');
-
-      }
-      else {
-        document.querySelector('.go-top-container').classList.remove('show');
-      }
-    }
-
-    document.querySelector('.go-top-container').addEventListener('click', () => {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    });
-
     function isVisible(elm) {
       var rect = elm.getBoundingClientRect();
       var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
       return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
     }
-
 
   document.addEventListener('DOMContentLoaded', function() {
     const notifBox = document.getElementById('notif-box');

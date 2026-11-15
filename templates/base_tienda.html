@@ -6,12 +6,17 @@ sobrescribe el bloque navbar, por ejemplo:
   {% block navbar %}{% include "partials/navbar.html" with menu_simple=True %}{% endblock %}
 {% endcomment %}
 
-{% block estilos_finales %}<link rel="stylesheet" href="{% static 'styles/styles_navbar.css' %}">{% endblock %}
+{% block estilos_finales %}
+<link rel="stylesheet" href="{% static 'styles/styles_navbar.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_boton_subir.css' %}">
+{% endblock %}
 
 {% block navbar %}{% include "partials/navbar.html" %}{% endblock %}
 
 {% block footer %}{% include "partials/footer.html" %}{% endblock %}
 
 {% block scripts %}
+{% include "partials/boton_subir.html" %}
 <script src="{% static 'js/navbar.js' %}"></script>
+<script src="{% static 'js/boton_subir.js' %}"></script>
 {% endblock %}
