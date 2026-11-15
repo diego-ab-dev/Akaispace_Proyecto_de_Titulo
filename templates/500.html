@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+Error del servidor. Django la muestra sin contexto (sin usuario, menús ni portada) y puede que la base de
+datos no responda, así que va sin navbar ni footer: solo el logo, el aviso y un enlace al inicio.
+{% endcomment %}
+
+{% block title %}Algo salió mal - Akaispace{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_error.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="pagina-error pagina-error-sola">
+  <div class="error-caja">
+    <a href="/" class="error-logo" title="Ir al inicio">
+      <img src="{% static 'images/akaispace_favicon.png' %}" alt="Akaispace">
+      <span>Akaispace</span>
+    </a>
+
+    <div class="error-codigo error-codigo-500" aria-hidden="true">
+      <span>5</span><span class="error-control"><i class="fas fa-plug-circle-xmark"></i></span><span>0</span>
+    </div>
+
+    <h1 class="error-titulo">Algo salió mal de nuestro lado</h1>
+    <p class="error-texto">
+      Tuvimos un problema al cargar esta página. Ya quedó registrado; intenta de nuevo en unos minutos.
+      Si necesitas ayuda, escríbenos a akaispacevaldivia@gmail.com.
+    </p>
+
+    <div class="error-acciones">
+      <a href="/" class="error-btn error-btn-principal"><i class="fas fa-house" aria-hidden="true"></i> Ir al inicio</a>
+      <a href="javascript:location.reload()" class="error-btn error-btn-secundario"><i class="fas fa-rotate-right" aria-hidden="true"></i> Reintentar</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,226 @@
+/* Páginas de error: 404 (con navbar y footer) y 500 (sola). templates/404.html y templates/500.html */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
+
+body {
+  background-color: #EEF1F4;
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+}
+
+.pagina-error {
+  min-height: calc(100vh - 70px);
+  min-height: calc(100svh - 70px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 110px 16px 64px;
+  box-sizing: border-box;
+}
+
+/* la 500 no tiene navbar: ocupa toda la pantalla */
+.pagina-error-sola {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: 48px;
+}
+
+.error-caja {
+  width: 100%;
+  max-width: 620px;
+  text-align: center;
+}
+
+/* "4 [control] 4" */
+.error-codigo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 2vw, 16px);
+  font-size: clamp(5rem, 3rem + 10vw, 9rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #1C253B;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
+.error-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.95em;
+  height: 0.95em;
+  border-radius: 50%;
+  background: #1C253B;
+  color: #00D2D5;
+  font-size: 1em;
+  box-shadow: 0 10px 30px rgba(28, 37, 59, 0.25), inset 0 0 0 0.06em rgba(0, 210, 213, 0.35);
+  animation: error-flotar 3s ease-in-out infinite;
+}
+
+.error-control i {
+  font-size: 0.42em;
+}
+
+@keyframes error-flotar {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-8px) rotate(6deg); }
+}
+
+.error-titulo {
+  margin: 28px 0 12px;
+  font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2rem);
+  font-weight: 700;
+  color: #1C253B;
+}
+
+.error-texto {
+  margin: 0 auto 28px;
+  max-width: 520px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #5b6475;
+}
+
+/* buscador */
+.error-buscar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 460px;
+  margin: 0 auto 24px;
+  padding: 6px 6px 6px 16px;
+  background: #ffffff;
+  border: 1px solid #dfe3ea;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(28, 37, 59, 0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.error-buscar:focus-within {
+  border-color: #4E84A8;
+  box-shadow: 0 0 0 0.2rem rgba(78, 132, 168, 0.2);
+}
+
+.error-buscar > i {
+  color: #8a93a3;
+}
+
+.error-buscar input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 8px 0;
+  margin: 0;
+}
+
+.error-buscar button {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 20px;
+  margin: 0;
+  background: #4E84A8;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.error-buscar button:hover {
+  background: #3f6f8f;
+}
+
+/* botones */
+.error-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.error-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 26px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: transform 0.2s, background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.error-btn:hover {
+  transform: translateY(-2px);
+}
+
+.error-btn-principal {
+  background: #1C253B;
+  color: #ffffff;
+  border: 2px solid #1C253B;
+}
+
+.error-btn-principal:hover {
+  background: #344266;
+  border-color: #344266;
+  color: #ffffff;
+}
+
+.error-btn-secundario {
+  background: transparent;
+  color: #1C253B;
+  border: 2px solid #1C253B;
+}
+
+.error-btn-secundario:hover {
+  background: #1C253B;
+  color: #ffffff;
+}
+
+/* logo de la 500 */
+.error-logo {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto 32px;
+  color: #1C253B;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.error-logo img {
+  width: 48px;
+  height: 48px;
+}
+
+.error-logo:hover {
+  color: #1C253B;
+}
+
+@media (max-width: 575px) {
+  .pagina-error {
+    padding: 96px 16px 48px;
+  }
+  .error-acciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .error-btn {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-control {
+    animation: none;
+  }
+}

@@ -1,0 +1,39 @@
+{% extends "base_tienda.html" %}
+{% load static %}
+{% comment %}
+Página "no encontrada". Django la usa sola cuando DEBUG=False: una URL que no existe o un get_object_or_404
+(por ejemplo, un producto eliminado). Lleva navbar y footer para que el cliente pueda seguir navegando.
+{% endcomment %}
+
+{% block title %}Página no encontrada - Akaispace{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_error.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="pagina-error">
+  <div class="error-caja">
+    <div class="error-codigo" aria-hidden="true">
+      <span>4</span><span class="error-control"><i class="fas fa-gamepad"></i></span><span>4</span>
+    </div>
+
+    <h1 class="error-titulo">Esta página se perdió en otro nivel</h1>
+    <p class="error-texto">
+      La dirección que buscas no existe o el producto ya no está disponible.
+      Prueba buscándolo o vuelve al catálogo.
+    </p>
+
+    <form method="get" action="{% url 'productos_menu' %}" class="error-buscar" role="search">
+      <i class="fas fa-search" aria-hidden="true"></i>
+      <input type="text" name="buscar" placeholder="Buscar productos" aria-label="Buscar productos">
+      <button type="submit">Buscar</button>
+    </form>
+
+    <div class="error-acciones">
+      <a href="{% url 'home' %}" class="error-btn error-btn-principal"><i class="fas fa-house" aria-hidden="true"></i> Ir al inicio</a>
+      <a href="{% url 'productos_menu' %}" class="error-btn error-btn-secundario"><i class="fas fa-store" aria-hidden="true"></i> Ver catálogo</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

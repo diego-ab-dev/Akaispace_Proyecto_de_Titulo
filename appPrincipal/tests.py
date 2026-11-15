@@ -964,6 +964,29 @@ class ErroresInternosTests(TestCase):
         self.assertFalse(Favorito.objects.exists())
 
 
+class PaginasDeErrorTests(TestCase):  # 404 propia con navbar y footer; 500 sin contexto
+    def test_url_inexistente_muestra_la_404_de_la_tienda(self):
+        respuesta = self.client.get('/esta-pagina-no-existe/')
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertTemplateUsed(respuesta, '404.html')
+        self.assertContains(respuesta, 'Esta página se perdió en otro nivel', status_code=404)
+        self.assertContains(respuesta, 'class="nav-tienda"', status_code=404)
+        self.assertContains(respuesta, 'footer-tienda', status_code=404)
+        self.assertContains(respuesta, 'name="buscar"', status_code=404)
+
+    def test_producto_inexistente_muestra_la_404(self):
+        respuesta = self.client.get('/producto/999999/')
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertTemplateUsed(respuesta, '404.html')
+
+    def test_la_500_se_puede_mostrar_sin_contexto(self):
+        # Django la renderiza sin context processors (sin usuario, menús ni portada)
+        from django.template import loader
+        html = loader.get_template('500.html').render()
+        self.assertIn('Algo salió mal de nuestro lado', html)
+        self.assertNotIn('nav-tienda', html)
+
+
 class PortadaSitioTests(TestCase): 
     def setUp(self):
         from .models import Destacado
