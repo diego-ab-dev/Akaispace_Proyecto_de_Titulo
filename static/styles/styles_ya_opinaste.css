@@ -33,14 +33,14 @@ body {
     margin: 0 auto 20px auto;
 }
 
-h1 {
+.message-card h1 {
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 15px;
     color: #333;
 }
 
-p {
+.message-card p {
     color: #666;
     margin-bottom: 30px;
     line-height: 1.5;
@@ -81,4 +81,28 @@ p {
 
 .message-card p.mb-1 {
     margin-bottom: 5px !important; 
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 575px) {
+    .message-card {
+        padding: 28px 20px;
+    }
+    .icon-circle {
+        width: 64px;
+        height: 64px;
+        font-size: 2rem;
+        margin-bottom: 16px;
+    }
+    .message-card h1 {
+        font-size: 1.3rem;
+    }
+    .message-card p {
+        margin-bottom: 22px;
+        font-size: 0.95rem;
+    }
+    .btn-volver {
+        display: block;
+        width: 100%;
+    }
 }

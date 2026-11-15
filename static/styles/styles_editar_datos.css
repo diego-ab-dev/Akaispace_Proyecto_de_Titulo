@@ -98,3 +98,33 @@ body {
     background-color: #344266;
     color: white;
 }
+
+/* ============ Responsive ============
+   celular: menos relleno y los botones Guardar / Cancelar se reparten el ancho de la tarjeta */
+@media (max-width: 575px) {
+    .edit-container,
+    .pass-card {
+        padding: 24px 18px;
+    }
+    .form-title {
+        font-size: 1.45rem;
+        margin-bottom: 18px;
+    }
+    .form-label {
+        font-size: 1rem;
+    }
+    .form-control,
+    .form-select {
+        font-size: 1rem;
+    }
+    .button-group {
+        gap: 12px;
+        margin-top: 26px;
+    }
+    .btn-guardar,
+    .btn-cancelar {
+        flex: 1;
+        width: auto;
+        padding: 11px 0;
+    }
+}

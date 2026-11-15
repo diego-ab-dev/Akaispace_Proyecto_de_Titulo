@@ -230,14 +230,6 @@ ul { list-style: none; padding: 0; margin: 0; }
     }
 }
 
-@media (max-width: 992px) {
-    .top-header-grid { grid-template-columns: 1fr; text-align: center; gap: 15px; }
-    .header-right { justify-content: center; }
-    .design-table { display: block; overflow-x: auto; white-space: nowrap; }
-    .history-item-title {
-        max-width: 150px; 
-    }
-}
 
 .estado-preparacion { color: #0d6efd; font-weight: bold; }   
 .estado-enviado { color: #6610f2; font-weight: bold; }       
@@ -246,3 +238,168 @@ ul { list-style: none; padding: 0; margin: 0; }
 .estado-listo-retiro { color: #0a8fa8; font-weight: bold; }      
 .estado-entregado { color: #198754; font-weight: bold; }     
 .estado-anulada { color: #dc3545; font-weight: bold; }  
+
+/* ============ Historial de compras responsive ============
+   escritorio (>= 992px): tabla completa
+   tablet y celular (< 992px): cada compra es una tarjeta con sus datos etiquetados (usa los data-label del HTML);
+   en tablet las tarjetas van en 2 columnas, en celular en una */
+
+/* encabezado en tablet y celular:  [      Historial de Compras      ]
+                                    [← Regresar          Filtrar Por] */
+@media (max-width: 991px) {
+    .main-wrapper {
+        padding: 16px 4px;
+    }
+    .top-header-grid {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "titulo titulo"
+            "volver filtro";
+        row-gap: 14px;
+    }
+    .header-center {
+        grid-area: titulo;
+        text-align: center;
+    }
+    .header-left {
+        grid-area: volver;
+    }
+    .header-right {
+        grid-area: filtro;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-wrapper {
+        padding: 8px 0;
+    }
+    .header-center h1 {
+        font-size: 1.5rem;
+        white-space: normal;
+    }
+    .btn-filtrar {
+        padding: 8px 16px;
+    }
+}
+
+/* tablet: tarjetas en 2 columnas */
+@media (min-width: 576px) and (max-width: 991px) {
+    .design-table tbody {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .design-table tbody tr {
+        margin-bottom: 0 !important;
+        display: flex !important;
+        flex-direction: column;
+    }
+    /* el botón queda abajo aunque una tarjeta tenga más productos que su vecina */
+    .design-table td.action-cell {
+        margin-top: auto;
+    }
+    .design-table tr:has(td.no-data) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 991px) {
+    /* la tabla pasa a tarjetas */
+    .table-wrapper {
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+    }
+    .design-table {
+        min-width: 0;
+    }
+    .design-table,
+    .design-table tbody,
+    .design-table tr,
+    .design-table td {
+        display: block;
+        width: 100%;
+    }
+    .design-table thead {
+        display: none;
+    }
+    .design-table tbody tr {
+        background-color: #fff;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+        padding: 12px 16px;
+        margin-bottom: 14px;
+    }
+    .design-table tbody tr:last-child {
+        border-bottom: none;
+    }
+    .design-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 6px 0;
+        text-align: right;
+    }
+    .design-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #4e84a8;
+        text-align: left;
+        flex-shrink: 0;
+    }
+    /* número de compra como título de la tarjeta */
+    .design-table td.celda-id {
+        justify-content: flex-start;
+        gap: 0;
+        font-size: 1.05rem;
+        text-align: left !important;
+        padding-bottom: 10px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid #eef0f3;
+    }
+    .design-table td.celda-id::before {
+        content: "Compra #";
+        color: #000;
+    }
+    /* productos: la etiqueta arriba y la lista debajo a todo el ancho */
+    .design-table td.celda-productos {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        text-align: left;
+    }
+    .product-list li {
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .history-item-title {
+        max-width: none;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .design-table td.action-cell {
+        padding-top: 10px;
+    }
+    .design-table td.action-cell::before {
+        display: none;
+    }
+    .btn-action {
+        width: 100%;
+        padding: 10px 0;
+        font-size: 0.9rem;
+    }
+    /* sin compras: un solo aviso centrado */
+    .design-table td.no-data {
+        display: block;
+        text-align: center;
+    }
+    .design-table td.no-data::before {
+        display: none;
+    }
+    .pagination-wrapper {
+        margin: 24px 0 32px;
+        gap: 6px;
+    }
+}

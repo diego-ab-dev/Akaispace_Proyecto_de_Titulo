@@ -333,3 +333,56 @@ input.is-invalid + .evidencia-box {
     background-color: #4a6f8a;
     border-color: #4a6f8a;
 }
+
+
+/* ============ Solicitud de devolución responsive ============
+   escritorio (>= 992px): formulario y tarjeta de envío lado a lado
+   tablet y celular: la tarjeta de envío va debajo del formulario */
+@media (max-width: 991px) {
+    .devolucion-header {
+        margin-bottom: 28px !important;
+        row-gap: 12px;
+    }
+    .custom-card {
+        padding: 24px;
+    }
+    /* el producto ya se ve arriba en el formulario: aquí basta el botón de enviar */
+    .custom-card .sidebar-text,
+    .custom-card .mini-preview,
+    .custom-card hr {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .page-title {
+        font-size: 1.3rem;
+    }
+    .custom-card {
+        padding: 18px;
+    }
+    .product-image-box {
+        width: 80px;
+        height: 80px;
+        margin-right: 14px !important;
+        flex-shrink: 0;
+    }
+    .product-name {
+        font-size: 1.1rem;
+    }
+    .product-meta {
+        font-size: 0.95rem;
+    }
+    .form-label {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+    /* 16px: en iPhone un campo con letra más chica hace zoom al tocarlo */
+    .custom-textarea,
+    .form-control {
+        font-size: 1rem;
+    }
+    .evidencia-container {
+        flex-wrap: wrap;
+    }
+}

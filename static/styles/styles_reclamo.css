@@ -91,3 +91,35 @@ h1 {
     background-color: #1F2533;
     color: white;
 }
+
+/* ============ Ingreso de reclamo responsive ============ */
+@media (max-width: 767px) {
+    .reclamo-card {
+        padding: 32px 28px;
+    }
+    h1 {
+        font-size: 1.6rem;
+        margin-bottom: 24px;
+    }
+}
+
+@media (max-width: 575px) {
+    .reclamo-card {
+        padding: 22px 18px;
+    }
+    h1 {
+        font-size: 1.4rem;
+        margin-bottom: 20px;
+    }
+    .form-label {
+        font-size: 1rem;
+    }
+    /* 16px: en iPhone un campo con letra más chica hace zoom al tocarlo */
+    .form-control {
+        font-size: 1rem;
+    }
+    .buttons-row {
+        gap: 12px;
+        margin-top: 28px;
+    }
+}

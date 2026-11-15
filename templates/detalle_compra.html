@@ -248,7 +248,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let progreso = (index / maxIndex) * 100;
     progreso = Math.max(0, Math.min(100, progreso));
 
-    document.getElementById("shippingProgress").style.transform = "scaleX(" + (progreso/100) + ")";
+    // el CSS decide si la línea avanza a lo ancho (escritorio) o hacia abajo (celular)
+    document.getElementById("shippingProgress").style.setProperty("--progreso", progreso / 100);
 
     document.querySelectorAll(".step-item").forEach((step, i) => {
         if (i < index) {

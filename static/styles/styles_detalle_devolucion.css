@@ -196,15 +196,6 @@ h1 {
     to {opacity: 1;}
 }
 
-@media (max-width: 768px) {
-    .page-header { display: flex; flex-direction: column; gap: 15px; }
-    .btn-regresar { position: relative; transform: none; }
-    .col-md-7 { margin-bottom: 20px; }
-    
-    .img-thumbnail-wrapper {
-        height: 100px; 
-    }
-}
 
 .estado-texto {
     font-weight: 700; 
@@ -313,5 +304,79 @@ h1 {
 @media (max-width: 576px) {
     .refund-amount {
         font-size: 1rem;
+    }
+}
+
+
+/* ============ Detalle de devolución responsive ============
+   escritorio (>= 992px): solicitud y respuesta lado a lado
+   tablet y celular: la respuesta va debajo; en celular el reembolso baja bajo el producto */
+@media (max-width: 991px) {
+    .main-container {
+        padding: 16px 4px;
+    }
+    .page-header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .btn-regresar {
+        position: static;
+        transform: none;
+        align-self: flex-start;
+    }
+    .main-container > .row > .col-lg-5 {
+        margin-top: 20px;
+    }
+    .detail-card {
+        padding: 22px;
+        height: auto;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-container {
+        padding: 8px 0;
+    }
+    h1 {
+        font-size: 1.45rem;
+    }
+    .detail-card {
+        padding: 18px;
+    }
+    .label-bold,
+    .date-text {
+        font-size: 1rem;
+    }
+    .text-content {
+        font-size: 0.95rem;
+        padding: 12px;
+    }
+    .btn-ver-compra {
+        font-size: 0.88rem;
+    }
+    .img-thumbnail-wrapper {
+        height: 90px;
+    }
+    .empty-response-box {
+        min-height: 150px;
+    }
+    .close-btn {
+        top: 12px;
+        right: 18px;
+    }
+}
+
+@media (max-width: 575px) {
+    /* el reembolso pasa bajo el producto, separado por una línea en vez de la barra lateral */
+    .reembolso-col {
+        border-left: 0 !important;
+        border-top: 1px solid #dee2e6;
+        margin-top: 12px;
+        padding-top: 10px;
+    }
+    .refund-amount {
+        font-size: 1.15rem;
     }
 }

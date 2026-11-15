@@ -135,8 +135,8 @@ body {
     right: 60px;
     height: 3px;
     background-color: #D4AF37;
-    transform-origin: left center;   
-    transform: scaleX(0);            
+    transform-origin: left center;
+    transform: scaleX(var(--progreso, 0));
     z-index: 1;
     transition: transform 0.4s ease-in-out;
 }
@@ -352,15 +352,6 @@ body {
     color: white; 
 }
 
-@media (max-width: 992px) {
-    .main-container { flex-direction: column; }
-    .right-sidebar { width: 100%; border-left: none; border-top: 1px solid #ddd; }
-    .shipping-timeline { overflow-x: auto; padding-bottom: 20px; }
-    .shipping-timeline::before { width: 100%; min-width: 500px; }
-    .left-column { padding: 20px; }
-    .btn-regresar { position: relative; margin-bottom: 10px;}
-    .page-header { flex-direction: column; align-items: flex-start; }
-}
 
 
 #notif-box {
@@ -504,4 +495,170 @@ body {
 
 .product-left {
     flex: 1 1 220px;
+}
+
+
+/* la etiqueta "Dirección:" / "Retiro en:" no se parte cuando la dirección es larga */
+.address-details .d-flex > strong {
+    flex-shrink: 0;
+}
+
+/* datos del pago uno bajo otro (método, tarjeta, orden): lado a lado quedaban en columnas muy angostas */
+.payment-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+/* ============ Detalle de compra responsive ============
+   escritorio (>= 992px): productos y envío a la izquierda, resumen en la barra lateral derecha
+   tablet (768-991px): el resumen baja como una tarjeta más, debajo del envío
+   celular (< 768px): además la línea de tiempo del envío pasa a ser vertical y los botones van a lo ancho */
+@media (max-width: 991px) {
+    .main-container {
+        flex-direction: column;
+        min-height: 0;
+    }
+    .left-column {
+        padding: 16px 4px 0;
+    }
+    .right-sidebar {
+        width: auto;
+        margin: 0 4px 20px;
+        padding: 28px;
+        border-left: none;
+        border-radius: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+    .button {
+        margin-top: 24px;
+    }
+    .btn-reclamo {
+        margin-top: 20px;
+        align-self: stretch;
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 767px) {
+    .left-column {
+        padding: 8px 0 0;
+    }
+    .page-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .btn-regresar {
+        position: static;
+        align-self: flex-start;
+    }
+    .page-title {
+        font-size: 1.45rem;
+        text-align: center;
+    }
+    .info-card {
+        padding: 18px;
+        border-radius: 14px;
+        margin-bottom: 18px;
+    }
+    .card-title {
+        font-size: 1.15rem;
+        margin-bottom: 16px;
+    }
+    .product-name {
+        font-size: 1rem;
+    }
+    /* sin scroll interno: la lista de productos crece con la página */
+    .productos-scroll {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+    }
+    .product-actions {
+        width: 100%;
+        gap: 10px;
+    }
+    /* compras no entregadas: sin botones, el contenedor vacío no deja un hueco */
+    .product-actions:not(:has(*)) {
+        display: none;
+    }
+    .product-actions > a,
+    .product-actions > button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+
+    /* línea de tiempo vertical:  (o) En Preparación
+                                   |   12/11/2026 10:30
+                                  (o) Enviado ...       */
+    .shipping-timeline {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 18px;
+        margin: 8px 0 24px;
+    }
+    .shipping-timeline::before,
+    .shipping-timeline .progress-line {
+        top: 22px;
+        bottom: 22px;
+        left: 20px;
+        right: auto;
+        width: 3px;
+        height: auto;
+    }
+    .shipping-timeline .progress-line {
+        transform-origin: center top;
+        transform: scaleY(var(--progreso, 0));
+    }
+    .step-item {
+        width: auto;
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        grid-template-areas:
+            "icono nombre"
+            "icono fecha";
+        column-gap: 14px;
+        align-items: center;
+    }
+    .step-icon {
+        grid-area: icono;
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    .step-label {
+        grid-area: nombre;
+        align-self: end;
+        line-height: 1.2;
+    }
+    .step-date {
+        grid-area: fecha;
+        align-self: start;
+    }
+
+    .address-details p,
+    .address-details div {
+        font-size: 0.92rem;
+        overflow-wrap: anywhere;
+    }
+    .right-sidebar {
+        margin: 0 0 20px;
+        padding: 20px 18px;
+        border-radius: 14px;
+    }
+    .summary-row {
+        font-size: 0.95rem;
+    }
+    #notif-box {
+        top: 80px;
+        left: 12px;
+        right: 12px;
+        text-align: center;
+    }
 }

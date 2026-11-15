@@ -192,12 +192,6 @@ body {
     }
 }
 
-@media (max-width: 768px) {
-    .page-header { margin-top: 50px; }
-    .btn-regresar { top: 0; }
-    .devolucion-card .row > div { text-align: center; margin-bottom: 15px; }
-    .product-thumb { margin: 0 auto; }
-}
 
 .devolucion-product-name {
     display: -webkit-box;
@@ -230,4 +224,76 @@ body {
 
 .estado-rechazada {
     color: #f44336; 
+}
+
+/* ============ Lista de devoluciones responsive ============
+   tablet y escritorio (>= 768px): imagen, datos, fecha y botón en una fila
+   celular (< 768px): imagen al lado de los datos; fecha y botón "Ver Más" (a todo el ancho) debajo */
+@media (max-width: 991px) {
+    .main-container {
+        padding: 16px 4px;
+    }
+    .page-header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .page-header h2 {
+        margin: 0;
+    }
+    .btn-regresar {
+        position: static;
+        transform: none;
+        align-self: flex-start;
+    }
+    .devolucion-card {
+        padding: 18px 20px;
+    }
+    .btn-ver-mas {
+        padding: 10px 26px;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-container {
+        padding: 8px 0;
+    }
+    .page-header h2 {
+        font-size: 1.4rem;
+    }
+    .devolucion-card {
+        padding: 14px;
+        border-radius: 12px;
+        margin-bottom: 14px;
+    }
+    .devolucion-card .row {
+        row-gap: 10px;
+    }
+    .product-thumb {
+        width: 72px;
+        height: 72px;
+    }
+    .devolucion-id {
+        font-size: 1rem;
+    }
+    .info-label {
+        font-size: 0.92rem;
+        margin-bottom: 0;
+    }
+    .info-value {
+        font-size: 0.92rem;
+    }
+    .fecha-col {
+        font-size: 0.92rem;
+    }
+    .btn-ver-mas {
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+    .pagination-wrapper {
+        margin: 24px 0 32px;
+        gap: 6px;
+    }
 }

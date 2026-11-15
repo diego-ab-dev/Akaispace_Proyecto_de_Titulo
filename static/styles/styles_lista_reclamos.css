@@ -173,12 +173,6 @@ h1 {
     }
 }
 
-@media (max-width: 992px) {
-    .page-header { display: flex; flex-direction: column; gap: 10px; }
-    .btn-regresar { position: relative; transform: none; }
-    .reclamo-card .row > div { margin-bottom: 15px; }
-    .btn-container-col { text-align: left !important; }
-}
 
 
 .estado-texto {
@@ -191,4 +185,65 @@ h1 {
 
 .estado-respondido {
     color: #4CAF50; 
+}
+
+
+/* ============ Lista de reclamos responsive ============
+   escritorio (>= 992px): cada reclamo en una fila de 4 columnas
+   tablet (768-991px): datos y asunto lado a lado; descripción y botón en la fila de abajo
+   celular (< 768px): todo en una columna y el botón "Ver Más" a todo el ancho */
+@media (max-width: 991px) {
+    .main-container {
+        padding: 16px 4px;
+    }
+    .page-header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+    .btn-regresar {
+        position: static;
+        transform: none;
+        align-self: flex-start;
+    }
+    .reclamo-card .row {
+        row-gap: 12px;
+    }
+    .btn-container-col {
+        text-align: right !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-container {
+        padding: 8px 0;
+    }
+    h1 {
+        font-size: 1.45rem;
+    }
+    .reclamo-card {
+        padding: 16px 18px;
+        border-radius: 12px;
+        margin-bottom: 14px;
+    }
+    .reclamo-card .row {
+        row-gap: 6px;
+    }
+    .info-col {
+        font-size: 0.92rem;
+        overflow-wrap: anywhere;
+    }
+    .btn-container-col {
+        margin-top: 8px;
+    }
+    .btn-ver-mas {
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+    .pagination-wrapper {
+        margin: 24px 0 32px;
+        gap: 6px;
+    }
 }

@@ -122,11 +122,6 @@ h1 {
 }
 
 
-@media (max-width: 768px) {
-    .page-header { display: flex; flex-direction: column; gap: 15px; }
-    .btn-regresar { position: relative; transform: none; }
-    .col-md-6 { margin-bottom: 20px; }
-}
 
 
 .estado-texto {
@@ -150,4 +145,57 @@ h1 {
     min-height: 200px;        
     height: 100%;              
     opacity: 0.7;             
+}
+
+/* ============ Detalle de reclamo responsive ============
+   tablet y escritorio (>= 768px): reclamo y respuesta lado a lado
+   celular (< 768px): la respuesta va debajo del reclamo */
+@media (max-width: 991px) {
+    .main-container {
+        padding: 16px 4px;
+    }
+    .detail-card {
+        padding: 22px;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-container {
+        padding: 8px 0;
+    }
+    .page-header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .btn-regresar {
+        position: static;
+        transform: none;
+        align-self: flex-start;
+    }
+    h1 {
+        font-size: 1.45rem;
+    }
+    .main-container > .row > .col-md-6 + .col-md-6 {
+        margin-top: 16px;
+    }
+    .detail-card {
+        padding: 18px;
+        height: auto;
+    }
+    .label-bold,
+    .date-text {
+        font-size: 1rem;
+    }
+    .text-content {
+        font-size: 0.95rem;
+        padding: 12px;
+    }
+    .btn-ver-compra {
+        font-size: 0.88rem;
+    }
+    .empty-response-box {
+        min-height: 150px;
+    }
 }

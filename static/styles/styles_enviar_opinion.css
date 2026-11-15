@@ -162,3 +162,29 @@ fieldset[data-campo] {
     margin-right: 0;
     padding: 0;
 }
+
+/* ============ Enviar opinión responsive ============ */
+@media (max-width: 575px) {
+    .opinion-card {
+        padding: 24px 18px;
+    }
+    h1 {
+        font-size: 1.3rem;
+        margin-bottom: 18px;
+        padding: 0;
+    }
+    .star-container {
+        gap: 6px;
+    }
+    .star-icon {
+        font-size: 1.9rem;
+    }
+    .custom-textarea {
+        font-size: 1rem;
+        height: 130px;
+        margin-bottom: 22px;
+    }
+    .actions-row {
+        gap: 12px;
+    }
+}

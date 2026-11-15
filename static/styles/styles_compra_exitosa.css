@@ -224,3 +224,61 @@ body {
     margin: 15vh auto 0;
     padding: 0 16px;
 }
+
+
+/* ============ Compra exitosa / pago no completado responsive ============ */
+.info-row {
+    gap: 16px;
+}
+.info-row > span:last-child {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+    .success-header {
+        padding: 28px 16px;
+        margin-bottom: 24px;
+        border-radius: 12px;
+    }
+    .success-header h1 {
+        font-size: 1.6rem;
+    }
+    .icon-wrapper i.fa-shopping-bag {
+        font-size: 2.8rem;
+    }
+    .content-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .info-card {
+        padding: 18px;
+    }
+    .info-row,
+    .info-grid {
+        font-size: 0.93rem;
+    }
+    .info-grid {
+        gap: 8px 14px;
+    }
+    /* botones Comprobante / Ir a mis compras / Intentar de nuevo a todo el ancho */
+    .acciones-compra {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+    .acciones-compra .button {
+        --width: 100%;
+        --height: 40px;
+    }
+    .acciones-compra .btn {
+        width: 100%;
+    }
+    .product-card .prod-img {
+        width: 64px !important;
+        height: 64px !important;
+        flex-shrink: 0;
+    }
+    .prod-info {
+        min-width: 0;
+    }
+}

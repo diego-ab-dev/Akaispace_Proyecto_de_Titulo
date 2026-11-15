@@ -28,3 +28,9 @@
 .link-volver:hover {
     color: #1c253b;
 }
+
+@media (max-width: 575px) {
+    .acciones-admin {
+        flex-direction: column;
+    }
+}

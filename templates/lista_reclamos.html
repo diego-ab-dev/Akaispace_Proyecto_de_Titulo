@@ -21,7 +21,7 @@
         <div class="reclamo-card">
             <div class="row align-items-center">
 
-                <div class="col-lg-3 info-col">
+                <div class="col-12 col-md-6 col-lg-3 info-col">
                     <div><span class="label-bold">ID {{ reclamo.id }}</span></div>
 
                     <div>
@@ -37,19 +37,19 @@
                     </div>
                 </div>
 
-                <div class="col-lg-3 info-col">
+                <div class="col-12 col-md-6 col-lg-3 info-col">
                     <span class="label-bold">Asunto:</span> 
                     <span class="text-value">{{ reclamo.asunto|truncatechars:15 }}</span>
                 </div>
 
-                <div class="col-lg-4 info-col">
+                <div class="col-12 col-md-8 col-lg-4 info-col">
                     <span class="label-bold">Descripción:</span> 
                     <span class="desc-text">
                         {{ reclamo.descripcion|truncatechars:30 }}
                     </span>
                 </div>
 
-                <div class="col-lg-2 text-end btn-container-col">
+                <div class="col-12 col-md-4 col-lg-2 text-end btn-container-col">
                     <a href="{% url 'ver_detalle_reclamo' reclamo.id %}" class="btn-ver-mas">
                         Ver Más
                     </a>

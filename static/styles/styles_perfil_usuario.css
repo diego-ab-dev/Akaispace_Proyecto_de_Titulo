@@ -246,25 +246,6 @@ a {
     transform: translateY(-2px);
 }
 
-@media (max-width: 768px) {
-    .header-profile {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-    .page-title {
-        order: -1; 
-    }
-    .btn-back {
-        align-self: flex-start;
-    }
-    .btn-logout {
-        align-self: flex-end;
-        width: 100%;
-        justify-content: center;
-    }
-}
-
 .profile-product-name {
     display: -webkit-box;
     -webkit-line-clamp: 2;     
@@ -339,4 +320,96 @@ a {
 
 .consentimiento-navegacion button {
     border: none;
+}
+
+/* ============ Perfil responsive ============
+   escritorio (>= 992px): compras + datos arriba, devoluciones / opiniones / reclamos en 3 columnas
+   tablet (768-991px): devoluciones y opiniones en 2 columnas, reclamos a todo el ancho
+   celular (< 768px): todo en una columna; el título va arriba y "Regresar" / "Salir" en una fila debajo */
+
+/* pantallas táctiles: no hay hover, así que los botones muestran su texto e ícono desde el inicio */
+@media (hover: none) {
+    .button-more .button-text,
+    .button-more .iconer {
+        transform: none;
+    }
+    .Btn {
+        width: 100px;
+    }
+    .Btn .sign {
+        width: 30%;
+        padding-left: 14px;
+    }
+    .Btn .text {
+        opacity: 1;
+        width: 70%;
+        font-size: 1rem;
+        padding-right: 10px;
+    }
+}
+
+@media (max-width: 991px) {
+    .main-container {
+        padding: 16px 4px;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-container {
+        padding: 8px 0;
+    }
+    .header-profile {
+        flex-wrap: wrap;
+        row-gap: 14px;
+        margin-bottom: 20px;
+    }
+    .page-title {
+        order: -1;
+        flex-basis: 100%;
+        text-align: center;
+        font-size: 1.6rem;
+    }
+    .logout-wrapper {
+        width: auto;
+    }
+    .profile-card {
+        padding: 18px;
+        border-radius: 12px;
+    }
+    .card-header-title {
+        font-size: 1.1rem;
+        margin-bottom: 14px;
+    }
+    .card-content {
+        margin-bottom: 14px;
+    }
+    .card-content p,
+    .card-content .d-flex,
+    .user-details p,
+    .user-details .d-flex {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+    /* los textos largos (correo, dirección) se cortan dentro de la tarjeta */
+    .profile-text-limit,
+    .profile-product-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .button-more {
+        padding: 10px 15px;
+    }
+    .button-text {
+        font-size: 1.05em;
+    }
+    .consentimiento-navegacion p {
+        font-size: 0.92rem;
+    }
+    /* el aviso flotante no se sale de la pantalla y queda bajo la barra de navegación */
+    #notif-box {
+        top: 80px;
+        left: 12px;
+        right: 12px;
+        text-align: center;
+    }
 }

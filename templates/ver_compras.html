@@ -51,17 +51,18 @@
                 <tbody>
                     {% for compra in page_obj %}
                     <tr>
-                        <td class="text-center fw-bold">{{ compra.id }}</td>
-                        <td class="fw-bold">${{ compra.total|formato_chileno }}</td>
-                        <td>{{ compra.fecha|date:"d/m/Y" }}</td>
-                        <td class="fw-bold">
+                        {# data-label: en celular la tabla se muestra como tarjetas y cada dato lleva su etiqueta #}
+                        <td class="text-center fw-bold celda-id">{{ compra.id }}</td>
+                        <td class="fw-bold" data-label="Total">${{ compra.total|formato_chileno }}</td>
+                        <td data-label="Fecha">{{ compra.fecha|date:"d/m/Y" }}</td>
+                        <td class="fw-bold" data-label="Estado">
                             {% include "partials/estado_envio.html" with venta=compra %}
                         </td>
 
-                        <td>
+                        <td class="celda-productos" data-label="Productos">
                             <ul class="product-list">
                                 {% for item in compra.producto_venta.all %}
-                                <li class="d-flex align-items-center">
+                                <li class="d-flex align-items-center min-w-0">
                                     <span class="history-item-title me-1" title="{{ item.producto.nombre }}">
                                         {{ item.producto.nombre }}
                                     </span>

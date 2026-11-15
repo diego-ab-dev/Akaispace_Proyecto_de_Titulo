@@ -21,7 +21,7 @@
         <div class="devolucion-card">
             <div class="row align-items-center">
 
-                <div class="col-md-2 text-center">
+                <div class="col-auto col-md-2 text-center">
                     <div class="product-thumb">
                         {% if devolucion.producto.imagen_principal %}
                             <img src="{{ devolucion.producto.imagen_principal.url }}" alt="{{ devolucion.producto.nombre }}">
@@ -31,7 +31,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col col-md-4 min-w-0">
                     <div class="devolucion-id">ID #{{ devolucion.id }}</div>
 
                     <div class="mb-1">
@@ -49,12 +49,12 @@
                     </div>
                 </div>
 
-                <div class="col-md-3 text-center">
+                <div class="col-12 col-md-3 text-md-center fecha-col">
                     <span class="info-label" style="display:inline;">Fecha: </span>
                     <span class="info-value">{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</span>
                 </div>
 
-                <div class="col-md-3 text-end">
+                <div class="col-12 col-md-3 text-end btn-col">
                     <a href="{% url 'ver_detalle_devolucion' devolucion.id %}" class="btn-ver-mas">
                         Ver Más
                     </a>

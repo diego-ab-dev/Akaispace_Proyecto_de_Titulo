@@ -206,16 +206,6 @@ h1 {
 }
 
 
-@media (max-width: 768px) {
-    .page-header {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-    .btn-regresar { position: relative; transform: none; }
-    .opinion-card .row { text-align: left; }
-    .info-col, .date-col, .comment-col { margin-bottom: 10px; }
-}
 
 
 .opinion-link {
@@ -232,4 +222,69 @@ h1 {
 /* nombres de producto sin espacios: se cortan en vez de salirse */
 .product-name {
     overflow-wrap: anywhere;
+}
+
+
+/* ============ Lista de opiniones responsive ============
+   escritorio (>= 992px): imagen, producto, fecha y comentario en una fila
+   tablet y celular: imagen al lado del producto y la puntuación; fecha y comentario debajo */
+@media (max-width: 991px) {
+    .main-container {
+        padding: 16px 4px;
+    }
+    .page-header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .btn-regresar {
+        position: static;
+        transform: none;
+        align-self: flex-start;
+    }
+    .opinion-card .row {
+        row-gap: 10px;
+    }
+    .info-col {
+        padding-left: 4px;
+        min-width: 0;
+    }
+    .date-text {
+        font-size: 0.92rem;
+    }
+    .comment-box {
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 767px) {
+    .main-container {
+        padding: 8px 0;
+    }
+    h1 {
+        font-size: 1.45rem;
+    }
+    .opinion-card {
+        padding: 14px;
+        margin-bottom: 14px;
+    }
+    .product-img-container {
+        width: 72px;
+        height: 72px;
+    }
+    .product-name {
+        font-size: 1rem;
+    }
+    .rating-row {
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+    }
+    .comment-box {
+        font-size: 0.9rem;
+    }
+    .pagination-wrapper {
+        margin: 24px 0 32px;
+        gap: 6px;
+    }
 }
