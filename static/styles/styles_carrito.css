@@ -915,3 +915,175 @@ a:hover {
   border-radius: 0 4px 4px 0;
 }
 
+
+/* ============ Carrito responsive ============
+   escritorio (>= 992px): productos y resumen lado a lado (como antes)
+   tablet y celular: el resumen va debajo a todo el ancho; en celular cada producto se ordena en dos filas */
+
+/* columnas apiladas: tablet y celular */
+@media (max-width: 991px) {
+  #carrito-container {
+    padding-top: 90px;
+    padding-bottom: 40px;
+  }
+  #carrito-container > .card {
+    width: calc(100% - 32px);
+    max-width: 760px;
+  }
+  .cart {
+    padding: 1.75rem;
+    border-radius: 1rem 1rem 0 0;
+  }
+  .summary {
+    padding: 1.75rem;
+    border-radius: 0 0 1rem 1rem;
+    border-top: 1px solid #eef0f3;
+  }
+  .card:has(.recos-carrito) .summary {
+    border-radius: 0;
+  }
+  .title {
+    margin-bottom: 1rem;
+  }
+  .summary h5 {
+    margin-top: 0;
+  }
+  .back-to-shop {
+    margin-top: 1.5rem;
+  }
+  /* sin scroll interno: la lista de productos crece con la página */
+  .products-scroll-container {
+    max-height: none;
+    overflow: visible;
+  }
+  /* botón de pagar a lo ancho */
+  #form-proceder {
+    padding-bottom: 0;
+  }
+  #form-proceder button {
+    width: 100%;
+  }
+}
+
+/* celular */
+@media (max-width: 575px) {
+  #carrito-container {
+    padding-top: 76px;
+    padding-bottom: 24px;
+  }
+  #carrito-container > .card {
+    width: calc(100% - 24px);
+    margin: 0 auto;
+  }
+  .cart,
+  .summary {
+    padding: 1.1rem;
+  }
+  .title b {
+    font-size: 1.3rem;
+  }
+  .title h4 {
+    margin-bottom: 0;
+  }
+
+  /* cada producto: [casilla] [imagen] [nombre .......... ✖]
+                                     [cantidad ...... precio] */
+  .products-scroll-container .main {
+    display: grid !important;
+    grid-template-columns: auto 60px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "chk img nombre quitar"
+      "chk img cantidad precio";
+    column-gap: 10px;
+    row-gap: 6px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #eef0f3;
+  }
+  .products-scroll-container .main:last-child {
+    border-bottom: none;
+  }
+  .products-scroll-container .main > div,
+  .products-scroll-container .main > a {
+    width: auto;
+    max-width: none;
+    padding: 0;
+  }
+  .main > .col-check {
+    grid-area: chk;
+  }
+  .main > .col-img {
+    grid-area: img;
+  }
+  .main > .col-img img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+  }
+  .main > .col-nombre {
+    grid-area: nombre;
+    min-width: 0;
+    align-self: start;
+  }
+  .main > .col-nombre .row {
+    font-size: 0.85rem;
+  }
+  .main > .col-nombre .cart-item-title {
+    font-size: 0.92rem;
+    color: #1C253B !important;
+  }
+  .main > .col-cantidad {
+    grid-area: cantidad;
+  }
+  .main > .col-cantidad form {
+    padding: 0;
+  }
+  .main > .col-precio {
+    grid-area: precio;
+    text-align: right;
+    font-weight: 600;
+    align-self: start;
+  }
+  .main > .btn-eliminar-item {
+    grid-area: quitar;
+    justify-self: end;
+    align-self: start;
+    margin: 0;
+  }
+
+  /* "Seleccionar todo" y los botones en una sola fila */
+  .acciones-carrito {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .recos-carrito {
+    padding: 1.5rem 1.1rem;
+  }
+}
+
+/* modal "Tus datos": nunca más ancho ni más alto que la pantalla */
+.modal-content-envio {
+  width: min(350px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+/* celulares muy angostos: el precio va bajo el nombre y la cantidad en su propia fila, sin montarse */
+@media (max-width: 380px) {
+  .products-scroll-container .main {
+    grid-template-columns: auto 52px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "chk img nombre quitar"
+      "chk img precio precio"
+      "chk img cantidad cantidad";
+  }
+  .main > .col-img img {
+    width: 52px;
+    height: 52px;
+  }
+  .main > .col-precio {
+    text-align: left;
+  }
+}
