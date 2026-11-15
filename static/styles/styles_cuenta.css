@@ -1,0 +1,30 @@
+/* Páginas de "Mi cuenta" con navbar y footer (templates/base_cuenta.html).
+   Varias hojas de estas páginas centraban todo el body con flex y height: 100vh; aquí el body vuelve a ser
+   normal (navbar arriba, contenido, footer abajo) y el centrado pasa al <main> cuando la página lo pide. */
+body.pagina-cuenta {
+  display: block !important;
+  height: auto !important;
+  min-height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cuenta-main {
+  min-height: calc(100vh - 70px);
+  min-height: calc(100svh - 70px);
+  padding: 96px 16px 56px;
+  box-sizing: border-box;
+}
+
+.cuenta-main.cuenta-centrada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 575px) {
+  .cuenta-main {
+    padding: 84px 12px 40px;
+  }
+}

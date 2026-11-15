@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static %}
 
 {% block title %}Ingreso de Reclamo{% endblock %}
@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="{% static 'styles/styles_reclamo.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta_centrada %} cuenta-centrada{% endblock %}
+
+{% block cuenta %}
 <div class="reclamo-card">
     <h1>Ingreso de Reclamo</h1>
 

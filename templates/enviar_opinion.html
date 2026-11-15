@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static %}
 
 {% block title %}Tu Opinión - {{ producto.nombre }}{% endblock %}
@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="{% static 'styles/styles_enviar_opinion.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta_centrada %} cuenta-centrada{% endblock %}
+
+{% block cuenta %}
     <div class="opinion-card">
         <h1 title="Tu opinión de {{ producto.nombre }}">
             Tu opinión de "{{ producto.nombre }}"

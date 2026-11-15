@@ -1,0 +1,21 @@
+{% extends "base_tienda.html" %}
+{% load static %}
+{% comment %}
+Páginas de "Mi cuenta" y del resultado de la compra: navbar y footer de la tienda alrededor del contenido.
+La página pone su contenido en el bloque `cuenta` (no en `content`). Las que van centradas en la pantalla
+(formularios cortos, avisos) agregan: {% block cuenta_centrada %} cuenta-centrada{% endblock %}
+styles_cuenta.css deja el body normal (varias hojas de estas páginas lo centraban con flex).
+{% endcomment %}
+
+{% block body_attrs %} class="pagina-cuenta"{% endblock %}
+
+{% block estilos_finales %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'styles/styles_cuenta.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="cuenta-main{% block cuenta_centrada %}{% endblock %}">
+{% block cuenta %}{% endblock %}
+</main>
+{% endblock %}

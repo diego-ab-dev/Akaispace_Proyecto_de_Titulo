@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static %}
 
 {% block title %}Cuenta de administrador{% endblock %}
@@ -8,7 +8,9 @@
 <link rel="stylesheet" href="{% static 'styles/styles_solo_clientes.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta_centrada %} cuenta-centrada{% endblock %}
+
+{% block cuenta %}
 <div class="message-card">
     <div class="icon-circle icon-admin">
         <i class="fa-solid fa-user-shield" aria-hidden="true"></i>

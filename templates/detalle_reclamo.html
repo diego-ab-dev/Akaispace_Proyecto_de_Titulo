@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static %}
 
 {% block title %}Detalle Reclamo #{{ reclamo.id }}{% endblock %}
@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'styles/styles_detalle_reclamo.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta %}
 <div class="main-container">
     <div class="page-header">
         <a href="{% url 'lista_reclamos' %}" class="btn-regresar">

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static custom_filters %}
 
 {% block title %}Mi Perfil - {{ usuario.nombre }}{% endblock %}
@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'styles/styles_perfil_usuario.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta %}
     <div id="notif-box" class="notif {{ request.GET.type }}">
         <span id="notif-msg">{{ request.GET.notif }}</span>
     </div>

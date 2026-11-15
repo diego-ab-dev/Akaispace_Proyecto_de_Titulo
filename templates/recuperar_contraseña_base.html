@@ -15,7 +15,7 @@ Diseño común de las páginas para recuperar la contraseña (HU-11): el mismo d
   <div class="row g-0">
     <div class="d-none d-md-flex col-md-4 col-lg-6 bg-image">
       <div class="marca-login">
-        <img src="{% static 'images/akaispace_logo.png' %}" alt="Akaispace">
+        <a href="{% url 'home' %}" class="logo-inicio" title="Ir al inicio"><img src="{% static 'images/akaispace_logo.png' %}" alt="Akaispace"></a>
         <p>Tu próxima partida empieza aquí</p>
       </div>
     </div>
@@ -24,7 +24,7 @@ Diseño común de las páginas para recuperar la contraseña (HU-11): el mismo d
         <div class="container">
           <div class="row">
             <div class="col-md-9 col-lg-8 mx-auto">
-              <img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" class="d-md-none" style="width: 110px; display: block; margin-bottom: 1rem;">
+              <a href="{% url 'home' %}" class="logo-inicio d-md-none" title="Ir al inicio"><img src="{% static 'images/akaispace_logo.png' %}" alt="Logo Akaispace" style="width: 110px; display: block; margin-bottom: 1rem;"></a>
               {% block tarjeta %}{% endblock %}
               <div class="text-center mt-4">
                 <a href="{% url 'login' %}" class="btn-volver btn">Volver al inicio de sesión</a>

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static %}
 
 {% block title %}Opiniones Ingresadas{% endblock %}
@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'styles/styles_lista_opiniones.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta %}
 <div class="main-container">
     <div class="page-header">
         <a href="{% url 'perfil' %}" class="btn-regresar">

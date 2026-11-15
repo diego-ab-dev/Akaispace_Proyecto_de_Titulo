@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static custom_filters %}
 
 {% block title %}Detalle Compra #{{ compra.id }}{% endblock %}
@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'styles/styles_detalle_compra.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta %}
 <div id="notif-box" class="notif {{ request.GET.type }}">
     <span id="notif-msg">{{ request.GET.notif }}</span>
 </div>

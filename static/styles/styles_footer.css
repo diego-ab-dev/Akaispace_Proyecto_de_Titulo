@@ -1,0 +1,54 @@
+/* Footer de la tienda (templates/partials/footer.html). Lo carga base_tienda.html después del CSS de cada página;
+   footer.footer-tienda gana a las reglas sueltas de las páginas (footer, a, p, h5...) para que se vea igual en todas. */
+footer.footer-tienda {
+  background-color: #1C253B;
+  color: #ffffff;
+  height: auto;
+  margin: 0;
+  padding: 20px 0 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+footer.footer-tienda p {
+  margin: 0 0 1rem;
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  text-align: inherit;
+}
+
+footer.footer-tienda h6 {
+  margin-top: 0;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+footer.footer-tienda a {
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+footer.footer-tienda a:hover {
+  color: #00D2D5 !important;
+}
+
+footer.footer-tienda .parrafo-footer {
+  overflow-wrap: anywhere;
+}
+
+/* barra del copyright: los enlaces bajan de línea en vez de salirse en el celular */
+footer.footer-tienda > div:last-child {
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 575px) {
+  footer.footer-tienda > div:last-child {
+    padding: 16px 12px !important;
+    font-size: 0.8rem;
+  }
+}

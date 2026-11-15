@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static custom_filters %}
 
 {% block title %}Pago no completado - Akaispace{% endblock %}
@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'styles/styles_compra_exitosa.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta %}
 {# Resultado de un pago con Webpay que no terminó en compra (HU-05) #}
 <div class="main-wrapper">
     <div class="success-header header-fallido">

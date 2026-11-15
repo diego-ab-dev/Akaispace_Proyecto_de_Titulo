@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_cuenta.html" %}
 {% load static %}
 
 {% block title %}Cambiar contraseña{% endblock %}
@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="{% static 'styles/styles_cambiarcont.css' %}">
 {% endblock %}
 
-{% block content %}
+{% block cuenta_centrada %} cuenta-centrada{% endblock %}
+
+{% block cuenta %}
     <div class="pass-card">
         <h2 class="form-title">Cambio de Contraseña</h2>
 
