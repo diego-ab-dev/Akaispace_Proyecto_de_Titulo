@@ -6,6 +6,8 @@ sobrescribe el bloque navbar, por ejemplo:
   {% block navbar %}{% include "partials/navbar.html" with menu_simple=True %}{% endblock %}
 {% endcomment %}
 
+{% block estilos_finales %}<link rel="stylesheet" href="{% static 'styles/styles_navbar.css' %}">{% endblock %}
+
 {% block navbar %}{% include "partials/navbar.html" %}{% endblock %}
 
 {% block footer %}{% include "partials/footer.html" %}{% endblock %}

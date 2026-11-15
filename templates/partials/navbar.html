@@ -1,21 +1,23 @@
 {% load static %}
 {% comment %}
-Navbar de la tienda. Variantes (se pasan con {% include ... with %}):
+Navbar de la tienda. Sus estilos están solo en static/styles/styles_navbar.css (lo carga base_tienda.html
+después del CSS de cada página) y todos van bajo .nav-tienda, así el CSS de una página no lo deforma.
+Variantes (se pasan con {% include ... with %}):
   menu_simple: links simples en vez del megamenú (home)
   en_menu: oculta el link "Productos" (la página del menú)
-  carrito: agrupa login, iconos y buscador en .nav-extras (styles_carrito.css)
-  nav_clase: clase para el <nav> (producto_detalle usa "navbar-main", ver styles_prod_detalle.css)
 Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales de `portada`
 (context_processors.py); ambos se editan en el panel (Configuración y Portada).
 {% endcomment %}
-<nav{% if nav_clase %} class="{{ nav_clase }}"{% endif %}>
+<nav class="nav-tienda">
   <div class="navbar">
-    <i class='bx bx-menu'></i>
-    <div class="logo"><a href="{% url 'home' %}"><img src="{% static 'images/akaispace_favicon.png' %}" alt="Logo Akaispace" style="height: 45px; vertical-align: middle; margin-right: 8px;">Akaispace</a></div>
+    <i class='bx bx-menu' role="button" aria-label="Abrir menú"></i>
+    <div class="logo">
+      <a href="{% url 'home' %}"><img src="{% static 'images/akaispace_favicon.png' %}" alt="Logo Akaispace"><span>Akaispace</span></a>
+    </div>
     <div class="nav-links">
       <div class="sidebar-logo">
         <span class="logo-name">Akaispace</span>
-        <i class='bx bx-x'></i>
+        <i class='bx bx-x' role="button" aria-label="Cerrar menú"></i>
       </div>
       <ul class="links">
         {% if menu_simple %}
@@ -28,17 +30,17 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
         {% if not en_menu %}<li><a href="/menu">Productos</a></li>{% endif %}
         {# las entradas vienen de MENU_NAVBAR (constants.py); las categorías ocultas se quitan en Configuración del panel #}
         {% for menu in menu_navbar %}
-        <li>
+        <li class="con-submenu">
           <a href="#">{{ menu.nombre }}</a>
-          <i class='bx bxs-chevron-down {{ menu.clase_flecha }} arrow'></i>
+          <i class='bx bxs-chevron-down arrow'></i>
 
-          <div class="{{ menu.clase_submenu }} sub-menu mega-menu-box">
+          <div class="sub-menu mega-menu-box">
             <div class="d-flex">
               <div class="menu-links-col">
                 <ul class="list-unstyled mb-0">
                   {% for grupo in menu.grupos %}
                   {% if not forloop.first %}<hr class="my-2">{% endif %}
-                  <li><span class="dropdown-header text-start" style="color: #00D2D5; background-color: transparent; padding-left:0;">{{ grupo.nombre }}</span></li>
+                  <li><span class="dropdown-header text-start">{{ grupo.nombre }}</span></li>
                   {% for url, etiqueta in grupo.enlaces %}
                   <li><a class="dropdown-item ps-0" href="{{ url }}">{{ etiqueta }}</a></li>
                   {% endfor %}
@@ -55,25 +57,30 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
         {% endfor %}
         {% endif %}
       </ul>
+      {# en celular la cuenta va dentro del menú lateral #}
       <div class="sidebar-login">
-        <button onclick="window.location.href='/login'">
+        {% if usuario %}
+          <p class="sidebar-saludo" title="{{ usuario.nombre|default:usuario.email }}">Hola, {{ usuario.nombre|default:usuario.email }}</p>
+          <a href="/perfil" class="sidebar-cuenta-link">Mi Perfil</a>
+          {% if usuario.is_staff %}<a href="/admin-panel" class="sidebar-cuenta-link">Panel de Administración</a>{% endif %}
+          <a href="/logout" class="sidebar-cuenta-link">Cerrar Sesión</a>
+        {% else %}
+        <button type="button" onclick="window.location.href='/login'">
           Iniciar Sesión
           <div class="arrow-wrapper">
             <div class="arrow"></div>
           </div>
         </button>
+        {% endif %}
       </div>
     </div>
 
-    {% if carrito %}<div class="nav-extras">{% endif %}
-    <div class="d-flex login-desktop">
+    <div class="login-desktop">
       {% if usuario %}
-        <div class="menu d-flex align-items-center gap-2">
+        <div class="menu">
           <div class="item">
             <a href="#" class="link">
-              <span class="user-name-limit" title="{{ usuario.nombre|default:usuario.email }}"> 
-                  Hola, {{ usuario.nombre|default:usuario.email }} 
-              </span>
+              <span class="user-name-limit" title="{{ usuario.nombre|default:usuario.email }}">Hola, {{ usuario.nombre|default:usuario.email }}</span>
               <svg viewBox="0 0 360 360" xml:space="preserve">
                 <g id="SVGRepo_iconCarrier">
                   <path
@@ -91,7 +98,7 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
                 <a href="/logout" class="submenu-link">Cerrar Sesión</a>
               </div>
               {% if usuario.is_staff %}
-              <div class="submenu-item item2" style="background-color: #4e84a8;">
+              <div class="submenu-item item2">
                 <a href="/admin-panel" class="submenu-link">Panel de Administración</a>
               </div>
               {% endif %}
@@ -99,34 +106,32 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
           </div>
         </div>
       {% else %}
-        <button onclick="window.location.href='/login'">
+        <button type="button" onclick="window.location.href='/login'">
           Iniciar Sesión
           <div class="arrow-wrapper">
             <div class="arrow"></div>
           </div>
         </button>
       {% endif %}
-    </div>      
-    <div class="icons d-flex {% if carrito %}gap-2{% else %}gap-3{% endif %}">
-      <a href="/favorites" style="color: #FFFFFF;">
+    </div>
+    <div class="icons">
+      <a href="/favorites" aria-label="Favoritos">
         <i class="fas fa-heart"></i>
       </a>
       {% if not usuario.is_staff %}
-      <a href="{% url 'ver_carrito' %}" style="color: #FFFFFF;">
+      <a href="{% url 'ver_carrito' %}" aria-label="Carrito">
         <i class="fas fa-shopping-cart"></i>
       </a>
       {% endif %}
     </div>
     <div class="search-box">
-      <i class='bx bx-search'></i>
+      <i class='bx bx-search' role="button" aria-label="Buscar"></i>
       <div class="input-box">
-        <form method="get" action="{% url 'productos_menu' %}" class="d-flex mx-auto" role="search"
-          style="width: 50%;">
-          <input class="form-control me-2" type="text" placeholder="Buscar productos" aria-label="Search" id="name"
+        <form method="get" action="{% url 'productos_menu' %}" role="search">
+          <input class="form-control" type="text" placeholder="Buscar productos" aria-label="Buscar productos" id="name"
             name="buscar">
         </form>
       </div>
     </div>
-    {% if carrito %}</div>{% endif %}
   </div>
 </nav>

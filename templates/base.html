@@ -21,6 +21,8 @@
   <script src="{% static 'js/formularios.js' %}" defer></script>
   <script src="{% static 'js/cambios_sin_guardar.js' %}" defer></script>
   {% block extra_head %}{% endblock %}
+  {# va después del CSS de la página para que sus reglas no lo pisen (base_tienda: navbar) #}
+  {% block estilos_finales %}{% endblock %}
 </head>
 <body{% block body_attrs %}{% endblock %}>
 {% block navbar %}{% endblock %}

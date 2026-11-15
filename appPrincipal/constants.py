@@ -82,11 +82,9 @@ POLITICA_RETRACTO = [
 # Menús de categorías del navbar. Cada entrada es (categoría, código de plataforma o None, etiqueta) y
 # enlaza a esa categoría filtrada por la plataforma. El admin oculta una categoría completa desde el panel
 # (Configuración, Categoria.visible_en_menu); oculta sigue existiendo y sus productos siguen a la venta.
-# clase_flecha / clase_submenu: las usa static/js/navbar.js para abrir el menú en celulares.
 MENU_NAVBAR = [
     {
         'nombre': 'Videojuegos', 'promo': 'menu_videojuegos',
-        'clase_flecha': 'htmlcss-arrow', 'clase_submenu': 'htmlCss-sub-menu',
         'texto_link': 'Ver detalles', 'color_etiqueta': '', 'vacio': 'Próximamente',
         'grupos': [
             ('PlayStation', [('Videojuegos', 'ps3', 'PlayStation 3'), ('Videojuegos', 'ps4', 'PlayStation 4'),
@@ -100,7 +98,6 @@ MENU_NAVBAR = [
     },
     {
         'nombre': 'Consolas', 'promo': 'menu_consolas',
-        'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
         'texto_link': 'Ver consola', 'color_etiqueta': '', 'vacio': 'Próximamente',
         'grupos': [
             ('PlayStation', [('Consolas', 'ps4', 'PlayStation 4'), ('Consolas', 'ps5', 'PlayStation 5')]),
@@ -110,7 +107,6 @@ MENU_NAVBAR = [
     },
     {
         'nombre': 'Accesorios', 'promo': 'menu_accesorios',
-        'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
         'texto_link': 'Ver accesorio', 'color_etiqueta': '#8e44ad', 'vacio': 'Sin stock destacado',
         'grupos': [
             ('PlayStation', [('Accesorios', 'psp', 'PSP'), ('Accesorios', 'psvita', 'VITA'),
@@ -125,7 +121,6 @@ MENU_NAVBAR = [
     },
     {
         'nombre': 'Figuras', 'promo': 'menu_figuras',
-        'clase_flecha': 'js-arrow', 'clase_submenu': 'js-sub-menu',
         'texto_link': 'Lo quiero', 'color_etiqueta': '#f39c12', 'vacio': 'Próximamente',
         'grupos': [
             ('Coleccionables', [('Funko Pop', None, 'FUNKO POP'), ('Amiibo', None, 'AMIIBO')]),

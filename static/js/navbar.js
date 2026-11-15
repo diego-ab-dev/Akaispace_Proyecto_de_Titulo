@@ -1,49 +1,54 @@
-// Navbar de la tienda (templates/partials/navbar.html): buscador, menú lateral en móvil y submenús.
+// Navbar de la tienda (templates/partials/navbar.html): buscador, menú lateral en pantallas chicas y submenús.
 (function () {
-  const navbar = document.querySelector(".navbar");
-  const searchBox = document.querySelector(".search-box .bx-search");
-  const navLinks = document.querySelector(".nav-links");
-  const menuOpenBtn = document.querySelector(".navbar .bx-menu");
-  const menuCloseBtn = document.querySelector(".nav-links .bx-x");
+  const nav = document.querySelector(".nav-tienda");
+  if (!nav) return;
+  const navbar = nav.querySelector(".navbar");
+  const lupa = nav.querySelector(".search-box > i");
+  const navLinks = nav.querySelector(".nav-links");
+  const menuOpenBtn = nav.querySelector(".bx-menu");
+  const menuCloseBtn = nav.querySelector(".nav-links .bx-x");
+  const enMenuLateral = () => window.matchMedia("(max-width: 1200px)").matches;
 
-  if (searchBox && navbar) {
-    searchBox.addEventListener("click", () => {
-      navbar.classList.toggle("showInput");
-      if (navbar.classList.contains("showInput")) {
-        searchBox.classList.replace("bx-search", "bx-x");
-      } else {
-        searchBox.classList.replace("bx-x", "bx-search");
+  if (lupa && navbar) {
+    lupa.addEventListener("click", () => {
+      const abierto = navbar.classList.toggle("showInput");
+      lupa.classList.replace(abierto ? "bx-search" : "bx-x", abierto ? "bx-x" : "bx-search");
+      if (abierto) {
+        const input = nav.querySelector(".search-box input");
+        if (input) input.focus();
       }
     });
   }
 
-  if (menuOpenBtn && navLinks) {
-    menuOpenBtn.onclick = function () {
-      navLinks.style.left = "0";
-    };
-  }
-
-  if (menuCloseBtn && navLinks) {
-    menuCloseBtn.onclick = function () {
-      navLinks.style.left = "-100%";
-    };
-  }
+  const abrirMenu = () => { navLinks.style.left = "0"; };
+  const cerrarMenu = () => { navLinks.style.left = "-100%"; };
 
   if (navLinks) {
+    if (menuOpenBtn) menuOpenBtn.addEventListener("click", abrirMenu);
+    if (menuCloseBtn) menuCloseBtn.addEventListener("click", cerrarMenu);
+
+    // los links a secciones del home (#nosotros, #local...) cierran el menú lateral
     navLinks.querySelectorAll('.links a[href^="#"]:not([href="#"])').forEach(function (link) {
       link.addEventListener("click", function () {
-        if (navLinks.style.left === "0px") navLinks.style.left = "-100%";
+        if (navLinks.style.left === "0px") cerrarMenu();
       });
     });
-  }
 
-  const flechas = { ".htmlcss-arrow": "show1", ".more-arrow": "show2", ".js-arrow": "show3" };
-  for (const [selector, clase] of Object.entries(flechas)) {
-    const flecha = document.querySelector(selector);
-    if (flecha && navLinks) {
-      flecha.onclick = function () {
-        navLinks.classList.toggle(clase);
+    // en el menú lateral cada categoría (flecha o nombre) abre solo su propio submenú
+    navLinks.querySelectorAll(".links > li.con-submenu").forEach(function (li) {
+      const alternar = function (e) {
+        e.preventDefault(); // el nombre es href="#": no salta al inicio de la página
+        if (enMenuLateral()) li.classList.toggle("abierto");
       };
-    }
+      const flecha = li.querySelector(":scope > .arrow");
+      const nombre = li.querySelector(':scope > a[href="#"]');
+      if (flecha) flecha.addEventListener("click", alternar);
+      if (nombre) nombre.addEventListener("click", alternar);
+    });
+
+    // al volver a escritorio el menú lateral queda cerrado
+    window.matchMedia("(max-width: 1200px)").addEventListener("change", function (mq) {
+      if (!mq.matches) navLinks.style.left = "";
+    });
   }
 })();
