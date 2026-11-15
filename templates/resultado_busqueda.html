@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_busqueda.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_filtros_catalogo.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_tarjetas_catalogo.css' %}">
 <script src="{% static 'js/filtros_catalogo.js' %}" defer></script>
 <style>
       #notif-box {
@@ -86,7 +87,7 @@
             <div class="row gy-4"> 
               {% for producto in productos %}
                 {% if producto.stock > 0 %}
-                  <div class="col-md-6 col-lg-4 col-xl-3">
+                  <div class="col-6 col-md-4 col-xl-3">
                     <div class="single-product">
 
                       <div class="part-1">

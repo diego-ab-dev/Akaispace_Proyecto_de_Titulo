@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_menu.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_filtros_catalogo.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_tarjetas_catalogo.css' %}">
 <script src="{% static 'js/filtros_catalogo.js' %}" defer></script>
 {% endblock %}
 
@@ -66,7 +67,7 @@
         <div class="container">
 
           <div class="row mb-4 align-items-center justify-content-between header-toolbar">
-            <div class="col-md-4 text-start">
+            <div class="col-md-6 text-start">
               {% if query %}
                   <h2 class="fw-bold text-dark m-0" style="font-size: 1.5rem;">Resultados para "{{ query }}"</h2>
               {% else %}
@@ -77,7 +78,7 @@
               </span>
             </div>
 
-            <div class="col-md-4 mt-3 mt-md-0 text-end">
+            <div class="col-md-6 mt-3 mt-md-0 text-end">
               <div class="d-inline-flex align-items-center form-ordenar">
                   <label for="ordenar" class="me-2 text-muted small fw-bold">Ordenar:</label>
                   <select name="orden" id="ordenar" form="form-filtros" class="form-select form-select-sm custom-select">
@@ -95,7 +96,7 @@
 
           <div class="row gy-4"> {% for producto in productos %}
               {% if producto.stock > 0 %}
-                <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="col-6 col-md-4 col-xl-3">
                   <div class="single-product">
 
                     <div class="part-1">

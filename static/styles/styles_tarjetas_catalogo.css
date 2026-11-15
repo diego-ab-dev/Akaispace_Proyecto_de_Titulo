@@ -1,0 +1,142 @@
+/* Tarjetas de producto del catálogo (menú, categoría y búsqueda): tamaño adaptable a la pantalla.
+   Se carga después del CSS de cada página. Grilla en las plantillas: col-6 col-md-4 col-xl-3
+   = 2 productos por fila en celular, 3 en tablet y 4 en escritorio. */
+
+/* la imagen mantiene la proporción de una carátula en vez de medir siempre 400 px de alto */
+.section-products .single-product .part-1 {
+  height: auto;
+  max-height: none;
+  aspect-ratio: 11 / 16;
+}
+
+.section-products .single-product .part-1 img {
+  display: block;
+}
+
+.section-products .single-product .part-2 .product-title {
+  overflow-wrap: anywhere;
+}
+
+/* en pantallas táctiles no hay "hover": la tarjeta no salta al tocarla */
+@media (hover: none) {
+  .section-products .single-product:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* tablet */
+@media (max-width: 991px) {
+  .section-products .single-product {
+    padding: 14px;
+  }
+  .section-products .single-product .part-1 {
+    margin-bottom: 14px;
+  }
+  .section-products .single-product .btn-detalles,
+  .section-products .single-product .btn-carrito {
+    padding: 9px 8px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  .section-products {
+    margin-top: 100px;
+    padding-top: 30px;
+  }
+  /* en el menú la grilla va después del carrusel: sus slides son flotantes (Bootstrap), así que la grilla
+     baja con clear en vez de la pila de <br> que usa el escritorio */
+  #myCarousel .carousel-inner > br {
+    display: none;
+  }
+  #myCarousel .section-products {
+    clear: both;
+    margin-top: 0;
+    padding-top: 40px;
+  }
+}
+
+/* celular: 2 por fila, todo un poco más compacto */
+@media (max-width: 575px) {
+  .section-products .row.gy-4 {
+    --bs-gutter-x: 12px;
+    --bs-gutter-y: 12px;
+  }
+  .section-products .single-product {
+    padding: 8px;
+    border-radius: 14px;
+    margin-bottom: 0;
+  }
+  .section-products .single-product .part-1 {
+    margin-bottom: 10px;
+    border-radius: 8px;
+  }
+  .section-products .single-product .part-1 ul {
+    display: none;
+  }
+  .section-products .single-product .part-2 .product-title {
+    font-size: 0.85rem !important;
+    margin-bottom: 4px;
+  }
+  .section-products .single-product .part-2 p {
+    font-size: 0.75rem;
+    margin-bottom: 4px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .section-products .single-product .part-2 .precioprod {
+    font-size: 1.05rem !important;
+    margin-bottom: 4px;
+  }
+  .section-products .single-product .precio-anterior {
+    font-size: 0.7rem;
+  }
+  .section-products .single-product .btn-detalles,
+  .section-products .single-product .btn-carrito {
+    margin: 6px 0 0;
+    padding: 8px 6px;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+    border-radius: 6px;
+  }
+  .section-products .single-product .badge-overlay {
+    top: 6px;
+    left: 6px;
+    padding: 3px 7px;
+    font-size: 0.6rem;
+  }
+  .section-products .single-product .badge-oferta {
+    top: 6px;
+    right: 6px;
+    padding: 2px 7px;
+    font-size: 0.7rem;
+  }
+
+  /* menos espacio vacío entre el carrusel / título y la grilla */
+  .section-products {
+    margin-top: 80px;
+    padding: 20px 0 30px;
+  }
+  .section-products hr.mb-5 {
+    margin-bottom: 1.25rem !important;
+  }
+}
+
+/* celulares muy angostos */
+@media (max-width: 360px) {
+  .section-products .single-product .btn-detalles,
+  .section-products .single-product .btn-carrito {
+    font-size: 0.72rem;
+    padding: 7px 4px;
+  }
+}
+
+/* carrusel del menú: el texto y la imagen dejan espacio a las flechas para que no queden encima */
+@media (min-width: 768px) {
+  #myCarousel .carousel-item .container {
+    padding-left: 104px;
+    padding-right: 104px;
+  }
+}
