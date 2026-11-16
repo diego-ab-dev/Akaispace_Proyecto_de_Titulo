@@ -1,6 +1,5 @@
 /* Base de las páginas del panel con menú lateral (templates/admin_panel/base_admin.html).
    Las páginas antiguas repiten estas reglas en su propio CSS; las nuevas solo agregan lo suyo. */
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
 :root{--header-height: 3rem;
     --nav-width: 68px;
     --first-color: #4e84a8;

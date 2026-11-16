@@ -62,7 +62,7 @@
                     <td data-label="ID">{{producto.id}}</td>
                     <td data-label="Imagen">
                         {% if producto.imagen_principal %}
-                            <img src="{{ producto.imagen_principal.url }}" alt="Imagen de {{ producto.nombre }}" class="product-img">
+                            <img src="{{ producto.imagen_principal.url }}" alt="Imagen de {{ producto.nombre }}" class="product-img" loading="lazy" decoding="async">
                         {% else %}
                             <span>Sin imagen</span>
                         {% endif %}

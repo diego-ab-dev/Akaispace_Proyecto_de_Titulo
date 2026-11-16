@@ -2,7 +2,6 @@
    lo carga después del CSS de cada página y todo va bajo .nav-tienda, así las reglas generales de una página
    (a, img, input, form, button, * ...) no lo deforman.
    Tamaños: escritorio > 1200px | menú lateral <= 1200px | sin saludo/login arriba <= 800px | celular <= 480px */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
 .nav-tienda {
   --nav-alto: 70px;

@@ -97,7 +97,7 @@
                         {% endif %}{% endif %}
                       {% with pct=producto|descuento %}{% if pct %}<span class="badge-oferta">-{{ pct }}%</span>{% endif %}{% endwith %}
 
-                        <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}">
+                        <img src="{{ producto.imagen_principal.url }}" class="card-img-top" alt="{{ producto.nombre }}"{% if forloop.counter > 4 %} loading="lazy"{% endif %} decoding="async">
 
                         <ul>
                           <li>

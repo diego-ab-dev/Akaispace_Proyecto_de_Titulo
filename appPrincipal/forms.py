@@ -5,6 +5,7 @@ from django.core import validators
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from .constants import REGIONES, REGIONES_CIUDADES
+from .imagenes import LADO_MAXIMO, LADO_MAXIMO_PORTADA, optimizar_subida
 from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto,
                      MovimientoCaja, Opinion, Producto, Usuario, youtube_embed_url)
 import os
@@ -458,9 +459,10 @@ ERRORES_IMAGEN = {'invalid_image': f'El archivo no es una foto válida. {MENSAJE
                   'invalid_extension': MENSAJE_FORMATO_IMAGEN}
 
 
-def validar_imagen(imagen):
+def validar_imagen(imagen, lado_maximo=LADO_MAXIMO):
     """Valida una foto recién subida: formato real, extensión y peso. Deja la extensión del archivo
-    igual a su formato real (un PNG llamado foto.jpg se guarda como foto.png)."""
+    igual a su formato real (un PNG llamado foto.jpg se guarda como foto.png). Si es pesada o muy
+    grande, la achica y la pasa a WebP (imagenes.py)."""
     if not isinstance(imagen, UploadedFile):
         return imagen  # foto que ya estaba guardada (edición sin cambiarla)
     formato = getattr(getattr(imagen, 'image', None), 'format', None)
@@ -472,7 +474,7 @@ def validar_imagen(imagen):
             f'La foto pesa {imagen.size / 1024 / 1024:.1f} MB; el máximo es {IMAGEN_MAXIMA_MB} MB.',
             code='imagen_pesada')
     imagen.name = (nombre or 'imagen') + FORMATOS_IMAGEN[formato]
-    return imagen
+    return optimizar_subida(imagen, lado_maximo)
 
 
 # fotos de evidencia de la devolución: hasta 3, todas opcionales
@@ -695,7 +697,7 @@ class DestacadoForm(forms.ModelForm):
         )
 
     def clean_imagen(self):
-        return validar_imagen(self.cleaned_data.get('imagen'))
+        return validar_imagen(self.cleaned_data.get('imagen'), LADO_MAXIMO_PORTADA)
 
     def clean_video_url(self):
         video_url = self.cleaned_data.get('video_url', '')

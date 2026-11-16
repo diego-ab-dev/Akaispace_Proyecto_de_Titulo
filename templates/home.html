@@ -57,7 +57,7 @@
         <div class="col-12 col-md-4 mb-4">
           <a href="{% url 'register' %}" class="text-decoration-none">
             <div class="card anim-up text-dark card-has-bg click-col"
-              style="background-image:url('https://www.ifema.es/img/xl/lista-principales-torneos-esports-equipos/lista-principales-torneos-esports-y-sus-equipos.jpeg');">
+              style="background-image:url('{% static 'images/portada/registro.webp' %}');">
               <div class="card-img-overlay d-flex flex-column">
                 <div class="card-body" style="color: white;">
                   <small class="card-meta mb-2" style="color: white;">Akaispace</small>
@@ -72,7 +72,7 @@
         <div class="col-12 col-md-4 mb-4">
           <a href="/menu" class="text-decoration-none">
             <div class="card anim-up  text-dark card-has-bg click-col"
-              style="background-image:url('https://i.blogs.es/9458c1/original/650_1200.jpeg');">
+              style="background-image:url('{% static 'images/portada/catalogo.webp' %}');">
               <div class="card-img-overlay d-flex flex-column">
                 <div class="card-body" style="color: white;">
                   <small class="card-meta mb-2" style="color: white;">Akaispace</small>
@@ -87,7 +87,7 @@
         <div class="col-12 col-md-4 mb-4">
           <a href="#redes" class="text-decoration-none">
             <div class="card anim-up text-dark card-has-bg click-col"
-              style="background-image:url('https://www.inci.gov.co/sites/default/files/styles/imagen_internas_1110x624_/public/2023-07/redes-sociales.jpg?itok=OoLVhkYTs');">
+              style="background-image:url('{% static 'images/portada/redes.webp' %}');">
               <div class="card-img-overlay d-flex flex-column">
                 <div class="card-body" style="color: white;">
                   <small class="card-meta mb-2" style="color: white;">Akaispace</small>
@@ -120,7 +120,7 @@
               {% if lanzamiento.video_embed_url %}
                 <iframe width="560" height="315" src="{{ lanzamiento.video_embed_url }}" title="{{ lanzamiento.titulo }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="box-shadow: 0 0 10px rgba(0, 0, 0, .8);"></iframe>
               {% elif lanzamiento.imagen_url %}
-                <img src="{{ lanzamiento.imagen_url }}" alt="{{ lanzamiento.titulo }}" class="img-fluid" style="box-shadow: 0 0 10px rgba(0, 0, 0, .8);">
+                <img src="{{ lanzamiento.imagen_url }}" alt="{{ lanzamiento.titulo }}" class="img-fluid" loading="lazy" decoding="async" style="box-shadow: 0 0 10px rgba(0, 0, 0, .8);">
               {% endif %}
             </div>
           </div>
@@ -240,7 +240,7 @@
 
           <div class="col-md-5">
             <div class="redes-image-placeholder">
-                <img src="https://www.formacionprofesional.info/wp-content/uploads/2019/04/tutoriales-esports.jpg" alt="">
+                <img src="{% static 'images/portada/redes_seccion.webp' %}" alt="" width="640" height="427" loading="lazy" decoding="async">
             </div>
           </div>
 

@@ -33,7 +33,7 @@
                 <div id="item-{{ item.producto_id }}" class="wishlist-item d-flex align-items-center py-4 border-bottom position-relative">
 
                     <div class="item-image me-4 bg-light rounded d-flex align-items-center justify-content-center flex-shrink-0">
-                        <a href="{% url 'producto_detalle' item.producto.id %}" class="fav-enlace-imagen" tabindex="-1" aria-hidden="true"><img src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}" class="img-fluid"></a>
+                        <a href="{% url 'producto_detalle' item.producto.id %}" class="fav-enlace-imagen" tabindex="-1" aria-hidden="true"><img src="{{ item.producto.imagen_principal.url }}" alt="{{ item.producto.nombre }}" class="img-fluid" loading="lazy" decoding="async"></a>
                     </div>
 
                     <div class="item-details flex-grow-1 min-w-0">

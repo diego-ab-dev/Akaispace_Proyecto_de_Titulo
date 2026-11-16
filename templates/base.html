@@ -13,6 +13,11 @@
     crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
+  {# tipografías de todo el sitio en una sola petición: Poppins (tienda) y Nunito (panel).
+     El navegador solo descarga los archivos de la que la página use. #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap">
   {% endblock %}
   <link rel="stylesheet" href="{% static 'styles/styles_formularios.css' %}">
   <link rel="stylesheet" href="{% static 'styles/styles_precios.css' %}">

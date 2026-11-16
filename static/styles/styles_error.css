@@ -1,5 +1,4 @@
 /* Páginas de error: 404 (con navbar y footer) y 500 (sola). templates/404.html y templates/500.html */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 
 body {
   background-color: #EEF1F4;

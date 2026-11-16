@@ -3905,6 +3905,144 @@ class SubidaDeFotosTests(TestCase):  # solo fotos reales, de formato permitido y
         self.assertIn('data-validacion="imagen"', html)
 
 
+def foto_de_prueba(ancho, alto, formato='JPEG', modo='RGB', ruido=False):
+    """Bytes de una foto de prueba. Con ruido=True pesa como una foto real (no se comprime a casi nada)."""
+    import io
+    import os as _os
+    from PIL import Image
+    if ruido:
+        imagen = Image.frombytes(modo, (ancho, alto), _os.urandom(ancho * alto * len(modo)))
+    else:
+        imagen = Image.new(modo, (ancho, alto), (30, 90, 160, 128)[:len(modo)])
+    datos = io.BytesIO()
+    imagen.save(datos, formato)
+    return datos.getvalue()
+
+
+class OptimizacionDeFotosTests(TestCase):  # las fotos pesadas se achican y pasan a WebP al subirlas
+    def subir(self, datos, nombre='foto.jpg', tipo='image/jpeg'):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .forms import ImagenProductoForm
+        form = ImagenProductoForm({}, {'imagen': SimpleUploadedFile(nombre, datos, tipo)})
+        self.assertTrue(form.is_valid(), form.errors)
+        return form.cleaned_data['imagen']
+
+    def abrir(self, archivo):
+        from PIL import Image
+        archivo.seek(0)
+        return Image.open(archivo)
+
+    def test_una_foto_grande_se_achica_y_pasa_a_webp(self):
+        archivo = self.subir(foto_de_prueba(3000, 2000), 'celular.jpg')
+        self.assertEqual(archivo.name, 'celular.webp')
+        imagen = self.abrir(archivo)
+        self.assertEqual(imagen.format, 'WEBP')
+        self.assertEqual(imagen.size, (1600, 1067))
+
+    def test_una_foto_pesada_aunque_no_sea_grande_tambien_se_optimiza(self):
+        datos = foto_de_prueba(1200, 900, 'PNG', ruido=True)
+        self.assertGreater(len(datos), 300 * 1024)
+        archivo = self.subir(datos, 'captura.png', 'image/png')
+        self.assertEqual(self.abrir(archivo).format, 'WEBP')
+        self.assertLess(archivo.size, len(datos))
+
+    def test_una_foto_liviana_queda_tal_cual(self):
+        datos = foto_de_prueba(800, 600)
+        archivo = self.subir(datos, 'liviana.jpg')
+        self.assertEqual(archivo.name, 'liviana.jpg')
+        archivo.seek(0)
+        self.assertEqual(archivo.read(), datos)
+
+    def test_conserva_la_transparencia(self):
+        archivo = self.subir(foto_de_prueba(2400, 2400, 'PNG', 'RGBA'), 'logo.png', 'image/png')
+        self.assertEqual(self.abrir(archivo).mode, 'RGBA')
+
+    def test_endereza_la_foto_segun_la_orientacion_de_la_camara(self):
+        import io
+        from PIL import Image
+        imagen = Image.new('RGB', (3000, 2000), 'red')
+        exif = imagen.getexif()
+        exif[0x0112] = 6  # la cámara la guardó acostada: hay que girarla 90°
+        datos = io.BytesIO()
+        imagen.save(datos, 'JPEG', exif=exif)
+        archivo = self.subir(datos.getvalue(), 'acostada.jpg')
+        self.assertEqual(self.abrir(archivo).size, (1067, 1600))
+
+    def test_un_gif_animado_no_se_toca(self):
+        import io
+        from PIL import Image
+        cuadros = [Image.new('RGB', (2000, 2000), color) for color in ('red', 'blue')]
+        datos = io.BytesIO()
+        cuadros[0].save(datos, 'GIF', save_all=True, append_images=cuadros[1:])
+        archivo = self.subir(datos.getvalue(), 'animado.gif', 'image/gif')
+        self.assertEqual(archivo.name, 'animado.gif')
+
+    def test_la_portada_admite_fotos_mas_anchas(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from .forms import DestacadoForm
+        from .models import Destacado
+        form = DestacadoForm({'seccion': Destacado.SECCION_LANZAMIENTOS, 'titulo': 't', 'orden': 0},
+                             {'imagen': SimpleUploadedFile('banner.jpg', foto_de_prueba(4000, 1500), 'image/jpeg')})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(self.abrir(form.cleaned_data['imagen']).size, (1920, 720))
+
+
+class ComandoOptimizarImagenesTests(TestCase):  # optimizar_imagenes: las fotos que ya estaban subidas
+    def setUp(self):
+        import shutil
+        import tempfile
+        self.media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.media, ignore_errors=True)
+        ajuste = self.settings(MEDIA_ROOT=self.media)
+        ajuste.enable()
+        self.addCleanup(ajuste.disable)
+
+    def guardar(self, ruta, datos):
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
+        return default_storage.save(ruta, ContentFile(datos))
+
+    def correr(self, *args):
+        import io
+        salida = io.StringIO()
+        call_command('optimizar_imagenes', *args, stdout=salida)
+        return salida.getvalue()
+
+    def test_convierte_las_pesadas_y_actualiza_todas_las_filas_que_la_usan(self):
+        from django.core.files.storage import default_storage
+        from .models import ImagenProducto
+        grande = self.guardar('productos/generica.png', foto_de_prueba(2000, 2000, 'PNG', ruido=True))
+        liviana = self.guardar('productos/chica.jpg', foto_de_prueba(400, 400))
+        uno, dos = crear_producto('Uno', imagen=grande), crear_producto('Dos', imagen=grande)
+        tres = crear_producto('Tres', imagen=liviana)
+        self.correr()
+        for producto in (uno, dos):
+            self.assertEqual(producto.imagen_principal.name, 'productos/generica.webp')
+        self.assertEqual(tres.imagen_principal.name, 'productos/chica.jpg')
+        self.assertTrue(default_storage.exists('productos/generica.webp'))
+        self.assertTrue(default_storage.exists(grande))  # sin --borrar-originales, el original se queda
+        self.assertEqual(ImagenProducto.objects.filter(imagen=grande).count(), 0)
+
+    def test_probar_no_cambia_nada(self):
+        from django.core.files.storage import default_storage
+        grande = self.guardar('productos/grande.jpg', foto_de_prueba(3000, 2000))
+        producto = crear_producto('Uno', imagen=grande)
+        self.assertIn('Prueba, sin cambios. Se optimizarían 1 foto(s)', self.correr('--probar'))
+        self.assertEqual(producto.imagen_principal.name, grande)
+        self.assertFalse(default_storage.exists('productos/grande.webp'))
+
+    def test_borrar_originales(self):
+        from django.core.files.storage import default_storage
+        grande = self.guardar('productos/grande.jpg', foto_de_prueba(3000, 2000))
+        crear_producto('Uno', imagen=grande)
+        self.correr('--borrar-originales')
+        self.assertFalse(default_storage.exists(grande))
+
+    def test_avisa_si_falta_un_archivo_y_sigue(self):
+        crear_producto('Uno', imagen='productos/no_existe.jpg')
+        self.assertIn('No existe el archivo: productos/no_existe.jpg', self.correr())
+
+
 class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compra ni opina como cliente
     def setUp(self):
         self.producto = crear_producto()

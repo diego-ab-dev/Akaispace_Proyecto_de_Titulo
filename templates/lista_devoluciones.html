@@ -24,7 +24,7 @@
                 <div class="col-auto col-md-2 text-center">
                     <div class="product-thumb">
                         {% if devolucion.producto.imagen_principal %}
-                            <img src="{{ devolucion.producto.imagen_principal.url }}" alt="{{ devolucion.producto.nombre }}">
+                            <img src="{{ devolucion.producto.imagen_principal.url }}" alt="{{ devolucion.producto.nombre }}" loading="lazy" decoding="async">
                         {% else %}
                             <i class="far fa-image"></i>
                         {% endif %}

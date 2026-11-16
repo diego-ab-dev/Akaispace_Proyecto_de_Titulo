@@ -11,7 +11,7 @@
                class="card-relacionada text-decoration-none">
                 <div class="card-rel-img-wrapper">
                     {% if rel.imagen_principal %}
-                        <img src="{{ rel.imagen_principal.url }}" alt="{{ rel.nombre }}">
+                        <img src="{{ rel.imagen_principal.url }}" alt="{{ rel.nombre }}" loading="lazy" decoding="async">
                     {% else %}
                         <img src="https://via.placeholder.com/300" alt="Sin imagen">
                     {% endif %}
