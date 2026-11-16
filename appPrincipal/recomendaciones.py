@@ -17,7 +17,7 @@ están en notebooks/hu07_similitud_productos.ipynb.
 - registrar_mostradas() y marcar_clic(): registran las recomendaciones mostradas y sus clics (KPI-05), solo
   de clientes que autorizaron sus datos de navegación; tasa_de_clics() calcula el KPI.
 - eliminar_navegacion_antigua(): aplica el plazo de conservación de la política de privacidad (24 meses).
-  La ejecuta a diario el comando mantener_recomendaciones. Al eliminar una cuenta se borra su navegación.
+  La ejecuta a diario el comando mantener_recomendaciones. Al eliminar una cuenta se borra su navegación (Usuario.anonimizar()).
 
 Los empates (muy frecuentes, porque hay pocos atributos) se resuelven por unidades vendidas y después
 por id, para que el resultado sea siempre el mismo.
@@ -41,7 +41,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from appPrincipal.models import (Carrito, InteraccionProducto, Producto, ProductoVenta, Recomendacion,
-                                 SimilitudProducto, Usuario)
+                                 SimilitudProducto)
 
 TOP_SIMILARES = 10
 CANTIDAD_RECOMENDACIONES = 4
@@ -403,13 +403,3 @@ def _recalcular(sender, instance, signal, **kwargs):
         # después del commit, una vez que el cambio quedó guardado
         transaction.on_commit(calcular_similitudes)
 
-
-@receiver(post_save, sender=Usuario)
-def _eliminar_navegacion_de_cuenta_eliminada(sender, instance, raw=False, **kwargs):
-    """Al eliminar una cuenta (borrado lógico) se borra su navegación: no es un dato que la ley obligue a
-    conservar (política de privacidad, sección 7)."""
-    if raw or not instance.is_deleted:
-        return
-    _eliminar_navegacion(instance)
-    if instance.datos_navegacion_autorizados_en is not None:
-        Usuario.objects.filter(pk=instance.pk).update(datos_navegacion_autorizados_en=None)

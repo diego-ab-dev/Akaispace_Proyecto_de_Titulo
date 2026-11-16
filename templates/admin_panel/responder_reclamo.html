@@ -45,7 +45,9 @@
             <form data-avisar-cambios method="post" class="respuesta-form">
                 {% csrf_token %}
                 <label for="respuesta" class="form-label">Respuesta</label>
-                <textarea id="respuesta" name="respuesta" placeholder="Escribe tu respuesta aquí..." required>{{ reclamo.respuesta|default_if_none:'' }}</textarea>
+                <textarea id="respuesta" name="respuesta" placeholder="Escribe tu respuesta aquí..." required
+                          {% if error %}aria-invalid="true" aria-describedby="error-respuesta"{% endif %}>{{ reclamo.respuesta|default_if_none:'' }}</textarea>
+                {% if error %}<div class="invalid-feedback d-block" id="error-respuesta">{{ error }}</div>{% endif %}
 
                 <div class="buttons-container">
                     <button type="submit" class="btn-enviar">Enviar</button>

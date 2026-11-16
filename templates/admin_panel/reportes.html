@@ -5,7 +5,6 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_reportes.css' %}">
-{% if vista == 'ventas' %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -481,5 +480,9 @@
 
 {% block scripts %}
 {{ block.super }}
-{% if vista == 'ventas' %}<script src="{% static 'js/grafico_ventas.js' %}"></script>{% endif %}
+{% if vista == 'ventas' %}
+{# Chart.js al final: no detiene la carga de la página #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/grafico_ventas.js' %}"></script>
+{% endif %}
 {% endblock %}

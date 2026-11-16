@@ -50,6 +50,8 @@ class UsuarioAdmin(UserAdmin):
     search_fields = ("nombre", "email", "rut", "telefono")
     ordering = ("email",)
     list_per_page = 20
+    # se elimina desde el panel o el perfil (anonimiza); marcarlo aquí dejaría los datos personales
+    readonly_fields = ("is_deleted", "deleted_at")
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),

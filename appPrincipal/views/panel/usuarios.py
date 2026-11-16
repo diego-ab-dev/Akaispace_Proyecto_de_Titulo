@@ -20,16 +20,32 @@ logger = logging.getLogger(__name__)
 
 @admin_required
 def admin_usuarios(request):
+    """Lista de usuarios con búsqueda por nombre o RUT y filtro de administradores."""
+    query = request.GET.get('q', '').strip()
+    filtro = request.GET.get('filtro', 'nombre')
+    es_admin = request.GET.get('es_admin', '')
+
     usuarios_list = Usuario.objects.filter(is_deleted=False).order_by('-id')
+    if query:
+        if filtro == "nombre":
+            usuarios_list = usuarios_list.filter(nombre__icontains=query)
+        elif filtro == "rut":
+            usuarios_list = usuarios_list.filter(rut__icontains=query)
+    if es_admin == "True":
+        usuarios_list = usuarios_list.filter(is_staff=True)
+    elif es_admin == "False":
+        usuarios_list = usuarios_list.filter(is_staff=False)
 
-    paginator = Paginator(usuarios_list, 10) 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
+    page_obj = Paginator(usuarios_list, 10).get_page(request.GET.get('page'))
     return render(request, 'admin_panel/usuarios.html', {
         'page_obj': page_obj,
         'usuarios': page_obj.object_list,
     })
+
+
+# los formularios de búsqueda apuntan a esta URL; es la misma lista con los filtros aplicados
+buscar_usuarios = admin_usuarios
+
 
 @admin_required
 @require_POST
@@ -46,35 +62,6 @@ def eliminar_usuario(request, usuario_id):
     else:
         messages.success(request, "Cuenta eliminada: sus datos personales se anonimizaron y sus ventas se conservan.")
     return redirect('admin_usuarios')
-
-
-@admin_required
-def buscar_usuarios(request):
-    query = request.GET.get('q', '').strip()
-    filtro = request.GET.get('filtro', 'nombre')
-    es_admin = request.GET.get('es_admin', '')
-
-    usuarios_list = Usuario.objects.filter(is_deleted=False)
-
-    if query:
-        if filtro == "nombre":
-            usuarios_list = usuarios_list.filter(nombre__icontains=query)
-        elif filtro == "rut":
-            usuarios_list = usuarios_list.filter(rut__icontains=query)
-
-    if es_admin == "True":
-        usuarios_list = usuarios_list.filter(is_staff=True)
-    elif es_admin == "False":
-        usuarios_list = usuarios_list.filter(is_staff=False)
-
-    paginator = Paginator(usuarios_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    return render(request, 'admin_panel/usuarios.html', {
-        'page_obj': page_obj,
-        'usuarios': page_obj.object_list,
-    })
 
 
 @admin_required

@@ -136,7 +136,7 @@ class Usuario(AbstractUser):
         tributario); sin nombre, correo, RUT, teléfono ni dirección ya no identifica a nadie. El correo y el
         RUT quedan libres, así la persona puede volver a registrarse. Al cambiar la contraseña por una no
         utilizable, Django cierra la sesión en todos los dispositivos.
-        La limpieza de las tablas relacionadas la hace eliminacion_cuenta.eliminar_cuenta()."""
+        Borra también su navegación; el resto de la limpieza la hace eliminacion_cuenta.eliminar_cuenta()."""
         self.nombre = self.NOMBRE_ANONIMO
         self.email = f'eliminado-{self.pk}@{self.DOMINIO_ANONIMO}'
         self.rut = None
@@ -150,6 +150,9 @@ class Usuario(AbstractUser):
         self.is_deleted = True
         self.deleted_at = now()
         self.save()
+        # la navegación (HU-07) no es un dato que la ley obligue a conservar (política de privacidad, sección 7)
+        self.interacciones.all().delete()
+        self.recomendaciones.all().delete()
 
     def delete(self, *args, **kwargs):
         # borrado lógico: nunca se borra la fila (hard_delete() lo hace solo si no tiene ventas)

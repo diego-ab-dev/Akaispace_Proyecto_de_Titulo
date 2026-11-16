@@ -41,22 +41,21 @@ def admin_reclamos(request):
 
 @admin_required
 def responder_reclamo(request, reclamo_id):
-    reclamo = get_object_or_404(Reclamo, id=reclamo_id)
+    reclamo = get_object_or_404(Reclamo.objects.select_related('usuario', 'venta'), id=reclamo_id)
+    error = ''
     if request.method == 'POST':
-        respuesta = request.POST.get('respuesta')
-        reclamo.respuesta = respuesta
-        reclamo.estado = 'Respondido'
-        reclamo.fecha_respuesta = timezone.now()
-        reclamo.save()
-        return redirect('admin_reclamos')
-    return render(request, 'admin_panel/responder_reclamo.html', {'reclamo': reclamo})
+        respuesta = (request.POST.get('respuesta') or '').strip()
+        if respuesta:
+            reclamo.respuesta = respuesta
+            reclamo.estado = 'Respondido'
+            reclamo.fecha_respuesta = timezone.now()
+            reclamo.save(update_fields=['respuesta', 'estado', 'fecha_respuesta'])
+            return redirect('admin_reclamos')
+        error = 'La respuesta no puede estar vacía.'
+    return render(request, 'admin_panel/responder_reclamo.html', {'reclamo': reclamo, 'error': error})
 
 
 @admin_required
 def detalle_reclamo(request, reclamo_id):
-    reclamo = get_object_or_404(Reclamo, id=reclamo_id)
-    
-    context = {
-        'reclamo': reclamo
-    }
-    return render(request, 'admin_panel/detalle_reclamo.html', context)
+    reclamo = get_object_or_404(Reclamo.objects.select_related('usuario', 'venta'), id=reclamo_id)
+    return render(request, 'admin_panel/detalle_reclamo.html', {'reclamo': reclamo})

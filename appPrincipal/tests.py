@@ -4654,3 +4654,36 @@ class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el c
             self.assertNotContains(respuesta, '@akaispace.invalid', msg_prefix=url)
         self.assertNotContains(self.client.get(f'/admin-panel/usuarios/detalle/{self.cliente.pk}/'),
                                f'/admin-panel/usuarios/eliminar/{self.cliente.pk}/')
+
+
+class PanelLimpiezaTests(TestCase):  # vistas del panel unificadas o validadas en la limpieza de código
+    def setUp(self):
+        self.admin = crear_cliente('admin@example.com', is_staff=True, nombre='Admin Tienda')
+        self.client.force_login(self.admin)
+
+    def test_buscar_usuarios_filtra_y_ordena_igual_que_la_lista(self):
+        for i in range(12):
+            crear_cliente(f'cliente{i}@example.com', nombre=f'Cliente {i}')
+        respuesta = self.client.get('/admin-panel/usuarios/buscar/', {'q': 'Cliente', 'filtro': 'nombre'})
+        nombres = [u.nombre for u in respuesta.context['usuarios']]
+        self.assertEqual(nombres, [f'Cliente {i}' for i in range(11, 1, -1)])  # los más nuevos primero
+        respuesta = self.client.get('/admin-panel/usuarios/buscar/', {'es_admin': 'True'})
+        self.assertEqual([u.nombre for u in respuesta.context['usuarios']], ['Admin Tienda'])
+
+    def test_no_se_responde_un_reclamo_con_la_respuesta_vacia(self):
+        from .models import Reclamo
+        reclamo = Reclamo.objects.create(usuario=self.admin, asunto='Demora', descripcion='No llega')
+        url = f'/admin-panel/reclamos/responder/{reclamo.pk}/'
+        respuesta = self.client.post(url, {'respuesta': '   '})
+        self.assertContains(respuesta, 'La respuesta no puede estar vacía.')
+        reclamo.refresh_from_db()
+        self.assertEqual(reclamo.estado, 'Abierto')
+        self.assertRedirects(self.client.post(url, {'respuesta': ' Ya va en camino '}), '/admin-panel/reclamos/',
+                             fetch_redirect_response=False)
+        reclamo.refresh_from_db()
+        self.assertEqual((reclamo.estado, reclamo.respuesta), ('Respondido', 'Ya va en camino'))
+
+    def test_chart_js_se_carga_al_final_de_la_pagina(self):
+        html = self.client.get('/admin-panel/').content.decode()
+        self.assertLess(html.index('</head>'), html.index('chart.umd.min.js'))
+        self.assertLess(html.index('chart.umd.min.js'), html.index('grafico_ventas.js'))

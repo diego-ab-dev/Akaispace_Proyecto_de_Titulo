@@ -11,15 +11,6 @@ def formato_chileno(valor):
 
 
 @register.filter
-def multiply(value, arg):
-    return value * arg
-
-
-@register.filter(name='add_class')
-def add_class(value, css_class):
-    return value.as_widget(attrs={"class": css_class})
-
-@register.filter
 def range_filter(value):
     return range(1, value + 1)
 

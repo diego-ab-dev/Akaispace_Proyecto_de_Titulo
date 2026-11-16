@@ -87,7 +87,11 @@ def _render_detalle_venta(request, venta, **extra):
 
 @admin_required
 def detalle_venta(request, venta_id):
-    venta = get_object_or_404(Venta.objects.prefetch_related('producto_venta__producto__imagenes_producto'), id=venta_id)
+    venta = get_object_or_404(
+        Venta.objects.select_related('usuario', 'datos_envio', 'pago_webpay', 'anulada_por')
+        .prefetch_related('producto_venta__producto__imagenes_producto'),
+        id=venta_id,
+    )
     return _render_detalle_venta(request, venta)
 
 @admin_required
