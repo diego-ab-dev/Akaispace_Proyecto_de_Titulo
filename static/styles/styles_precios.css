@@ -47,8 +47,7 @@
 }
 
 /* centrado cuando la tarjeta centra el texto */
-.text-center .precio,
-.precio--centro {
+.text-center .precio {
     align-items: center;
 }
 

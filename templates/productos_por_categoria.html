@@ -46,6 +46,7 @@
           box-shadow: 0 4px 15px rgba(232, 62, 140, 0.4);
       }
     </style>
+<script src="{% static 'js/catalogo_acciones.js' %}" data-url-login="{% url 'login' %}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -195,105 +196,5 @@
       </div>
     </div>
 
-<script>
-    function isVisible(elm) {
-      var rect = elm.getBoundingClientRect();
-      var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-      return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
-    }
 
-    window.addEventListener('DOMContentLoaded', (ev0) => {
-      window.addEventListener('scroll', (ev1) => {
-        document.querySelectorAll(".paused").forEach(elm => {
-          if (isVisible(elm))
-            elm.classList.remove("paused");
-        })
-      });
-    });
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const notifBox = document.getElementById('notif-box');
-    const notifMsg = document.getElementById('notif-msg');
-
-    const forms = document.querySelectorAll('.form-agregar');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const url = this.action;
-            const formData = new FormData(this);
-
-            fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if(notifMsg) notifMsg.innerText = data.message;
-                    if(notifBox) {
-                        notifBox.className = 'notif show success'; 
-                        setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
-                    }
-                } else if (data.error === 'not_logged_in') {
-                    window.location.href = '{% url "login" %}?next=' + encodeURIComponent(window.location.pathname);
-                } else {
-                    // sin stock suficiente o cantidad inválida: se avisa al cliente
-                    if(notifMsg) notifMsg.innerText = data.error;
-                    if(notifBox) {
-                        notifBox.className = 'notif show error';
-                        setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
-                    }
-                }
-            })
-            .catch(error => console.error('Error carrito:', error));
-        });
-    });
-
-    const favForms = document.querySelectorAll('.form-favorito');
-
-    favForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault(); 
-
-            const url = this.action;
-            const formData = new FormData(this);
-
-            const btnIcon = this.querySelector('button i'); 
-
-            fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if(notifMsg) notifMsg.innerText = data.message;
-                    if(notifBox) {
-                        notifBox.className = 'notif show favorite';
-                        setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
-                    }
-
-                    if (data.agregado) {
-                        btnIcon.classList.remove('far'); 
-                        btnIcon.classList.add('fas');    
-                        btnIcon.style.color = 'red';
-                    } else {
-                        btnIcon.classList.remove('fas'); 
-                        btnIcon.classList.add('far');    
-                        btnIcon.style.color = '';       
-                    }
-
-                } else if (data.error === 'not_logged_in') {
-                    window.location.href = '/login';
-                }
-            })
-            .catch(error => console.error('Error favoritos:', error));
-        });
-    });
-
-  });
-</script>
 {% endblock %}

@@ -178,23 +178,6 @@ hr {
     border: 1px solid #CBD5E0;
 }
 
-.evidencia-label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #4A5568;
-    font-weight: 600;
-    cursor: pointer;
-    gap: 5px;
-}
-
-.evidencia-label i {
-    font-size: 1.6rem;
-}
-
-.evidencia-input {
-    display: none !important;
-}
 
 .preview-img {
     width: 100%;

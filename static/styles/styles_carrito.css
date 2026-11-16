@@ -9,9 +9,6 @@ body {
   min-height: 100vh;
 }
 
-.custom-text-color {
-  color: rgb(255, 255, 255);
-}
 
 #carrito {
   position: relative;
@@ -107,7 +104,7 @@ body {
   }
 }
 .summary .col-2 { padding: 0; }
-.summary .col-10 { padding: 0; }
+
 .row { margin: 0; }
 .title b { font-size: 1.5rem; }
 .main { margin: 0; padding: 2vh 0; width: 100%; }
@@ -237,9 +234,6 @@ a:hover {
     text-overflow: ellipsis;
 }
 
-.edit-btn {
-  background-color:white;
-}
 
 .modal-envio {
     display: none;

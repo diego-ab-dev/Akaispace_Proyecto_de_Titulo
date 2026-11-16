@@ -197,7 +197,6 @@ body {
 }
 
 
-
 .step-label {
     font-weight: 800;
     font-size: 0.95rem;
@@ -254,7 +253,6 @@ body {
 }
 .payment-header { font-weight: 700; font-size: 0.9rem; margin-bottom: 5px; }
 .payment-info { display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.9rem;}
-.visa-icon { font-size: 2rem; color: #1a1f71; }
 
 
 .button {
@@ -351,7 +349,6 @@ body {
 }
 
 
-
 #notif-box {
     position: fixed;
     top: 20px;
@@ -442,8 +439,6 @@ body {
     font-size: 0.95rem;
     color: #333;
 }
-
-
 
 
 /* Aviso de retiro en tienda (HU-08) */

@@ -57,33 +57,10 @@ body {
   opacity: 1;
 }
 
-#myCarousel .carousel-item h4 {
-  -webkit-animation-name: fadeInLeft;
-  animation-name: fadeInLeft;
-}
-#myCarousel .carousel-item p {
-  -webkit-animation-name: slideInRight;
-  animation-name: slideInRight;
-}
-#myCarousel .carousel-item a {
-  -webkit-animation-name: fadeInUp;
-  animation-name: fadeInUp;
-}
 #myCarousel .carousel-item .mask img {
-  -webkit-animation-name: slideInRight;
-  animation-name: slideInRight;
   display: block;
   height: auto;
   max-width: 100%;
-}
-#myCarousel h4,
-#myCarousel p,
-#myCarousel a,
-#myCarousel .carousel-item .mask img {
-  -webkit-animation-duration: 1s;
-  animation-duration: 1.2s;
-  -webkit-animation-fill-mode: both;
-  animation-fill-mode: both;
 }
 #myCarousel .container {
   max-width: 1430px;

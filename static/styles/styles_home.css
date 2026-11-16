@@ -7,13 +7,10 @@ body {
   min-height: 100vh;
 }
 
-.custom-text-color {
-  color: rgb(255, 255, 255);
-}
 
 /*Fondo de principal oscuro*/
 #fondo {
-  background-image: url("../images/home_fondo.jpg");
+  background-image: url("../images/home_fondo.webp");
   min-height: 100vh;
   min-height: 100svh;
   display: flex;

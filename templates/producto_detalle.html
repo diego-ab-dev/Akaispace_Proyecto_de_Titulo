@@ -15,6 +15,7 @@
 <meta property="og:url" content="{{ url_compartir }}">
 {% if imagen_compartir %}<meta property="og:image" content="{{ imagen_compartir }}">{% endif %}
 <meta name="twitter:card" content="summary_large_image">
+<script src="{% static 'js/catalogo_acciones.js' %}" data-url-login="{% url 'login' %}" defer></script>
 {% endblock %}
 
 
@@ -384,83 +385,6 @@
                 });
             }
         }
-
-        // favoritos
-        const favForms = document.querySelectorAll('.form-favorito');
-        favForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault(); 
-                const url = this.action;
-                const formData = new FormData(this);
-                const btnIcon = this.querySelector('button i'); 
-
-                fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if(notifMsg) notifMsg.innerText = data.message;
-                        if(notifBox) {
-                            notifBox.className = 'notif show favorite';
-                            setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
-                        }
-                        if (data.agregado) {
-                            btnIcon.classList.remove('far');
-                            btnIcon.classList.add('fas');
-                            btnIcon.style.color = 'red'; 
-                        } else {
-                            btnIcon.classList.remove('fas');
-                            btnIcon.classList.add('far');
-                            btnIcon.style.color = ''; 
-                        }
-                    } else if (data.error === 'not_logged_in') {
-                        window.location.href = '/login';
-                    }
-                })
-                .catch(error => console.error('Error favoritos:', error));
-            });
-        });
-
-        // carrito de compras 
-        const cartForms = document.querySelectorAll('.form-agregar');
-
-        cartForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault(); 
-
-                const url = this.action;
-                const formData = new FormData(this);
-
-                fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        if(notifMsg) notifMsg.innerText = data.message;
-                        if(notifBox) {
-                            notifBox.className = 'notif show success';
-                            setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
-                        }
-                    } else if (data.error === 'not_logged_in') {
-                        window.location.href = '{% url "login" %}?next=' + encodeURIComponent(window.location.pathname);
-                    } else {
-                        // sin stock suficiente o cantidad inválida: se avisa al cliente
-                        if(notifMsg) notifMsg.innerText = data.error;
-                        if(notifBox) {
-                            notifBox.className = 'notif show error';
-                            setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
-                        }
-                    }
-                })
-                .catch(error => console.error('Error carrito:', error));
-            });
-        });
 
         // compartir: copiar enlace y menú nativo del celular (si el navegador lo permite)
         const compartir = document.querySelector('.compartir');

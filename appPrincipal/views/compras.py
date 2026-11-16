@@ -22,18 +22,13 @@ def ver_compras(request):
     else:
         orden_query = '-fecha'
 
-    compras_list = Venta.objects.filter(usuario=usuario).prefetch_related(
+    compras_list = Venta.objects.filter(usuario=usuario).select_related('datos_envio').prefetch_related(
         'producto_venta__producto__imagenes_producto'
     ).order_by(orden_query)
 
     paginator = Paginator(compras_list, 10) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    for compra in page_obj:
-        for producto_venta in compra.producto_venta.all():
-            producto = producto_venta.producto
-            producto_venta.opinion_enviada = producto.opiniones.filter(usuario=usuario).exists()
 
     return render(request, 'ver_compras.html', {
         'usuario': usuario,

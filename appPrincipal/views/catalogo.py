@@ -2,7 +2,7 @@
 import re
 
 from django.core.paginator import Paginator
-from django.db.models import Avg, prefetch_related_objects
+from django.db.models import Avg, Count, Q, prefetch_related_objects
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -136,46 +136,34 @@ def clic_recomendacion(request, recomendacion_id):
 def home(request):
     return render(request, 'home.html', {'recomendaciones': recomendaciones_para(request)})
 
-def productos_menu(request):
-    query = request.GET.get('buscar')
-    orden = request.GET.get('orden') 
-
-    if query:
-        productos = Producto.objects.filter(
-            nombre__icontains=query,
-            stock__gt=0,
-        )
-    else:
-        productos = Producto.objects.filter(
-            stock__gt=0,
-        )
-
-    productos, filtros = filtrar_catalogo(request, productos)
-    productos = productos_para_listado(productos)
-
-    if orden == 'precio_asc':
-        productos = productos.order_by('precio')
-    elif orden == 'precio_desc':
-        productos = productos.order_by('-precio')
-    else:
-        productos = productos.order_by('-id')
-
-    favoritos_ids = []
+def _pagina_de_catalogo(request, productos):
+    """Orden, página de 16 productos y favoritos del cliente: lo común del menú, la búsqueda y las categorías."""
+    orden = request.GET.get('orden')
+    productos = productos_para_listado(productos).order_by(
+        {'precio_asc': 'precio', 'precio_desc': '-precio'}.get(orden, '-id'))
+    page_obj = Paginator(productos, 16).get_page(request.GET.get('page'))
+    favoritos_ids = set()
     if request.user.is_authenticated:
-        favoritos_ids = Favorito.objects.filter(usuario=request.user).values_list('producto_id', flat=True)
-
-    paginator = Paginator(productos, 16)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    template_name = 'resultado_busqueda.html' if query else 'productosmenu.html'
-    
-    return render(request, template_name, {
+        favoritos_ids = set(Favorito.objects.filter(usuario=request.user).values_list('producto_id', flat=True))
+    return {
         'page_obj': page_obj,
         'productos': page_obj.object_list,
         'favoritos_ids': favoritos_ids,
-        'query': query,
         'orden_actual': orden,
+    }
+
+
+def productos_menu(request):
+    query = request.GET.get('buscar')
+    productos = Producto.objects.filter(stock__gt=0)
+    if query:
+        productos = productos.filter(nombre__icontains=query)
+    productos, filtros = filtrar_catalogo(request, productos)
+
+    template_name = 'resultado_busqueda.html' if query else 'productosmenu.html'
+    return render(request, template_name, {
+        **_pagina_de_catalogo(request, productos),
+        'query': query,
         'filtros': filtros,
     })
 
@@ -189,25 +177,29 @@ def producto_detalle(request, producto_id):
     registrar_interaccion(request.user, producto, InteraccionProducto.VISTA)
     rango_cantidad = range(1, producto.stock + 1)
 
-    opiniones_list = producto.opiniones.all().order_by('-fecha_creacion')
+    opiniones_list = producto.opiniones.select_related('usuario').order_by('-fecha_creacion')
 
     paginator = Paginator(opiniones_list, 5) 
     page_number = request.GET.get('page')
     opiniones = paginator.get_page(page_number)
 
-    promedio_puntuacion = opiniones_list.aggregate(avg=Avg('puntuacion'))['avg'] or 0
-    promedio_puntuacion = round(promedio_puntuacion, 1)
+    # promedio, total y cantidad por estrella en una sola consulta
+    resumen = producto.opiniones.aggregate(
+        avg=Avg('puntuacion'), total=Count('id'),
+        **{f'estrellas_{n}': Count('id', filter=Q(puntuacion=n)) for n in range(1, 6)},
+    )
+    promedio_puntuacion = round(resumen['avg'] or 0, 1)
 
     full_stars = int(promedio_puntuacion)
     half_star = (promedio_puntuacion - full_stars) >= 0.5
     full_stars_range = range(full_stars)
     empty_stars_range = range(5 - full_stars - (1 if half_star else 0))
 
-    total_opiniones = opiniones_list.count()
+    total_opiniones = resumen['total']
     ratings_data = []
-    
+
     for score in range(5, 0, -1):
-        count = opiniones_list.filter(puntuacion=score).count()
+        count = resumen[f'estrellas_{score}']
         percent = (count / total_opiniones * 100) if total_opiniones > 0 else 0
         ratings_data.append({
             "score": score,
@@ -270,33 +262,8 @@ def productos_por_categoria(request, categoria_id, plataforma=None):
     # si la URL ya fija la plataforma, o la categoría no la usa, no se muestra ese filtro
     con_plataforma = plataforma is None and categoria.requiere_plataforma
     productos, filtros = filtrar_catalogo(request, productos, con_plataforma=con_plataforma)
-    productos = productos_para_listado(productos)
-
-    orden = request.GET.get('orden')
-    
-    if orden == 'precio_asc':
-        productos = productos.order_by('precio')
-    elif orden == 'precio_desc':
-        productos = productos.order_by('-precio')
-    else:
-        productos = productos.order_by('-id')
-
-    favoritos_ids = []
-    if request.user.is_authenticated:
-        favoritos_ids = Favorito.objects.filter(
-            usuario=request.user
-        ).values_list('producto_id', flat=True)
-
-    paginator = Paginator(productos, 16)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
+    return render(request, 'productos_por_categoria.html', {
+        **_pagina_de_catalogo(request, productos),
         'categoria': nombre_categoria,
-        'favoritos_ids': favoritos_ids,
-        'page_obj': page_obj,
-        'productos': page_obj.object_list,
-        'orden_actual': orden,
         'filtros': filtros,
-    }
-    return render(request, 'productos_por_categoria.html', context)
+    })
