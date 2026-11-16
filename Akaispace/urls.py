@@ -51,6 +51,8 @@ urlpatterns = [
     path('perfil/', views.perfil, name='perfil'),
     path('editar/', views.editar_perfil, name='editar'),
     path('perfil/datos-navegacion/', views.datos_navegacion, name='datos_navegacion'),
+    path('perfil/eliminar-cuenta/', views.eliminar_cuenta, name='eliminar_cuenta'),
+    path('cuenta-eliminada/', views.cuenta_eliminada, name='cuenta_eliminada'),
     path('cambiar/', views.cambiar_contraseña, name='cambiar'),
     # compras de cliente
     path('compras/', views.ver_compras, name='ver_compras'),

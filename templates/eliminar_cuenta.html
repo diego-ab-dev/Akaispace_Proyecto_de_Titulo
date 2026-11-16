@@ -1,0 +1,88 @@
+{% extends "base_cuenta.html" %}
+{% load static %}
+
+{% block title %}Eliminar mi cuenta{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_cambiarcont.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_eliminar_cuenta.css' %}">
+{% endblock %}
+
+{% block cuenta_centrada %} cuenta-centrada{% endblock %}
+
+{% block cuenta %}
+    <div class="pass-card eliminar-card">
+        <h1 class="form-title">Eliminar mi cuenta</h1>
+
+        {% if motivos %}
+        <div class="alert alert-warning" role="alert">
+            <p class="fw-semibold mb-2">Por ahora no puedes eliminar tu cuenta:</p>
+            <ul class="mb-2">
+                {% for motivo in motivos %}<li>{{ motivo }}</li>{% endfor %}
+            </ul>
+            <p class="mb-0">
+                Espera a que termine y vuelve a intentarlo. Lo necesitamos para poder contactarte y cumplir con tu
+                compra, devolución o reclamo. Si tienes dudas, escríbenos a {{ correo_tienda }}.
+            </p>
+        </div>
+        <div class="button-group">
+            <a href="{% url 'perfil' %}" class="btn-cancelar">Volver al perfil</a>
+        </div>
+        {% else %}
+
+        <p>Eliminar tu cuenta es <strong>inmediato y no se puede deshacer</strong>.</p>
+
+        <h2 class="eliminar-subtitulo">Qué eliminamos</h2>
+        <ul class="eliminar-lista">
+            <li>Tu nombre, correo, RUT, teléfono y dirección.</li>
+            <li>Tu historial de navegación y tu autorización para recomendaciones personalizadas.</li>
+            <li>Tus opiniones, favoritos y el carrito.</li>
+            <li>El acceso con tu contraseña o con Google: se cerrará tu sesión en todos tus dispositivos.</li>
+        </ul>
+
+        <h2 class="eliminar-subtitulo">Qué conservamos</h2>
+        <p class="eliminar-texto">
+            El registro de tus compras, devoluciones y reclamos, <strong>sin tus datos personales</strong>, porque la
+            ley nos obliga a guardarlo para la contabilidad, los impuestos y la protección al consumidor
+            (<a href="{% url 'politica_privacidad' %}#conservacion" target="_blank" rel="noopener">política de privacidad</a>).
+            Podrás crear una cuenta nueva con el mismo correo cuando quieras.
+        </p>
+
+        <form method="POST" data-validar>
+            {% csrf_token %}
+            <div data-resumen-errores hidden></div>
+            {% include "partials/errores_generales.html" %}
+
+            <div class="mb-3" data-campo>
+                {% if con_contraseña %}
+                <label for="confirmacion" class="form-label">Para confirmar, ingresa tu contraseña</label>
+                <input id="confirmacion" type="password" name="confirmacion" class="form-control pe-5"
+                       autocomplete="current-password" required data-msg-requerido="Ingresa tu contraseña.">
+                {% else %}
+                <label for="confirmacion" class="form-label">Para confirmar, escribe el correo de tu cuenta</label>
+                <p class="form-text mt-0 mb-2">Tu cuenta se creó con Google, así que no tiene contraseña.</p>
+                <input id="confirmacion" type="email" name="confirmacion" class="form-control"
+                       autocomplete="off" spellcheck="false" required
+                       data-msg-requerido="Escribe el correo de tu cuenta.">
+                {% endif %}
+                {% include "partials/error_campo.html" with campo=form.confirmacion %}
+            </div>
+
+            <div class="form-check mb-3" data-campo>
+                <input class="form-check-input" type="checkbox" id="entiendo" name="entiendo" value="on" required
+                       data-msg-requerido="Marca la casilla para confirmar que entiendes que no se puede deshacer."
+                       {% if form.entiendo.value %}checked{% endif %}>
+                <label class="form-check-label" for="entiendo">
+                    Entiendo que mi cuenta se eliminará de inmediato y que no se puede recuperar.
+                </label>
+                {% include "partials/error_campo.html" with campo=form.entiendo %}
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-eliminar-cuenta" data-texto-enviando="Eliminando…">Eliminar mi cuenta</button>
+                <a href="{% url 'perfil' %}" class="btn-cancelar">Cancelar</a>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+{% endblock %}

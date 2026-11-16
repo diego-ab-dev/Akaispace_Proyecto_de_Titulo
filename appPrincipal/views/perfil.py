@@ -1,7 +1,7 @@
-"""Perfil del cliente: resumen, edición de datos y cambio de contraseña."""
+"""Perfil del cliente: resumen, edición de datos, cambio de contraseña y eliminación de la cuenta."""
 from urllib.parse import urlencode
 
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import logout as auth_logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -11,7 +11,10 @@ from django.db import IntegrityError
 
 from appPrincipal import correos
 from appPrincipal.constants import REGIONES, REGIONES_CIUDADES, RESPONSABLE_DATOS
-from appPrincipal.forms import DIRECCION_MAXIMA, NOMBRE_MAXIMO, CambiarContraseñaForm, EditarPerfilForm
+from appPrincipal.eliminacion_cuenta import CuentaNoEliminable, eliminar_cuenta as eliminar_y_anonimizar
+from appPrincipal.eliminacion_cuenta import motivos_para_no_eliminar
+from appPrincipal.forms import (DIRECCION_MAXIMA, NOMBRE_MAXIMO, CambiarContraseñaForm, EditarPerfilForm,
+                                EliminarCuentaForm)
 from appPrincipal.models import Devolucion, Opinion, Reclamo, Venta
 from appPrincipal.recomendaciones import cambiar_consentimiento_navegacion
 
@@ -101,3 +104,33 @@ def editar_perfil(request):
         'rut_guardado': usuario.rut,
         'correo_tienda': RESPONSABLE_DATOS['correo_privacidad'],
     })
+
+
+@login_required
+def eliminar_cuenta(request):
+    """Derecho de supresión: el cliente elimina su cuenta de inmediato, confirmando con su contraseña
+    (o su correo si la cuenta es solo de Google). Ver eliminacion_cuenta.py."""
+    usuario = request.user
+    motivos = motivos_para_no_eliminar(usuario)
+    form = EliminarCuentaForm(usuario=usuario)
+    if request.method == 'POST' and not motivos:
+        form = EliminarCuentaForm(request.POST, usuario=usuario)
+        if form.is_valid():
+            try:
+                eliminar_y_anonimizar(usuario)
+            except CuentaNoEliminable as error:
+                motivos = error.motivos  # algo cambió entre que abrió la página y confirmó
+            else:
+                auth_logout(request)
+                return redirect('cuenta_eliminada')
+
+    return render(request, 'eliminar_cuenta.html', {
+        'form': form,
+        'motivos': motivos,
+        'con_contraseña': form.con_contraseña,
+        'correo_tienda': RESPONSABLE_DATOS['correo_privacidad'],
+    })
+
+
+def cuenta_eliminada(request):
+    return render(request, 'cuenta_eliminada.html')

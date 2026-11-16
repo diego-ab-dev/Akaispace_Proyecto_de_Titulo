@@ -376,6 +376,30 @@ class CambiarContraseñaForm(forms.Form):
         return cleaned_data
 
 
+class EliminarCuentaForm(forms.Form):
+    """Confirmación para eliminar la cuenta: la contraseña o, en las cuentas creadas solo con Google (sin
+    contraseña), el correo de la cuenta escrito a mano."""
+    confirmacion = forms.CharField(strip=False)
+    entiendo = forms.BooleanField(error_messages={
+        'required': 'Marca la casilla para confirmar que entiendes que no se puede deshacer.'})
+
+    def __init__(self, *args, usuario, **kwargs):
+        self.usuario = usuario
+        self.con_contraseña = usuario.has_usable_password()
+        super().__init__(*args, **kwargs)
+        self.fields['confirmacion'].error_messages['required'] = (
+            'Ingresa tu contraseña.' if self.con_contraseña else 'Escribe el correo de tu cuenta.')
+
+    def clean_confirmacion(self):
+        valor = self.cleaned_data['confirmacion']
+        if self.con_contraseña:
+            if not self.usuario.check_password(valor):
+                raise ValidationError('La contraseña no es correcta.', code='contraseña_incorrecta')
+        elif valor.strip().lower() != self.usuario.email:
+            raise ValidationError('El correo no coincide con el de tu cuenta.', code='correo_incorrecto')
+        return valor
+
+
 class ReclamoForm(forms.Form):
     ASUNTO_MAXIMO = 50
     DESCRIPCION_MAXIMA = 2000

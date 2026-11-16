@@ -1,0 +1,32 @@
+{% extends "correos/base.html" %}
+{% block contenido %}
+<h1 style="font-size:20px; margin:0 0 12px;">Hola, {{ nombre }}</h1>
+<p style="margin:0 0 16px;">
+  Te confirmamos que tu cuenta Akaispace (<strong>{{ email }}</strong>) fue eliminada
+  {% if por_administrador %}por la tienda{% else %}a tu solicitud{% endif %}
+  el <strong>{{ fecha|date:"d/m/Y" }} a las {{ fecha|date:"H:i" }}</strong>.
+</p>
+
+<h2 style="font-size:16px; margin:0 0 8px;">Qué eliminamos</h2>
+<ul style="margin:0 0 16px; padding-left:20px; font-size:14px; color:#374151;">
+  <li>Tu nombre, correo, RUT, teléfono y dirección.</li>
+  <li>Tu historial de navegación y tu autorización para recomendaciones personalizadas.</li>
+  <li>Tus opiniones, favoritos y el carrito.</li>
+  <li>El acceso con tu contraseña o con Google.</li>
+</ul>
+
+<h2 style="font-size:16px; margin:0 0 8px;">Qué conservamos</h2>
+<p style="margin:0 0 16px; font-size:14px; color:#374151;">
+  El registro de tus compras, devoluciones y reclamos, <strong>sin tus datos personales</strong>, porque la ley nos
+  obliga a guardarlo para la contabilidad, los impuestos y la protección al consumidor. Más detalles en la
+  <a href="{{ url_privacidad }}" style="color:#4E84A8;">política de privacidad</a>.
+</p>
+
+<p style="margin:0 0 16px; font-size:14px; color:#374151;">
+  Si quieres volver a comprar con nosotros, puedes crear una cuenta nueva con este mismo correo cuando quieras.
+</p>
+
+<p style="margin:0; padding:12px 16px; background-color:#FDECEC; border-left:4px solid #B10000; border-radius:4px; font-size:14px; color:#7A1010;">
+  ¿No pediste eliminar tu cuenta? Escríbenos de inmediato a {{ tienda.correo_privacidad }}.
+</p>
+{% endblock %}

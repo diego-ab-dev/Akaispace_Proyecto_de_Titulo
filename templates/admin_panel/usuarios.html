@@ -13,6 +13,9 @@
 
 {% block content %}
     <div class="height-100">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="status">{{ message }}</div>
+        {% endfor %}
         <form method="get" action="{% url 'buscar_usuarios' %}" style="margin-bottom: 10px;"">
             <input type="hidden" name="q" value="{{ request.GET.q }}">
             <input type="hidden" name="filtro" value="{{ request.GET.filtro }}">
@@ -129,7 +132,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    ¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.
+                    ¿Estás seguro de que deseas eliminar este usuario? Se anonimizarán sus datos personales (sus ventas se conservan) y se le avisará por correo. Esta acción no se puede deshacer.
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

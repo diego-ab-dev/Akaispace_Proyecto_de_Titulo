@@ -1,0 +1,27 @@
+{% extends "base_cuenta.html" %}
+{% load static %}
+
+{% block title %}Cuenta eliminada{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_cambiarcont.css' %}">
+<link rel="stylesheet" href="{% static 'styles/styles_eliminar_cuenta.css' %}">
+{% endblock %}
+
+{% block cuenta_centrada %} cuenta-centrada{% endblock %}
+
+{% block cuenta %}
+    <div class="pass-card eliminar-card text-center">
+        <i class="fa-solid fa-circle-check eliminar-icono" aria-hidden="true"></i>
+        <h1 class="form-title">Tu cuenta fue eliminada</h1>
+        <p>
+            Eliminamos tus datos personales y cerramos tu sesión. Te enviamos un correo de confirmación.
+        </p>
+        <p class="eliminar-texto">
+            Gracias por haber comprado en Akaispace. Si quieres volver, puedes crear una cuenta nueva cuando quieras.
+        </p>
+        <div class="button-group">
+            <a href="{% url 'home' %}" class="btn-guardar text-decoration-none d-flex align-items-center justify-content-center">Ir a la tienda</a>
+        </div>
+    </div>
+{% endblock %}

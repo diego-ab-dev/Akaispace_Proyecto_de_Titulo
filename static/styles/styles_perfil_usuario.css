@@ -321,6 +321,37 @@ a {
     border: none;
 }
 
+/* Eliminar mi cuenta: al final del perfil, separada del resto con borde rojo */
+.zona-eliminar {
+    border-left: 4px solid #b10000;
+}
+
+.btn-eliminar-perfil {
+    background-color: #b10000;
+    color: #fff;
+    display: inline-block;
+    text-align: center;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    align-self: flex-start;
+    transition: all 0.3s ease;
+}
+
+.btn-eliminar-perfil:hover,
+.btn-eliminar-perfil:focus-visible {
+    background-color: #8a0000;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 575px) {
+    .btn-eliminar-perfil {
+        align-self: stretch;
+    }
+}
+
 /* ============ Perfil responsive ============
    escritorio (>= 992px): compras + datos arriba, devoluciones / opiniones / reclamos en 3 columnas
    tablet (768-991px): devoluciones y opiniones en 2 columnas, reclamos a todo el ancho

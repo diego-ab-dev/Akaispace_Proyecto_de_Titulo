@@ -1,0 +1,55 @@
+/* Eliminar mi cuenta y su confirmación. Se carga después de styles_cambiarcont.css (tarjeta y botones). */
+.eliminar-card {
+    max-width: 560px;
+}
+
+.eliminar-subtitulo {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 18px 0 6px;
+    color: #000;
+}
+
+.eliminar-lista {
+    padding-left: 20px;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.eliminar-texto {
+    font-size: 0.95rem;
+    color: #4b5563;
+    margin-bottom: 20px;
+}
+
+.btn-eliminar-cuenta {
+    background-color: #b10000;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    min-width: 140px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-eliminar-cuenta:hover,
+.btn-eliminar-cuenta:focus-visible {
+    background-color: #8a0000;
+}
+
+.eliminar-icono {
+    font-size: 3rem;
+    color: #28a745;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 575px) {
+    .btn-eliminar-cuenta {
+        flex: 1;
+        min-width: 0;
+        padding: 11px 0;
+    }
+}

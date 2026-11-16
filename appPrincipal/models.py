@@ -127,11 +127,33 @@ class Usuario(AbstractUser):
             self.rut = None
         super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        self.is_deleted = True
+    NOMBRE_ANONIMO = 'Cuenta eliminada'
+    DOMINIO_ANONIMO = 'akaispace.invalid'  # dominio reservado (RFC 2606): nunca recibe correo
+
+    def anonimizar(self):
+        """Supresión de datos (Ley 21.719): reemplaza los datos que identifican al cliente y desactiva la cuenta.
+        La fila se conserva porque las ventas, devoluciones y reclamos la referencian (respaldo contable y
+        tributario); sin nombre, correo, RUT, teléfono ni dirección ya no identifica a nadie. El correo y el
+        RUT quedan libres, así la persona puede volver a registrarse. Al cambiar la contraseña por una no
+        utilizable, Django cierra la sesión en todos los dispositivos.
+        La limpieza de las tablas relacionadas la hace eliminacion_cuenta.eliminar_cuenta()."""
+        self.nombre = self.NOMBRE_ANONIMO
+        self.email = f'eliminado-{self.pk}@{self.DOMINIO_ANONIMO}'
+        self.rut = None
+        self.telefono = ''
+        self.direccion = ''
+        self.region = ''
+        self.ciudad = ''
+        self.datos_navegacion_autorizados_en = None
+        self.set_unusable_password()
         self.is_active = False
+        self.is_deleted = True
         self.deleted_at = now()
         self.save()
+
+    def delete(self, *args, **kwargs):
+        # borrado lógico: nunca se borra la fila (hard_delete() lo hace solo si no tiene ventas)
+        self.anonimizar()
 
     def hard_delete(self):
         super().delete()

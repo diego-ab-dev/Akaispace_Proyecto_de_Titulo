@@ -238,8 +238,26 @@
                 </div>
             </div>
 
-        </div> 
-    </div> 
+        </div>
+
+        <!-- derecho de supresión (Ley 21.719): el cliente elimina su cuenta de inmediato -->
+        {% if not usuario.is_staff %}
+        <div class="row g-4 mt-1">
+            <div class="col-12">
+                <section class="profile-card zona-eliminar" aria-labelledby="titulo-eliminar-cuenta">
+                    <h3 class="card-header-title" id="titulo-eliminar-cuenta">Eliminar mi cuenta</h3>
+                    <p class="mb-3">
+                        Eliminaremos tus datos personales y cerraremos tu sesión. Conservaremos el registro de tus
+                        compras sin tus datos, porque la ley nos obliga. No se puede deshacer.
+                    </p>
+                    <a href="{% url 'eliminar_cuenta' %}" class="btn-eliminar-perfil">
+                        Eliminar mi cuenta <i class="fa-solid fa-trash-can ms-2" aria-hidden="true"></i>
+                    </a>
+                </section>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

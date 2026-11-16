@@ -10,6 +10,7 @@
 - Bienvenida: una sola vez, al crear la cuenta (formulario o Google).
 - Contraseña actualizada: aviso de seguridad al cambiarla desde el perfil o restablecerla con el enlace de
   recuperación, con un enlace para recuperar la cuenta si el cambio no lo hizo el cliente.
+- Cuenta eliminada: confirma la eliminación y anonimización de la cuenta, y qué datos se conservan por ley.
 
 Todos son correos de la cuenta o de una compra (transaccionales), no publicidad. No se avisa cada inicio de
 sesión: sería un correo en cada visita.
@@ -89,6 +90,26 @@ def _enviar_contraseña_actualizada(usuario, como):
 def enviar_contraseña_actualizada(usuario, como=CAMBIADA):
     """`como`: CAMBIADA (desde el perfil) o RESTABLECIDA (con el enlace de recuperación)."""
     _al_confirmar(_enviar_contraseña_actualizada, usuario, como)
+
+
+def _enviar_cuenta_eliminada(nombre, email, por_administrador):
+    contexto = {
+        'nombre': nombre,
+        'email': email,
+        'por_administrador': por_administrador,
+        'fecha': localtime(now()),
+        'url_privacidad': settings.SITIO_URL + reverse('politica_privacidad') + '#conservacion',
+        'tienda': RESPONSABLE_DATOS,
+    }
+    enviado = _enviar("Tu cuenta fue eliminada - Akaispace", 'cuenta_eliminada', contexto, email)
+    if enviado:
+        logger.info("Aviso de cuenta eliminada enviado")  # sin el correo: la cuenta ya está anonimizada
+    return enviado
+
+
+def enviar_cuenta_eliminada(nombre, email, por_administrador=False):
+    """Recibe el nombre y el correo originales: al enviarse, la cuenta ya está anonimizada."""
+    _al_confirmar(_enviar_cuenta_eliminada, nombre, email, por_administrador)
 
 
 def enviar_confirmacion_compra(venta):

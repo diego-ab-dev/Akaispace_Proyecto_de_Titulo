@@ -4450,3 +4450,185 @@ class DatosParaComprarTests(TestCase):  # RUT y teléfono obligatorios para comp
         self.assertContains(respuesta, 'Completa tus datos para comprar')
         self.assertContains(respuesta, 'id="falta-rut"')
         self.assertContains(respuesta, 'id="falta-telefono"')
+
+
+class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el cliente elimina su cuenta
+    URL = '/perfil/eliminar-cuenta/'
+    CONTRASEÑA = 'Akaispace-2026!'
+
+    def setUp(self):
+        self.cliente = crear_cliente('ana@example.com', direccion='Picarte 1', region='LOS RIOS', ciudad='Valdivia')
+        self.producto = crear_producto()
+        self.client.force_login(self.cliente)
+
+    def confirmar(self, confirmacion=None, entiendo='on'):
+        datos = {'confirmacion': self.CONTRASEÑA if confirmacion is None else confirmacion}
+        if entiendo:
+            datos['entiendo'] = entiendo
+        return self.client.post(self.URL, datos)
+
+    def test_el_perfil_muestra_la_seccion_al_final(self):
+        respuesta = self.client.get('/perfil/')
+        self.assertContains(respuesta, 'href="/perfil/eliminar-cuenta/"')
+
+    def test_el_administrador_no_ve_la_seccion_ni_puede_eliminarse(self):
+        admin = crear_cliente('admin@example.com', is_staff=True)
+        self.client.force_login(admin)
+        self.assertNotContains(self.client.get('/perfil/'), 'href="/perfil/eliminar-cuenta/"')
+        self.client.post(self.URL, {'confirmacion': self.CONTRASEÑA, 'entiendo': 'on'})
+        admin.refresh_from_db()
+        self.assertFalse(admin.is_deleted)
+
+    def test_contraseña_incorrecta_o_sin_marcar_la_casilla_no_elimina(self):
+        respuesta = self.confirmar('otra-clave')
+        self.assertIn('confirmacion', respuesta.context['form'].errors)
+        respuesta = self.confirmar(entiendo=None)
+        self.assertIn('entiendo', respuesta.context['form'].errors)
+        self.cliente.refresh_from_db()
+        self.assertFalse(self.cliente.is_deleted)
+
+    def test_anonimiza_los_datos_y_cierra_la_sesion(self):
+        rut = self.cliente.rut
+        respuesta = self.confirmar()
+        self.assertRedirects(respuesta, '/cuenta-eliminada/')
+        self.cliente.refresh_from_db()
+        self.assertTrue(self.cliente.is_deleted)
+        self.assertFalse(self.cliente.is_active)
+        self.assertIsNotNone(self.cliente.deleted_at)
+        self.assertEqual(self.cliente.nombre, 'Cuenta eliminada')
+        self.assertEqual(self.cliente.email, f'eliminado-{self.cliente.pk}@akaispace.invalid')
+        self.assertIsNone(self.cliente.rut)
+        self.assertEqual((self.cliente.telefono, self.cliente.direccion, self.cliente.region, self.cliente.ciudad),
+                         ('', '', '', ''))
+        self.assertFalse(self.cliente.has_usable_password())
+        self.assertFalse(Usuario.objects.filter(rut=rut).exists())
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertEqual(self.client.get('/perfil/').status_code, 302)
+
+    def test_cierra_la_sesion_en_otros_dispositivos(self):
+        from django.test import Client
+        otro_dispositivo = Client()
+        otro_dispositivo.post('/login/', {'email': 'ana@example.com', 'contraseña': self.CONTRASEÑA})
+        self.assertEqual(otro_dispositivo.get('/perfil/').status_code, 200)
+        self.confirmar()
+        self.assertEqual(otro_dispositivo.get('/perfil/').status_code, 302)
+
+    def test_conserva_las_ventas_sin_datos_personales_y_borra_lo_demas(self):
+        from .models import Carrito, Favorito, InteraccionProducto, Opinion, Recomendacion, Venta
+        venta = crear_venta(self.cliente, self.producto)
+        Venta.objects.filter(pk=venta.pk).update(direccion_envio='Picarte 1, Valdivia')
+        Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='Bueno', puntuacion=5)
+        Favorito.objects.create(usuario=self.cliente, producto=self.producto)
+        Carrito.objects.create(usuario=self.cliente)
+        Usuario.objects.filter(pk=self.cliente.pk).update(datos_navegacion_autorizados_en=now())
+        InteraccionProducto.objects.create(usuario=self.cliente, producto=self.producto, tipo='vista')
+        Recomendacion.objects.create(usuario=self.cliente, producto=self.producto, ubicacion='home')
+
+        self.confirmar()
+
+        venta.refresh_from_db()
+        self.assertEqual(venta.usuario_id, self.cliente.pk)
+        self.assertEqual(venta.producto_venta.count(), 1)
+        self.assertIsNone(venta.direccion_envio)
+        for modelo in (Opinion, Favorito, InteraccionProducto, Recomendacion):
+            self.assertFalse(modelo.objects.filter(usuario=self.cliente).exists(), modelo.__name__)
+        self.assertFalse(Carrito.objects.filter(usuario=self.cliente).exists())
+        self.cliente.refresh_from_db()
+        self.assertIsNone(self.cliente.datos_navegacion_autorizados_en)
+
+    def test_envia_el_correo_de_confirmacion_a_la_direccion_original(self):
+        from django.core import mail
+        with self.captureOnCommitCallbacks(execute=True):
+            self.confirmar()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['ana@example.com'])
+        self.assertIn('Cliente Prueba', mail.outbox[0].body)
+        self.assertIn('a tu solicitud', mail.outbox[0].body)
+
+    def test_el_correo_y_el_rut_quedan_libres_para_una_cuenta_nueva(self):
+        from .forms import DatosCuentaForm
+        rut = self.cliente.rut
+        self.confirmar()
+        form = DatosCuentaForm({'rut': rut, 'nombre': 'Ana', 'email': 'ana@example.com', 'telefono': '987654321',
+                                'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': 'Picarte 1'})
+        form.is_valid()
+        self.assertNotIn('email', form.errors)
+        self.assertNotIn('rut', form.errors)
+
+    def test_cuenta_de_google_confirma_con_el_correo_y_se_desvincula(self):
+        from allauth.account.models import EmailAddress
+        from allauth.socialaccount.models import SocialAccount
+        google = crear_cliente('luis@gmail.com', password=None)
+        SocialAccount.objects.create(user=google, provider='google', uid='999')
+        EmailAddress.objects.create(user=google, email='luis@gmail.com', verified=True, primary=True)
+        self.client.force_login(google)
+        self.assertContains(self.client.get(self.URL), 'escribe el correo de tu cuenta')
+
+        respuesta = self.client.post(self.URL, {'confirmacion': 'otro@gmail.com', 'entiendo': 'on'})
+        self.assertIn('confirmacion', respuesta.context['form'].errors)
+
+        respuesta = self.client.post(self.URL, {'confirmacion': ' Luis@Gmail.com ', 'entiendo': 'on'})
+        self.assertRedirects(respuesta, '/cuenta-eliminada/')
+        self.assertFalse(SocialAccount.objects.filter(user=google).exists())
+        self.assertFalse(EmailAddress.objects.filter(email='luis@gmail.com').exists())
+
+    def assertBloqueada(self, motivo):
+        respuesta = self.client.get(self.URL)
+        self.assertContains(respuesta, motivo)
+        self.assertNotContains(respuesta, 'name="confirmacion"')
+        self.confirmar()
+        self.cliente.refresh_from_db()
+        self.assertFalse(self.cliente.is_deleted)
+
+    def test_bloquea_si_tiene_una_compra_sin_entregar(self):
+        crear_venta(self.cliente, self.producto, estado='En Preparación')
+        self.assertBloqueada('compra que aún no se entrega')
+
+    def test_una_compra_entregada_o_anulada_no_bloquea(self):
+        from .models import Venta
+        crear_venta(self.cliente, self.producto, estado='Entregado')
+        anulada = crear_venta(self.cliente, self.producto, estado='En Preparación')
+        Venta.objects.filter(pk=anulada.pk).update(anulada_en=now())
+        self.assertRedirects(self.confirmar(), '/cuenta-eliminada/')
+
+    def test_bloquea_si_tiene_una_devolucion_en_curso(self):
+        from .models import Devolucion
+        venta = crear_venta(self.cliente, self.producto)
+        devolucion = Devolucion.objects.create(venta=venta, producto=self.producto, usuario=self.cliente,
+                                               motivo='Llegó dañado')
+        self.assertBloqueada('devolución o un reembolso en curso')
+        Devolucion.objects.filter(pk=devolucion.pk).update(estado='Rechazada')
+        self.assertRedirects(self.confirmar(), '/cuenta-eliminada/')
+
+    def test_bloquea_si_tiene_un_reclamo_abierto(self):
+        from .models import Reclamo
+        Reclamo.objects.create(usuario=self.cliente, asunto='Demora', descripcion='No llega')
+        self.assertBloqueada('reclamo que aún no se responde')
+
+    def test_bloquea_si_tiene_un_pago_webpay_en_curso_pero_no_uno_abandonado(self):
+        from .models import PagoWebpay
+        pago = PagoWebpay.objects.create(usuario=self.cliente, orden_compra='OC-1', monto=1000, metodo_envio='tienda')
+        self.assertBloqueada('pago con Webpay en curso')
+        PagoWebpay.objects.filter(pk=pago.pk).update(creado=now() - timedelta(hours=2))
+        self.assertRedirects(self.confirmar(), '/cuenta-eliminada/')
+
+    def test_el_administrador_elimina_desde_el_panel_con_las_mismas_reglas(self):
+        from django.core import mail
+        admin = crear_cliente('admin@example.com', is_staff=True)
+        self.client.force_login(admin)
+        url = f'/admin-panel/usuarios/eliminar/{self.cliente.pk}/'
+
+        venta = crear_venta(self.cliente, self.producto, estado='En Preparación')
+        respuesta = self.client.post(url, follow=True)
+        self.assertContains(respuesta, 'No se puede eliminar la cuenta')
+        self.cliente.refresh_from_db()
+        self.assertFalse(self.cliente.is_deleted)
+
+        venta.datos_envio.guardar_estado('Entregado')
+        with self.captureOnCommitCallbacks(execute=True):
+            respuesta = self.client.post(url, follow=True)
+        self.assertContains(respuesta, 'Cuenta eliminada')
+        self.cliente.refresh_from_db()
+        self.assertTrue(self.cliente.is_deleted)
+        self.assertIsNone(self.cliente.rut)
+        self.assertIn('por la tienda', mail.outbox[-1].body)

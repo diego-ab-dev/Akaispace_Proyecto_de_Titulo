@@ -1,6 +1,7 @@
 """Panel de administración: usuarios."""
 import logging
 
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.http import JsonResponse
@@ -10,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from appPrincipal.decorators import admin_required
 from appPrincipal.constants import REGIONES
+from appPrincipal.eliminacion_cuenta import CuentaNoEliminable, eliminar_cuenta
 from appPrincipal.forms import DIRECCION_MAXIMA, NOMBRE_MAXIMO, CrearUsuarioAdminForm, errores_para_json
 from appPrincipal.models import Usuario
 
@@ -32,9 +34,17 @@ def admin_usuarios(request):
 @admin_required
 @require_POST
 def eliminar_usuario(request, usuario_id):
+    # misma eliminación que hace el cliente desde su perfil: anonimiza y conserva las ventas (eliminacion_cuenta.py)
     usuario = get_object_or_404(Usuario, id=usuario_id)
-    if usuario != request.user:
-        usuario.delete()
+    if usuario == request.user:
+        messages.error(request, "No puedes eliminar tu propia cuenta.")
+        return redirect('admin_usuarios')
+    try:
+        eliminar_cuenta(usuario, por_administrador=True)
+    except CuentaNoEliminable as error:
+        messages.error(request, f"No se puede eliminar la cuenta de {usuario.nombre}: {error}")
+    else:
+        messages.success(request, "Cuenta eliminada: sus datos personales se anonimizaron y sus ventas se conservan.")
     return redirect('admin_usuarios')
 
 
