@@ -5,8 +5,8 @@
   const navbar = nav.querySelector(".navbar");
   const lupa = nav.querySelector(".search-box > i");
   const navLinks = nav.querySelector(".nav-links");
-  const menuOpenBtn = nav.querySelector(".bx-menu");
-  const menuCloseBtn = nav.querySelector(".nav-links .bx-x");
+  const menuOpenBtn = nav.querySelector(".icono-menu");
+  const menuCloseBtn = nav.querySelector(".nav-links .icono-cerrar");
   const enMenuLateral = () => window.matchMedia("(max-width: 1200px)").matches;
 
   // los íconos con role="button" (menú, cerrar, lupa) también responden a Enter y Espacio
@@ -25,7 +25,7 @@
   if (lupa && navbar) {
     lupa.addEventListener("click", () => {
       const abierto = navbar.classList.toggle("showInput");
-      lupa.classList.replace(abierto ? "bx-search" : "bx-x", abierto ? "bx-x" : "bx-search");
+      lupa.classList.replace(abierto ? "fa-magnifying-glass" : "fa-xmark", abierto ? "fa-xmark" : "fa-magnifying-glass");
       if (abierto) {
         const input = nav.querySelector(".search-box input");
         if (input) input.focus();

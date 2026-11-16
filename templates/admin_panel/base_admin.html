@@ -7,6 +7,8 @@ El bloque `encabezado` va antes del header (por ejemplo el <h1> de la sección).
 
 {% block librerias %}
 {{ block.super }}
+{# íconos del panel (la tienda usa solo Font Awesome) #}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
 <link rel="stylesheet" href="{% static 'styles/styles_admin/panel.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_boton_subir.css' %}">
 {% endblock %}

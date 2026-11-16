@@ -214,9 +214,11 @@
       </div>
 
 <script>
-  // carrusel principal
+  // carrusel principal (espera a Bootstrap, que se carga con defer)
   const carrusel = document.querySelector('#myCarousel');
-  new bootstrap.Carousel(carrusel, { interval: 3000, ride: 'carousel' });
+  document.addEventListener('DOMContentLoaded', () => {
+    new bootstrap.Carousel(carrusel, { interval: 3000, ride: 'carousel' });
+  });
 
   // todos los slides con el alto del más alto (cada portada mide distinto): así el catálogo no sube ni
   // baja al cambiar de slide. Se mide al cargar las imágenes y de nuevo si cambia el ancho de la ventana.

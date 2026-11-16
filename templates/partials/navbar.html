@@ -10,14 +10,14 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
 {% endcomment %}
 <nav class="nav-tienda">
   <div class="navbar">
-    <i class='bx bx-menu' role="button" tabindex="0" aria-label="Abrir menú"></i>
+    <i class="fa-solid fa-bars icono-menu" role="button" tabindex="0" aria-label="Abrir menú"></i>
     <div class="logo">
       <a href="{% url 'home' %}"><img src="{% static 'images/akaispace_favicon.webp' %}" alt="Logo Akaispace"><span>Akaispace</span></a>
     </div>
     <div class="nav-links">
       <div class="sidebar-logo">
         <span class="logo-name">Akaispace</span>
-        <i class='bx bx-x' role="button" tabindex="0" aria-label="Cerrar menú"></i>
+        <i class="fa-solid fa-xmark icono-cerrar" role="button" tabindex="0" aria-label="Cerrar menú"></i>
       </div>
       <ul class="links">
         {% if menu_simple %}
@@ -32,7 +32,7 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
         {% for menu in menu_navbar %}
         <li class="con-submenu">
           <a href="#" role="button" aria-haspopup="true" aria-expanded="false">{{ menu.nombre }}</a>
-          <i class='bx bxs-chevron-down arrow'></i>
+          <i class="fa-solid fa-chevron-down arrow"></i>
 
           <div class="sub-menu mega-menu-box">
             <div class="d-flex">
@@ -125,7 +125,7 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
       {% endif %}
     </div>
     <div class="search-box">
-      <i class='bx bx-search' role="button" tabindex="0" aria-label="Buscar"></i>
+      <i class="fa-solid fa-magnifying-glass" role="button" tabindex="0" aria-label="Buscar"></i>
       <div class="input-box">
         <form method="get" action="{% url 'productos_menu' %}" role="search">
           <input class="form-control" type="text" placeholder="Buscar productos" aria-label="Buscar productos" id="name"
