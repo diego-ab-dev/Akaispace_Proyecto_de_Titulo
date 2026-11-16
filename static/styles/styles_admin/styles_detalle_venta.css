@@ -284,11 +284,11 @@ body {
 }
 
 .custom-toast.success {
-    background: linear-gradient(135deg, #28a745, #34ce57);
+    background-color: #1e7b45;
 }
 
 .custom-toast.error {
-    background: linear-gradient(135deg, #dc3545, #ff4757);
+    background-color: #c53030;
 }
 
 @keyframes slideIn {

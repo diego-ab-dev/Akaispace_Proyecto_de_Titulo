@@ -64,9 +64,10 @@ El selector "Ordenar" de cada página se une a este formulario con form="form-fi
 
     {% if filtros.aplicados %}
     <div class="filtros-aplicados">
+        <span class="filtros-aplicados-titulo">Filtrando por:</span>
         {% for filtro in filtros.aplicados %}
         <a href="?{{ filtro.url }}" class="chip-filtro" title="Quitar este filtro">
-            {{ filtro.texto }} <i class="fas fa-xmark"></i>
+            {{ filtro.texto }} <span class="chip-filtro-quitar" aria-hidden="true"><i class="fas fa-xmark"></i></span>
         </a>
         {% endfor %}
     </div>

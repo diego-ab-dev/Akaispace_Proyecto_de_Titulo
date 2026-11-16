@@ -90,9 +90,9 @@
                         <h4 class="fw-bold mb-3" id="titulo-cambios-sin-guardar" style="color: #1C253B;">Tienes cambios sin guardar</h4>
                         <p class="text-muted mb-4">Si sales ahora, se perderán los cambios que hiciste en esta página.</p>
                         <div class="d-flex justify-content-center flex-wrap gap-2">
-                            <button type="button" class="btn px-4 rounded-pill fw-semibold" data-bs-dismiss="modal"
+                            <button type="button" class="btn px-4 rounded-3 fw-semibold" data-bs-dismiss="modal"
                                     style="background-color: #4E84A8; color: #fff;">Seguir editando</button>
-                            <button type="button" class="btn btn-outline-danger px-4 rounded-pill fw-semibold"
+                            <button type="button" class="btn btn-outline-danger px-4 rounded-3 fw-semibold"
                                     id="btn-salir-sin-guardar">Salir sin guardar</button>
                         </div>
                     </div>
