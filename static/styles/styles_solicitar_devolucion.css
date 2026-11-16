@@ -323,9 +323,69 @@ input.is-invalid + .evidencia-box {
     overflow-wrap: anywhere;
 }
 
+/* acciones sobre la foto abierta: fondo tenue de color que se rellena al pasar el mouse */
+.btn-foto-accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.btn-foto-accion i {
+    font-size: 0.95em;
+    transition: transform 0.3s ease;
+}
+
+.btn-foto-accion:active {
+    transform: scale(0.97);
+}
+
+.btn-quitar-foto {
+    background-color: #FDECEC;
+    border-color: #F8C9C9;
+    color: #C53030;
+}
+
+.btn-quitar-foto:hover,
+.btn-quitar-foto:focus-visible {
+    background-color: #DC3545;
+    border-color: #DC3545;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-quitar-foto:hover i {
+    transform: rotate(-12deg);
+}
+
+.btn-cambiar-foto {
+    background-color: #E8F1F7;
+    border-color: #C5DAE8;
+    color: #3B6A8A;
+}
+
+.btn-cambiar-foto:hover,
+.btn-cambiar-foto:focus-visible {
+    background-color: #4E84A8;
+    border-color: #4E84A8;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(78, 132, 168, 0.3);
+}
+
+.btn-cambiar-foto:hover i {
+    transform: rotate(180deg);
+}
+
 .btn-cerrar-foto {
     background-color: #4E84A8;
     border-color: #4E84A8;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 8px 20px;
 }
 
 .btn-cerrar-foto:hover,
@@ -384,5 +444,19 @@ input.is-invalid + .evidencia-box {
     }
     .evidencia-container {
         flex-wrap: wrap;
+    }
+    /* en el modal: quitar y cambiar comparten fila, "Listo" va abajo a lo ancho */
+    #modalFotoEvidencia .modal-footer {
+        gap: 8px;
+    }
+    #modalFotoEvidencia .modal-footer > * {
+        margin: 0 !important;
+    }
+    .btn-foto-accion {
+        flex: 1 1 0;
+        justify-content: center;
+    }
+    .btn-cerrar-foto {
+        flex: 1 1 100%;
     }
 }
