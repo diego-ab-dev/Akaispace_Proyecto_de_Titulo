@@ -1,5 +1,5 @@
 /* Base de las páginas del panel con menú lateral (templates/admin_panel/base_admin.html).
-   Las páginas antiguas repiten estas reglas en su propio CSS; las nuevas solo agregan lo suyo. */
+   Las hojas de cada página no repiten estas reglas: solo agregan lo suyo. */
 :root{--header-height: 3rem;
     --nav-width: 68px;
     --first-color: #4e84a8;
@@ -162,8 +162,7 @@ a{text-decoration: none}
             }
         }
 
-/* Con 10 secciones el menú debe caber en pantallas de notebook. Más específico que .nav_link para ganar
-   también a las hojas antiguas que repiten las reglas del menú. */
+/* Con 10 secciones el menú debe caber en pantallas de notebook. */
 .l-navbar .nav_logo {
     margin-bottom: 1.25rem;
 }
@@ -183,7 +182,7 @@ a{text-decoration: none}
    escritorio y tablet (>= 768px): barra fija de íconos que al abrirse muestra los nombres y corre el contenido (como antes)
    celular (< 768px): el menú queda oculto; el botón lo abre ENCIMA del contenido, con nombres y un fondo oscuro.
    El contenido no se corre (en un celular quedaría aplastado). Se cierra tocando fuera o eligiendo una sección.
-   Las reglas llevan #body-pd delante para ganarle a las hojas antiguas que repiten el menú. */
+   Las reglas llevan #body-pd delante para ganarle a las reglas generales de arriba. */
 @media (max-width: 767px) {
     #body-pd {
         margin-top: var(--header-height);
@@ -200,8 +199,7 @@ a{text-decoration: none}
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
     #body-pd .l-navbar {
-        /* siempre sobre el fondo oscuro (z-index 1025): algunas hojas antiguas (ventas, reclamos,
-           devoluciones) bajan el menú a z-index 100 y el fondo lo tapaba, sin dejar tocar nada */
+        /* siempre sobre el fondo oscuro (z-index 1025), si no el fondo lo tapa y no se puede tocar nada */
         z-index: 1030;
         left: calc(-1 * (var(--nav-width) + 170px));
         width: calc(var(--nav-width) + 156px);
