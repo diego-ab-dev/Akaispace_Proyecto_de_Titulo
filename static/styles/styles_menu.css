@@ -62,7 +62,9 @@ body {
   height: auto;
   max-width: 100%;
 }
-#myCarousel .container {
+/* el catálogo usa el mismo ancho que el carrusel */
+#myCarousel .container,
+.section-products .container {
   max-width: 1430px;
 }
 #myCarousel .carousel-item {

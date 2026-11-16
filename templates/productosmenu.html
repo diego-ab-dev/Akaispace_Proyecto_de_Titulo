@@ -4,6 +4,7 @@
 {% block title %}Akaispace - Menu{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_paginacion.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_catalogo_comun.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_menu.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_filtros_catalogo.css' %}">
@@ -20,7 +21,7 @@
 </div>
 
 <!--carrusel principal-->
-  <div id="myCarousel" class="carousel slide carousel-fade" data-ride="carousel">
+  <div id="myCarousel" class="carousel slide carousel-fade">
     <div class="carousel-inner">
       {# los slides se editan en el panel de administración (Portada > Carrusel del menú) #}
       {% for slide in portada.carrusel %}
@@ -60,8 +61,8 @@
         <span class="sr-only">Next</span>
       </a>
       {% endif %}
-
-      <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+    </div>
+  </div>
 
       <!--seccion de productos-->
       <section class="section-products">
@@ -214,6 +215,28 @@
 
 <script>
   // carrusel principal
-  new bootstrap.Carousel(document.querySelector('#myCarousel'), { interval: 3000, ride: 'carousel' });
+  const carrusel = document.querySelector('#myCarousel');
+  new bootstrap.Carousel(carrusel, { interval: 3000, ride: 'carousel' });
+
+  // todos los slides con el alto del más alto (cada portada mide distinto): así el catálogo no sube ni
+  // baja al cambiar de slide. Se mide al cargar las imágenes y de nuevo si cambia el ancho de la ventana.
+  function igualarAltoCarrusel() {
+    const slides = carrusel.querySelectorAll('.carousel-item');
+    slides.forEach((slide) => { slide.style.minHeight = ''; });
+    let alto = 0;
+    slides.forEach((slide) => {
+      const oculto = getComputedStyle(slide).display === 'none';
+      if (oculto) slide.style.display = 'block';  // los slides inactivos no ocupan espacio: se muestran un instante para medirlos
+      alto = Math.max(alto, slide.offsetHeight);
+      if (oculto) slide.style.display = '';
+    });
+    slides.forEach((slide) => { slide.style.minHeight = alto + 'px'; });
+  }
+  window.addEventListener('load', igualarAltoCarrusel);
+  let esperaAlto;
+  window.addEventListener('resize', () => {
+    clearTimeout(esperaAlto);
+    esperaAlto = setTimeout(igualarAltoCarrusel, 150);
+  });
 </script>
 {% endblock %}
