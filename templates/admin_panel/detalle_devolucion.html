@@ -56,9 +56,14 @@
                         </div>
                         <div class="min-w-0">
                             <h6 class="m-0 fw-bold texto-largo">{{ devolucion.usuario.nombre }}</h6>
+                            {% if not devolucion.usuario.is_deleted %}
                             <small class="text-muted texto-largo d-block">{{ devolucion.usuario.email }}</small>
+                            {% endif %}
                         </div>
                     </div>
+                    {% if devolucion.usuario.is_deleted %}
+                    <div class="mt-2">{% include "partials/aviso_cuenta_eliminada.html" with usuario=devolucion.usuario %}</div>
+                    {% endif %}
                 </div>
 
                 <div class="mb-3">

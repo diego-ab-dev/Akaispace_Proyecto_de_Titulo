@@ -48,6 +48,13 @@
             Podrás crear una cuenta nueva con el mismo correo cuando quieras.
         </p>
 
+        <div class="alert alert-warning small" role="note">
+            <strong>Tus compras anteriores no se podrán recuperar.</strong> Si después creas una cuenta nueva, aunque
+            sea con el mismo correo y RUT, empezarás sin historial: no verás esas compras, devoluciones ni reclamos.
+            Guarda los <strong>correos de confirmación de compra</strong>: su número de compra es lo que necesitarás si
+            luego quieres ejercer una garantía o hacer una consulta.
+        </div>
+
         <form method="POST" data-validar>
             {% csrf_token %}
             <div data-resumen-errores hidden></div>

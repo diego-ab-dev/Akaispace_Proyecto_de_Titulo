@@ -44,7 +44,9 @@
                 <h3 class="card-title">Datos del Comprador</h3>
 
                 <div class="data-row"><span class="data-label">Canal:</span> {{ venta.get_canal_display }}</div>
-                {% if venta.usuario %}
+                {% if venta.usuario.is_deleted %}
+                {% include "partials/aviso_cuenta_eliminada.html" with usuario=venta.usuario %}
+                {% elif venta.usuario %}
                 <div class="data-row texto-largo"><span class="data-label">Nombre:</span> {{ venta.usuario.nombre }}</div>
                 <div class="data-row texto-largo"><span class="data-label">Correo:</span> {{ venta.usuario.email }}</div>
                 <div class="data-row"><span class="data-label">RUT:</span> {{ venta.usuario.rut|default:"No especificado" }}</div>

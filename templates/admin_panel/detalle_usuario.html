@@ -11,6 +11,9 @@
     <div class="container d-flex justify-content-center">
         <div class="detail-card">
             <h2>Usuario #{{ usuario.id }}</h2>
+            {% if usuario.is_deleted %}
+            <div class="mb-3">{% include "partials/aviso_cuenta_eliminada.html" %}</div>
+            {% else %}
 
             <div class="info-group">
                 <span class="info-label">Nombre:</span>
@@ -46,6 +49,7 @@
                 <span class="info-label">Ciudad:</span>
                 <span class="info-value">{{ usuario.ciudad }}</span>
             </div>
+            {% endif %}
 
             <div class="info-group">
                 <span class="info-label">Administrador:</span>
@@ -67,6 +71,7 @@
                 </span>
             </div>
 
+            {% if not usuario.is_deleted %}
             <div class="action-buttons">
 
                 <a href="{% url 'eliminar_usuario' usuario.id %}" 
@@ -74,6 +79,7 @@
                    Eliminar
                 </a>
             </div>
+            {% endif %}
 
             <div class="btn-volver-container">
                 <a href="{% url 'admin_usuarios' %}" class="btn-custom btn-volver">Volver</a>

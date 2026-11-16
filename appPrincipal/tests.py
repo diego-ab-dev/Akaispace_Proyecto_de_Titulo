@@ -4632,3 +4632,25 @@ class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el c
         self.assertTrue(self.cliente.is_deleted)
         self.assertIsNone(self.cliente.rut)
         self.assertIn('por la tienda', mail.outbox[-1].body)
+
+    def test_la_pagina_advierte_que_no_se_recupera_el_historial(self):
+        respuesta = self.client.get(self.URL)
+        self.assertContains(respuesta, 'Tus compras anteriores no se podrán recuperar')
+        self.assertContains(respuesta, 'correos de confirmación de compra')
+
+    def test_el_panel_muestra_el_aviso_en_lugar_de_los_datos_anonimizados(self):
+        from .models import Devolucion, Reclamo
+        venta = crear_venta(self.cliente, self.producto)
+        devolucion = Devolucion.objects.create(venta=venta, producto=self.producto, usuario=self.cliente,
+                                               motivo='Llegó dañado', estado='Rechazada')
+        reclamo = Reclamo.objects.create(usuario=self.cliente, venta=venta, asunto='Demora', estado='Respondido')
+        self.confirmar()
+        self.cliente.refresh_from_db()
+        self.client.force_login(crear_cliente('admin@example.com', is_staff=True))
+        for url in [f'/admin-panel/ventas/detalle/{venta.pk}/', f'/devolucion/detalle/{devolucion.pk}/',
+                    f'/administracion/reclamos/detalle/{reclamo.pk}/', f'/admin-panel/usuarios/detalle/{self.cliente.pk}/']:
+            respuesta = self.client.get(url)
+            self.assertContains(respuesta, 'Cuenta eliminada el', msg_prefix=url)
+            self.assertNotContains(respuesta, '@akaispace.invalid', msg_prefix=url)
+        self.assertNotContains(self.client.get(f'/admin-panel/usuarios/detalle/{self.cliente.pk}/'),
+                               f'/admin-panel/usuarios/eliminar/{self.cliente.pk}/')

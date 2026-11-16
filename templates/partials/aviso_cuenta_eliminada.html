@@ -1,0 +1,10 @@
+{% comment %}
+Aviso para el panel en lugar de los datos de un cliente que eliminó su cuenta (eliminacion_cuenta.py): sus datos
+personales se anonimizaron y el registro (venta, devolución, reclamo) se conserva sin ellos por obligación legal.
+Uso: {% include "partials/aviso_cuenta_eliminada.html" with usuario=venta.usuario %}
+{% endcomment %}<div class="alert alert-secondary small mb-0 aviso-cuenta-eliminada" role="note">
+    <strong><i class="fa-solid fa-user-slash me-1" aria-hidden="true"></i>Cuenta eliminada el {{ usuario.deleted_at|date:"d/m/Y" }}.</strong>
+    Sus datos personales se anonimizaron (Ley 21.719, derecho de supresión). Este registro se conserva sin ellos por
+    obligación tributaria y de protección al consumidor. Si el cliente vuelve a contactarte, ubícalo por el número de
+    compra que aparece en su correo de confirmación.
+</div>

@@ -22,7 +22,9 @@
     </div>
 
     <div class="info-cliente texto-largo">
-        {% if venta.usuario %}
+        {% if venta.usuario.is_deleted %}
+        <strong>Cliente:</strong> Cuenta eliminada (datos personales anonimizados)
+        {% elif venta.usuario %}
         <strong>Cliente:</strong> {{ venta.usuario.nombre }}<br>
         <strong>RUT:</strong> {{ venta.usuario.rut|default:"No especificado" }}<br>
         <strong>Dirección:</strong> {{ venta.usuario.direccion }}<br>

@@ -95,7 +95,11 @@
             <label class="mb-2 fw-bold" for="respuesta-devolucion">Tu Respuesta:</label>
             <textarea name="respuesta" id="respuesta-devolucion" rows="4" maxlength="{{ largo_maximo_respuesta }}" placeholder="Indica al cliente la resolución del caso..." required>{{ respuesta }}</textarea>
             <small class="text-muted d-block mb-3" style="margin-top: -8px;">
+                {% if devolucion.usuario.is_deleted %}
+                <i class="fas fa-user-slash"></i> El cliente eliminó su cuenta: no recibirá esta respuesta por correo.
+                {% else %}
                 <i class="fas fa-envelope"></i> El cliente recibirá esta respuesta por correo en {{ devolucion.usuario.email }}.
+                {% endif %}
             </small>
 
             <div class="mb-2" style="font-weight: 600; font-size: 0.95rem;">Decisión Administrativa:</div>
