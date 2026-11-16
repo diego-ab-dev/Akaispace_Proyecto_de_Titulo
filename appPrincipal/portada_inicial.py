@@ -11,19 +11,19 @@ CONTENIDO_INICIAL = [
         'seccion': 'carrusel', 'orden': 1, 'titulo': 'Call of Duty: Black Ops 6',
         'texto': 'Prepárate para la adrenalina de Call of Duty: Black Ops 6. Vive una experiencia de combate '
                  'que no querrás dejar. ¡Consíguelo ahora!',
-        'imagen_static': 'cod6.png', 'producto': 'Call of Duty: Black Ops 6',
+        'imagen_static': 'cod6.webp', 'producto': 'Call of Duty: Black Ops 6',
     },
     {
         'seccion': 'carrusel', 'orden': 2, 'titulo': 'FC25',
         'texto': '¡Vive la emoción del fútbol como nunca antes con FC25! Llévate el juego que todos quieren '
                  'y domina la cancha desde casa.',
-        'imagen_static': 'fc25.png', 'producto': 'Fc 25',
+        'imagen_static': 'fc25.webp', 'producto': 'Fc 25',
     },
     {
         'seccion': 'carrusel', 'orden': 3, 'titulo': 'Silent Hill 2',
         'texto': 'Sumérgete en el terror psicológico de Silent Hill 2. Atrévete a enfrentar tus miedos y '
                  'descubre los oscuros secretos que te esperan.',
-        'imagen_static': 'silent.png', 'producto': 'Silent Hill 2',
+        'imagen_static': 'silent.webp', 'producto': 'Silent Hill 2',
     },
     {
         'seccion': 'lanzamientos', 'orden': 1, 'titulo': 'Battlefield 6',
@@ -43,7 +43,7 @@ CONTENIDO_INICIAL = [
     },
     {
         'seccion': 'menu_videojuegos', 'orden': 1, 'titulo': 'Call of Duty: Black Ops 6', 'etiqueta': '¡NUEVO!',
-        'imagen_static': 'cod6.png', 'producto': 'Call of Duty: Black Ops 6',
+        'imagen_static': 'cod6.webp', 'producto': 'Call of Duty: Black Ops 6',
     },
     {
         'seccion': 'menu_consolas', 'orden': 1, 'titulo': 'Play Station 5', 'etiqueta': '¡TOP VENTAS!',

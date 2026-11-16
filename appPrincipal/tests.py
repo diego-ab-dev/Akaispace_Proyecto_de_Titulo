@@ -4043,6 +4043,26 @@ class ComandoOptimizarImagenesTests(TestCase):  # optimizar_imagenes: las fotos 
         self.assertIn('No existe el archivo: productos/no_existe.jpg', self.correr())
 
 
+class ComentariosDePlantillasTests(TestCase):  # un {# #} de varias líneas Django lo muestra como texto en la página
+    def test_ningun_comentario_corto_ocupa_mas_de_una_linea(self):
+        import re
+        from pathlib import Path
+        from django.conf import settings
+        malos = []
+        for carpeta in settings.TEMPLATES[0]['DIRS']:
+            for archivo in Path(carpeta).rglob('*.html'):
+                texto = archivo.read_text(encoding='utf-8')
+                for m in re.finditer(r'\{#(?:(?!#\}).)*?\n', texto, re.S):
+                    malos.append(f'{archivo.name}:{texto[:m.start()].count(chr(10)) + 1}')
+        self.assertEqual(malos, [], 'Usa {% comment %}...{% endcomment %} para comentarios de varias líneas')
+
+    def test_la_pagina_no_muestra_comentarios(self):
+        for url in ['/', '/login/', '/menu/']:
+            html = self.client.get(url).content.decode()
+            self.assertNotIn('{#', html, url)
+            self.assertNotIn('#}', html, url)
+
+
 class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compra ni opina como cliente
     def setUp(self):
         self.producto = crear_producto()
