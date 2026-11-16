@@ -4,6 +4,7 @@
 {% block title %}Devoluciones{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/estados_solicitud.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_devolucion.css' %}">
 {% endblock %}
 
@@ -88,19 +89,7 @@
                         <td data-label="Motivo">{{ devolucion.motivo|truncatechars:30 }}</td>
                         <td data-label="Fecha">{{ devolucion.fecha_solicitud|date:"d/m/Y H:i" }}</td>
                         <td data-label="Estado">
-                            <span class="badge
-                                {% if devolucion.estado == 'Pendiente' %}
-                                    bg-warning text-dark
-                                {% elif devolucion.estado == 'Aprobada' %}
-                                    bg-success
-                                {% elif devolucion.estado == 'Recibida' %}
-                                    bg-primary
-                                {% elif devolucion.estado == 'Rechazada' %}
-                                    bg-danger
-                                {% else %}
-                                    bg-secondary
-                                {% endif %}
-                            ">
+                            <span class="estado-solicitud estado-solicitud--{{ devolucion.estado|slugify }}">
                                 {{ devolucion.estado }}
                             </span>
 

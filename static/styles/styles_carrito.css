@@ -671,14 +671,14 @@ a:hover {
 
 .reco-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 0;
+  right: 0;
   z-index: 1;
-  padding: 3px 9px;
-  border-radius: 999px;
+  padding: 4px 9px 4px 11px;
+  border-radius: 0 13px 0 10px;
   background-color: #E0313E;
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 

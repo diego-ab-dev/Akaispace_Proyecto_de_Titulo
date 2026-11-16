@@ -100,7 +100,8 @@
                     {% if config_sitio.mostrar_stock %}
                     <p class="mb-1 d-flex align-items-center">
                         <strong>Stock:</strong> 
-                        <span class="ms-2 badge {% if producto.stock > 5 %}bg-success{% elif producto.stock > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %} rounded-pill px-3">
+                        <span class="ms-2 stock-texto {% if producto.stock > 5 %}stock-texto--alto{% elif producto.stock > 0 %}stock-texto--bajo{% else %}stock-texto--agotado{% endif %}">
+                            <i class="fa-solid {% if producto.stock > 5 %}fa-circle-check{% elif producto.stock > 0 %}fa-hourglass-half{% else %}fa-circle-xmark{% endif %}" aria-hidden="true"></i>
                             {{ producto.stock }} unidades
                         </span>
                     </p>

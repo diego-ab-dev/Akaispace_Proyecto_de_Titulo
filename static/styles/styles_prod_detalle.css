@@ -647,3 +647,23 @@ h2, h3, h5 {
     margin-top: 4px;
   }
 }
+
+/* stock: ícono + texto de color, sin "pastilla" */
+.stock-texto {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.stock-texto--alto {
+    color: #1e7b45;
+}
+
+.stock-texto--bajo {
+    color: #a66a00;
+}
+
+.stock-texto--agotado {
+    color: #b42318;
+}

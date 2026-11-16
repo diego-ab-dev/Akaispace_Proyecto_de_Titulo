@@ -4,6 +4,7 @@
 {% block title %}Detalle Reclamo{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="{% static 'styles/styles_admin/estados_solicitud.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_admin/styles_detalle_reclamo.css' %}">
 {% endblock %}
 
@@ -30,11 +31,7 @@
                 <div class="detail-card">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <span class="badge 
-                                {% if reclamo.estado == 'Abierto' or reclamo.estado == 'Pendiente' %}bg-warning text-dark
-                                {% elif reclamo.estado == 'Respondido' %}bg-success
-                                {% else %}bg-secondary{% endif %} 
-                                px-3 py-2 rounded-pill">
+                            <span class="estado-solicitud estado-solicitud--{{ reclamo.estado|slugify }} estado-solicitud--grande">
                                 {{ reclamo.estado }}
                             </span>
                         </div>
