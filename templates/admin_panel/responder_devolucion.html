@@ -92,8 +92,8 @@
 
             <hr style="opacity: 0.1; margin: 20px 0;">
 
-            <label class="mb-2 fw-bold">Tu Respuesta:</label>
-            <textarea name="respuesta" rows="4" maxlength="{{ largo_maximo_respuesta }}" placeholder="Indica al cliente la resolución del caso..." required>{{ respuesta }}</textarea>
+            <label class="mb-2 fw-bold" for="respuesta-devolucion">Tu Respuesta:</label>
+            <textarea name="respuesta" id="respuesta-devolucion" rows="4" maxlength="{{ largo_maximo_respuesta }}" placeholder="Indica al cliente la resolución del caso..." required>{{ respuesta }}</textarea>
             <small class="text-muted d-block mb-3" style="margin-top: -8px;">
                 <i class="fas fa-envelope"></i> El cliente recibirá esta respuesta por correo en {{ devolucion.usuario.email }}.
             </small>

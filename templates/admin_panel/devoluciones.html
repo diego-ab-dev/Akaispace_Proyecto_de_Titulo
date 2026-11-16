@@ -18,12 +18,12 @@
        <form method="GET" class="row g-3 mb-4">
 
         <div class="col-md-4">
-            <input type="text" name="q" class="form-control" placeholder="Buscar por cliente, producto o ID"
+            <input type="text" name="q" aria-label="Buscar devoluciones" class="form-control" placeholder="Buscar por cliente, producto o ID"
                 value="{{ request.GET.q }}">
         </div>
 
         <div class="col-md-3">
-            <select name="estado" class="form-select">
+            <select name="estado" aria-label="Filtrar por estado" class="form-select">
                 <option value="">Estado (Todos)</option>
                 <option value="Pendiente" {% if request.GET.estado == "Pendiente" %}selected{% endif %}>Pendiente</option>
                 <option value="Aprobada" {% if request.GET.estado == "Aprobada" %}selected{% endif %}>Aprobada</option>
@@ -33,12 +33,12 @@
         </div>
 
         <div class="col-md-2">
-            <input type="date" name="fecha_inicio" class="form-control"
+            <input type="date" name="fecha_inicio" aria-label="Fecha desde" title="Fecha desde" class="form-control"
                 value="{{ request.GET.fecha_inicio }}" max="{{ hoy }}">
         </div>
 
         <div class="col-md-2">
-            <input type="date" name="fecha_fin" class="form-control"
+            <input type="date" name="fecha_fin" aria-label="Fecha hasta" title="Fecha hasta" class="form-control"
                 value="{{ request.GET.fecha_fin }}" max="{{ hoy }}">
         </div>
 

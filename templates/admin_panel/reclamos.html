@@ -30,13 +30,13 @@
 
             <input 
                 type="text" 
-                name="q" 
+                name="q" aria-label="Buscar reclamos" 
                 class="form-control w-auto" 
                 placeholder="Buscar por usuario, ID o asunto..."
                 value="{{ request.GET.q }}"
             >
 
-            <select name="estado" class="form-select w-auto">
+            <select name="estado" aria-label="Filtrar por estado" class="form-select w-auto">
                 <option value="">Todos los estados</option>
                 <option value="Abierto" {% if estado_seleccionado == 'Abierto' %}selected{% endif %}>Abierto</option>
                 <option value="Respondido" {% if estado_seleccionado == 'Respondido' %}selected{% endif %}>Respondido</option>
@@ -44,14 +44,14 @@
 
             <input 
                 type="date" 
-                name="fecha_inicio" 
+                name="fecha_inicio" aria-label="Fecha desde" title="Fecha desde" 
                 class="form-control w-auto"
                 value="{{ request.GET.fecha_inicio }}"
             >
 
             <input 
                 type="date" 
-                name="fecha_fin" 
+                name="fecha_fin" aria-label="Fecha hasta" title="Fecha hasta" 
                 class="form-control w-auto"
                 value="{{ request.GET.fecha_fin }}"
             >

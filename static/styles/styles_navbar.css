@@ -353,7 +353,8 @@
   transition: all 0.48s cubic-bezier(0.23, 1, 0.32, 1);
   z-index: 1;
 }
-.nav-tienda .menu .item:hover .submenu {
+.nav-tienda .menu .item:hover .submenu,
+.nav-tienda .menu .item:focus-within .submenu {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -361,11 +362,13 @@
   border-top: transparent;
   border-color: #2c2e33;
 }
-.nav-tienda .menu .item:hover .link {
+.nav-tienda .menu .item:hover .link,
+.nav-tienda .menu .item:focus-within .link {
   color: #000;
   border-radius: 16px 16px 0 0;
 }
-.nav-tienda .menu .item:hover .link svg {
+.nav-tienda .menu .item:hover .link svg,
+.nav-tienda .menu .item:focus-within .link svg {
   transform: rotate(-180deg);
 }
 .nav-tienda .submenu .submenu-item {
@@ -496,10 +499,12 @@
 
 /* en escritorio el megamenú se abre al pasar el mouse */
 @media (min-width: 1201px) {
-  .nav-tienda .links > li:hover > .mega-menu-box {
+  .nav-tienda .links > li:hover > .mega-menu-box,
+  .nav-tienda .links > li:focus-within > .mega-menu-box {
     display: block;
   }
-  .nav-tienda .links > li:hover > .arrow {
+  .nav-tienda .links > li:hover > .arrow,
+  .nav-tienda .links > li:focus-within > .arrow {
     transform: rotate(180deg);
   }
 }

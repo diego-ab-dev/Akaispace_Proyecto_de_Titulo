@@ -17,7 +17,7 @@
             <input type="hidden" name="q" value="{{ request.GET.q }}">
             <input type="hidden" name="filtro" value="{{ request.GET.filtro }}">
 
-            <select name="es_admin" onchange="this.form.submit()">
+            <select name="es_admin" aria-label="Filtrar por tipo de usuario" onchange="this.form.submit()">
                 <option value="" {% if request.GET.es_admin == "" %}selected{% endif %}>Todos</option>
                 <option value="True" {% if request.GET.es_admin == "True" %}selected{% endif %}>Administradores</option>
                 <option value="False" {% if request.GET.es_admin == "False" %}selected{% endif %}>No Administradores</option>
@@ -25,8 +25,8 @@
         </form>
         <div class="product-actions">
             <form method="get" action="{% url 'buscar_usuarios' %}">
-                <input type="text" name="q" placeholder="Buscar usuarios..." value="{{ request.GET.q }}" />
-                <select name="filtro">
+                <input type="text" name="q" aria-label="Buscar usuarios" placeholder="Buscar usuarios..." value="{{ request.GET.q }}" />
+                <select name="filtro" aria-label="Buscar por">
                     <option value="nombre" {% if request.GET.filtro == 'nombre' %}selected{% endif %}>Nombre</option>
                     <option value="rut" {% if request.GET.filtro == 'rut' %}selected{% endif %}>RUT</option>
                 </select>

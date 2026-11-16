@@ -30,7 +30,7 @@
         <div class="col-md-4">
             <input 
                 type="text" 
-                name="q" 
+                name="q" aria-label="Buscar ventas" 
                 class="form-control" 
                 placeholder="Buscar por usuario o ID..." 
                 value="{{ request.GET.q }}"
@@ -40,7 +40,7 @@
         <div class="col-md-3">
             <input 
                 type="date" 
-                name="fecha_inicio" 
+                name="fecha_inicio" aria-label="Fecha desde" title="Fecha desde" 
                 max="{{ hoy }}" 
                 class="form-control"
                 value="{{ request.GET.fecha_inicio }}"
@@ -50,7 +50,7 @@
         <div class="col-md-3">
             <input 
                 type="date" 
-                name="fecha_fin"
+                name="fecha_fin" aria-label="Fecha hasta" title="Fecha hasta"
                 max="{{ hoy }}" 
                 class="form-control"
                 value="{{ request.GET.fecha_fin }}"
@@ -58,7 +58,7 @@
         </div>
 
         <div class="col-md-2">
-            <select name="ordenar" class="form-select">
+            <select name="ordenar" aria-label="Ordenar ventas" class="form-select">
                 <option value="">Ordenar</option>
                 <option value="recientes" {% if request.GET.ordenar == "recientes" %}selected{% endif %}>Más recientes</option>
                 <option value="antiguas" {% if request.GET.ordenar == "antiguas" %}selected{% endif %}>Más antiguas</option>
@@ -66,7 +66,7 @@
         </div>
 
         <div class="col-md-3">
-            <select name="estado" class="form-select">
+            <select name="estado" aria-label="Filtrar por estado" class="form-select">
                 <option value="">Todos los estados</option>
                 {% for valor, nombre in estados %}
                 <option value="{{ valor }}" {% if request.GET.estado == valor %}selected{% endif %}>{{ nombre }}</option>
@@ -75,7 +75,7 @@
         </div>
 
         <div class="col-md-3">
-            <select name="entrega" class="form-select">
+            <select name="entrega" aria-label="Filtrar por tipo de entrega" class="form-select">
                 <option value="">Todas las entregas</option>
                 {% for valor, nombre in entregas %}
                 <option value="{{ valor }}" {% if request.GET.entrega == valor %}selected{% endif %}>{{ nombre }}</option>
@@ -84,7 +84,7 @@
         </div>
 
         <div class="col-md-3">
-            <select name="canal" class="form-select">
+            <select name="canal" aria-label="Filtrar por canal de venta" class="form-select">
                 <option value="">Todos los canales</option>
                 {% for valor, nombre in canales %}
                 <option value="{{ valor }}" {% if request.GET.canal == valor %}selected{% endif %}>{{ nombre }}</option>

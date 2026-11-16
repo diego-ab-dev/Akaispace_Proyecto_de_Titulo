@@ -24,10 +24,10 @@
   </div>
 
   <!--Parrafos-->
-  <a name="nosotros"></a>
+  <a id="nosotros"></a>
   <div class="cont container">
-    <section id="hero" class="paused">
-      <h1 class="anim-down fw-bold fst-italic text-center">Bienvenido a Akaispace</h1>
+    <section id="bienvenida" class="paused">
+      <h2 class="anim-down fw-bold fst-italic text-center">Bienvenido a Akaispace</h2>
       <div class="containerparrafo container">
         <div class="row">
           <div class="col-lg-6">
@@ -46,11 +46,11 @@
   </div>
 
   <!--Cards-->
-  <section id="hero" class="wrapper paused">
+  <section id="acciones" class="wrapper paused">
     <div class="container">
       <div class="row">
         <div class="col text-center mb-5">
-          <h1 class="anim-down display-6 fw-bold fst-italic text-center">Acciones Rápidas</h1>
+          <h2 class="anim-down display-6 fw-bold fst-italic text-center">Acciones Rápidas</h2>
         </div>
       </div>
       <div class="row">
@@ -61,7 +61,7 @@
               <div class="card-img-overlay d-flex flex-column">
                 <div class="card-body" style="color: white;">
                   <small class="card-meta mb-2" style="color: white;">Akaispace</small>
-                  <h4 class="card-title mt-0" style="color: white;">Regístrate</h4>
+                  <h3 class="h4 card-title mt-0" style="color: white;">Regístrate</h3>
                   <small>¡Se Parte de Nuestra Comunidad y Regístrate ya!</small>
                 </div>
               </div>
@@ -76,7 +76,7 @@
               <div class="card-img-overlay d-flex flex-column">
                 <div class="card-body" style="color: white;">
                   <small class="card-meta mb-2" style="color: white;">Akaispace</small>
-                  <h4 class="card-title mt-0" style="color: white;">Nuestro catálogo de videojuegos</h4>
+                  <h3 class="h4 card-title mt-0" style="color: white;">Nuestro catálogo de videojuegos</h3>
                   <small>Visita nuestro ampliado catálogo de Videojuegos</small>
                 </div>
               </div>
@@ -91,7 +91,7 @@
               <div class="card-img-overlay d-flex flex-column">
                 <div class="card-body" style="color: white;">
                   <small class="card-meta mb-2" style="color: white;">Akaispace</small>
-                  <h4 class="card-title mt-0 " style="color: white;">Nuestras Redes Sociales</h4>
+                  <h3 class="h4 card-title mt-0" style="color: white;">Nuestras Redes Sociales</h3>
                   <small>Te invitamos a seguirnos en nuestras redes</small>
                 </div>
               </div>
@@ -108,7 +108,7 @@
     <div class="container cont-vid">
       <div class="row">
         <div class="col text-center mb-5">
-          <h1 class="anim-down display-6 fw-bold fst-italic text-center">Nuevos Lanzamientos</h1>
+          <h2 class="anim-down display-6 fw-bold fst-italic text-center">Nuevos Lanzamientos</h2>
         </div>
       </div>
       {% for lanzamiento in portada.lanzamientos %}
@@ -126,7 +126,7 @@
           </div>
         </div>
         <div class="col-md-6{% if forloop.counter|divisibleby:2 %} order-2 order-md-1{% endif %}">
-          <h2 class="fw-bold mb-3 text-dark texto-largo">{{ lanzamiento.titulo }}</h2>
+          <h3 class="h2 fw-bold mb-3 text-dark texto-largo">{{ lanzamiento.titulo }}</h3>
           <p class="text-dark texto-largo texto-justificado">{{ lanzamiento.texto }}</p>
           {% if lanzamiento.producto_disponible %}
           <a href="{% url 'producto_detalle' lanzamiento.producto_disponible.id %}" class="btn-product-cta">Ver Producto</a>
@@ -148,12 +148,12 @@
 {% endif %}
 
 <!--Local fisico: mapa y horarios-->
-<a name="local" id="local"></a>
+<a id="local"></a>
   <section class="wrapper paused">
     <div class="container">
       <div class="row">
         <div class="col text-center mb-5">
-          <h1 class="anim-down display-6 fw-bold fst-italic text-center">Visita Nuestro Local</h1>
+          <h2 class="anim-down display-6 fw-bold fst-italic text-center">Visita Nuestro Local</h2>
         </div>
       </div>
 
@@ -172,7 +172,7 @@
           <div class="col-lg-5">
             <div class="local-info">
               <div class="local-direccion">
-                <h2 class="fw-bold mb-1 text-dark">Akaispace Valdivia</h2>
+                <h3 class="h2 fw-bold mb-1 text-dark">Akaispace Valdivia</h3>
                 <p class="text-muted mb-0">Galería Caupolicán 544, Local 26<br>Valdivia, Región de Los Ríos</p>
               </div>
 
@@ -205,7 +205,7 @@
   </section>
 
 <!--redes sociales-->
-<a name="redes" id="redes"></a>
+<a id="redes"></a>
   <section class="wrapper paused">
     <div class="container">
 

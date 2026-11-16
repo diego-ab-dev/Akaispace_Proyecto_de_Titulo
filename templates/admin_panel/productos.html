@@ -20,9 +20,9 @@
                 {% if categoria %} <input type="hidden" name="categoria" value="{{ categoria }}"> {% endif %}
                 {% if genero %} <input type="hidden" name="genero" value="{{ genero }}"> {% endif %}
 
-                <input type="text" name="q" value="{{ query|default_if_none:'' }}" placeholder="Buscar productos..." class="search-input" />            
+                <input type="text" name="q" aria-label="Buscar productos" value="{{ query|default_if_none:'' }}" placeholder="Buscar productos..." class="search-input" />            
 
-                <select name="ordenar" onchange="this.form.submit()"> <option value="recientes" {% if ordenar == 'recientes' %}selected{% endif %}>Recientes</option>
+                <select name="ordenar" aria-label="Ordenar productos" onchange="this.form.submit()"> <option value="recientes" {% if ordenar == 'recientes' %}selected{% endif %}>Recientes</option>
                     <option value="antiguos" {% if ordenar == 'antiguos' %}selected{% endif %}>Antiguos</option>
                     <option value="menor_precio" {% if ordenar == 'menor_precio' %}selected{% endif %}>Menor Precio</option>
                     <option value="mayor_precio" {% if ordenar == 'mayor_precio' %}selected{% endif %}>Mayor Precio</option>

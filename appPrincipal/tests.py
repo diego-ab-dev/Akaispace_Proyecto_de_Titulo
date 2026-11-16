@@ -2456,7 +2456,7 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
                 for categoria, plataforma, _ in entradas:
                     self.assertIn(f'href="{url_categoria(ids[categoria], plataforma)}"', html, (categoria, plataforma))
         for menu in ['Videojuegos', 'Consolas', 'Accesorios', 'Figuras']:
-            self.assertIn(f'<a href="#">{menu}</a>', html)
+            self.assertIn(f'<a href="#" role="button" aria-haspopup="true" aria-expanded="false">{menu}</a>', html)
 
     def test_una_categoria_oculta_sale_del_navbar_pero_su_pagina_sigue(self):
         from .models import Categoria
@@ -2464,16 +2464,16 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
         url = f'/productos/{Categoria.objects.get(nombre="Videojuegos").id}/ps5/'
         respuesta = self.client.get('/menu/')
         self.assertNotContains(respuesta, f'href="{url}"')
-        self.assertNotContains(respuesta, '<a href="#">Videojuegos</a>')
+        self.assertNotContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Videojuegos</a>')
         self.assertContains(self.client.get(url), 'Juego PS5')
 
     def test_si_se_ocultan_todas_las_de_un_menu_el_menu_desaparece(self):
         self.ocultar('Funko Pop')
-        self.assertContains(self.client.get('/menu/'), '<a href="#">Figuras</a>')
+        self.assertContains(self.client.get('/menu/'), '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Figuras</a>')
         self.ocultar('Amiibo')
         respuesta = self.client.get('/menu/')
-        self.assertNotContains(respuesta, '<a href="#">Figuras</a>')
-        self.assertContains(respuesta, '<a href="#">Consolas</a>')
+        self.assertNotContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Figuras</a>')
+        self.assertContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Consolas</a>')
 
     def test_relacionados_de_la_misma_categoria_por_defecto(self):
         relacionados = list(self.ficha().context['productos_relacionados'])

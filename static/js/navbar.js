@@ -9,6 +9,19 @@
   const menuCloseBtn = nav.querySelector(".nav-links .bx-x");
   const enMenuLateral = () => window.matchMedia("(max-width: 1200px)").matches;
 
+  // los íconos con role="button" (menú, cerrar, lupa) también responden a Enter y Espacio
+  nav.querySelectorAll('i[role="button"]').forEach(function (icono) {
+    icono.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      icono.click();
+    });
+  });
+
+  // "Hola, usuario" solo despliega su submenú: no salta al inicio de la página
+  const linkCuenta = nav.querySelector('.login-desktop .link[href="#"]');
+  if (linkCuenta) linkCuenta.addEventListener("click", function (e) { e.preventDefault(); });
+
   if (lupa && navbar) {
     lupa.addEventListener("click", () => {
       const abierto = navbar.classList.toggle("showInput");
@@ -38,7 +51,9 @@
     navLinks.querySelectorAll(".links > li.con-submenu").forEach(function (li) {
       const alternar = function (e) {
         e.preventDefault(); // el nombre es href="#": no salta al inicio de la página
-        if (enMenuLateral()) li.classList.toggle("abierto");
+        if (!enMenuLateral()) return;
+        const abierto = li.classList.toggle("abierto");
+        if (nombre) nombre.setAttribute("aria-expanded", abierto ? "true" : "false");
       };
       const flecha = li.querySelector(":scope > .arrow");
       const nombre = li.querySelector(':scope > a[href="#"]');
