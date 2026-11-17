@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+import sys
 from django.contrib.messages import constants as messages
 from decouple import config, Csv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -126,6 +127,11 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'appPrincipal.seguridad.LetraYNumeroValidator',
     },
 ]
+
+# Solo al correr los tests (manage.py test): un hasher rápido para que crear usuarios no tome casi un segundo
+# cada vez. Nunca aplica al sitio real, que sigue usando el hasher por defecto de Django (PBKDF2).
+if 'test' in sys.argv[1:2]:
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 
 # Autenticación
