@@ -42,7 +42,7 @@
 
                     <div class="product-actions">
                         {% if compra.datos_envio.estado == "Entregado" %}
-                            <a href="{% url 'enviar_opinion' item.producto.id %}" class="btn-opinar" style="text-decoration: none;">
+                            <a href="{% url 'enviar_opinion' item.producto.id %}?next={{ request.path|urlencode }}" class="btn-opinar" style="text-decoration: none;">
                                 Opinar
                             </a>
 

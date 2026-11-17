@@ -28,7 +28,7 @@
                         {% if opinion.producto.imagen_principal %}
                             <img src="{{ opinion.producto.imagen_principal.url }}" alt="{{ opinion.producto.nombre }}" class="product-img" loading="lazy" decoding="async">
                         {% else %}
-                            <img src="{% static 'images/placeholder.png' %}" class="product-img">
+                            <i class="far fa-image sin-imagen" aria-label="Sin imagen"></i>
                         {% endif %}
                     </div>
                 </div>

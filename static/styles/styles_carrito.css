@@ -1079,3 +1079,11 @@ a:hover {
     text-align: left;
   }
 }
+
+/* la foto de cada producto del carrito es cuadrada desde que se pinta: así no cambia el alto de la fila
+   al cargar y el skeleton (js/skeleton_imagenes.js) tiene dónde verse */
+.main > .col-img img {
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 6px;
+}

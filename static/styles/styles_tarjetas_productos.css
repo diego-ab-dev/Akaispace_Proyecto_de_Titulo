@@ -58,3 +58,9 @@
 .recomendaciones-home {
     padding-bottom: 3rem;
 }
+
+/* producto sin imagen */
+.card-rel-img-wrapper .sin-imagen {
+    font-size: 3rem;
+    color: #A0AEC0;
+}

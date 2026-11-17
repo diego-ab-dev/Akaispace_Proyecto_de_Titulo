@@ -40,10 +40,12 @@
               </div>
               <div class="col-md-5 col-12 order-md-2 order-1">
                 {% if slide.imagen_url %}
+                <div class="carrusel-img">
                 {% if slide.producto_disponible %}<a href="{% url 'producto_detalle' slide.producto_disponible.id %}">{% endif %}
                   <img src="{{ slide.imagen_url }}" class="mx-auto"
                     style="filter: drop-shadow(0 0 10px rgba(0, 0, 0, .8));" alt="{{ slide.titulo }}">
                 {% if slide.producto_disponible %}</a>{% endif %}
+                </div>
                 {% endif %}
               </div>
             </div>

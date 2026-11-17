@@ -335,3 +335,15 @@ a:hover {
     }
 }
 
+
+/* imagen del carrusel: mientras carga no tiene alto propio, así que el skeleton
+   (js/skeleton_imagenes.js) reserva un bloque fijo */
+#myCarousel .carrusel-img.img-skeleton {
+  height: 320px;
+  border-radius: 12px;
+}
+@media (max-width: 767px) {
+  #myCarousel .carrusel-img.img-skeleton {
+    height: 220px;
+  }
+}
