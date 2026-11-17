@@ -100,6 +100,7 @@ function actualizarListaFavoritos() {
 
             if (nuevaLista && listaActual) {
                 listaActual.innerHTML = nuevaLista.innerHTML;
+                if (window.activarSkeletonImagenes) window.activarSkeletonImagenes(listaActual);
             }
 
             if (nuevaPaginacion && paginacionActual) {

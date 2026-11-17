@@ -1,0 +1,44 @@
+/* Skeleton de imágenes de producto (tienda): mientras la foto descarga, su contenedor muestra
+   un bloque gris con un brillo que lo recorre. Lo activa js/skeleton_imagenes.js agregando
+   .img-skeleton al contenedor y lo quita cuando la imagen termina de cargar. */
+
+.img-skeleton {
+  background-color: #e9ecef !important;
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 70%
+  ) !important;
+  background-size: 200% 100% !important;
+  background-repeat: no-repeat !important;
+  animation: skeleton-brillo 1.3s ease-in-out infinite;
+}
+
+/* la imagen ocupa su lugar (no mueve el diseño) pero no se ve hasta estar lista */
+.img-skeleton img {
+  opacity: 0;
+}
+
+/* al terminar de cargar, aparece suave en vez de "saltar" */
+.img-skeleton-aparece {
+  animation: skeleton-aparecer 0.35s ease-out;
+}
+
+@keyframes skeleton-brillo {
+  from { background-position: 150% 0; }
+  to   { background-position: -50% 0; }
+}
+
+@keyframes skeleton-aparecer {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* quien pidió menos movimiento en su sistema ve el bloque gris quieto, sin brillo ni fundido */
+@media (prefers-reduced-motion: reduce) {
+  .img-skeleton,
+  .img-skeleton-aparece {
+    animation: none;
+  }
+}
