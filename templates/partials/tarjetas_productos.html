@@ -13,7 +13,7 @@
                     {% if rel.imagen_principal %}
                         <img src="{{ rel.imagen_principal.url }}" alt="{{ rel.nombre }}" loading="lazy" decoding="async">
                     {% else %}
-                        <img src="https://via.placeholder.com/300" alt="Sin imagen">
+                        <i class="far fa-image sin-imagen" aria-label="Sin imagen"></i>
                     {% endif %}
                 </div>
                 <div class="card-rel-body">

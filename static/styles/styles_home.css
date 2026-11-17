@@ -458,3 +458,13 @@ html {
   max-height: 360px;
   object-fit: contain;
 }
+
+/* "Nuevos lanzamientos" con imagen: mientras carga no tiene alto propio, así que el skeleton
+   (js/skeleton_imagenes.js) reserva un bloque 16:9 como el de los videos */
+.video-placeholder.img-skeleton {
+  aspect-ratio: 16 / 9;
+  max-width: 560px;
+  max-height: 360px;
+  margin: 0 auto;
+  border-radius: 10px;
+}

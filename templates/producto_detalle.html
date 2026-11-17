@@ -336,11 +336,12 @@
     function changeImage(element, newSrc) {
         const mainImage = document.querySelector('.slide');
 
-        mainImage.style.opacity = '0';
-        setTimeout(() => {
+        // con skeleton si la nueva imagen aún no está en caché, con fundido si ya lo está (js/skeleton_imagenes.js)
+        if (window.cambiarImagenConSkeleton) {
+            window.cambiarImagenConSkeleton(mainImage, newSrc, mainImage.closest('.zoom-container'));
+        } else {
             mainImage.src = newSrc;
-            mainImage.style.opacity = '1';
-        }, 150); 
+        }
 
         const thumbnails = document.querySelectorAll('.option img');
         thumbnails.forEach(thumb => {
