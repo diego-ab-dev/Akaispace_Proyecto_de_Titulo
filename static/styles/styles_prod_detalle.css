@@ -599,3 +599,58 @@ h2, h3, h5 {
 .stock-texto--agotado {
     color: #b42318;
 }
+
+/* invitación a opinar (sección de opiniones): solo la ve quien compró y recibió o retiró el producto */
+.invitar-opinar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background-color: #fff8e1;
+  border: 1px solid #f3dc8c;
+}
+.invitar-opinar-icono {
+  font-size: 1.6rem;
+  color: #D4AF37;
+  flex-shrink: 0;
+}
+.btn-invitar-opinar {
+  flex-shrink: 0;
+  background-color: #D4AF37;
+  color: #fff;
+  border-radius: 50px;
+  padding: 8px 22px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+.btn-invitar-opinar:hover,
+.btn-invitar-opinar:focus-visible {
+  background-color: #b5952f;
+  color: #fff;
+}
+.invitar-opinar-hecho {
+  background-color: #eaf6ec;
+  border-color: #b9e0c0;
+}
+.invitar-opinar-hecho .invitar-opinar-icono { color: #28a745; }
+.invitar-opinar-espera {
+  background-color: #eef4f9;
+  border-color: #c9dcea;
+}
+.invitar-opinar-espera .invitar-opinar-icono { color: #4E84A8; }
+
+/* en el celular el botón baja y ocupa todo el ancho */
+@media (max-width: 575px) {
+  .invitar-opinar { flex-wrap: wrap; }
+  .btn-invitar-opinar { width: 100%; text-align: center; }
+}
+
+/* etiqueta bajo el nombre de quien opinó y además compró y recibió el producto */
+.compra-verificada {
+  display: block;
+  font-size: 0.75rem;
+  color: #28a745;
+  font-weight: 600;
+}

@@ -883,6 +883,96 @@ class OpinionesTests(TestCase):
         self.assertTrue(Opinion.objects.filter(usuario=self.cliente, producto=self.producto).exists())
 
 
+class InvitarAOpinarTests(TestCase):  # la ficha invita a opinar a quien compró y recibió o retiró el producto
+    BOTON = 'Dar mi opinión'
+
+    def setUp(self):
+        self.producto = crear_producto()
+        self.cliente = crear_cliente()
+        self.ficha_url = f'/producto/{self.producto.id}/'
+        self.opinar_url = f'/opinion/enviar/{self.producto.id}/'
+
+    def ficha(self):
+        return self.client.get(self.ficha_url)
+
+    def opinar(self, siguiente):
+        return self.client.post(f'{self.opinar_url}?next={siguiente}',
+                                {'puntuacion': 5, 'comentario': 'Excelente'})
+
+    def test_sin_sesion_no_se_invita(self):
+        self.assertNotContains(self.ficha(), self.BOTON)
+
+    def test_sin_haberlo_comprado_no_se_invita(self):
+        self.client.force_login(self.cliente)
+        respuesta = self.ficha()
+        self.assertIsNone(respuesta.context['estado_opinion'])
+        self.assertNotContains(respuesta, self.BOTON)
+
+    def test_recibido_o_retirado_muestra_el_boton_que_vuelve_a_la_ficha(self):
+        crear_venta(self.cliente, self.producto)
+        self.client.force_login(self.cliente)
+        self.assertContains(self.ficha(),
+                            f'{self.opinar_url}?next=/producto/{self.producto.id}/%23seccion-opiniones')
+
+    def test_pedido_en_camino_avisa_que_podra_opinar_al_recibirlo(self):
+        crear_venta(self.cliente, self.producto, estado='Listo para retiro')
+        self.client.force_login(self.cliente)
+        respuesta = self.ficha()
+        self.assertNotContains(respuesta, self.BOTON)
+        self.assertContains(respuesta, 'podrás opinar sobre este producto cuando lo recibas')
+
+    def test_pedido_anulado_no_muestra_nada(self):
+        crear_venta(self.cliente, self.producto, estado='Anulada')
+        self.client.force_login(self.cliente)
+        self.assertIsNone(self.ficha().context['estado_opinion'])
+
+    def test_si_ya_opino_no_se_vuelve_a_invitar(self):
+        from .models import Opinion
+        crear_venta(self.cliente, self.producto)
+        Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='Bueno', puntuacion=5)
+        self.client.force_login(self.cliente)
+        respuesta = self.ficha()
+        self.assertNotContains(respuesta, self.BOTON)
+        self.assertContains(respuesta, 'Ya dejaste tu opinión')
+
+    def test_el_admin_no_ve_la_invitacion(self):
+        admin = crear_cliente(email='admin@example.com', is_staff=True)
+        crear_venta(admin, self.producto)
+        self.client.force_login(admin)
+        self.assertNotContains(self.ficha(), self.BOTON)
+
+    def test_con_las_opiniones_ocultas_no_se_invita(self):
+        from .models import ConfiguracionSitio
+        configuracion = ConfiguracionSitio.actual()
+        configuracion.mostrar_opiniones = False
+        configuracion.save()
+        crear_venta(self.cliente, self.producto)
+        self.client.force_login(self.cliente)
+        self.assertNotContains(self.ficha(), self.BOTON)
+
+    def test_al_opinar_desde_la_ficha_vuelve_a_ella_con_el_aviso(self):
+        crear_venta(self.cliente, self.producto)
+        self.client.force_login(self.cliente)
+        respuesta = self.opinar(f'/producto/{self.producto.id}/%23seccion-opiniones')
+        self.assertRedirects(respuesta, f'/producto/{self.producto.id}/?notif=Opini%C3%B3n+ingresada+con+%C3%A9xito'
+                                        f'&type=success#seccion-opiniones', fetch_redirect_response=False)
+
+    def test_un_next_de_otro_sitio_se_ignora(self):
+        crear_venta(self.cliente, self.producto)
+        self.client.force_login(self.cliente)
+        respuesta = self.opinar('https://malicioso.example.com/')
+        self.assertTrue(respuesta['Location'].startswith('/perfil'))
+
+    def test_compra_verificada_solo_en_opiniones_de_quien_lo_recibio(self):
+        from .models import Opinion
+        otro = crear_cliente(email='otro@example.com')
+        crear_venta(self.cliente, self.producto)
+        Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='Bueno', puntuacion=5)
+        Opinion.objects.create(usuario=otro, producto=self.producto, comentario='Regular', puntuacion=3)
+        verificadas = {op.usuario_id: op.compra_verificada for op in self.ficha().context['opiniones']}
+        self.assertEqual(verificadas, {self.cliente.id: True, otro.id: False})
+
+
 class RegionesTests(TestCase):  
     def test_cada_region_del_select_tiene_sus_ciudades(self):
         from .constants import REGIONES, REGIONES_CIUDADES

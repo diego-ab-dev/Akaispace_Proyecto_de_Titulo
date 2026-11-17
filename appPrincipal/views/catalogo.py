@@ -8,9 +8,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from appPrincipal.models import (Categoria, ConfiguracionSitio, Favorito, Genero, InteraccionProducto, Plataforma,
-                                 Producto)
+                                 Producto, ProductoVenta)
 from appPrincipal.recomendaciones import (marcar_clic, recomendar, recomendar_para_carrito, registrar_interaccion,
                                           registrar_mostradas)
+from appPrincipal.views.opiniones import ENVIO_RECIBIDO, estado_para_opinar
 
 
 def productos_para_listado(productos):
@@ -183,6 +184,15 @@ def producto_detalle(request, producto_id):
     page_number = request.GET.get('page')
     opiniones = paginator.get_page(page_number)
 
+    # "Compra verificada": autores de esta página que compraron y recibieron el producto (una consulta)
+    autores_verificados = set(
+        ProductoVenta.objects.filter(producto=producto, venta__datos_envio__estado=ENVIO_RECIBIDO,
+                                     venta__usuario__in=[op.usuario_id for op in opiniones])
+        .values_list('venta__usuario', flat=True)
+    )
+    for op in opiniones:
+        op.compra_verificada = op.usuario_id in autores_verificados
+
     # promedio, total y cantidad por estrella en una sola consulta
     resumen = producto.opiniones.aggregate(
         avg=Avg('puntuacion'), total=Count('id'),
@@ -227,6 +237,9 @@ def producto_detalle(request, producto_id):
     if request.user.is_authenticated:
         es_favorito = Favorito.objects.filter(usuario=request.user, producto=producto).exists()
 
+    # invitación a opinar en la sección de opiniones (solo si el admin las muestra en el sitio)
+    estado_opinion = estado_para_opinar(request.user, producto) if configuracion.mostrar_opiniones else None
+
     # botones de compartir y vista previa del enlace (Open Graph): siempre la URL limpia de la ficha,
     # sin ?page= de las opiniones, y la imagen con dominio para que WhatsApp o Facebook la muestren
     url_compartir = request.build_absolute_uri(reverse('producto_detalle', args=[producto.id]))
@@ -246,6 +259,7 @@ def producto_detalle(request, producto_id):
         "ratings": ratings_data, 
         "total_opiniones": total_opiniones,
         "es_favorito": es_favorito,
+        "estado_opinion": estado_opinion,
         "productos_relacionados": productos_relacionados,
         "titulo_relacionados": titulo_relacionados,
     })
