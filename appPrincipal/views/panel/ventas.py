@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from appPrincipal import pagos
+from appPrincipal.correos import enviar_listo_para_retiro
 from appPrincipal.decorators import admin_required
 from appPrincipal.envios import TRANSPORTISTAS_ENCOMIENDA
 from appPrincipal.models import Envio, PagoWebpay, Producto, Venta
@@ -142,10 +143,14 @@ def modificar_venta(request, venta_id):
 
         if envio is None:
             envio = Envio.objects.create(venta=venta)
+        # solo la primera vez: si el pedido vuelve a "Listo para retiro" no se repite el aviso
+        avisar_retiro = estado_post == 'Listo para retiro' and envio.fecha_listo_retiro is None
         envio.numero_seguimiento = tracking_post
         if transportista_post:
             envio.transportista = transportista_post
         envio.guardar_estado(estado_post)
+        if avisar_retiro:
+            enviar_listo_para_retiro(venta)
 
         return redirect('detalle_venta', venta_id=venta.id)
 

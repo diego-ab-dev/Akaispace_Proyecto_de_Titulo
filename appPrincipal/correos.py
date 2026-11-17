@@ -2,6 +2,8 @@
 
 - Confirmación de compra: se envía al aprobarse el pago con Webpay. Si falla, la reenvía el comando
   reenviar_confirmaciones.
+- Pedido listo para retiro: se envía la primera vez que el administrador marca un retiro en tienda como
+  "Listo para retiro", con la dirección y el horario de la tienda.
 - Resolución de devolución: se envía cuando el administrador aprueba (con las instrucciones para entregar o enviar
   el producto) o rechaza una solicitud.
 - Recepción de devolución: se envía cuando la tienda recibe el producto, e indica si el reembolso se hizo en Webpay
@@ -134,6 +136,26 @@ def enviar_confirmacion_compra(venta):
         logger.error("Confirmación de compra pendiente: venta %s, cliente %s. La reenvía reenviar_confirmaciones.",
                      venta.id, venta.usuario.email)
     return enviado
+
+
+def _enviar_listo_para_retiro(venta):
+    contexto = {
+        'venta': venta,
+        'items': venta.producto_venta.select_related('producto'),
+        'direccion': envios.DIRECCION_TIENDA,
+        'horario': envios.HORARIO_TIENDA,
+        'url_compra': settings.SITIO_URL + reverse('ver_detalle', args=[venta.id]),
+        'tienda': RESPONSABLE_DATOS,
+    }
+    enviado = _enviar(f"Tu pedido Nº {venta.id} está listo para retiro - Akaispace", 'listo_para_retiro',
+                      contexto, venta.usuario.email)
+    if enviado:
+        logger.info("Aviso de pedido listo para retiro enviado: venta %s", venta.id)
+    return enviado
+
+
+def enviar_listo_para_retiro(venta):
+    _al_confirmar(_enviar_listo_para_retiro, venta)
 
 
 def enviar_resolucion_devolucion(devolucion):

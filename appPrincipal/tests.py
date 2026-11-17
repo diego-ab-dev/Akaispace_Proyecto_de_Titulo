@@ -1370,6 +1370,23 @@ class ListoParaRetiroTests(TestCase):
         self.assertEqual(self.envio.estado, 'Listo para retiro')
         self.assertNotContains(self.detalle_cliente(), 'Marcar como recibido')
 
+    def test_avisa_por_correo_una_sola_vez(self):
+        from django.core import mail
+        with self.captureOnCommitCallbacks(execute=True):
+            self.cambiar_estado('Listo para retiro')
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, [self.cliente.email])
+        self.assertIn(f'Nº {self.venta.id}', correo.subject)
+        for texto in [correo.body, correo.alternatives[0][0]]:  # versión de texto y HTML
+            self.assertIn('Galería Caupolicán 544, Local 26', texto)
+            self.assertIn(f'/compra/{self.venta.id}/detalle/', texto)
+        with self.captureOnCommitCallbacks(execute=True):  # vuelve a preparación y otra vez a listo
+            self.cambiar_estado('En Preparación')
+            self.cambiar_estado('Listo para retiro')
+            self.cambiar_estado('Entregado')
+        self.assertEqual(len(mail.outbox), 1)
+
     def test_guardar_el_mismo_estado_no_cambia_la_fecha(self):
         self.envio.guardar_estado('Listo para retiro')
         primera = self.envio.fecha_listo_retiro
