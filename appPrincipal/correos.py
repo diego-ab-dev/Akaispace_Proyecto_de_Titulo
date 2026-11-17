@@ -4,6 +4,11 @@
   reenviar_confirmaciones.
 - Pedido listo para retiro: se envía la primera vez que el administrador marca un retiro en tienda como
   "Listo para retiro", con la dirección y el horario de la tienda.
+- Pedido enviado: la primera vez que una encomienda pasa a "Enviado", con el transportista y el número de
+  seguimiento (el panel lo exige para ese estado). Los demás estados de la encomienda no se avisan: el
+  transportista ya informa el seguimiento.
+- Pedido en reparto: la primera vez que un Delivery Express en Valdivia pasa a "En Reparto", con la dirección de
+  entrega.
 - Resolución de devolución: se envía cuando el administrador aprueba (con las instrucciones para entregar o enviar
   el producto) o rechaza una solicitud.
 - Recepción de devolución: se envía cuando la tienda recibe el producto, e indica si el reembolso se hizo en Webpay
@@ -192,3 +197,43 @@ def enviar_recepcion_devolucion(devolucion, reembolso=None):
     if enviado:
         logger.info("Correo de recepción de devolución enviado: devolución %s", devolucion.id)
     return enviado
+
+
+def _enviar_pedido_enviado(venta, envio):
+    contexto = {
+        'venta': venta,
+        'envio': envio,
+        'items': venta.producto_venta.select_related('producto'),
+        'url_compra': settings.SITIO_URL + reverse('ver_detalle', args=[venta.id]),
+        'tienda': RESPONSABLE_DATOS,
+    }
+    enviado = _enviar(f"Tu pedido Nº {venta.id} fue enviado - Akaispace", 'pedido_enviado',
+                      contexto, venta.usuario.email)
+    if enviado:
+        logger.info("Aviso de pedido enviado: venta %s", venta.id)
+    return enviado
+
+
+def _enviar_pedido_en_reparto(venta):
+    contexto = {
+        'venta': venta,
+        'items': venta.producto_venta.select_related('producto'),
+        'url_compra': settings.SITIO_URL + reverse('ver_detalle', args=[venta.id]),
+        'tienda': RESPONSABLE_DATOS,
+    }
+    enviado = _enviar(f"Tu pedido Nº {venta.id} va en camino - Akaispace", 'pedido_en_reparto',
+                      contexto, venta.usuario.email)
+    if enviado:
+        logger.info("Aviso de pedido en reparto enviado: venta %s", venta.id)
+    return enviado
+
+
+def avisar_estado_envio(venta, envio, estado):
+    """Avisa al cliente los estados que le sirven saber. La vista lo llama solo la primera vez que el pedido
+    llega a cada estado, para no repetir el correo si el administrador corrige el estado."""
+    if estado == 'Listo para retiro':
+        enviar_listo_para_retiro(venta)
+    elif estado == 'Enviado':
+        _al_confirmar(_enviar_pedido_enviado, venta, envio)
+    elif estado == 'En Reparto' and venta.metodo_envio == 'delivery':
+        _al_confirmar(_enviar_pedido_en_reparto, venta)

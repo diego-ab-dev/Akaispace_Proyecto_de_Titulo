@@ -1273,6 +1273,64 @@ class EnviosPanelTests(TestCase):
         self.assertEqual((venta.datos_envio.estado, venta.datos_envio.transportista), ('Enviado', 'Bluexpress'))
 
 
+class AvisoEstadoEnvioTests(TestCase):  # correo al enviar una encomienda o salir a reparto un delivery
+    def setUp(self):
+        self.admin = crear_cliente('jefe@example.com', is_staff=True)
+
+    def venta_con(self, metodo):
+        cliente = crear_cliente(f'{metodo}@example.com')
+        venta = crear_venta(cliente, crear_producto(f'Juego {metodo}'), estado='En Preparación')
+        venta.metodo_envio = metodo
+        venta.direccion_envio = 'Picarte 1234, Valdivia, Los Ríos'
+        venta.save()
+        return venta
+
+    def cambiar_estado(self, venta, estado, **extra):
+        self.client.force_login(self.admin)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': estado, **extra})
+
+    def test_encomienda_enviada_avisa_con_seguimiento_una_sola_vez(self):
+        from django.core import mail
+        venta = self.venta_con('por_pagar')
+        datos = {'transportista': 'Starken', 'numero_seguimiento': 'STK123456'}
+        self.cambiar_estado(venta, 'Enviado', **datos)
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, [venta.usuario.email])
+        self.assertIn(f'Nº {venta.id}', correo.subject)
+        for texto in [correo.body, correo.alternatives[0][0]]:  # versión de texto y HTML
+            self.assertIn('STK123456', texto)
+            self.assertIn('Starken', texto)
+            self.assertIn('Picarte 1234', texto)
+            self.assertIn('por pagar', texto)
+            self.assertIn(f'/compra/{venta.id}/detalle/', texto)
+        # tránsito, reparto y entrega de una encomienda no avisan; volver a Enviado tampoco repite el correo
+        for estado in ['En Tránsito', 'Enviado', 'En Reparto', 'Entregado']:
+            self.cambiar_estado(venta, estado, **datos)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_delivery_en_reparto_avisa_una_sola_vez(self):
+        from django.core import mail
+        venta = self.venta_con('delivery')
+        self.cambiar_estado(venta, 'En Reparto')
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertIn('va en camino', correo.subject)
+        for texto in [correo.body, correo.alternatives[0][0]]:
+            self.assertIn('Picarte 1234', texto)
+        self.cambiar_estado(venta, 'En Preparación')
+        self.cambiar_estado(venta, 'En Reparto')
+        self.cambiar_estado(venta, 'Entregado')
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_si_el_panel_rechaza_el_cambio_no_se_avisa(self):
+        from django.core import mail
+        venta = self.venta_con('bluexpress')
+        self.cambiar_estado(venta, 'Enviado', transportista='Bluexpress')  # falta el número de seguimiento
+        self.assertEqual(len(mail.outbox), 0)
+
+
 class AnularVentaTests(TestCase):  # motivo obligatorio y bloqueo de ventas pagadas con Webpay
     def setUp(self):
         self.jefe = crear_cliente('jefe@example.com', is_staff=True, nombre='Ana Jefa')
