@@ -1,0 +1,13 @@
+.env
+venv/
+media/
+staticfiles/
+.git/
+__pycache__/
+*.pyc
+.coverage
+htmlcov/
+docs/
+infra/
+notebooks/
+CLAUDE.md
