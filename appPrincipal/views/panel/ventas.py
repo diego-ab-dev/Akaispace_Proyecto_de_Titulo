@@ -101,6 +101,9 @@ def modificar_venta(request, venta_id):
     if venta.canal != Venta.CANAL_WEB:
         return redirect('detalle_venta', venta_id=venta.id)  # las ventas presenciales no tienen envío
     envio = getattr(venta, 'datos_envio', None)
+    if venta.anulada or (envio and envio.estado == 'Anulada'):
+        # una venta anulada ya devolvió el stock y el pago: cambiarle el estado la dejaría inconsistente
+        return redirect('detalle_venta', venta_id=venta.id)
 
     error = None
     estado_post = None

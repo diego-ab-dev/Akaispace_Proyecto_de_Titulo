@@ -829,8 +829,12 @@ class Envio(models.Model):
         return f"Envío #{self.id} para Venta {self.venta.id}"
 
     def guardar_estado(self, nuevo_estado):
-        if nuevo_estado != self.estado and nuevo_estado in self.FECHAS_ESTADO:
-            setattr(self, self.FECHAS_ESTADO[nuevo_estado], now())
+        """Cada fecha registra la primera vez que el pedido llegó a ese estado. Si el administrador vuelve a un estado
+        anterior y avanza de nuevo, no se reescribe: así la fecha de entrega, que fija el plazo de devolución, no se
+        puede correr."""
+        campo = self.FECHAS_ESTADO.get(nuevo_estado)
+        if campo and getattr(self, campo) is None:
+            setattr(self, campo, now())
         self.estado = nuevo_estado
         self.save()
 
@@ -845,15 +849,6 @@ class Envio(models.Model):
             return 'Retirado'
         return self.estado
 
-    def registrar_envio(self, tracking):
-        self.numero_seguimiento = tracking
-        self.estado = 'Enviado'
-        self.fecha_envio = now()
-        self.save()
-
-    def actualizar_estado(self, nuevo_estado):
-        self.estado = nuevo_estado
-        self.save()
 
 
 # clase Comprobante: comprobante de compra NO tributario (no reemplaza la boleta del SII)

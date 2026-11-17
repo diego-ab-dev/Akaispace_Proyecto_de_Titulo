@@ -5,7 +5,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.timezone import now
 from django.views.decorators.http import require_POST
 
 from appPrincipal.envios import DIRECCION_TIENDA, HORARIO_TIENDA
@@ -71,9 +70,7 @@ def marcar_recibido(request, compra_id):
         qs = urlencode({'notif': "Aún no puedes marcar como recibido.", 'type': 'error'})
         return redirect(f"{base_url}?{qs}")
 
-    envio.estado = "Entregado"
-    envio.fecha_entrega = now()
-    envio.save()
+    envio.guardar_estado("Entregado")
 
     qs = urlencode({'notif': "Pedido marcado como recibido.", 'type': 'success'})
     return redirect(f"{base_url}?{qs}")

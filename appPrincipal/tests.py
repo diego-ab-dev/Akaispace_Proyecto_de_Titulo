@@ -1272,6 +1272,16 @@ class EnviosPanelTests(TestCase):
         venta.datos_envio.refresh_from_db()
         self.assertEqual((venta.datos_envio.estado, venta.datos_envio.transportista), ('Enviado', 'Bluexpress'))
 
+    def test_una_venta_anulada_no_se_puede_modificar(self):
+        venta = self.venta_con('delivery')
+        venta.datos_envio.guardar_estado('Anulada')
+        url = f'/admin-panel/ventas/modificar/{venta.id}/'
+        self.assertRedirects(self.client.get(url), f'/admin-panel/ventas/detalle/{venta.id}/',
+                             fetch_redirect_response=False)
+        self.client.post(url, {'estado': 'En Preparación'})
+        venta.datos_envio.refresh_from_db()
+        self.assertEqual(venta.datos_envio.estado, 'Anulada')
+
 
 class AvisoEstadoEnvioTests(TestCase):  # correo al enviar una encomienda o salir a reparto un delivery
     def setUp(self):
@@ -1444,6 +1454,15 @@ class ListoParaRetiroTests(TestCase):
             self.cambiar_estado('Listo para retiro')
             self.cambiar_estado('Entregado')
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_volver_atras_no_corre_la_fecha_de_entrega(self):
+        self.cambiar_estado('Entregado')
+        self.envio.refresh_from_db()
+        primera = self.envio.fecha_entrega
+        self.cambiar_estado('En Preparación')
+        self.cambiar_estado('Entregado')
+        self.envio.refresh_from_db()
+        self.assertEqual(self.envio.fecha_entrega, primera)  # el plazo de devolución sigue contando desde la primera
 
     def test_guardar_el_mismo_estado_no_cambia_la_fecha(self):
         self.envio.guardar_estado('Listo para retiro')
