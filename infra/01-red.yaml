@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - red (Fase 2): VPC en las 2 primeras zonas de la region (sa-east-1a y sa-east-1b) con 2 subredes publicas y 2 privadas,
+  Internet Gateway, sin NAT Gateway ni endpoints, y los 4 grupos de seguridad (sin puerto 22).
+  Sin costo por hora.
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: akaispace-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: akaispace-igw
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  # Subredes publicas: balanceador e instancias (IP publica para salir a Internet sin NAT)
+  SubredPublicaA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: 10.0.0.0/20
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: akaispace-publica-a
+
+  SubredPublicaB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: 10.0.16.0/20
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: akaispace-publica-b
+
+  # Subredes privadas: RDS, sin salida a Internet
+  SubredPrivadaA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: 10.0.128.0/20
+      Tags:
+        - Key: Name
+          Value: akaispace-privada-a
+
+  SubredPrivadaB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: 10.0.144.0/20
+      Tags:
+        - Key: Name
+          Value: akaispace-privada-b
+
+  TablaPublica:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: akaispace-rutas-publicas
+
+  RutaInternet:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref TablaPublica
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  AsociacionPublicaA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredPublicaA
+      RouteTableId: !Ref TablaPublica
+
+  AsociacionPublicaB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredPublicaB
+      RouteTableId: !Ref TablaPublica
+
+  # Solo la ruta local de la VPC: las subredes privadas no salen a Internet
+  TablaPrivada:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: akaispace-rutas-privadas
+
+  AsociacionPrivadaA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredPrivadaA
+      RouteTableId: !Ref TablaPrivada
+
+  AsociacionPrivadaB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubredPrivadaB
+      RouteTableId: !Ref TablaPrivada
+
+  # Grupos de seguridad (Fase 2.2). La salida queda abierta: ECR, S3, SES, SSM, Transbank y Google.
+  AlbSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: akaispace-alb-sg
+      GroupDescription: Balanceador - HTTPS desde Internet
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS desde Internet
+      Tags:
+        - Key: Name
+          Value: akaispace-alb-sg
+
+  AppSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: akaispace-app-sg
+      GroupDescription: Instancias de produccion - HTTPS solo desde el balanceador
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref AlbSg
+          Description: HTTPS desde el balanceador
+      Tags:
+        - Key: Name
+          Value: akaispace-app-sg
+
+  TestSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: akaispace-test-sg
+      GroupDescription: Instancia de pruebas - HTTPS solo desde el balanceador (sin acceso a RDS)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref AlbSg
+          Description: HTTPS desde el balanceador
+      Tags:
+        - Key: Name
+          Value: akaispace-test-sg
+
+  RdsSg:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: akaispace-rds-sg
+      GroupDescription: Base de datos - MySQL solo desde las instancias de produccion
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref AppSg
+          Description: MySQL desde produccion
+      Tags:
+        - Key: Name
+          Value: akaispace-rds-sg
+
+Outputs:
+  VpcId:
+    Value: !Ref Vpc
+    Export:
+      Name: akaispace-vpc-id
+  SubredPublicaA:
+    Value: !Ref SubredPublicaA
+    Export:
+      Name: akaispace-subred-publica-a
+  SubredPublicaB:
+    Value: !Ref SubredPublicaB
+    Export:
+      Name: akaispace-subred-publica-b
+  SubredPrivadaA:
+    Value: !Ref SubredPrivadaA
+    Export:
+      Name: akaispace-subred-privada-a
+  SubredPrivadaB:
+    Value: !Ref SubredPrivadaB
+    Export:
+      Name: akaispace-subred-privada-b
+  AlbSg:
+    Value: !Ref AlbSg
+    Export:
+      Name: akaispace-alb-sg
+  AppSg:
+    Value: !Ref AppSg
+    Export:
+      Name: akaispace-app-sg
+  TestSg:
+    Value: !Ref TestSg
+    Export:
+      Name: akaispace-test-sg
+  RdsSg:
+    Value: !Ref RdsSg
+    Export:
+      Name: akaispace-rds-sg

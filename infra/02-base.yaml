@@ -1,0 +1,292 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - base (Fases 3.1-3.3, 4.1, 4.3, 4.4 y certificado de la Fase 5): bucket S3, repositorios
+  ECR y su replicacion a us-east-1, grupo de parametros y grupo de subredes de RDS (sin la base),
+  roles de las instancias, tema SNS y certificado ACM. Sin costo por hora.
+
+Parameters:
+  Dominio:
+    Type: String
+    Default: akaispace.shop
+    Description: Dominio de demostracion (nunca el sitio real del propietario).
+  CorreoAlertas:
+    Type: String
+    Description: Correo que recibe las alarmas (debe confirmar la suscripcion).
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+
+Resources:
+  # 3.1 Imagenes de productos y devoluciones: privado, con versionado; se ven con URLs firmadas
+  Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub akaispace-imagenes-${AWS::AccountId}
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: borrar-versiones-antiguas-30-dias
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  PoliticaBucket:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: SoloConTls
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !GetAtt Bucket.Arn
+              - !Sub '${Bucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+
+  # 4.1 Repositorios: etiquetas inmutables, escaneo basico al subir y solo las 10 imagenes mas recientes
+  RepoWeb:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: akaispace-web
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Conservar las 10 imagenes mas recientes",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+          "action":{"type":"expire"}}]}
+
+  RepoNginx:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: akaispace-nginx
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Conservar las 10 imagenes mas recientes",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+          "action":{"type":"expire"}}]}
+
+  # Copia de las imagenes en us-east-1 (solo las que se suban despues de crear la regla)
+  ReplicacionEcr:
+    Type: AWS::ECR::ReplicationConfiguration
+    Properties:
+      ReplicationConfiguration:
+        Rules:
+          - Destinations:
+              - Region: us-east-1
+                RegistryId: !Ref AWS::AccountId
+            RepositoryFilters:
+              - Filter: akaispace-
+                FilterType: PREFIX_MATCH
+
+  # 3.2 MySQL rechaza cualquier conexion sin TLS
+  GrupoParametrosRds:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      DBParameterGroupName: akaispace-mysql84
+      Family: mysql8.4
+      Description: Akaispace - MySQL 8.4 con TLS obligatorio
+      Parameters:
+        require_secure_transport: '1'
+
+  # 3.3 Solo las subredes privadas
+  GrupoSubredesRds:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: akaispace-db-subnets
+      DBSubnetGroupDescription: Akaispace - subredes privadas de sa-east-1a y sa-east-1b
+      SubnetIds:
+        - !ImportValue akaispace-subred-privada-a
+        - !ImportValue akaispace-subred-privada-b
+
+  # 4.3 Instancias de produccion: Session Manager, registros, imagenes, sus parametros y el bucket
+  RolProd:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: akaispace-ec2-prod-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Policies:
+        - PolicyName: akaispace-prod-app
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParametersByPath
+                  - ssm:GetParameters
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod/*
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt Bucket.Arn
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub '${Bucket.Arn}/*'
+
+  PerfilProd:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: akaispace-ec2-prod-role
+      Roles:
+        - !Ref RolProd
+
+  # 4.4 Instancia de pruebas: solo su ruta de parametros y su carpeta del bucket. El Deny es necesario
+  # porque AmazonSSMManagedInstanceCore permite leer parametros de cualquier ruta.
+  RolTest:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: akaispace-ec2-test-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Policies:
+        - PolicyName: akaispace-test-app
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParametersByPath
+                  - ssm:GetParameters
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/test
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/test/*
+              - Sid: SinParametrosDeProduccion
+                Effect: Deny
+                Action: ssm:GetParameter*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod/*
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt Bucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix: pruebas/*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub '${Bucket.Arn}/pruebas/*'
+
+  PerfilTest:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: akaispace-ec2-test-role
+      Roles:
+        - !Ref RolTest
+
+  # Fase 8: destino de las alarmas
+  TemaAlertas:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: akaispace-alertas
+      DisplayName: Akaispace alertas
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref CorreoAlertas
+
+  # Fase 5: en sa-east-1, la misma region del balanceador; CloudFormation crea los registros de validacion
+  Certificado:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref Dominio
+      SubjectAlternativeNames:
+        - !Sub www.${Dominio}
+        - !Sub pruebas.${Dominio}
+      ValidationMethod: DNS
+      KeyAlgorithm: RSA_2048
+      DomainValidationOptions:
+        - DomainName: !Ref Dominio
+          HostedZoneId: !ImportValue akaispace-zona-id
+        - DomainName: !Sub www.${Dominio}
+          HostedZoneId: !ImportValue akaispace-zona-id
+        - DomainName: !Sub pruebas.${Dominio}
+          HostedZoneId: !ImportValue akaispace-zona-id
+
+Outputs:
+  Bucket:
+    Value: !Ref Bucket
+    Export:
+      Name: akaispace-bucket
+  RepoWebUri:
+    Value: !GetAtt RepoWeb.RepositoryUri
+  RepoNginxUri:
+    Value: !GetAtt RepoNginx.RepositoryUri
+  GrupoParametrosRds:
+    Value: !Ref GrupoParametrosRds
+    Export:
+      Name: akaispace-rds-parametros
+  GrupoSubredesRds:
+    Value: !Ref GrupoSubredesRds
+    Export:
+      Name: akaispace-rds-subredes
+  PerfilProd:
+    Value: !Ref PerfilProd
+    Export:
+      Name: akaispace-perfil-prod
+  PerfilTest:
+    Value: !Ref PerfilTest
+    Export:
+      Name: akaispace-perfil-test
+  TemaAlertas:
+    Value: !Ref TemaAlertas
+    Export:
+      Name: akaispace-tema-alertas
+  Certificado:
+    Value: !Ref Certificado
+    Export:
+      Name: akaispace-certificado
