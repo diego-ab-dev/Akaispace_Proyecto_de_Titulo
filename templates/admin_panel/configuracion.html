@@ -1,5 +1,5 @@
 {% extends "admin_panel/base_admin.html" %}
-{% load static %}
+{% load static custom_filters %}
 
 {% block title %}Configuración{% endblock %}
 
@@ -27,6 +27,34 @@
 
     <form data-avisar-cambios method="post" novalidate>
         {% csrf_token %}
+
+        <section class="portada-seccion">
+            <header class="portada-seccion__header">
+                <div>
+                    <h2>Barra de anuncio</h2>
+                    <p class="portada-seccion__nota">Una franja delgada sobre el menú de la tienda, en todas sus páginas.</p>
+                </div>
+            </header>
+
+            <div class="config-campo">
+                <div class="form-check form-switch">
+                    {{ form.mostrar_anuncio }}
+                    <label class="form-check-label" for="{{ form.mostrar_anuncio.id_for_label }}">Mostrar la barra de anuncio</label>
+                </div>
+                <span class="config-campo__ayuda">El visitante puede cerrarla con la ✕; vuelve a aparecer en su próxima visita o si cambias el texto.</span>
+            </div>
+
+            <div class="config-campo">
+                <label class="config-campo__titulo" for="{{ form.texto_anuncio.id_for_label }}">{{ form.texto_anuncio.label }}</label>
+                {{ form.texto_anuncio }}
+                <span class="config-campo__ayuda">
+                    Hasta {{ form.texto_anuncio.field.max_length }} caracteres, en una línea. Si anuncias precios de envío, revisa que
+                    coincidan con los del carrito: hoy el delivery en Valdivia cuesta
+                    <strong>${{ delivery.precio|formato_chileno }}</strong> y es gratis desde <strong>${{ delivery.gratis_desde|formato_chileno }}</strong>.
+                </span>
+                {% for error in form.texto_anuncio.errors %}<span class="text-danger small d-block">{{ error }}</span>{% endfor %}
+            </div>
+        </section>
 
         <section class="portada-seccion">
             <header class="portada-seccion__header">

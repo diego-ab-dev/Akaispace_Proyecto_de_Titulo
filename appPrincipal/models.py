@@ -1084,7 +1084,18 @@ class ConfiguracionSitio(models.Model):
         (RELACIONADOS_NINGUNO, 'No mostrar'),
     ]
 
+    ANUNCIO_POR_DEFECTO = ("Delivery en Valdivia por solo $2.000 (¡Gratis desde $24.990!). "
+                           "Envíos a regiones por pagar de forma rápida y segura.")
+    LARGO_MAXIMO_ANUNCIO = 150
+
     id = models.BigAutoField(primary_key=True, db_comment="Identificador. La tabla tiene un único registro con id 1.")
+    # barra delgada sobre el navbar de la tienda; el visitante puede cerrarla durante su visita
+    mostrar_anuncio = models.BooleanField(default=True, verbose_name="Mostrar la barra de anuncio",
+                                          db_comment="Indica si la tienda muestra la barra de anuncio sobre el navbar.")
+    texto_anuncio = models.CharField(
+        max_length=LARGO_MAXIMO_ANUNCIO, blank=True, default=ANUNCIO_POR_DEFECTO, verbose_name="Texto del anuncio",
+        db_comment="Texto de la barra de anuncio (texto simple, sin HTML).",
+    )
     productos_relacionados = models.CharField(
         max_length=12, choices=OPCIONES_RELACIONADOS, default=RELACIONADOS_CATEGORIA,
         verbose_name="Productos relacionados en la ficha",

@@ -734,9 +734,11 @@ class ConfiguracionSitioForm(forms.ModelForm):
 
     class Meta:
         model = ConfiguracionSitio
-        fields = ['productos_relacionados', 'mostrar_opiniones', 'mostrar_etiquetas', 'mostrar_stock',
-                  'mostrar_recomendaciones', 'kpi01_linea_base']
+        fields = ['mostrar_anuncio', 'texto_anuncio', 'productos_relacionados', 'mostrar_opiniones',
+                  'mostrar_etiquetas', 'mostrar_stock', 'mostrar_recomendaciones', 'kpi01_linea_base']
         widgets = {
+            'mostrar_anuncio': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'texto_anuncio': forms.TextInput(attrs={'class': 'form-control'}),
             'kpi01_linea_base': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': 1}),
             'productos_relacionados': forms.RadioSelect,
             'mostrar_opiniones': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
@@ -750,6 +752,15 @@ class ConfiguracionSitioForm(forms.ModelForm):
         if not self.is_bound:
             self.initial['categorias_visibles'] = list(
                 Categoria.objects.filter(visible_en_menu=True).values_list('id', flat=True))
+
+    def clean_texto_anuncio(self):
+        return ' '.join(self.cleaned_data['texto_anuncio'].split())  # una sola línea, sin espacios de más
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('mostrar_anuncio') and not datos.get('texto_anuncio'):
+            self.add_error('texto_anuncio', 'Escribe el texto del anuncio o desactiva la barra.')
+        return datos
 
     def save(self, commit=True):
         configuracion = super().save(commit)

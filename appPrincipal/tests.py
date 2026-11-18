@@ -2484,6 +2484,30 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
         self.assertNotContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Figuras</a>')
         self.assertContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Consolas</a>')
 
+    def test_barra_de_anuncio_por_defecto_editable_y_desactivable(self):
+        from .models import ConfiguracionSitio
+        respuesta = self.client.get('/menu/')
+        self.assertContains(respuesta, 'class="anuncio-barra"')
+        self.assertContains(respuesta, 'Gratis desde $24.990')
+        self.configurar(texto_anuncio='Preventa <b>abierta</b>')
+        self.assertContains(self.client.get('/menu/'), 'Preventa &lt;b&gt;abierta&lt;/b&gt;')  # texto simple, sin HTML
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.assertNotContains(self.client.get('/admin-panel/'), 'anuncio-barra')  # nunca en el panel
+        self.configurar(mostrar_anuncio=False)
+        self.assertNotContains(self.client.get('/menu/'), 'anuncio-barra')
+        self.assertEqual(ConfiguracionSitio._meta.get_field('texto_anuncio').max_length, 150)
+
+    def test_el_panel_exige_texto_si_la_barra_esta_activa(self):
+        from .forms import ConfiguracionSitioForm
+        base = {'productos_relacionados': 'categoria'}
+        form = ConfiguracionSitioForm({**base, 'mostrar_anuncio': 'on', 'texto_anuncio': '   '})
+        self.assertIn('texto_anuncio', form.errors)
+        form = ConfiguracionSitioForm({**base, 'texto_anuncio': ''})  # desactivada puede quedar vacía
+        self.assertTrue(form.is_valid(), form.errors)
+        form = ConfiguracionSitioForm({**base, 'mostrar_anuncio': 'on', 'texto_anuncio': '  Envío\n gratis  '})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['texto_anuncio'], 'Envío gratis')
+
     def test_relacionados_de_la_misma_categoria_aleatorios_o_ninguno(self):
         self.assertEqual(list(self.ficha().context['productos_relacionados']), [self.otro_ps5])  # por defecto
         self.configurar(productos_relacionados='aleatorios')
