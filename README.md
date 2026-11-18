@@ -1,6 +1,6 @@
-# Akaispace
+# Akai Space
 
-Tienda web de Akaispace (Django 5.2 + MySQL 8.4).
+Tienda web de Akai Space (Django 5.2 + MySQL 8.4).
 
 ## Acceso rápido
 

@@ -101,7 +101,7 @@ def register(request):
         auth_login(request, usuario, backend='django.contrib.auth.backends.ModelBackend')
         logger.info("Registro: usuario %s", usuario.pk)
         correos.enviar_bienvenida(usuario)
-        return JsonResponse({'success': True, 'message': f'¡Bienvenido/a a Akaispace, {usuario.nombre}! Tu cuenta quedó creada.',
+        return JsonResponse({'success': True, 'message': f'¡Bienvenido/a a Akai Space, {usuario.nombre}! Tu cuenta quedó creada.',
                              'redirect': reverse('home')})
 
     data = {'form': forms.UsuarioCustomForm(), 'regiones': REGIONES,

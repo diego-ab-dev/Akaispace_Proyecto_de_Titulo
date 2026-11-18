@@ -5,7 +5,7 @@ Error del servidor. Django la muestra sin contexto (sin usuario, menús ni porta
 datos no responda, así que va sin navbar ni footer: solo el logo, el aviso y un enlace al inicio.
 {% endcomment %}
 
-{% block title %}Algo salió mal - Akaispace{% endblock %}
+{% block title %}Algo salió mal - Akai Space{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_error.css' %}">
@@ -15,8 +15,8 @@ datos no responda, así que va sin navbar ni footer: solo el logo, el aviso y un
 <main class="pagina-error pagina-error-sola">
   <div class="error-caja">
     <a href="/" class="error-logo" title="Ir al inicio">
-      <img src="{% static 'images/akaispace_favicon.webp' %}" alt="Akaispace">
-      <span>Akaispace</span>
+      <img src="{% static 'images/akaispace_favicon.webp' %}" alt="Akai Space">
+      <span>Akai Space</span>
     </a>
 
     <div class="error-codigo error-codigo-500" aria-hidden="true">

@@ -30,7 +30,7 @@ OPCIONES_ENVIO = {
         'precio': 2000,
         'gratis_desde': 24990,
         'disponible_en': 'valdivia',
-        'transportista': 'Delivery Akaispace',
+        'transportista': 'Delivery Akai Space',
         'estados': ESTADOS_DELIVERY,
     },
     'bluexpress': {

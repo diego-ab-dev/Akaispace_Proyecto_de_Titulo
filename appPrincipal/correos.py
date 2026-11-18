@@ -65,7 +65,7 @@ def _enviar_bienvenida(usuario, con_google):
         'url_perfil': settings.SITIO_URL + reverse('perfil'),
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar("¡Bienvenido/a a Akaispace!", 'bienvenida', contexto, usuario.email)
+    enviado = _enviar("¡Bienvenido/a a Akai Space!", 'bienvenida', contexto, usuario.email)
     if enviado:
         logger.info("Correo de bienvenida enviado: usuario %s", usuario.pk)
     return enviado
@@ -87,7 +87,7 @@ def _enviar_contraseña_actualizada(usuario, como):
         'url_recuperar': settings.SITIO_URL + reverse('recuperar_contraseña'),
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar("Se actualizó la contraseña de tu cuenta - Akaispace", 'contraseña_actualizada',
+    enviado = _enviar("Se actualizó la contraseña de tu cuenta - Akai Space", 'contraseña_actualizada',
                       contexto, usuario.email)
     if enviado:
         logger.info("Aviso de contraseña actualizada enviado: usuario %s", usuario.pk)
@@ -108,7 +108,7 @@ def _enviar_cuenta_eliminada(nombre, email, por_administrador):
         'url_privacidad': settings.SITIO_URL + reverse('politica_privacidad') + '#conservacion',
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar("Tu cuenta fue eliminada - Akaispace", 'cuenta_eliminada', contexto, email)
+    enviado = _enviar("Tu cuenta fue eliminada - Akai Space", 'cuenta_eliminada', contexto, email)
     if enviado:
         logger.info("Aviso de cuenta eliminada enviado")  # sin el correo: la cuenta ya está anonimizada
     return enviado
@@ -131,7 +131,7 @@ def enviar_confirmacion_compra(venta):
         'retracto': POLITICA_RETRACTO,
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar(f"Confirmación de tu compra Nº {venta.id} - Akaispace", 'confirmacion_compra',
+    enviado = _enviar(f"Confirmación de tu compra Nº {venta.id} - Akai Space", 'confirmacion_compra',
                       contexto, venta.usuario.email)
     if enviado:
         Venta.objects.filter(pk=venta.pk).update(confirmacion_enviada=True)
@@ -152,7 +152,7 @@ def _enviar_listo_para_retiro(venta):
         'url_compra': settings.SITIO_URL + reverse('ver_detalle', args=[venta.id]),
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar(f"Tu pedido Nº {venta.id} está listo para retiro - Akaispace", 'listo_para_retiro',
+    enviado = _enviar(f"Tu pedido Nº {venta.id} está listo para retiro - Akai Space", 'listo_para_retiro',
                       contexto, venta.usuario.email)
     if enviado:
         logger.info("Aviso de pedido listo para retiro enviado: venta %s", venta.id)
@@ -173,7 +173,7 @@ def enviar_resolucion_devolucion(devolucion):
         'tienda': RESPONSABLE_DATOS,
     }
     resultado = 'aprobada' if contexto['aprobada'] else 'rechazada'
-    enviado = _enviar(f"Tu solicitud de devolución Nº {devolucion.id} fue {resultado} - Akaispace",
+    enviado = _enviar(f"Tu solicitud de devolución Nº {devolucion.id} fue {resultado} - Akai Space",
                       'resolucion_devolucion', contexto, devolucion.usuario.email)
     if enviado:
         logger.info("Correo de resolución de devolución enviado: devolución %s", devolucion.id)
@@ -192,7 +192,7 @@ def enviar_recepcion_devolucion(devolucion, reembolso=None):
         'url_devolucion': settings.SITIO_URL + reverse('ver_detalle_devolucion', args=[devolucion.id]),
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar(f"Recibimos el producto de tu devolución Nº {devolucion.id} - Akaispace",
+    enviado = _enviar(f"Recibimos el producto de tu devolución Nº {devolucion.id} - Akai Space",
                       'recepcion_devolucion', contexto, devolucion.usuario.email)
     if enviado:
         logger.info("Correo de recepción de devolución enviado: devolución %s", devolucion.id)
@@ -207,7 +207,7 @@ def _enviar_pedido_enviado(venta, envio):
         'url_compra': settings.SITIO_URL + reverse('ver_detalle', args=[venta.id]),
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar(f"Tu pedido Nº {venta.id} fue enviado - Akaispace", 'pedido_enviado',
+    enviado = _enviar(f"Tu pedido Nº {venta.id} fue enviado - Akai Space", 'pedido_enviado',
                       contexto, venta.usuario.email)
     if enviado:
         logger.info("Aviso de pedido enviado: venta %s", venta.id)
@@ -221,7 +221,7 @@ def _enviar_pedido_en_reparto(venta):
         'url_compra': settings.SITIO_URL + reverse('ver_detalle', args=[venta.id]),
         'tienda': RESPONSABLE_DATOS,
     }
-    enviado = _enviar(f"Tu pedido Nº {venta.id} va en camino - Akaispace", 'pedido_en_reparto',
+    enviado = _enviar(f"Tu pedido Nº {venta.id} va en camino - Akai Space", 'pedido_en_reparto',
                       contexto, venta.usuario.email)
     if enviado:
         logger.info("Aviso de pedido en reparto enviado: venta %s", venta.id)

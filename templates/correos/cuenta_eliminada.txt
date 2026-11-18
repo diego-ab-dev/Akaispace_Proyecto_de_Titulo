@@ -1,6 +1,6 @@
 {% autoescape off %}Hola, {{ nombre }}
 
-Te confirmamos que tu cuenta Akaispace ({{ email }}) fue eliminada {% if por_administrador %}por la tienda{% else %}a tu solicitud{% endif %} el {{ fecha|date:"d/m/Y" }} a las {{ fecha|date:"H:i" }}.
+Te confirmamos que tu cuenta Akai Space ({{ email }}) fue eliminada {% if por_administrador %}por la tienda{% else %}a tu solicitud{% endif %} el {{ fecha|date:"d/m/Y" }} a las {{ fecha|date:"H:i" }}.
 
 QUÉ ELIMINAMOS
 - Tu nombre, correo, RUT, teléfono y dirección.
@@ -16,6 +16,6 @@ Si quieres volver a comprar con nosotros, puedes crear una cuenta nueva con este
 ¿No pediste eliminar tu cuenta? Escríbenos de inmediato a {{ tienda.correo_privacidad }}.
 
 --
-Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Akai Space · Galería Caupolicán 544, Local 26, Valdivia
 Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
 {% endautoescape %}

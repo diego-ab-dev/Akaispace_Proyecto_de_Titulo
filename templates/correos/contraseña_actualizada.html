@@ -2,7 +2,7 @@
 {% block contenido %}
 <h1 style="font-size:20px; margin:0 0 12px;">Hola, {{ usuario.nombre }}</h1>
 <p style="margin:0 0 16px;">
-  Te avisamos que la contraseña de tu cuenta Akaispace (<strong>{{ usuario.email }}</strong>) se actualizó
+  Te avisamos que la contraseña de tu cuenta Akai Space (<strong>{{ usuario.email }}</strong>) se actualizó
   {% if restablecida %}con el enlace de recuperación{% else %}desde tu perfil{% endif %}
   el <strong>{{ fecha|date:"d/m/Y" }} a las {{ fecha|date:"H:i" }}</strong>.
 </p>
@@ -22,6 +22,6 @@
 </p>
 
 <p style="margin:0; font-size:13px; color:#6B7280;">
-  Por tu seguridad, Akaispace nunca te pedirá tu contraseña por correo, teléfono ni WhatsApp.
+  Por tu seguridad, Akai Space nunca te pedirá tu contraseña por correo, teléfono ni WhatsApp.
 </p>
 {% endblock %}

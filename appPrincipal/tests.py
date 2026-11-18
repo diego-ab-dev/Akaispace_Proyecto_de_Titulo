@@ -1166,7 +1166,7 @@ class EnviosTests(TestCase):
         self.cliente_en('Valdivia')
         _, venta = self.comprar('delivery', cantidad=2)
         self.assertEqual((venta.subtotal, venta.envio, venta.total), (20000, 2000, 22000))
-        self.assertEqual(venta.datos_envio.transportista, 'Delivery Akaispace')
+        self.assertEqual(venta.datos_envio.transportista, 'Delivery Akai Space')
         self.assertEqual(venta.direccion_envio, 'Picarte 123, Valdivia, Región de Los Ríos')
 
     def test_opciones_que_no_corresponden_a_la_ciudad_o_sin_direccion_vuelven_al_carrito(self):
@@ -4161,7 +4161,7 @@ class CorreosDeCuentaTests(TestCase):  # bienvenida al crear la cuenta y aviso d
             self.assertTrue(self.client.post('/register/', RegisterTests.datos).json()['success'])
         self.assertEqual(len(mail.outbox), 1)
         correo = mail.outbox[0]
-        self.assertEqual((correo.to, correo.subject), (['juan@example.com'], '¡Bienvenido/a a Akaispace!'))
+        self.assertEqual((correo.to, correo.subject), (['juan@example.com'], '¡Bienvenido/a a Akai Space!'))
         self.assertIn('Juan Perez', correo.body)
         self.assertIn('Ir a la tienda: http', correo.body)
         self.assertIn('Ir a la tienda', correo.alternatives[0][0])
@@ -4196,7 +4196,7 @@ class CorreosDeCuentaTests(TestCase):  # bienvenida al crear la cuenta y aviso d
             self.client.post('/cambiar/', datos)
         self.assertEqual(len(mail.outbox), 1)
         correo = mail.outbox[0]
-        self.assertEqual(correo.subject, 'Se actualizó la contraseña de tu cuenta - Akaispace')
+        self.assertEqual(correo.subject, 'Se actualizó la contraseña de tu cuenta - Akai Space')
         self.assertIn('desde tu perfil', correo.body)
         self.assertIn('Recuperar mi cuenta: http://', correo.body)
         self.assertIn('/recuperar-contrasena/', correo.body)
