@@ -4,12 +4,18 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
 from .constants import REGIONES, REGIONES_CIUDADES
+from .correos import responder_a
 from .imagenes import LADO_MAXIMO, LADO_MAXIMO_PORTADA, optimizar_subida
 from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto,
                      MovimientoCaja, Opinion, Producto, Usuario, youtube_embed_url)
+import logging
 import os
 import unicodedata
+
+logger = logging.getLogger(__name__)
 
 
 # validacion de rut
@@ -420,6 +426,21 @@ class RecuperarContraseñaForm(PasswordResetForm):
         usuarios = Usuario._default_manager.filter(email__iexact=email, is_active=True, is_deleted=False)
         return (u for u in usuarios if _mismo_correo(email, u.email))
 
+    # el mismo correo que arma Django (y, como Django, si falla solo se registra), con el 'responder a'
+    # de los demás correos de la tienda
+    def send_mail(self, subject_template_name, email_template_name, context, from_email, to_email,
+                  html_email_template_name=None):
+        asunto = ''.join(loader.render_to_string(subject_template_name, context).splitlines())
+        mensaje = EmailMultiAlternatives(asunto, loader.render_to_string(email_template_name, context),
+                                         from_email, [to_email], reply_to=responder_a())
+        if html_email_template_name is not None:
+            mensaje.attach_alternative(loader.render_to_string(html_email_template_name, context), 'text/html')
+        try:
+            mensaje.send()
+        except Exception:
+            logger.exception("No se pudo enviar el correo de recuperación de contraseña: usuario %s",
+                             context['user'].pk)
+
 # compara correos sin distinguir mayúsculas ni formas unicode equivalentes (NFKC + casefold),
 # igual que hace Django internamente, sin depender de su función privada
 def _mismo_correo(correo1, correo2):
@@ -734,9 +755,11 @@ class ConfiguracionSitioForm(forms.ModelForm):
 
     class Meta:
         model = ConfiguracionSitio
-        fields = ['productos_relacionados', 'mostrar_opiniones', 'mostrar_etiquetas', 'mostrar_stock',
-                  'mostrar_recomendaciones', 'kpi01_linea_base']
+        fields = ['mostrar_anuncio', 'texto_anuncio', 'productos_relacionados', 'mostrar_opiniones',
+                  'mostrar_etiquetas', 'mostrar_stock', 'mostrar_recomendaciones', 'kpi01_linea_base']
         widgets = {
+            'mostrar_anuncio': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'texto_anuncio': forms.TextInput(attrs={'class': 'form-control'}),
             'kpi01_linea_base': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': 1}),
             'productos_relacionados': forms.RadioSelect,
             'mostrar_opiniones': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
@@ -750,6 +773,15 @@ class ConfiguracionSitioForm(forms.ModelForm):
         if not self.is_bound:
             self.initial['categorias_visibles'] = list(
                 Categoria.objects.filter(visible_en_menu=True).values_list('id', flat=True))
+
+    def clean_texto_anuncio(self):
+        return ' '.join(self.cleaned_data['texto_anuncio'].split())  # una sola línea, sin espacios de más
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('mostrar_anuncio') and not datos.get('texto_anuncio'):
+            self.add_error('texto_anuncio', 'Escribe el texto del anuncio o desactiva la barra.')
+        return datos
 
     def save(self, commit=True):
         configuracion = super().save(commit)

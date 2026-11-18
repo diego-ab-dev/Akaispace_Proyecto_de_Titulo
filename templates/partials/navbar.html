@@ -7,16 +7,25 @@ Variantes (se pasan con {% include ... with %}):
   en_menu: oculta el link "Productos" (la página del menú)
 Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales de `portada`
 (context_processors.py); ambos se editan en el panel (Configuración y Portada).
+La barra de anuncio también se edita en Configuración. Va dentro del navbar fijo y, justo después, una copia
+invisible que ocupa su mismo alto: así baja el contenido de cada página sin cambiar su CSS.
 {% endcomment %}
+{% with anuncio=config_sitio.texto_anuncio %}
 <nav class="nav-tienda">
+  {% if config_sitio.mostrar_anuncio and anuncio %}
+  <div class="anuncio-barra" data-anuncio>
+    <p><i class="fa-solid fa-truck-fast" aria-hidden="true"></i>{{ anuncio }}</p>
+    <button type="button" class="anuncio-cerrar" aria-label="Cerrar anuncio"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+  </div>
+  {% endif %}
   <div class="navbar">
     <i class="fa-solid fa-bars icono-menu" role="button" tabindex="0" aria-label="Abrir menú"></i>
     <div class="logo">
-      <a href="{% url 'home' %}"><img src="{% static 'images/akaispace_favicon.webp' %}" alt="Logo Akaispace"><span>Akaispace</span></a>
+      <a href="{% url 'home' %}"><img src="{% static 'images/akaispace_favicon.webp' %}" alt="Logo Akai Space"><span>Akai Space</span></a>
     </div>
     <div class="nav-links">
       <div class="sidebar-logo">
-        <span class="logo-name">Akaispace</span>
+        <span class="logo-name">Akai Space</span>
         <i class="fa-solid fa-xmark icono-cerrar" role="button" tabindex="0" aria-label="Cerrar menú"></i>
       </div>
       <ul class="links">
@@ -135,3 +144,25 @@ Los menús de categorías vienen de `menu_navbar` y sus tarjetas promocionales d
     </div>
   </div>
 </nav>
+{% if config_sitio.mostrar_anuncio and anuncio %}
+<div class="anuncio-barra anuncio-barra--espacio" data-anuncio aria-hidden="true">
+  <p><i class="fa-solid fa-truck-fast"></i>{{ anuncio }}</p>
+  <span class="anuncio-cerrar"></span>
+</div>
+{{ anuncio|json_script:"anuncio-texto" }}
+<script>
+  // se ejecuta antes de dibujar la página: si el visitante ya cerró este mismo anuncio, no parpadea
+  (function () {
+    var texto = JSON.parse(document.getElementById("anuncio-texto").textContent);
+    var quitar = function () {
+      document.querySelectorAll("[data-anuncio]").forEach(function (barra) { barra.remove(); });
+    };
+    try { if (sessionStorage.getItem("anuncio-cerrado") === texto) { quitar(); return; } } catch (e) {}
+    document.querySelector(".anuncio-cerrar").addEventListener("click", function () {
+      try { sessionStorage.setItem("anuncio-cerrado", texto); } catch (e) {}
+      quitar();
+    });
+  })();
+</script>
+{% endif %}
+{% endwith %}

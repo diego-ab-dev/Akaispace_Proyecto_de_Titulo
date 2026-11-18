@@ -9,7 +9,7 @@ Cantidad: {{ devolucion.cantidad }}
 {% if devolucion.venta %}Pedido: Nº {{ devolucion.venta.id }}
 {% endif %}{% if aprobada and monto_reembolso %}Monto a reembolsar: ${{ monto_reembolso|formato_chileno }}
 {% endif %}
-RESPUESTA DE AKAISPACE
+RESPUESTA DE AKAI SPACE
 {{ devolucion.respuesta_admin }}
 
 {% if aprobada %}Entrega o envía el producto según las indicaciones de la respuesta. Cuando lo recibamos y lo revisemos, te avisaremos por correo y haremos el reembolso.{% else %}Si tienes dudas sobre esta decisión, puedes ingresar un reclamo desde el detalle de tu compra o escribirnos a {{ tienda.correo_privacidad }}.{% endif %}
@@ -17,6 +17,6 @@ RESPUESTA DE AKAISPACE
 Ver tu solicitud: {{ url_devolucion }}
 
 --
-Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Akai Space · Galería Caupolicán 544, Local 26, Valdivia
 Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
 {% endautoescape %}

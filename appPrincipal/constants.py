@@ -51,7 +51,7 @@ TERMINOS_FECHA = '6 de octubre de 2026'
 # Datos del responsable del tratamiento que aparecen en la política.
 # El RUT es ficticio
 RESPONSABLE_DATOS = {
-    'nombre_comercial': 'Akaispace',
+    'nombre_comercial': 'Akai Space',
     'razon_social': 'Carlos Fuentes Riquelme',
     'rut': '15.432.876-9',
     'domicilio': 'Galería Caupolicán 544, Local 26, Valdivia, Región de Los Ríos, Chile',

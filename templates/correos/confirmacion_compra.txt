@@ -27,6 +27,6 @@ DERECHO A RETRACTO
 {% for punto in retracto %}- {{ punto }}
 {% endfor %}
 --
-Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Akai Space · Galería Caupolicán 544, Local 26, Valdivia
 Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
 {% endautoescape %}

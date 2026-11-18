@@ -27,6 +27,12 @@ class AdaptadorCuenta(DefaultAccountAdapter):
         # igual que el login propio: el administrador entra a su panel
         return reverse('admin_dashboard' if request.user.is_staff else 'home')
 
+    def render_mail(self, template_prefix, email, context, headers=None):
+        # los correos de allauth llevan el mismo 'responder a' que los de la tienda
+        mensaje = super().render_mail(template_prefix, email, context, headers)
+        mensaje.reply_to = correos.responder_a() or []
+        return mensaje
+
 
 class AdaptadorCuentaGoogle(DefaultSocialAccountAdapter):
     def is_open_for_signup(self, request, sociallogin):

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+import sys
 from django.contrib.messages import constants as messages
 from decouple import config, Csv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -140,6 +141,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Solo al correr los tests (manage.py test): un hasher rápido para que crear usuarios no tome casi un segundo
+# cada vez. Nunca aplica al sitio real, que sigue usando el hasher por defecto de Django (PBKDF2).
+if 'test' in sys.argv[1:2]:
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
 
 # Autenticación
 AUTH_USER_MODEL = 'appPrincipal.Usuario'
@@ -207,7 +213,9 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_TIMEOUT = 10
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Akaispace <no-reply@akaispace.shop>')
+# El remitente es del dominio verificado en SES; las respuestas del cliente van a CONTACT_EMAIL (si está definido)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Akai Space <no-reply@akaispace.shop>')
+CONTACT_EMAIL = config('CONTACT_EMAIL', default='')
 SITIO_URL = config('SITIO_URL', default='http://localhost:8000').rstrip('/')
 # el enlace para recuperar la contraseña vence en 1 hora (HU-11)
 PASSWORD_RESET_TIMEOUT = 60 * 60

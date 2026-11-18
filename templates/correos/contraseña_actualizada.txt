@@ -1,6 +1,6 @@
 {% autoescape off %}Hola, {{ usuario.nombre }}
 
-Te avisamos que la contraseña de tu cuenta Akaispace ({{ usuario.email }}) se actualizó {% if restablecida %}con el enlace de recuperación{% else %}desde tu perfil{% endif %} el {{ fecha|date:"d/m/Y" }} a las {{ fecha|date:"H:i" }}.
+Te avisamos que la contraseña de tu cuenta Akai Space ({{ usuario.email }}) se actualizó {% if restablecida %}con el enlace de recuperación{% else %}desde tu perfil{% endif %} el {{ fecha|date:"d/m/Y" }} a las {{ fecha|date:"H:i" }}.
 
 Si fuiste tú, no tienes que hacer nada.
 
@@ -9,9 +9,9 @@ Alguien más podría tener acceso a tu cuenta. Crea una contraseña nueva ahora 
 
 Recuperar mi cuenta: {{ url_recuperar }}
 
-Por tu seguridad, Akaispace nunca te pedirá tu contraseña por correo, teléfono ni WhatsApp.
+Por tu seguridad, Akai Space nunca te pedirá tu contraseña por correo, teléfono ni WhatsApp.
 
 --
-Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Akai Space · Galería Caupolicán 544, Local 26, Valdivia
 Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
 {% endautoescape %}

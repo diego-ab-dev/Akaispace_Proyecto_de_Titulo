@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from appPrincipal import pagos
+from appPrincipal.correos import avisar_estado_envio
 from appPrincipal.decorators import admin_required
 from appPrincipal.envios import TRANSPORTISTAS_ENCOMIENDA
 from appPrincipal.models import Envio, PagoWebpay, Producto, Venta
@@ -100,6 +101,9 @@ def modificar_venta(request, venta_id):
     if venta.canal != Venta.CANAL_WEB:
         return redirect('detalle_venta', venta_id=venta.id)  # las ventas presenciales no tienen envío
     envio = getattr(venta, 'datos_envio', None)
+    if venta.anulada or (envio and envio.estado == 'Anulada'):
+        # una venta anulada ya devolvió el stock y el pago: cambiarle el estado la dejaría inconsistente
+        return redirect('detalle_venta', venta_id=venta.id)
 
     error = None
     estado_post = None
@@ -142,10 +146,15 @@ def modificar_venta(request, venta_id):
 
         if envio is None:
             envio = Envio.objects.create(venta=venta)
+        # solo la primera vez que llega a cada estado: si el administrador lo corrige y vuelve, no se repite el aviso
+        campo_fecha = Envio.FECHAS_ESTADO.get(estado_post)
+        primera_vez = campo_fecha is not None and getattr(envio, campo_fecha) is None
         envio.numero_seguimiento = tracking_post
         if transportista_post:
             envio.transportista = transportista_post
         envio.guardar_estado(estado_post)
+        if primera_vez:
+            avisar_estado_envio(venta, envio, estado_post)
 
         return redirect('detalle_venta', venta_id=venta.id)
 

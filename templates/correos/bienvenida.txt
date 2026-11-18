@@ -1,4 +1,4 @@
-{% autoescape off %}¡Hola, {{ usuario.nombre }}! Te damos la bienvenida a Akaispace
+{% autoescape off %}¡Hola, {{ usuario.nombre }}! Te damos la bienvenida a Akai Space
 
 Tu cuenta quedó creada con el correo {{ usuario.email }}.{% if con_google %} Para entrar, usa el botón "Continuar con Google".{% endif %}
 A este correo te llegarán las confirmaciones de tus compras y los avisos de tus pedidos.
@@ -13,6 +13,6 @@ Ir a la tienda: {{ url_tienda }}
 ¿No creaste esta cuenta? Escríbenos a {{ tienda.correo_privacidad }} y la revisamos.
 
 --
-Akaispace · Galería Caupolicán 544, Local 26, Valdivia
+Akai Space · Galería Caupolicán 544, Local 26, Valdivia
 Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
 {% endautoescape %}

@@ -1,4 +1,4 @@
-"""Vistas del panel de administración propio de Akaispace (no confundir con el admin de Django)."""
+"""Vistas del panel de administración propio de Akai Space (no confundir con el admin de Django)."""
 from .configuracion import admin_configuracion
 from .compras import admin_compras, detalle_compra, eliminar_compra, recibir_compra, registrar_compra
 from .dashboard import admin_dashboard

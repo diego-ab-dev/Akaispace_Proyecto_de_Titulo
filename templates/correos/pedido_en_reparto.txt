@@ -1,0 +1,17 @@
+{% autoescape off %}¡Hola, {{ venta.usuario.nombre }}!
+
+Tu pedido Nº {{ venta.id }} va en camino con nuestro Delivery Express en Valdivia.
+
+DIRECCIÓN DE ENTREGA
+{{ venta.direccion_envio|default:"La que indicaste al comprar." }}
+Procura que haya alguien para recibirlo. Si no podrás estar, llámanos al {{ tienda.telefono }}.
+
+PRODUCTOS
+{% for item in items %}- {{ item.cantidad }} x {{ item.producto.nombre }}
+{% endfor %}
+Ver tu pedido: {{ url_compra }}
+
+--
+Akai Space · Galería Caupolicán 544, Local 26, Valdivia
+Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
+{% endautoescape %}

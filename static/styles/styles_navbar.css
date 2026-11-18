@@ -11,7 +11,6 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: var(--nav-alto);
   background: var(--nav-fondo);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   z-index: 99;
@@ -45,7 +44,7 @@
 }
 
 .nav-tienda .navbar {
-  height: 100%;
+  height: var(--nav-alto);
   max-width: 1300px;
   width: 100%;
   display: flex;
@@ -696,5 +695,71 @@
   }
   .nav-tienda .navbar {
     gap: 10px;
+  }
+}
+
+/* ---------- barra de anuncio (Configuración del panel) ----------
+   La de .nav-tienda es la visible; la copia --espacio queda en el flujo de la página, invisible, y empuja el
+   contenido lo mismo que mide la barra (aunque el texto ocupe dos líneas en el celular). */
+.anuncio-barra {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 44px;
+  position: relative;
+  background: #141B2D;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #E6E9F0;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+}
+.anuncio-barra p {
+  margin: 0;
+}
+.anuncio-barra p i {
+  margin-right: 8px;
+  color: #00D2D5;
+}
+/* .nav-tienda delante: le gana a .nav-tienda button (el estilo del botón Iniciar Sesión) */
+.nav-tienda .anuncio-cerrar,
+.anuncio-barra--espacio .anuncio-cerrar {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #AEB6C7;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-tienda .anuncio-cerrar:hover,
+.nav-tienda .anuncio-cerrar:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+.anuncio-barra--espacio {
+  visibility: hidden;
+}
+@media (max-width: 480px) {
+  .anuncio-barra {
+    padding: 6px 40px 6px 16px;
+    font-size: 12px;
+  }
+  .anuncio-barra p i {
+    display: none;
   }
 }

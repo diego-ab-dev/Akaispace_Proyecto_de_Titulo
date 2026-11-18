@@ -1,0 +1,25 @@
+{% autoescape off %}¡Hola, {{ venta.usuario.nombre }}!
+
+Tu pedido Nº {{ venta.id }} fue enviado y ya está en manos del transportista.
+
+SEGUIMIENTO
+Transportista: {{ envio.transportista }}
+Número de seguimiento: {{ envio.numero_seguimiento }}
+Con este número puedes revisar el estado de tu envío en el sitio de {{ envio.transportista }}.
+
+PRODUCTOS
+{% for item in items %}- {{ item.cantidad }} x {{ item.producto.nombre }}
+{% endfor %}
+DIRECCIÓN DE ENTREGA
+{{ venta.direccion_envio|default:"La que indicaste al comprar." }}
+{% if venta.envio_por_pagar %}
+Recuerda que el envío es por pagar: lo pagas al recibir el pedido.
+{% endif %}
+Si tienes dudas, puedes llamarnos al {{ tienda.telefono }} indicando tu número de pedido (Nº {{ venta.id }}).
+
+Ver tu pedido: {{ url_compra }}
+
+--
+Akai Space · Galería Caupolicán 544, Local 26, Valdivia
+Este correo se envió automáticamente, por favor no lo respondas. Si tienes dudas, escríbenos a {{ tienda.correo_privacidad }}.
+{% endautoescape %}

@@ -829,8 +829,12 @@ class Envio(models.Model):
         return f"Envío #{self.id} para Venta {self.venta.id}"
 
     def guardar_estado(self, nuevo_estado):
-        if nuevo_estado != self.estado and nuevo_estado in self.FECHAS_ESTADO:
-            setattr(self, self.FECHAS_ESTADO[nuevo_estado], now())
+        """Cada fecha registra la primera vez que el pedido llegó a ese estado. Si el administrador vuelve a un estado
+        anterior y avanza de nuevo, no se reescribe: así la fecha de entrega, que fija el plazo de devolución, no se
+        puede correr."""
+        campo = self.FECHAS_ESTADO.get(nuevo_estado)
+        if campo and getattr(self, campo) is None:
+            setattr(self, campo, now())
         self.estado = nuevo_estado
         self.save()
 
@@ -845,15 +849,6 @@ class Envio(models.Model):
             return 'Retirado'
         return self.estado
 
-    def registrar_envio(self, tracking):
-        self.numero_seguimiento = tracking
-        self.estado = 'Enviado'
-        self.fecha_envio = now()
-        self.save()
-
-    def actualizar_estado(self, nuevo_estado):
-        self.estado = nuevo_estado
-        self.save()
 
 
 # clase Comprobante: comprobante de compra NO tributario (no reemplaza la boleta del SII)
@@ -1089,7 +1084,18 @@ class ConfiguracionSitio(models.Model):
         (RELACIONADOS_NINGUNO, 'No mostrar'),
     ]
 
+    ANUNCIO_POR_DEFECTO = ("Delivery en Valdivia por solo $2.000 (¡Gratis desde $24.990!). "
+                           "Envíos a regiones por pagar de forma rápida y segura.")
+    LARGO_MAXIMO_ANUNCIO = 150
+
     id = models.BigAutoField(primary_key=True, db_comment="Identificador. La tabla tiene un único registro con id 1.")
+    # barra delgada sobre el navbar de la tienda; el visitante puede cerrarla durante su visita
+    mostrar_anuncio = models.BooleanField(default=True, verbose_name="Mostrar la barra de anuncio",
+                                          db_comment="Indica si la tienda muestra la barra de anuncio sobre el navbar.")
+    texto_anuncio = models.CharField(
+        max_length=LARGO_MAXIMO_ANUNCIO, blank=True, default=ANUNCIO_POR_DEFECTO, verbose_name="Texto del anuncio",
+        db_comment="Texto de la barra de anuncio (texto simple, sin HTML).",
+    )
     productos_relacionados = models.CharField(
         max_length=12, choices=OPCIONES_RELACIONADOS, default=RELACIONADOS_CATEGORIA,
         verbose_name="Productos relacionados en la ficha",

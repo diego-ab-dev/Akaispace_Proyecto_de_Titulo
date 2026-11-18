@@ -1,4 +1,4 @@
-"""Vistas de Akaispace, separadas por funcionalidad.
+"""Vistas de Akai Space, separadas por funcionalidad.
 
 Las del cliente están en este paquete y las del panel de administración en views/panel/.
 Todas se reexportan aquí para que urls.py pueda usarlas como views.<nombre>.

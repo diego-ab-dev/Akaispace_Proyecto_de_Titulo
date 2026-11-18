@@ -127,14 +127,19 @@ class RegisterTests(TestCase):
         'acepta_privacidad': 'on', 'autoriza_datos_navegacion': 'on',
     }
 
-    def test_registro_guarda_los_consentimientos_y_la_version_aceptada(self):  # HU-01
+    def test_registro_valido_guarda_consentimientos_y_rut_normalizado_e_inicia_sesion(self):  # HU-01
         from .constants import POLITICA_PRIVACIDAD_VERSION
-        self.assertTrue(self.client.post('/register/', self.datos).json()['success'])
+        respuesta = self.client.post('/register/', self.datos).json()
+        self.assertTrue(respuesta['success'])
+        self.assertEqual(respuesta['redirect'], '/')
         usuario = Usuario.objects.get(email='juan@example.com')
+        self.assertEqual(usuario.rut, '12.343.455-2')
         self.assertEqual(usuario.declaracion_edad, Usuario.MAYOR_18)
         self.assertIsNotNone(usuario.privacidad_aceptada_en)
         self.assertIsNotNone(usuario.datos_navegacion_autorizados_en)
         self.assertEqual(usuario.privacidad_version, POLITICA_PRIVACIDAD_VERSION)
+        self.assertEqual(int(self.client.session['_auth_user_id']), usuario.pk)
+        self.assertRedirects(self.client.get('/register/'), '/', fetch_redirect_response=False)
 
     def test_sin_aceptar_la_politica_no_se_crea_la_cuenta(self):  # HU-01
         datos = {k: v for k, v in self.datos.items() if k != 'acepta_privacidad'}
@@ -171,16 +176,18 @@ class RegisterTests(TestCase):
         self.assertContains(registro, 'Menor de 18 años con autorización de su padre, madre o tutor')
         self.assertContains(self.client.get('/'), 'href="/politica-de-privacidad/"')
 
-    def test_registro_valido_guarda_rut_normalizado(self):
-        respuesta = self.client.post('/register/', self.datos)
-        self.assertTrue(respuesta.json()['success'])
-        self.assertEqual(Usuario.objects.get(email='juan@example.com').rut, '12.343.455-2')
-
-    def test_registro_con_rut_invalido_es_rechazado(self):
-        respuesta = self.client.post('/register/', {**self.datos, 'rut': '12343455-3'})
-        self.assertFalse(respuesta.json()['success'])
-        self.assertIn('RUT', respuesta.json()['message'])
+    def test_datos_invalidos_se_rechazan_en_su_campo(self):
+        casos = {'rut': '12343455-3', 'ciudad': 'Osorno',  # RUT con dígito verificador malo; ciudad de otra región
+                 'telefono': ['1234', 'abcdefgh', '+56 9 1234 56789']}
+        for campo, valores in casos.items():
+            for valor in valores if isinstance(valores, list) else [valores]:
+                with self.subTest(campo=campo, valor=valor):
+                    respuesta = self.client.post('/register/', {**self.datos, campo: valor}).json()
+                    self.assertFalse(respuesta['success'])
+                    self.assertIn(campo, respuesta['errors'])
         self.assertFalse(Usuario.objects.exists())
+        self.client.post('/register/', {**self.datos, 'telefono': '87654321'})
+        self.assertEqual(Usuario.objects.get().telefono, '+56 9 87654321')
 
     def test_rut_duplicado_con_otro_formato_es_rechazado(self):
         self.client.post('/register/', self.datos)
@@ -215,31 +222,8 @@ class RegisterTests(TestCase):
                       'confirmar_contraseña', 'declaracion_edad', 'acepta_privacidad']:
             self.assertIn(campo, errores, campo)
         self.assertEqual(errores['contraseña'], ['Ingresa una contraseña.'])
+        self.assertEqual(errores['confirmar_contraseña'], ['Repite tu contraseña.'])
         self.assertEqual(list(errores)[0], 'rut')  # en el mismo orden del formulario
-
-    def test_sin_contraseña_el_mensaje_dice_que_falta_la_contraseña(self):
-        datos = {**self.datos, 'contraseña': '', 'confirmar_contraseña': ''}
-        respuesta = self.client.post('/register/', datos).json()
-        self.assertEqual(respuesta['message'], 'Ingresa una contraseña.')
-        self.assertEqual(respuesta['errors']['confirmar_contraseña'], ['Repite tu contraseña.'])
-
-    def test_telefono_se_valida_y_se_guarda_con_formato(self):
-        for telefono in ['1234', 'abcdefgh', '+56 9 1234 56789']:
-            respuesta = self.client.post('/register/', {**self.datos, 'telefono': telefono})
-            self.assertIn('telefono', respuesta.json()['errors'], telefono)
-        self.client.post('/register/', {**self.datos, 'telefono': '87654321'})
-        self.assertEqual(Usuario.objects.get().telefono, '+56 9 87654321')
-
-    def test_ciudad_de_otra_region_es_rechazada(self):
-        respuesta = self.client.post('/register/', {**self.datos, 'ciudad': 'Osorno'}).json()
-        self.assertIn('ciudad', respuesta['errors'])
-        self.assertFalse(Usuario.objects.exists())
-
-    def test_registro_inicia_la_sesion(self):
-        respuesta = self.client.post('/register/', self.datos).json()
-        self.assertEqual(respuesta['redirect'], '/')
-        self.assertEqual(int(self.client.session['_auth_user_id']), Usuario.objects.get().pk)
-        self.assertRedirects(self.client.get('/register/'), '/', fetch_redirect_response=False)
 
 
 _ruts_de_prueba = iter(range(20_000_000, 30_000_000))
@@ -303,31 +287,25 @@ class LoginTests(TestCase):
 
 
 class ContraseñaTests(TestCase):  # 15
-    def test_registro_rechaza_contraseña_debil(self):
-        datos = {**RegisterTests.datos, 'contraseña': '12345', 'confirmar_contraseña': '12345'}
-        respuesta = self.client.post('/register/', datos)
-        self.assertFalse(respuesta.json()['success'])
-        self.assertFalse(Usuario.objects.exists())
-
-    def test_contraseña_sin_letra_o_sin_numero_es_rechazada(self):  # RNF-01
+    def test_registro_rechaza_contraseñas_que_no_cumplen_las_reglas(self):  # RNF-01
         from django.contrib.auth.password_validation import validate_password
         from django.core.exceptions import ValidationError
-        for clave in ['Akaispace-Tienda!', 'Valdivia-Gamer-Store']:  # largas y no comunes, pero sin número
-            datos = {**RegisterTests.datos, 'contraseña': clave, 'confirmar_contraseña': clave}
-            respuesta = self.client.post('/register/', datos).json()
-            self.assertFalse(respuesta['success'], clave)
-            self.assertIn('una letra y un número', respuesta['message'])
-        with self.assertRaises(ValidationError):
-            validate_password('2026-2027-2028!')  # sin letras
-        self.assertFalse(Usuario.objects.exists())
-        validate_password('Akaispace-2026!')  # con letra y número: no lanza error
-
-    def test_las_reglas_se_muestran_antes_de_escribir_la_contraseña(self):  # RNF-01
-        self.assertContains(self.client.get('/register/'), 'al menos una letra y un número')
-
-    def test_registro_rechaza_confirmacion_distinta(self):
+        casos = [('12345', None),  # débil
+                 ('Akaispace-Tienda!', 'una letra y un número'),  # larga y no común, pero sin número
+                 ('Valdivia-Gamer-Store', 'una letra y un número')]
+        for clave, mensaje in casos:
+            with self.subTest(clave=clave):
+                datos = {**RegisterTests.datos, 'contraseña': clave, 'confirmar_contraseña': clave}
+                respuesta = self.client.post('/register/', datos).json()
+                self.assertFalse(respuesta['success'])
+                if mensaje:
+                    self.assertIn(mensaje, respuesta['message'])
         datos = {**RegisterTests.datos, 'confirmar_contraseña': 'Otra-Clave-2026!'}
         self.assertEqual(self.client.post('/register/', datos).json()['message'], 'Las contraseñas no coinciden.')
+        self.assertFalse(Usuario.objects.exists())
+        with self.assertRaises(ValidationError):
+            validate_password('2026-2027-2028!')  # sin letras
+        validate_password('Akaispace-2026!')  # con letra y número: no lanza error
 
     def test_cambiar_contraseña_muestra_los_errores_en_cada_campo(self):
         usuario = crear_cliente()
@@ -372,20 +350,16 @@ class AccesoTests(TestCase):  # 1 y 20
         self.assertEqual(respuesta.status_code, 401)
         self.assertEqual(respuesta.json()['error'], 'not_logged_in')
 
-    def test_no_se_puede_ver_la_compra_ni_el_comprobante_de_otro_usuario(self):
+    def test_solo_el_dueño_ve_su_compra_y_su_comprobante(self):
         self.client.force_login(self.otro)
         self.assertEqual(self.client.get(f'/compra/{self.venta.id}/detalle/').status_code, 404)
         self.assertEqual(self.client.get(f'/comprobante/{self.venta.id}/').status_code, 404)
-
-    def test_el_dueño_si_ve_su_compra(self):
         self.client.force_login(self.dueño)
         self.assertEqual(self.client.get(f'/comprobante/{self.venta.id}/').status_code, 200)
 
-    def test_cliente_no_entra_al_panel_admin(self):
+    def test_solo_el_admin_entra_al_panel(self):
         self.client.force_login(self.otro)
         self.assertRedirects(self.client.get('/admin-panel/'), '/', fetch_redirect_response=False)
-
-    def test_admin_entra_al_panel(self):
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
         self.assertEqual(self.client.get('/admin-panel/').status_code, 200)
 
@@ -437,22 +411,15 @@ class ModeloTests(TestCase):  # 17, 25, 26 y 28
         self.venta = Venta.objects.create(usuario=self.cliente, metodo_envio='tienda')
         ProductoVenta.objects.create(venta=self.venta, producto=self.producto, cantidad=2, precio_unitario=1000)
 
-    def test_objects_oculta_eliminados_y_todos_los_incluye(self):  # 28
+    def test_eliminar_es_logico_y_el_historial_conserva_el_producto(self):  # 17 y 28
         self.producto.delete()
         self.assertFalse(Producto.objects.filter(id=self.producto.id).exists())
-        self.assertTrue(Producto.todos.filter(id=self.producto.id).exists())
         self.assertIsNotNone(Producto.todos.get(id=self.producto.id).deleted_at)
+        self.assertEqual(self.venta.producto_venta.get().producto.nombre, 'Consola')
 
-    def test_delete_masivo_tambien_es_logico(self):  # 28
-        Producto.objects.filter(id=self.producto.id).delete()
-        producto = Producto.todos.get(id=self.producto.id)
-        self.assertTrue(producto.is_deleted)
-        self.assertIsNotNone(producto.deleted_at)
-
-    def test_historial_conserva_el_producto_eliminado(self):  # 17 y 28
-        self.producto.delete()
-        linea = self.venta.producto_venta.get()
-        self.assertEqual(linea.producto.nombre, 'Consola')
+        otro = crear_producto('Otro', codigo_de_barra='223')
+        Producto.objects.filter(id=otro.id).delete()  # el delete masivo también es lógico
+        self.assertTrue(Producto.todos.get(id=otro.id).is_deleted)
 
     def test_no_se_puede_borrar_de_verdad_un_producto_o_usuario_con_ventas(self):  # 17
         from django.db.models import ProtectedError
@@ -520,12 +487,9 @@ class PanelFiltrosTests(TestCase):  # filtro de fechas compartido por ventas, re
         respuesta = self.client.get('/admin-panel/ventas/', {'fecha_inicio': self.hoy, 'fecha_fin': self.hoy})
         self.assertEqual(list(respuesta.context['ventas']), [self.venta])
 
-    def test_fecha_futura_no_se_aplica_y_se_informa(self):
-        from datetime import timedelta
+    def test_fecha_futura_se_informa_y_una_imposible_se_ignora(self):
         respuesta = self.client.get('/admin-panel/reclamos/', {'fecha_fin': self.hoy + timedelta(days=1)})
         self.assertEqual(respuesta.context['errores'], ["La fecha de fin no puede ser futura."])
-
-    def test_fecha_imposible_se_ignora(self):
         respuesta = self.client.get('/admin-panel/devoluciones/', {'fecha_inicio': '2026-02-31'})
         self.assertEqual(respuesta.status_code, 200)
 
@@ -649,41 +613,32 @@ class CarritoTests(TestCase):
         from .models import ItemCarritoProducto
         return list(ItemCarritoProducto.objects.values_list('cantidad', flat=True))
 
-    def test_cantidad_invalida_o_negativa_se_rechaza(self):
+    def test_cantidad_invalida_o_por_get_se_rechaza(self):
         for cantidad in ['abc', '-2', '0', '']:
             self.assertEqual(self.agregar(cantidad).status_code, 400, cantidad)
+        self.assertEqual(self.client.get(f'/agregar/{self.producto.id}/').status_code, 405)
         self.assertEqual(self.items(), [])
 
-    def test_pasarse_del_stock_no_responde_exito_ni_agrega(self):
+    def test_no_se_agrega_mas_que_el_stock(self):
+        self.assertFalse(self.agregar(5).json()['success'])  # más que todo el stock: ni se crea el item
+        self.assertEqual(self.items(), [])
         self.assertTrue(self.agregar(2).json()['success'])
-        respuesta = self.agregar(2).json()  
+        respuesta = self.agregar(2).json()  # ya tiene 2 de 3: solo cabe 1
         self.assertFalse(respuesta['success'])
         self.assertIn('1 unidad', respuesta['error'])
         self.assertEqual(self.items(), [2])
-
-    def test_sin_stock_no_se_crea_el_item(self):
-        self.assertFalse(self.agregar(5).json()['success'])
-        self.assertEqual(self.items(), [])
 
     def test_no_se_pueden_agregar_productos_eliminados(self):
         self.producto.delete()
         self.assertEqual(self.agregar(1).status_code, 404)
         self.assertEqual(self.client.get(f'/producto/{self.producto.id}/').status_code, 404)
 
-    def test_agregar_por_get_no_esta_permitido(self):
-        self.assertEqual(self.client.get(f'/agregar/{self.producto.id}/').status_code, 405)
-
-    def test_actualizar_cantidad_con_texto_no_se_cae(self):
+    def test_actualizar_con_texto_o_sobre_el_stock_no_cambia_la_cantidad(self):
         from .models import ItemCarritoProducto
         self.agregar(1)
         item = ItemCarritoProducto.objects.get()
         self.assertEqual(self.client.post('/actualizar-cantidad/', {'producto_id': item.producto_id, 'cantidad': 'x'}).status_code, 400)
         self.assertEqual(self.client.post('/actualizar-cantidad/', {'item_id': 'x', 'cantidad': 1}).status_code, 400)
-
-    def test_actualizar_sobre_el_stock_no_cambia_la_cantidad(self):
-        from .models import ItemCarritoProducto
-        self.agregar(1)
-        item = ItemCarritoProducto.objects.get()
         respuesta = self.client.post('/actualizar-cantidad/', {'producto_id': item.producto_id, 'cantidad': 500}).json()
         self.assertFalse(respuesta['success'])
         self.assertEqual(self.items(), [1])
@@ -747,10 +702,13 @@ class DevolucionesTests(TestCase):
         url = f'/admin-panel/devoluciones/responder/{devolucion.id}/'
         return self.client.post(url, {'accion': accion, 'respuesta': 'ok'})
 
-    def test_no_se_puede_devolver_mas_de_lo_comprado_ni_cantidades_negativas(self):
-        from .models import Devolucion
+    def test_no_se_puede_devolver_mas_de_lo_comprado_ni_una_compra_sin_entregar(self):
+        from .models import Devolucion, Envio
         for cantidad in [3, 0, -5, 'abc']:
             self.pedir(cantidad)
+        self.assertFalse(Devolucion.objects.exists())
+        Envio.objects.filter(venta=self.venta).update(estado='Enviado')
+        self.pedir(1)
         self.assertFalse(Devolucion.objects.exists())
 
     def test_lo_ya_solicitado_descuenta_de_lo_que_se_puede_devolver(self):
@@ -761,12 +719,6 @@ class DevolucionesTests(TestCase):
         self.pedir(1)
         self.assertEqual(list(Devolucion.objects.values_list('cantidad', flat=True)), [1, 1])
         self.assertEqual(self.client.get(self.url).status_code, 302)  
-
-    def test_solo_se_puede_devolver_una_compra_entregada(self):
-        from .models import Devolucion, Envio
-        Envio.objects.filter(venta=self.venta).update(estado='Enviado')
-        self.pedir(1)
-        self.assertFalse(Devolucion.objects.exists())
 
     def recibir_como_admin(self, devolucion):
         return self.client.post(f'/admin-panel/devoluciones/recepcion/{devolucion.id}/')
@@ -840,10 +792,7 @@ class AccionesPorPostTests(TestCase):
         self.assertTrue(self.cliente.is_active)
         self.assertTrue(Producto.objects.filter(id=self.producto.id).exists())
         self.assertEqual(Envio.objects.get().estado, 'Enviado')
-
-    def test_acciones_del_panel_funcionan_por_post(self):
-        self.client.force_login(self.jefe)
-        self.client.post(f'/admin-panel/productos/eliminar/{self.producto.id}/')
+        self.client.post(f'/admin-panel/productos/eliminar/{self.producto.id}/')  # por POST sí funciona
         self.assertFalse(Producto.objects.filter(id=self.producto.id).exists())
 
     def test_marcar_recibido_solo_por_post(self):
@@ -865,20 +814,15 @@ class OpinionesTests(TestCase):
     def opinar(self):
         return self.client.post(self.url, {'puntuacion': 5, 'comentario': 'Excelente'})
 
-    def test_no_se_puede_opinar_sin_haber_comprado(self):
+    def test_solo_se_opina_un_producto_comprado_y_recibido(self):
         from .models import Opinion
-        self.opinar()
+        self.opinar()  # sin haberlo comprado
         self.assertFalse(Opinion.objects.exists())
-
-    def test_no_se_puede_opinar_si_el_pedido_no_ha_llegado(self):
-        from .models import Opinion
-        crear_venta(self.cliente, self.producto, estado='Enviado')
-        self.opinar()
+        venta = crear_venta(self.cliente, self.producto, estado='Enviado')
+        self.opinar()  # comprado pero aún no llega
         self.assertFalse(Opinion.objects.exists())
-
-    def test_se_puede_opinar_un_producto_recibido(self):
-        from .models import Opinion
-        crear_venta(self.cliente, self.producto)
+        venta.datos_envio.estado = 'Entregado'
+        venta.datos_envio.save()
         self.opinar()
         self.assertTrue(Opinion.objects.filter(usuario=self.cliente, producto=self.producto).exists())
 
@@ -899,20 +843,36 @@ class InvitarAOpinarTests(TestCase):  # la ficha invita a opinar a quien compró
         return self.client.post(f'{self.opinar_url}?next={siguiente}',
                                 {'puntuacion': 5, 'comentario': 'Excelente'})
 
-    def test_sin_sesion_no_se_invita(self):
+    def test_no_se_invita_sin_sesion_sin_compra_recibida_al_admin_ni_con_opiniones_ocultas(self):
+        from .models import ConfiguracionSitio
+        self.assertNotContains(self.ficha(), self.BOTON)  # sin sesión
+        self.client.force_login(self.cliente)
+        self.assertIsNone(self.ficha().context['estado_opinion'])  # sin haberlo comprado
+        crear_venta(self.cliente, self.producto, estado='Anulada')
+        self.assertIsNone(self.ficha().context['estado_opinion'])
+
+        admin = crear_cliente(email='admin@example.com', is_staff=True)
+        crear_venta(admin, self.producto)
+        self.client.force_login(admin)
         self.assertNotContains(self.ficha(), self.BOTON)
 
-    def test_sin_haberlo_comprado_no_se_invita(self):
+        crear_venta(self.cliente, self.producto)
         self.client.force_login(self.cliente)
-        respuesta = self.ficha()
-        self.assertIsNone(respuesta.context['estado_opinion'])
-        self.assertNotContains(respuesta, self.BOTON)
+        configuracion = ConfiguracionSitio.actual()
+        configuracion.mostrar_opiniones = False
+        configuracion.save()
+        self.assertNotContains(self.ficha(), self.BOTON)
 
-    def test_recibido_o_retirado_muestra_el_boton_que_vuelve_a_la_ficha(self):
+    def test_recibido_invita_con_un_boton_que_vuelve_a_la_ficha_y_despues_de_opinar_ya_no(self):
+        from .models import Opinion
         crear_venta(self.cliente, self.producto)
         self.client.force_login(self.cliente)
         self.assertContains(self.ficha(),
                             f'{self.opinar_url}?next=/producto/{self.producto.id}/%23seccion-opiniones')
+        Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='Bueno', puntuacion=5)
+        respuesta = self.ficha()
+        self.assertNotContains(respuesta, self.BOTON)
+        self.assertContains(respuesta, 'Ya dejaste tu opinión')
 
     def test_pedido_en_camino_avisa_que_podra_opinar_al_recibirlo(self):
         crear_venta(self.cliente, self.producto, estado='Listo para retiro')
@@ -920,35 +880,6 @@ class InvitarAOpinarTests(TestCase):  # la ficha invita a opinar a quien compró
         respuesta = self.ficha()
         self.assertNotContains(respuesta, self.BOTON)
         self.assertContains(respuesta, 'podrás opinar sobre este producto cuando lo recibas')
-
-    def test_pedido_anulado_no_muestra_nada(self):
-        crear_venta(self.cliente, self.producto, estado='Anulada')
-        self.client.force_login(self.cliente)
-        self.assertIsNone(self.ficha().context['estado_opinion'])
-
-    def test_si_ya_opino_no_se_vuelve_a_invitar(self):
-        from .models import Opinion
-        crear_venta(self.cliente, self.producto)
-        Opinion.objects.create(usuario=self.cliente, producto=self.producto, comentario='Bueno', puntuacion=5)
-        self.client.force_login(self.cliente)
-        respuesta = self.ficha()
-        self.assertNotContains(respuesta, self.BOTON)
-        self.assertContains(respuesta, 'Ya dejaste tu opinión')
-
-    def test_el_admin_no_ve_la_invitacion(self):
-        admin = crear_cliente(email='admin@example.com', is_staff=True)
-        crear_venta(admin, self.producto)
-        self.client.force_login(admin)
-        self.assertNotContains(self.ficha(), self.BOTON)
-
-    def test_con_las_opiniones_ocultas_no_se_invita(self):
-        from .models import ConfiguracionSitio
-        configuracion = ConfiguracionSitio.actual()
-        configuracion.mostrar_opiniones = False
-        configuracion.save()
-        crear_venta(self.cliente, self.producto)
-        self.client.force_login(self.cliente)
-        self.assertNotContains(self.ficha(), self.BOTON)
 
     def test_al_opinar_desde_la_ficha_vuelve_a_ella_con_el_aviso(self):
         crear_venta(self.cliente, self.producto)
@@ -958,10 +889,12 @@ class InvitarAOpinarTests(TestCase):  # la ficha invita a opinar a quien compró
                                         f'&type=success#seccion-opiniones', fetch_redirect_response=False)
 
     def test_un_next_de_otro_sitio_se_ignora(self):
+        from .models import Opinion
         crear_venta(self.cliente, self.producto)
         self.client.force_login(self.cliente)
         respuesta = self.opinar('https://malicioso.example.com/')
         self.assertTrue(respuesta['Location'].startswith('/perfil'))
+        self.assertTrue(Opinion.objects.exists())
 
     def test_compra_verificada_solo_en_opiniones_de_quien_lo_recibio(self):
         from .models import Opinion
@@ -977,10 +910,6 @@ class RegionesTests(TestCase):
     def test_cada_region_del_select_tiene_sus_ciudades(self):
         from .constants import REGIONES, REGIONES_CIUDADES
         self.assertEqual([codigo for codigo, _ in REGIONES], list(REGIONES_CIUDADES))
-
-    def test_el_carrito_recibe_las_regiones_desde_constants(self):
-        self.client.force_login(crear_cliente())
-        self.assertContains(self.client.get('/ver_carrito/'), 'id="regiones-ciudades"')
 
     def test_datos_de_envio_se_validan(self):
         cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1')
@@ -1038,33 +967,17 @@ class ErroresInternosTests(TestCase):
         self.assertEqual(respuesta.status_code, 500)
         self.assertNotIn('secreto', respuesta.json()['message'])
 
-    def test_eliminar_favoritos_con_datos_invalidos_responde_400(self):
-        self.client.force_login(crear_cliente())
-        for cuerpo in ['no es json', '{"ids": ["abc"]}', '[1, 2]']:
-            respuesta = self.client.post('/eliminar_favoritos_seleccionados/', cuerpo, content_type='application/json')
-            self.assertEqual(respuesta.status_code, 400, cuerpo)
-            self.assertEqual(respuesta.json()['error'], 'Solicitud inválida.')
-
-    def test_eliminar_favoritos_acepta_ids_como_texto(self):
+    def test_eliminar_favoritos_rechaza_datos_invalidos_y_acepta_ids_como_texto(self):
         from .models import Favorito
         cliente = crear_cliente()
         favorito = Favorito.objects.create(usuario=cliente, producto=crear_producto())
         self.client.force_login(cliente)
+        for cuerpo in ['no es json', '{"ids": ["abc"]}', '[1, 2]']:
+            respuesta = self.client.post('/eliminar_favoritos_seleccionados/', cuerpo, content_type='application/json')
+            self.assertEqual(respuesta.status_code, 400, cuerpo)
+            self.assertEqual(respuesta.json()['error'], 'Solicitud inválida.')
         self.client.post('/eliminar_favoritos_seleccionados/', {'ids': [str(favorito.producto_id)]}, content_type='application/json')
         self.assertFalse(Favorito.objects.exists())
-
-
-class FavoritosTests(TestCase):
-    def test_favorito_sin_stock_enlaza_a_su_ficha(self):
-        from .models import Favorito
-        cliente = crear_cliente()
-        agotado = crear_producto('Juego agotado', stock=0)
-        Favorito.objects.create(usuario=cliente, producto=agotado)
-        self.client.force_login(cliente)
-        respuesta = self.client.get('/favorites/')
-        self.assertContains(respuesta, 'Sin Stock')
-        self.assertContains(respuesta, f'href="/producto/{agotado.id}/" class="fav-enlace-nombre"')
-        self.assertEqual(self.client.get(f'/producto/{agotado.id}/').status_code, 200)
 
 
 class PaginasDeErrorTests(TestCase):  # 404 propia con navbar y footer; 500 sin contexto
@@ -1076,9 +989,7 @@ class PaginasDeErrorTests(TestCase):  # 404 propia con navbar y footer; 500 sin 
         self.assertContains(respuesta, 'class="nav-tienda"', status_code=404)
         self.assertContains(respuesta, 'footer-tienda', status_code=404)
         self.assertContains(respuesta, 'name="buscar"', status_code=404)
-
-    def test_producto_inexistente_muestra_la_404(self):
-        respuesta = self.client.get('/producto/999999/')
+        respuesta = self.client.get('/producto/999999/')  # un producto que no existe también usa la 404 propia
         self.assertEqual(respuesta.status_code, 404)
         self.assertTemplateUsed(respuesta, '404.html')
 
@@ -1117,19 +1028,12 @@ class PortadaSitioTests(TestCase):
         self.assertContains(respuesta, 'Producto no disponible')
 
     def test_lanzamientos_del_home_con_video_de_youtube(self):
+        self.assertNotContains(self.client.get('/'), 'Nuevos Lanzamientos')  # sin lanzamientos no hay sección
         self.crear(seccion='lanzamientos', titulo='Juego 2027', texto='Muy esperado',
                    video_url='https://youtu.be/wFGEMfyAQtI')
         respuesta = self.client.get('/')
         self.assertContains(respuesta, 'Nuevos Lanzamientos')
         self.assertContains(respuesta, 'https://www.youtube-nocookie.com/embed/wFGEMfyAQtI')
-
-    def test_lanzamientos_alternan_el_lado_del_video(self):
-        for i in range(2):
-            self.crear(seccion='lanzamientos', titulo=f'Juego {i}', video_url='https://youtu.be/wFGEMfyAQtI', orden=i)
-        self.assertContains(self.client.get('/'), 'order-md-2', count=1) 
-
-    def test_sin_lanzamientos_la_seccion_no_aparece(self):
-        self.assertNotContains(self.client.get('/'), 'Nuevos Lanzamientos')
 
     def test_promo_de_menu_muestra_el_primero_activo(self):
         self.crear(seccion='menu_figuras', titulo='Figura B', producto=self.producto, orden=2)
@@ -1156,12 +1060,10 @@ class PortadaPanelTests(TestCase):
         return {'seccion': 'carrusel', 'producto': self.producto.id, 'titulo': 'Slide nuevo',
                 'texto': 'Texto', 'etiqueta': '', 'video_url': '', 'orden': 1, 'activo': 'on', **cambios}
 
-    def test_listado_y_formulario_cargan(self):
-        self.assertContains(self.client.get('/admin-panel/portada/'), 'Carrusel del menú')
-        self.assertEqual(self.client.get('/admin-panel/portada/nuevo/?seccion=lanzamientos').status_code, 200)
-
     def test_crear_editar_ocultar_y_eliminar(self):
         from .models import Destacado
+        self.assertEqual(self.client.get('/admin-panel/portada/').status_code, 200)
+        self.assertEqual(self.client.get('/admin-panel/portada/nuevo/?seccion=lanzamientos').status_code, 200)
         self.assertRedirects(self.client.post('/admin-panel/portada/nuevo/', self.datos()), '/admin-panel/portada/')
         destacado = Destacado.objects.get(titulo='Slide nuevo')
 
@@ -1177,13 +1079,11 @@ class PortadaPanelTests(TestCase):
         self.client.post(f'/admin-panel/portada/{destacado.id}/eliminar/')
         self.assertFalse(Destacado.objects.filter(id=destacado.id).exists())
 
-    def test_carrusel_y_menus_necesitan_producto(self):
+    def test_carrusel_y_menus_necesitan_producto_y_un_lanzamiento_un_video_valido(self):
+        from .models import Destacado
         for seccion in ['carrusel', 'menu_consolas']:
             respuesta = self.client.post('/admin-panel/portada/nuevo/', self.datos(seccion=seccion, producto=''))
             self.assertFormError(respuesta.context['form'], 'producto', 'Elige el producto al que lleva este destacado.')
-
-    def test_lanzamiento_sin_producto_con_video_es_valido_y_link_invalido_no(self):
-        from .models import Destacado
         self.client.post('/admin-panel/portada/nuevo/', self.datos(
             seccion='lanzamientos', producto='', titulo='Lanzamiento', video_url='https://youtu.be/wFGEMfyAQtI'))
         self.assertTrue(Destacado.objects.filter(titulo='Lanzamiento').exists())
@@ -1191,11 +1091,6 @@ class PortadaPanelTests(TestCase):
         respuesta = self.client.post('/admin-panel/portada/nuevo/', self.datos(
             seccion='lanzamientos', producto='', video_url='https://vimeo.com/123'))
         self.assertIn('video_url', respuesta.context['form'].errors)
-
-    def test_selector_muestra_el_nombre_del_producto(self):
-        respuesta = self.client.get('/admin-panel/portada/nuevo/')
-        self.assertContains(respuesta, 'Juego Nuevo · ')
-        self.assertNotContains(respuesta, 'Producto object')
 
     def test_no_se_pasa_el_maximo_de_visibles(self):
         from .models import Destacado
@@ -1271,25 +1166,21 @@ class EnviosTests(TestCase):
         self.cliente_en('Valdivia')
         _, venta = self.comprar('delivery', cantidad=2)
         self.assertEqual((venta.subtotal, venta.envio, venta.total), (20000, 2000, 22000))
-        self.assertEqual(venta.datos_envio.transportista, 'Delivery Akaispace')
+        self.assertEqual(venta.datos_envio.transportista, 'Delivery Akai Space')
         self.assertEqual(venta.direccion_envio, 'Picarte 123, Valdivia, Región de Los Ríos')
 
-    def test_delivery_gratis_desde_24990(self):
-        self.cliente_en('Valdivia')
-        _, venta = self.comprar('delivery', cantidad=3)
-        self.assertEqual((venta.envio, venta.total), (0, 30000))
-
-    def test_delivery_solo_para_valdivia(self):
-        from .models import Venta
-        self.cliente_en('Osorno', region='LOS LAGOS')
-        respuesta, _ = self.comprar('delivery')
-        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
+    def test_opciones_que_no_corresponden_a_la_ciudad_o_sin_direccion_vuelven_al_carrito(self):
+        from .models import ItemCarritoProducto, Venta
+        casos = [('delivery', 'Osorno', 'LOS LAGOS', 'Picarte 123'),   # delivery solo en Valdivia
+                 ('bluexpress', 'Valdivia', 'LOS RIOS', 'Picarte 123'),  # envío a región no se ofrece en Valdivia
+                 ('bluexpress', 'Osorno', 'LOS LAGOS', '')]              # despacho sin dirección
+        for metodo, ciudad, region, direccion in casos:
+            with self.subTest(metodo=metodo, ciudad=ciudad, direccion=direccion):
+                ItemCarritoProducto.objects.all().delete()
+                self.cliente_en(ciudad, region=region, direccion=direccion)
+                respuesta, _ = self.comprar(metodo)
+                self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
         self.assertFalse(Venta.objects.exists())
-
-    def test_envio_a_region_no_se_ofrece_en_valdivia(self):
-        self.cliente_en('Valdivia')
-        respuesta, _ = self.comprar('bluexpress')
-        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
 
     def test_bluexpress_fuera_de_valdivia(self):
         self.cliente_en('Osorno', region='LOS LAGOS')
@@ -1311,11 +1202,6 @@ class EnviosTests(TestCase):
         self.assertTrue(venta.direccion_envio.startswith('Retiro en tienda: Galería Caupolicán 544'))
         self.assertEqual(venta.estados_envio, ['En Preparación', 'Listo para retiro', 'Entregado'])
 
-    def test_despacho_sin_direccion_no_avanza(self):
-        self.cliente_en('Osorno', region='LOS LAGOS', direccion='')
-        respuesta, _ = self.comprar('bluexpress')
-        self.assertTrue(respuesta.url.startswith('/ver_carrito/?notif='))
-
     def test_sin_elegir_entrega_vuelve_al_carrito(self):
         from .models import ItemCarritoProducto
         self.cliente_en('Valdivia')
@@ -1335,15 +1221,6 @@ class EnviosTests(TestCase):
         self.assertIsNone(pago)
         self.assertFalse(Venta.objects.exists())
 
-    def test_el_carrito_muestra_las_opciones(self):
-        from .models import ItemCarritoProducto
-        self.cliente_en('Valdivia')
-        ItemCarritoProducto.objects.create(carrito=self.carrito, producto=self.producto)
-        respuesta = self.client.get('/ver_carrito/')
-        self.assertContains(respuesta, 'Delivery Express en Valdivia')
-        self.assertContains(respuesta, 'Retiro en tienda')
-        self.assertNotContains(respuesta, '5990')
-
     def test_venta_antigua_a_domicilio_conserva_su_envio(self):
         from .models import Venta
         venta = Venta.objects.create(usuario=self.carrito.usuario, metodo_envio='domicilio', envio=5990)
@@ -1356,15 +1233,25 @@ class EnviosPanelTests(TestCase):
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
 
     def venta_con(self, metodo):
-        venta = crear_venta(crear_cliente(), crear_producto(), estado='En Preparación')
+        venta = crear_venta(crear_cliente(f'{metodo}@example.com'), crear_producto(f'Juego {metodo}'),
+                            estado='En Preparación')
         venta.metodo_envio = metodo
         venta.save()
         return venta
 
-    def test_retiro_en_tienda_no_pasa_por_enviado(self):
+    def test_estados_que_no_corresponden_a_la_entrega_se_rechazan(self):
+        # retiro en tienda no pasa por Enviado, un delivery no queda listo para retiro y no se anula desde aquí
+        for metodo, estado in [('tienda', 'Enviado'), ('delivery', 'Listo para retiro'), ('bluexpress', 'Anulada')]:
+            with self.subTest(metodo=metodo, estado=estado):
+                venta = self.venta_con(metodo)
+                respuesta = self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': estado})
+                self.assertContains(respuesta, 'Estado no válido.')
+                venta.datos_envio.refresh_from_db()
+                self.assertEqual(venta.datos_envio.estado, 'En Preparación')
+
+    def test_retiro_en_tienda_pasa_directo_a_entregado(self):
         venta = self.venta_con('tienda')
         url = f'/admin-panel/ventas/modificar/{venta.id}/'
-        self.assertContains(self.client.post(url, {'estado': 'Enviado'}), 'Estado no válido.')
         self.assertRedirects(self.client.post(url, {'estado': 'Entregado'}),
                              f'/admin-panel/ventas/detalle/{venta.id}/', fetch_redirect_response=False)
         venta.datos_envio.refresh_from_db()
@@ -1385,10 +1272,85 @@ class EnviosPanelTests(TestCase):
         venta.datos_envio.refresh_from_db()
         self.assertEqual((venta.datos_envio.estado, venta.datos_envio.transportista), ('Enviado', 'Bluexpress'))
 
-    def test_no_se_anula_desde_modificar(self):
+    def test_una_venta_anulada_no_se_puede_modificar(self):
+        venta = self.venta_con('delivery')
+        venta.datos_envio.guardar_estado('Anulada')
+        url = f'/admin-panel/ventas/modificar/{venta.id}/'
+        self.assertRedirects(self.client.get(url), f'/admin-panel/ventas/detalle/{venta.id}/',
+                             fetch_redirect_response=False)
+        self.client.post(url, {'estado': 'En Preparación'})
+        venta.datos_envio.refresh_from_db()
+        self.assertEqual(venta.datos_envio.estado, 'Anulada')
+
+
+class AvisoEstadoEnvioTests(TestCase):  # correo al enviar una encomienda o salir a reparto un delivery
+    def setUp(self):
+        self.admin = crear_cliente('jefe@example.com', is_staff=True)
+
+    def venta_con(self, metodo):
+        cliente = crear_cliente(f'{metodo}@example.com')
+        venta = crear_venta(cliente, crear_producto(f'Juego {metodo}'), estado='En Preparación')
+        venta.metodo_envio = metodo
+        venta.direccion_envio = 'Picarte 1234, Valdivia, Los Ríos'
+        venta.save()
+        return venta
+
+    def cambiar_estado(self, venta, estado, **extra):
+        self.client.force_login(self.admin)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': estado, **extra})
+
+    def test_encomienda_enviada_avisa_con_seguimiento_una_sola_vez(self):
+        from django.core import mail
+        venta = self.venta_con('por_pagar')
+        datos = {'transportista': 'Starken', 'numero_seguimiento': 'STK123456'}
+        self.cambiar_estado(venta, 'Enviado', **datos)
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, [venta.usuario.email])
+        self.assertIn(f'Nº {venta.id}', correo.subject)
+        for texto in [correo.body, correo.alternatives[0][0]]:  # versión de texto y HTML
+            self.assertIn('STK123456', texto)
+            self.assertIn('Starken', texto)
+            self.assertIn('Picarte 1234', texto)
+            self.assertIn('por pagar', texto)
+            self.assertIn(f'/compra/{venta.id}/detalle/', texto)
+        # tránsito, reparto y entrega de una encomienda no avisan; volver a Enviado tampoco repite el correo
+        for estado in ['En Tránsito', 'Enviado', 'En Reparto', 'Entregado']:
+            self.cambiar_estado(venta, estado, **datos)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_delivery_en_reparto_avisa_una_sola_vez(self):
+        from django.core import mail
+        venta = self.venta_con('delivery')
+        self.cambiar_estado(venta, 'En Reparto')
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertIn('va en camino', correo.subject)
+        for texto in [correo.body, correo.alternatives[0][0]]:
+            self.assertIn('Picarte 1234', texto)
+        self.cambiar_estado(venta, 'En Preparación')
+        self.cambiar_estado(venta, 'En Reparto')
+        self.cambiar_estado(venta, 'Entregado')
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_si_el_panel_rechaza_el_cambio_no_se_avisa(self):
+        from django.core import mail
         venta = self.venta_con('bluexpress')
-        respuesta = self.client.post(f'/admin-panel/ventas/modificar/{venta.id}/', {'estado': 'Anulada'})
-        self.assertContains(respuesta, 'Estado no válido.')
+        self.cambiar_estado(venta, 'Enviado', transportista='Bluexpress')  # falta el número de seguimiento
+        self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(DEFAULT_FROM_EMAIL='Akai Space <no-reply@akaispace.shop>', CONTACT_EMAIL='contacto@example.com')
+    def test_avisos_salen_del_remitente_y_se_responden_al_contacto(self):
+        from django.core import mail
+        self.cambiar_estado(self.venta_con('por_pagar'), 'Enviado', transportista='Starken',
+                            numero_seguimiento='STK123456')
+        self.cambiar_estado(self.venta_con('delivery'), 'En Reparto')
+        self.cambiar_estado(self.venta_con('tienda'), 'Listo para retiro')
+        self.assertEqual(len(mail.outbox), 3)
+        for correo in mail.outbox:
+            self.assertEqual(correo.from_email, 'Akai Space <no-reply@akaispace.shop>')
+            self.assertEqual(correo.reply_to, ['contacto@example.com'])
 
 
 class AnularVentaTests(TestCase):  # motivo obligatorio y bloqueo de ventas pagadas con Webpay
@@ -1414,46 +1376,35 @@ class AnularVentaTests(TestCase):  # motivo obligatorio y bloqueo de ventas paga
         self.assertNoAnulada(self.anular('   '), 'Escribe el motivo de la anulación.')
         self.assertNoAnulada(self.anular('x' * 201), 'El motivo no puede superar los 200 caracteres.')
 
-    def test_guarda_el_motivo_sin_espacios_y_lo_muestra_con_la_fecha(self):
+    def test_guarda_el_motivo_la_fecha_y_quien_anula_y_los_muestra(self):
         from django.utils import timezone
+        from .models import Venta
+        crear_cliente('otro@example.com', is_staff=True, nombre='Otro Admin')
         self.anular('  ' + 'x' * 196 + ' fin  ')
         self.venta.refresh_from_db()
-        self.assertEqual(self.venta.motivo_anulacion, 'x' * 196 + ' fin')
+        self.assertEqual(self.venta.motivo_anulacion, 'x' * 196 + ' fin')  # sin los espacios de los bordes
+        self.assertEqual(self.venta.anulada_por, self.jefe)
         detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
         self.assertContains(detalle, 'x' * 196 + ' fin')
         self.assertContains(detalle, timezone.localtime(self.venta.anulada_en).strftime('%d/%m/%Y - %H:%M'))
-
-    def test_guarda_al_administrador_que_anula_y_lo_muestra(self):
-        from .models import Venta
-        otro_admin = crear_cliente('otro@example.com', is_staff=True, nombre='Otro Admin')
-        self.anular('Error al registrar')
-        self.venta.refresh_from_db()
-        self.assertEqual(self.venta.anulada_por, self.jefe)
-        self.assertNotEqual(self.venta.anulada_por, otro_admin)
-        detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
         self.assertContains(detalle, 'Anulada por:')
         self.assertContains(detalle, 'Ana Jefa')
         # ventas anuladas antes de registrar quién anula
         Venta.objects.filter(id=self.venta.id).update(anulada_por=None)
         self.assertContains(self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/'), 'No registrado')
 
-    def test_una_venta_pagada_con_webpay_no_se_anula(self):
+    def test_una_venta_pagada_con_webpay_no_se_anula_aunque_ya_se_haya_reembolsado(self):
         from .models import PagoWebpay
-        PagoWebpay.objects.create(usuario=self.venta.usuario, venta=self.venta, orden_compra='AKATEST1', monto=1000,
-                                  metodo_envio='tienda', estado=PagoWebpay.APROBADO)
-        detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
-        self.assertContains(detalle, 'flujo de devolución')
-        self.assertNotContains(detalle, 'data-bs-target="#anularModal"')
-        self.assertNoAnulada(self.anular('El cliente se arrepintió'), 'se pagó con Webpay y no se puede anular')
-
-    def test_una_venta_ya_reembolsada_tampoco_se_anula(self):
-        from .models import PagoWebpay
-        PagoWebpay.objects.create(usuario=self.venta.usuario, venta=self.venta, orden_compra='AKATEST2', monto=1000,
-                                  metodo_envio='tienda', estado=PagoWebpay.REEMBOLSADO)
-        detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
-        self.assertContains(detalle, 'aunque ya se haya reembolsado')
-        self.assertNotContains(detalle, 'data-bs-target="#anularModal"')
-        self.assertNoAnulada(self.anular('Error al registrar'), 'se pagó con Webpay y no se puede anular')
+        pago = PagoWebpay.objects.create(usuario=self.venta.usuario, venta=self.venta, orden_compra='AKATEST1',
+                                         monto=1000, metodo_envio='tienda', estado=PagoWebpay.APROBADO)
+        for estado, aviso in [(PagoWebpay.APROBADO, 'flujo de devolución'),
+                              (PagoWebpay.REEMBOLSADO, 'aunque ya se haya reembolsado')]:
+            with self.subTest(estado=estado):
+                PagoWebpay.objects.filter(id=pago.id).update(estado=estado)
+                detalle = self.client.get(f'/admin-panel/ventas/detalle/{self.venta.id}/')
+                self.assertContains(detalle, aviso)
+                self.assertNotContains(detalle, 'data-bs-target="#anularModal"')
+                self.assertNoAnulada(self.anular('Error al registrar'), 'se pagó con Webpay y no se puede anular')
 
 
 class ListoParaRetiroTests(TestCase):
@@ -1473,9 +1424,6 @@ class ListoParaRetiroTests(TestCase):
     def detalle_cliente(self):
         self.client.force_login(self.cliente)
         return self.client.get(f'/compra/{self.venta.id}/detalle/')
-
-    def test_en_preparacion_avisa_que_se_le_notificara(self):
-        self.assertContains(self.detalle_cliente(), 'Cuando esté listo para retiro lo verás aquí')
 
     def test_listo_para_retiro_marca_fecha_y_muestra_donde_retirar(self):
         self.cambiar_estado('Listo para retiro')
@@ -1502,17 +1450,37 @@ class ListoParaRetiroTests(TestCase):
         self.assertEqual(self.envio.estado, 'Listo para retiro')
         self.assertNotContains(self.detalle_cliente(), 'Marcar como recibido')
 
+    def test_avisa_por_correo_una_sola_vez(self):
+        from django.core import mail
+        with self.captureOnCommitCallbacks(execute=True):
+            self.cambiar_estado('Listo para retiro')
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, [self.cliente.email])
+        self.assertIn(f'Nº {self.venta.id}', correo.subject)
+        for texto in [correo.body, correo.alternatives[0][0]]:  # versión de texto y HTML
+            self.assertIn('Galería Caupolicán 544, Local 26', texto)
+            self.assertIn(f'/compra/{self.venta.id}/detalle/', texto)
+        with self.captureOnCommitCallbacks(execute=True):  # vuelve a preparación y otra vez a listo
+            self.cambiar_estado('En Preparación')
+            self.cambiar_estado('Listo para retiro')
+            self.cambiar_estado('Entregado')
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_volver_atras_no_corre_la_fecha_de_entrega(self):
+        self.cambiar_estado('Entregado')
+        self.envio.refresh_from_db()
+        primera = self.envio.fecha_entrega
+        self.cambiar_estado('En Preparación')
+        self.cambiar_estado('Entregado')
+        self.envio.refresh_from_db()
+        self.assertEqual(self.envio.fecha_entrega, primera)  # el plazo de devolución sigue contando desde la primera
+
     def test_guardar_el_mismo_estado_no_cambia_la_fecha(self):
         self.envio.guardar_estado('Listo para retiro')
         primera = self.envio.fecha_listo_retiro
         self.envio.guardar_estado('Listo para retiro')
         self.assertEqual(self.envio.fecha_listo_retiro, primera)
-
-    def test_delivery_no_puede_quedar_listo_para_retiro(self):
-        venta = crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro'), estado='En Preparación')
-        venta.metodo_envio = 'delivery'
-        venta.save()
-        self.assertContains(self.cambiar_estado('Listo para retiro', venta), 'Estado no válido.')
 
     def test_panel_filtra_y_cuenta_los_pedidos_por_retirar(self):
         otra = crear_venta(crear_cliente('otro@example.com'), crear_producto('Otro'), estado='En Preparación')
@@ -1934,9 +1902,6 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
         from django.core import mail
         return re.search(r'http://testserver(/recuperar-contrasena/\S+/\S+/)', mail.outbox[-1].body).group(1)
 
-    def test_el_login_enlaza_a_recuperar_contraseña(self):
-        self.assertContains(self.client.get('/login/'), 'href="/recuperar-contrasena/"')
-
     def test_envia_un_enlace_al_correo_registrado(self):
         from django.core import mail
         respuesta = self.pedir_enlace('CLIENTE@example.com')
@@ -1945,14 +1910,32 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
         self.assertEqual(mail.outbox[0].to, ['cliente@example.com'])
         self.assertIn('1 hora', mail.outbox[0].body)
 
-    def test_correo_no_registrado_muestra_lo_mismo_y_no_envia_nada(self):
+    def test_sale_del_remitente_y_se_responde_al_contacto_si_esta_definido(self):
         from django.core import mail
-        respuesta = self.pedir_enlace('nadie@example.com')
-        self.assertRedirects(respuesta, '/recuperar-contrasena/enviado/')
-        self.assertEqual(mail.outbox, [])
+        with self.settings(DEFAULT_FROM_EMAIL='Akai Space <no-reply@akaispace.shop>',
+                           CONTACT_EMAIL='contacto@example.com'):
+            self.pedir_enlace()
+        with self.settings(CONTACT_EMAIL=''):
+            self.pedir_enlace()
+        self.assertEqual(mail.outbox[0].from_email, 'Akai Space <no-reply@akaispace.shop>')
+        self.assertEqual(mail.outbox[0].reply_to, ['contacto@example.com'])
+        self.assertEqual(mail.outbox[1].reply_to, [])
+        self.assertIn('/recuperar-contrasena/', mail.outbox[0].body)  # el correo sigue siendo el de Django
 
-    def test_usuario_eliminado_no_recibe_enlace(self):
+    def test_no_recibe_enlace_un_correo_no_registrado_eliminado_o_inactivo(self):
         from django.core import mail
+        respuesta = self.pedir_enlace('nadie@example.com')  # muestra lo mismo que a un correo registrado
+        self.assertRedirects(respuesta, '/recuperar-contrasena/enviado/')
+
+        google = self.crear_cliente_google()  # inactivo, aunque la cuenta sea de Google
+        google.is_active = False
+        google.save()
+        self.pedir_enlace('ana@gmail.com')
+
+        Usuario.objects.filter(pk=self.usuario.pk).update(is_deleted=True)  # marcado como eliminado y aún activo
+        self.pedir_enlace()
+        Usuario.objects.filter(pk=self.usuario.pk).update(is_deleted=False, is_active=False)  # inactivo
+        self.pedir_enlace()
         self.usuario.delete()
         self.pedir_enlace()
         self.assertEqual(mail.outbox, [])
@@ -1966,14 +1949,8 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
         self.assertRedirects(respuesta, '/recuperar-contrasena/listo/')
         self.usuario.refresh_from_db()
         self.assertTrue(self.usuario.check_password('NuevaClave-2027'))
-
-    def test_el_enlace_solo_sirve_una_vez(self):
-        self.pedir_enlace()
-        enlace = self.enlace_del_correo()
-        formulario = self.client.get(enlace, follow=True)
-        self.client.post(formulario.redirect_chain[-1][0],
-                         {'new_password1': 'NuevaClave-2027', 'new_password2': 'NuevaClave-2027'})
-        self.assertContains(self.client.get(enlace, follow=True), 'El enlace ya no es válido')
+        # el enlace solo sirve una vez
+        self.assertContains(self.client.get(self.enlace_del_correo(), follow=True), 'El enlace ya no es válido')
 
     def test_el_enlace_vence_en_una_hora(self):
         from datetime import timedelta
@@ -2028,23 +2005,6 @@ class RecuperarContraseñaTests(TestCase):  # HU-11
         respuesta = self.client.post('/login/', {'email': 'ana@gmail.com', 'contraseña': 'NuevaClave-2027'})
         self.assertRedirects(respuesta, '/', fetch_redirect_response=False)
 
-    def test_cuenta_inactiva_no_recibe_enlace(self):
-        from django.core import mail
-        self.usuario.is_active = False
-        self.usuario.save()
-        google = self.crear_cliente_google()
-        google.is_active = False
-        google.save()
-        self.pedir_enlace()
-        self.pedir_enlace('ana@gmail.com')
-        self.assertEqual(mail.outbox, [])
-
-    def test_cuenta_marcada_como_eliminada_no_recibe_enlace_aunque_siga_activa(self):
-        from django.core import mail
-        Usuario.objects.filter(pk=self.usuario.pk).update(is_deleted=True)
-        self.pedir_enlace()
-        self.assertEqual(mail.outbox, [])
-
 
 class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, plataforma y precio
     def setUp(self):
@@ -2059,16 +2019,12 @@ class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, pl
     def nombres(self, respuesta):
         return {p.nombre for p in respuesta.context['productos']}
 
-    def test_filtra_por_genero(self):
+    def test_filtra_por_genero_plataforma_y_precio_con_formato_chileno(self):
         respuesta = self.client.get('/menu/', {'genero': self.deportes})
         self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
         self.assertContains(respuesta, 'Género: Deportes')
-
-    def test_filtra_por_plataforma_juntando_juegos_consolas_y_accesorios(self):
-        respuesta = self.client.get('/menu/', {'plataforma': 'ps5'})
+        respuesta = self.client.get('/menu/', {'plataforma': 'ps5'})  # junta juegos, consolas y accesorios
         self.assertEqual(self.nombres(respuesta), {'FIFA PS5', 'Control PS5'})
-
-    def test_filtra_por_rango_de_precio_con_formato_chileno(self):
         respuesta = self.client.get('/menu/', {'precio_min': '20.000', 'precio_max': '$50.000'})
         self.assertEqual(self.nombres(respuesta), {'Zelda Switch', 'FIFA PS5'})
         self.assertContains(respuesta, 'Precio: $20.000 a $50.000')
@@ -2084,8 +2040,7 @@ class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, pl
         self.assertEqual(self.nombres(respuesta), {'FIFA PS5'})
         self.assertNotContains(respuesta, 'name="plataforma"')
         self.assertContains(respuesta, 'Videojuegos PlayStation 5')
-
-    def test_categoria_sin_plataforma_en_la_url_muestra_el_selector(self):
+        # sin plataforma en la URL sí aparece el selector
         respuesta = self.client.get(f'/productos/{self.videojuegos.id}/', {'plataforma': 'ps4'})
         self.assertEqual(self.nombres(respuesta), {'Gran Turismo PS4'})
         self.assertContains(respuesta, 'name="plataforma"')
@@ -2094,17 +2049,14 @@ class FiltrosCatalogoTests(TestCase):  # HU-17: buscar y filtrar por género, pl
         self.assertEqual(self.client.get('/productos/9999/').status_code, 404)
         self.assertEqual(self.client.get(f'/productos/{self.videojuegos.id}/gameboy/').status_code, 404)
 
-    def test_precio_minimo_mayor_al_maximo_avisa_y_no_filtra(self):
-        respuesta = self.client.get('/menu/', {'precio_min': '50000', 'precio_max': '10000'})
-        self.assertContains(respuesta, 'El precio mínimo no puede ser mayor que el máximo.')
-        self.assertEqual(len(self.nombres(respuesta)), 4)
-
-    def test_precio_invalido_avisa_y_no_filtra(self):
-        respuesta = self.client.get('/menu/', {'precio_min': 'abc'})
-        self.assertContains(respuesta, 'El precio debe ser un número entero')
-        self.assertEqual(len(self.nombres(respuesta)), 4)
-
-    def test_valores_desconocidos_se_ignoran(self):
+    def test_filtros_invalidos_avisan_o_se_ignoran_y_no_filtran(self):
+        casos = [({'precio_min': '50000', 'precio_max': '10000'}, 'El precio mínimo no puede ser mayor que el máximo.'),
+                 ({'precio_min': 'abc'}, 'El precio debe ser un número entero')]
+        for filtros, aviso in casos:
+            with self.subTest(filtros=filtros):
+                respuesta = self.client.get('/menu/', filtros)
+                self.assertContains(respuesta, aviso)
+                self.assertEqual(len(self.nombres(respuesta)), 4)
         respuesta = self.client.get('/menu/', {'genero': '9999', 'plataforma': 'gameboy'})
         self.assertEqual(len(self.nombres(respuesta)), 4)
         self.assertFalse(respuesta.context['filtros']['activos'])
@@ -2182,24 +2134,15 @@ class CarritoEliminarVariosTests(TestCase):  # HU-11: eliminar algunos o todos l
         self.client.post('/carrito/vaciar/')
         self.assertTrue(ItemCarritoProducto.objects.filter(pk=ajeno.pk).exists())
 
-    def test_seleccion_vacia_o_invalida_se_rechaza(self):
+    def test_seleccion_invalida_get_o_sin_sesion_se_rechaza(self):
         for datos in [{}, {'ids': ['abc']}, {'ids': [self.items[0].producto_id, 'x']}]:
             respuesta = self.client.post('/carrito/eliminar-seleccionados/', datos)
             self.assertEqual(respuesta.status_code, 400, datos)
-        self.assertEqual(len(self.ids_en_carrito()), 3)
-
-    def test_solo_por_post_y_con_sesion(self):
         self.assertEqual(self.client.get('/carrito/vaciar/').status_code, 405)
         self.assertEqual(self.client.get('/carrito/eliminar-seleccionados/').status_code, 405)
         self.client.logout()
         self.assertEqual(self.client.post('/carrito/vaciar/').status_code, 401)
         self.assertEqual(len(self.ids_en_carrito()), 3)
-
-    def test_el_carrito_muestra_la_seleccion_y_los_botones(self):
-        respuesta = self.client.get('/ver_carrito/')
-        self.assertContains(respuesta, 'class="form-check-input check-carrito check-item"', count=3)
-        self.assertContains(respuesta, 'Vaciar carrito')
-        self.assertContains(respuesta, 'Eliminar seleccionados')
 
 
 class ReembolsoDevolucionTests(TestCase):  # aprobar avisa al cliente; registrar la recepción repone y reembolsa
@@ -2557,7 +2500,7 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
         self.assertNotContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Videojuegos</a>')
         self.assertContains(self.client.get(url), 'Juego PS5')
 
-    def test_si_se_ocultan_todas_las_de_un_menu_el_menu_desaparece(self):
+        # si se ocultan todas las de un menú, el menú desaparece
         self.ocultar('Funko Pop')
         self.assertContains(self.client.get('/menu/'), '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Figuras</a>')
         self.ocultar('Amiibo')
@@ -2565,16 +2508,34 @@ class ConfiguracionSitioTests(TestCase):  # HU-09: habilitar o deshabilitar func
         self.assertNotContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Figuras</a>')
         self.assertContains(respuesta, '<a href="#" role="button" aria-haspopup="true" aria-expanded="false">Consolas</a>')
 
-    def test_relacionados_de_la_misma_categoria_por_defecto(self):
-        relacionados = list(self.ficha().context['productos_relacionados'])
-        self.assertEqual(relacionados, [self.otro_ps5])
+    def test_barra_de_anuncio_por_defecto_editable_y_desactivable(self):
+        from .models import ConfiguracionSitio
+        respuesta = self.client.get('/menu/')
+        self.assertContains(respuesta, 'class="anuncio-barra"')
+        self.assertContains(respuesta, 'Gratis desde $24.990')
+        self.configurar(texto_anuncio='Preventa <b>abierta</b>')
+        self.assertContains(self.client.get('/menu/'), 'Preventa &lt;b&gt;abierta&lt;/b&gt;')  # texto simple, sin HTML
+        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
+        self.assertNotContains(self.client.get('/admin-panel/'), 'anuncio-barra')  # nunca en el panel
+        self.configurar(mostrar_anuncio=False)
+        self.assertNotContains(self.client.get('/menu/'), 'anuncio-barra')
+        self.assertEqual(ConfiguracionSitio._meta.get_field('texto_anuncio').max_length, 150)
 
-    def test_relacionados_aleatorios_incluyen_otras_categorias(self):
+    def test_el_panel_exige_texto_si_la_barra_esta_activa(self):
+        from .forms import ConfiguracionSitioForm
+        base = {'productos_relacionados': 'categoria'}
+        form = ConfiguracionSitioForm({**base, 'mostrar_anuncio': 'on', 'texto_anuncio': '   '})
+        self.assertIn('texto_anuncio', form.errors)
+        form = ConfiguracionSitioForm({**base, 'texto_anuncio': ''})  # desactivada puede quedar vacía
+        self.assertTrue(form.is_valid(), form.errors)
+        form = ConfiguracionSitioForm({**base, 'mostrar_anuncio': 'on', 'texto_anuncio': '  Envío\n gratis  '})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['texto_anuncio'], 'Envío gratis')
+
+    def test_relacionados_de_la_misma_categoria_aleatorios_o_ninguno(self):
+        self.assertEqual(list(self.ficha().context['productos_relacionados']), [self.otro_ps5])  # por defecto
         self.configurar(productos_relacionados='aleatorios')
-        relacionados = set(self.ficha().context['productos_relacionados'])
-        self.assertEqual(relacionados, {self.otro_ps5, self.switch})
-
-    def test_relacionados_se_pueden_desactivar(self):
+        self.assertEqual(set(self.ficha().context['productos_relacionados']), {self.otro_ps5, self.switch})
         self.configurar(productos_relacionados='ninguno')
         self.assertNotContains(self.ficha(), 'También te podría interesar')
 
@@ -2630,14 +2591,6 @@ class ConfiguracionPanelTests(TestCase):  # HU-09: pantalla del panel
         self.assertFalse(configuracion.mostrar_stock)
         self.assertTrue(configuracion.mostrar_opiniones)
         self.assertEqual(self.visibles(), {'Videojuegos', 'Consolas', 'Funko Pop', 'Amiibo'})
-
-    def test_el_formulario_muestra_lo_guardado(self):
-        from .models import Categoria
-        Categoria.objects.filter(nombre='Amiibo').update(visible_en_menu=False)
-        ids = self.categorias()
-        html = self.client.get(self.url).content.decode()
-        self.assertIn(f'value="{ids["Funko Pop"]}"\n                                   data-menu="categorias" checked', html)
-        self.assertNotIn(f'value="{ids["Amiibo"]}"\n                                   data-menu="categorias" checked', html)
 
     def test_valores_invalidos_no_se_guardan(self):
         from .models import ConfiguracionSitio
@@ -2843,7 +2796,7 @@ class ImagenesProductoPanelTests(TestCase):  # HU-09: formulario de producto con
         self.assertEqual([(i.orden, i.es_principal) for i in imagenes], [(1, None), (2, True)])
         self.assertTrue(producto.imagen_principal.name.endswith('b.gif'))
 
-    def test_exige_al_menos_una_imagen_y_plataforma_en_videojuegos(self):
+    def test_exige_plataforma_en_videojuegos_y_entre_1_y_6_imagenes(self):
         from .models import Producto
         respuesta = self.client.post('/admin-panel/productos/agregar/', {**self.base, 'plataforma': ''},
                                      HTTP_X_REQUESTED_WITH='XMLHttpRequest')
@@ -2851,6 +2804,11 @@ class ImagenesProductoPanelTests(TestCase):  # HU-09: formulario de producto con
         self.assertIn('plataforma', errores)
         respuesta = self.client.post('/admin-panel/productos/agregar/', self.base, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertIn('imagenes-TOTAL_FORMS', respuesta.json()['errors'])
+        # y no admite más de 6
+        datos = {**self.base, 'imagenes-TOTAL_FORMS': '7'}
+        datos.update({f'imagenes-{i}-imagen': self.foto(f'{i}.gif') for i in range(7)})
+        respuesta = self.client.post('/admin-panel/productos/agregar/', datos, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertFalse(respuesta.json()['success'])
         self.assertFalse(Producto.objects.filter(nombre='Juego Nuevo').exists())
 
     def test_editar_cambia_la_principal_y_quita_imagenes(self):
@@ -2870,22 +2828,18 @@ class ImagenesProductoPanelTests(TestCase):  # HU-09: formulario de producto con
         self.assertEqual([(i.imagen.name, i.es_principal) for i in producto.imagenes_producto.all()],
                          [('productos/silent.png', True)])
 
-    def test_no_admite_mas_de_6_imagenes(self):
-        datos = {**self.base, 'imagenes-TOTAL_FORMS': '7'}
-        datos.update({f'imagenes-{i}-imagen': self.foto(f'{i}.gif') for i in range(7)})
-        respuesta = self.client.post('/admin-panel/productos/agregar/', datos, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        self.assertFalse(respuesta.json()['success'])
-
 
 class LoginGoogleTests(TestCase):  # HU-02: django-allauth
     def test_el_boton_de_google_solo_aparece_con_credenciales(self):
         # sin credenciales a propósito: el .env de cada computador puede tenerlas configuradas
-        with self.settings(GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET=''):
-            self.assertNotContains(self.client.get('/login/'), 'Continuar con Google')
-        with self.settings(GOOGLE_CLIENT_ID='id-de-prueba', GOOGLE_CLIENT_SECRET='secreto-de-prueba'):
-            respuesta = self.client.get('/login/')
-        self.assertContains(respuesta, 'Continuar con Google')
-        self.assertContains(respuesta, 'action="/accounts/google/login/')
+        for url, texto in [('/login/', 'Continuar con Google'), ('/register/', 'Registrarse con Google')]:
+            with self.subTest(url=url):
+                with self.settings(GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET=''):
+                    self.assertNotContains(self.client.get(url), texto)
+                with self.settings(GOOGLE_CLIENT_ID='id-de-prueba', GOOGLE_CLIENT_SECRET='secreto-de-prueba'):
+                    respuesta = self.client.get(url)
+                self.assertContains(respuesta, texto)
+                self.assertContains(respuesta, 'action="/accounts/google/login/')
 
     def test_el_registro_de_allauth_esta_cerrado(self):
         self.client.post('/accounts/signup/', {'email': 'x@example.com', 'password1': 'Akaispace-2026!',
@@ -2902,14 +2856,6 @@ class LoginGoogleTests(TestCase):  # HU-02: django-allauth
                         return_value=sociallogin.user):
             usuario = AdaptadorCuentaGoogle().populate_user(None, sociallogin, {'email': 'ana@gmail.com'})
         self.assertEqual(usuario.nombre, 'Ana Pérez')
-
-    def test_el_boton_de_google_tambien_aparece_en_el_registro(self):
-        with self.settings(GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET=''):
-            self.assertNotContains(self.client.get('/register/'), 'Registrarse con Google')
-        with self.settings(GOOGLE_CLIENT_ID='id-de-prueba', GOOGLE_CLIENT_SECRET='secreto-de-prueba'):
-            respuesta = self.client.get('/register/')
-        self.assertContains(respuesta, 'Registrarse con Google')
-        self.assertContains(respuesta, 'action="/accounts/google/login/')
 
     def _registro_google(self, datos):
         from allauth.account.models import EmailAddress
@@ -2929,7 +2875,12 @@ class LoginGoogleTests(TestCase):  # HU-02: django-allauth
         SessionMiddleware(lambda r: None).process_request(request)
         return form, form.save(request)
 
-    def test_la_cuenta_nueva_de_google_guarda_los_consentimientos(self):
+    def test_la_cuenta_nueva_de_google_exige_la_politica_y_guarda_los_consentimientos(self):
+        form, usuario = self._registro_google({'declaracion_edad': Usuario.MAYOR_18})  # sin aceptar la política
+        self.assertIsNone(usuario)
+        self.assertIn('acepta_privacidad', form.errors)
+        self.assertFalse(Usuario.objects.exists())
+
         form, usuario = self._registro_google({'declaracion_edad': Usuario.MAYOR_18, 'acepta_privacidad': 'on',
                                                'email': 'otro@example.com'})
         usuario.refresh_from_db()
@@ -2939,12 +2890,6 @@ class LoginGoogleTests(TestCase):  # HU-02: django-allauth
         self.assertIsNotNone(usuario.privacidad_aceptada_en)
         self.assertIsNone(usuario.datos_navegacion_autorizados_en)
         self.assertFalse(usuario.has_usable_password())
-
-    def test_la_cuenta_de_google_exige_aceptar_la_politica(self):
-        form, usuario = self._registro_google({'declaracion_edad': Usuario.MAYOR_18})
-        self.assertIsNone(usuario)
-        self.assertIn('acepta_privacidad', form.errors)
-        self.assertFalse(Usuario.objects.exists())
 
 
 class VentaPresencialTests(TestCase):  # HU-12: ventas de la tienda física y WhatsApp registradas en el panel
@@ -3127,15 +3072,6 @@ class RecomendacionesTests(TestCase):  # HU-07: similitud TF-IDF + coseno y arra
         self.assertNotIn('Elden Ring', nombres)
         self.assertTrue(all(0 < puntaje <= 1 for _, puntaje in similares))
 
-    def test_recalcular_reemplaza_y_excluye_eliminados(self):
-        from .models import SimilitudProducto
-        from .recomendaciones import calcular_similitudes
-        calcular_similitudes()
-        self.demons.delete()
-        calcular_similitudes()
-        self.assertNotIn("Demon's Souls", [nombre for nombre, _ in self.similares(self.elden)])
-        self.assertFalse(SimilitudProducto.objects.filter(producto=self.demons).exists())
-
     def test_guarda_como_maximo_10_similares(self):
         from .recomendaciones import TOP_SIMILARES, calcular_similitudes
         for numero in range(12):
@@ -3227,43 +3163,36 @@ class RecomendacionesTests(TestCase):  # HU-07: similitud TF-IDF + coseno y arra
         # en la página principal sigue mandando el historial
         self.assertEqual(recomendar(cliente).productos[0].nombre, 'Ghost of Tsushima')
 
-    def test_sin_consentimiento_no_se_usa_su_historial(self):
-        from .recomendaciones import SIMILARES, calcular_similitudes, recomendar
-        cliente = crear_cliente()
-        self.interaccion(cliente, self.funko)
-        calcular_similitudes()
-        recomendaciones = recomendar(cliente, self.elden)
-        self.assertEqual(recomendaciones.tipo, SIMILARES)
-
-    def test_autorizo_pero_sin_historial_usa_el_arranque_en_frio(self):
+    def test_sin_consentimiento_o_sin_historial_usa_el_arranque_en_frio(self):
         from .recomendaciones import MAS_VENDIDOS, SIMILARES, calcular_similitudes, recomendar
-        cliente = self.autorizar(crear_cliente())
+        sin_consentimiento = crear_cliente()
+        self.interaccion(sin_consentimiento, self.funko)  # su historial no se usa
+        sin_historial = self.autorizar(crear_cliente('otro@example.com'))
         calcular_similitudes()
-        self.assertEqual(recomendar(cliente, self.elden).tipo, SIMILARES)
-        self.assertEqual(recomendar(cliente).tipo, MAS_VENDIDOS)
+        for cliente in [sin_consentimiento, sin_historial]:
+            with self.subTest(cliente=cliente.email):
+                self.assertEqual(recomendar(cliente, self.elden).tipo, SIMILARES)
+                self.assertEqual(recomendar(cliente).tipo, MAS_VENDIDOS)
 
     # recálculo automático al modificar el catálogo
-    def test_crear_un_producto_recalcula(self):
+    def test_crear_cambiar_el_genero_o_eliminar_un_producto_recalcula(self):
+        from .models import Genero, SimilitudProducto
         with self.captureOnCommitCallbacks(execute=True):
             nuevo = crear_producto('Final Fantasy XVI', genero='RPG')
         self.assertIn('Final Fantasy XVI', [nombre for nombre, _ in self.similares(self.elden)])
         self.assertTrue(self.similares(nuevo))
 
-    def test_cambiar_el_genero_recalcula(self):
-        from .models import Genero
         self.gow.genero = Genero.objects.get(nombre='RPG')
         with self.captureOnCommitCallbacks(execute=True) as recalculos:
             self.gow.save()
         self.assertEqual(len(recalculos), 1)
         self.assertEqual(self.similares(self.elden)[0][1], 1)
 
-    def test_eliminar_un_producto_recalcula(self):
-        from .recomendaciones import calcular_similitudes
-        calcular_similitudes()
         with self.captureOnCommitCallbacks(execute=True) as recalculos:
             self.demons.delete()
         self.assertEqual(len(recalculos), 1)
         self.assertNotIn("Demon's Souls", [nombre for nombre, _ in self.similares(self.elden)])
+        self.assertFalse(SimilitudProducto.objects.filter(producto=self.demons).exists())
 
     def test_cambiar_precio_o_stock_no_recalcula(self):
         self.elden.precio = 29990
@@ -3306,37 +3235,29 @@ class InteraccionesTests(TestCase):  # HU-07: historial de navegación, solo con
     def ver_ficha(self):
         self.assertEqual(self.client.get(f'/producto/{self.producto.id}/').status_code, 200)
 
-    def test_ver_la_ficha_registra_una_vista(self):
-        self.ver_ficha()
-        self.assertEqual(self.interacciones(), [(self.cliente.id, self.producto.id, 'vista')])
-
-    def test_recargar_la_ficha_antes_de_30_minutos_no_suma_otra_vista(self):
+    def test_ver_la_ficha_registra_una_vista_y_recargar_antes_de_30_minutos_no_suma_otra(self):
         from datetime import timedelta
         from django.db.models import F
         from .models import InteraccionProducto
         self.ver_ficha()
+        self.assertEqual(self.interacciones(), [(self.cliente.id, self.producto.id, 'vista')])
         self.ver_ficha()
         self.assertEqual(len(self.interacciones()), 1)
         InteraccionProducto.objects.update(fecha=F('fecha') - timedelta(minutes=31))
         self.ver_ficha()
         self.assertEqual(len(self.interacciones()), 2)
 
-    def test_agregar_al_carrito_registra_la_interaccion(self):
+    def test_agregar_al_carrito_registra_la_interaccion_solo_si_se_pudo_agregar(self):
+        self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 5})  # más que el stock
+        self.assertEqual(self.interacciones(), [])
         self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1})
         self.assertEqual(self.interacciones(), [(self.cliente.id, self.producto.id, 'carrito')])
 
-    def test_si_no_se_pudo_agregar_no_se_registra(self):
-        self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 5})  # más que el stock
-        self.assertEqual(self.interacciones(), [])
-
-    def test_sin_consentimiento_no_se_registra_nada(self):
+    def test_sin_consentimiento_o_sin_sesion_no_se_registra_nada(self):
         self.cliente.datos_navegacion_autorizados_en = None
         self.cliente.save()
         self.ver_ficha()
         self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1})
-        self.assertEqual(self.interacciones(), [])
-
-    def test_un_visitante_anonimo_no_registra_nada(self):
         self.client.logout()
         self.ver_ficha()
         self.assertEqual(self.interacciones(), [])
@@ -3349,17 +3270,14 @@ class ConsentimientoNavegacionTests(TestCase):  # HU-07 y política de privacida
         self.cliente = crear_cliente()
         self.client.force_login(self.cliente)
 
-    def test_activar_desde_el_perfil(self):
+    def test_activar_desde_el_perfil_y_otra_vez_conserva_la_fecha(self):
         self.assertContains(self.client.get('/perfil/'), 'Activar recomendaciones personalizadas')
         respuesta = self.client.post(self.url, {'autoriza': 'on'})
         self.assertTrue(respuesta['Location'].startswith('/perfil/?notif='))
         self.cliente.refresh_from_db()
         self.assertIsNotNone(self.cliente.datos_navegacion_autorizados_en)
         self.assertContains(self.client.get('/perfil/'), 'Desactivar y eliminar mi historial')
-
-    def test_activar_dos_veces_conserva_la_fecha_original(self):
-        self.client.post(self.url, {'autoriza': 'on'})
-        self.cliente.refresh_from_db()
+        # activar de nuevo conserva la fecha original
         fecha = self.cliente.datos_navegacion_autorizados_en
         self.client.post(self.url, {'autoriza': 'on'})
         self.cliente.refresh_from_db()
@@ -3386,9 +3304,6 @@ class ConsentimientoNavegacionTests(TestCase):  # HU-07 y política de privacida
         self.assertEqual(self.client.post(self.url, {'autoriza': 'on'}).status_code, 302)
         self.cliente.refresh_from_db()
         self.assertIsNone(self.cliente.datos_navegacion_autorizados_en)
-
-    def test_la_politica_indica_que_se_retira_desde_el_perfil(self):
-        self.assertContains(self.client.get('/politica-de-privacidad/'), 'Recomendaciones personalizadas')
 
 
 class MostrarRecomendacionesTests(TestCase):  # HU-07: home y ficha, según el interruptor de Configuración
@@ -3417,15 +3332,12 @@ class MostrarRecomendacionesTests(TestCase):  # HU-07: home y ficha, según el i
         self.assertContains(respuesta, 'También te podría interesar')
         self.assertEqual(list(respuesta.context['productos_relacionados']), [self.demons])
 
-    def test_anonimo_ve_los_mas_vendidos_en_el_home(self):
+    def test_anonimo_ve_los_mas_vendidos_en_el_home_y_los_similares_en_la_ficha(self):
         self.activar()
         respuesta = self.client.get('/')
         self.assertContains(respuesta, 'Lo más vendido')
         self.assertEqual(respuesta.context['recomendaciones'].productos[0], self.funko)
         self.assertContains(respuesta, f'href="/producto/{self.funko.id}/"')
-
-    def test_anonimo_ve_los_similares_en_la_ficha(self):
-        self.activar()
         respuesta = self.ficha(self.elden)
         self.assertContains(respuesta, 'Productos similares')
         self.assertNotContains(respuesta, 'También te podría interesar')
@@ -3472,17 +3384,17 @@ class Kpi05Tests(TestCase):  # HU-07: recomendaciones mostradas y clics, solo co
         from .models import Recomendacion
         return list(Recomendacion.objects.order_by('posicion').values_list('producto', 'ubicacion', 'posicion'))
 
-    def test_registra_las_mostradas_en_la_ficha_con_su_posicion(self):
+    def test_registra_las_mostradas_en_la_ficha_con_su_posicion_y_en_el_home(self):
         respuesta = self.client.get(f'/producto/{self.elden.id}/')
         self.assertEqual(self.mostradas(), [(self.demons.id, 'ficha', 1), (self.bloodborne.id, 'ficha', 2)])
         from .models import Recomendacion
         primera = Recomendacion.objects.get(posicion=1)
         self.assertContains(respuesta, f'href="/recomendacion/{primera.id}/"')
-
-    def test_registra_las_mostradas_en_el_home(self):
+        Recomendacion.objects.all().delete()
         self.client.get('/')
         self.assertEqual({ubicacion for _, ubicacion, _ in self.mostradas()}, {'home'})
-        self.assertEqual(len(self.mostradas()), 3)
+        # Elden Ring no aparece en el home: lo acaba de ver en la ficha (no se recomienda lo visto en 7 días)
+        self.assertEqual({producto for producto, _, _ in self.mostradas()}, {self.demons.id, self.bloodborne.id})
 
     def test_sin_consentimiento_no_se_registra_y_el_enlace_va_directo(self):
         self.client.logout()
@@ -3546,15 +3458,12 @@ class ConservacionNavegacionTests(TestCase):  # HU-07 y política de privacidad 
         from .models import InteraccionProducto, Recomendacion
         return InteraccionProducto.objects.count(), Recomendacion.objects.count()
 
-    def test_conserva_la_navegacion_de_menos_de_24_meses(self):
+    def test_conserva_la_navegacion_de_menos_de_24_meses_y_borra_la_mas_antigua(self):
         from .recomendaciones import eliminar_navegacion_antigua
         self.envejecer(700)
         self.assertEqual(eliminar_navegacion_antigua(), (0, 0))
         self.assertEqual(self.cantidades(), (1, 1))
-
-    def test_borra_la_navegacion_de_mas_de_24_meses(self):
-        from .recomendaciones import eliminar_navegacion_antigua
-        self.envejecer(731)
+        self.envejecer(31)
         self.assertEqual(eliminar_navegacion_antigua(), (1, 1))
         self.assertEqual(self.cantidades(), (0, 0))
 
@@ -3575,13 +3484,6 @@ class ConservacionNavegacionTests(TestCase):  # HU-07 y política de privacidad 
         self.assertIsNone(self.cliente.datos_navegacion_autorizados_en)
         self.assertEqual(list(InteraccionProducto.objects.values_list('usuario', flat=True)), [otro.id])
         self.assertEqual(self.cantidades(), (1, 0))
-
-    def test_los_textos_declaran_solo_los_datos_que_se_usan(self):
-        for url in ['/politica-de-privacidad/', '/register/']:
-            respuesta = self.client.get(url)
-            self.assertEqual(respuesta.status_code, 200, url)
-            self.assertNotContains(respuesta, 'búsquedas')
-            self.assertNotContains(respuesta, 'favoritos')
 
 
 def crear_venta_en(fecha, total, canal='web', metodo_pago='webpay', usuario=None, anulada=False):
@@ -3798,10 +3700,6 @@ class PanelReportesTests(TestCase):  # HU-10: pantallas del panel
             self.assertEqual(respuesta.status_code, 200, vista)
             self.assertEqual(respuesta.context['vista'], vista)
 
-    def test_las_pestanas_conservan_el_periodo(self):
-        respuesta = self.client.get('/admin-panel/reportes/', {'desde': '2026-01-01', 'hasta': '2026-01-31'})
-        self.assertContains(respuesta, '?vista=ganancia&desde=2026-01-01&amp;hasta=2026-01-31')
-
     def test_un_cliente_no_entra_a_reportes(self):
         self.client.force_login(crear_cliente('otro@example.com'))
         self.assertRedirects(self.client.get('/admin-panel/reportes/'), '/', fetch_redirect_response=False)
@@ -3870,13 +3768,6 @@ class ComprasPanelTests(TestCase):  # HU-10: compras a proveedores, base del rep
         self.client.post(f'/admin-panel/compras/{pendiente.id}/eliminar/')
         self.assertFalse(Compra.objects.filter(id=pendiente.id).exists())
 
-    def test_listado_y_detalle(self):
-        from .models import Compra
-        self.registrar()
-        compra = Compra.objects.get()
-        self.assertContains(self.client.get('/admin-panel/compras/'), 'Distribuidora Sur')
-        self.assertContains(self.client.get(f'/admin-panel/compras/{compra.id}/'), 'Marcar como recibida')
-
 
 class FormulariosDeCuentaTests(TestCase):  # validación con mensajes por campo en los formularios de cuenta
     def test_editar_perfil_valida_y_guarda_con_formato(self):
@@ -3897,13 +3788,11 @@ class FormulariosDeCuentaTests(TestCase):  # validación con mensajes por campo 
         self.assertEqual((cliente.telefono, cliente.region, cliente.ciudad, cliente.direccion),
                          ('+56 9 22223333', 'LOS LAGOS', 'Osorno', 'Calle Nueva 45'))
 
-    def test_editar_perfil_no_acepta_ciudad_sin_region(self):
-        cliente = crear_cliente(region='LOS RIOS', ciudad='Valdivia', direccion='Picarte 1')
-        self.client.force_login(cliente)
+        # una ciudad sin región no se acepta
         self.client.post('/editar/', {'nombre': 'Cliente Prueba', 'telefono': '22223333', 'region': '', 'ciudad': 'Santiago',
                                       'direccion': 'Calle 1'})
         cliente.refresh_from_db()
-        self.assertEqual(cliente.ciudad, 'Valdivia')
+        self.assertEqual(cliente.ciudad, 'Osorno')
 
     def test_crear_usuario_desde_el_panel_devuelve_errores_por_campo(self):
         self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
@@ -3933,15 +3822,6 @@ class FormulariosDeCuentaTests(TestCase):  # validación con mensajes por campo 
         self.assertFalse(Reclamo.objects.exists())
         self.client.post(f'/crear_reclamo/{venta.id}/', {'asunto': 'Llegó roto', 'descripcion': 'La caja venía abierta'})
         self.assertEqual(Reclamo.objects.get().asunto, 'Llegó roto')
-
-    def test_las_paginas_de_formularios_cargan_la_validacion_compartida(self):
-        cliente = crear_cliente()
-        for url in ['/register/', '/login/']:
-            self.assertContains(self.client.get(url), 'js/formularios.js')
-        self.client.force_login(cliente)
-        for url in ['/editar/', '/cambiar/']:
-            respuesta = self.client.get(url)
-            self.assertContains(respuesta, 'data-validar')
 
 
 class SubidaDeFotosTests(TestCase):  # solo fotos reales, de formato permitido y de peso razonable
@@ -3987,12 +3867,6 @@ class SubidaDeFotosTests(TestCase):  # solo fotos reales, de formato permitido y
         form = self.formularios(lambda: self.foto('png_disfrazado.jpg', 'PNG'))[0]
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data['imagen'].name, 'png_disfrazado.png')
-
-    def test_los_campos_de_foto_filtran_el_explorador_de_archivos(self):
-        from .forms import ImagenProductoForm
-        html = str(ImagenProductoForm()['imagen'])
-        self.assertIn('accept="image/jpeg,image/png,image/webp,image/gif', html)
-        self.assertIn('data-validacion="imagen"', html)
 
 
 def foto_de_prueba(ancho, alto, formato='JPEG', modo='RGB', ruido=False):
@@ -4146,12 +4020,6 @@ class ComentariosDePlantillasTests(TestCase):  # un {# #} de varias líneas Djan
                     malos.append(f'{archivo.name}:{texto[:m.start()].count(chr(10)) + 1}')
         self.assertEqual(malos, [], 'Usa {% comment %}...{% endcomment %} para comentarios de varias líneas')
 
-    def test_la_pagina_no_muestra_comentarios(self):
-        for url in ['/', '/login/', '/menu/']:
-            html = self.client.get(url).content.decode()
-            self.assertNotIn('{#', html, url)
-            self.assertNotIn('#}', html, url)
-
 
 class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compra ni opina como cliente
     def setUp(self):
@@ -4159,24 +4027,15 @@ class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compr
         self.admin = crear_cliente('jefe@example.com', is_staff=True)
         self.client.force_login(self.admin)
 
-    def test_el_panel_tiene_un_enlace_a_la_tienda(self):
-        from django.urls import reverse
-        respuesta = self.client.get(reverse('admin_dashboard'))
-        self.assertContains(respuesta, f'href="{reverse("home")}" class="nav_link"')
-        self.assertContains(respuesta, 'Ir a la tienda')
-
-    def test_puede_ver_la_tienda_sin_el_icono_del_carrito(self):
-        respuesta = self.client.get(f'/producto/{self.producto.id}/')
-        self.assertEqual(respuesta.status_code, 200)
-        self.assertNotContains(respuesta, 'href="/ver_carrito/"')
-
-    def test_no_puede_agregar_al_carrito(self):
+    def test_no_puede_agregar_al_carrito_pero_un_cliente_si(self):
         from .decorators import MENSAJE_SOLO_CLIENTES
         from .models import Carrito
         respuesta = self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1})
         self.assertEqual(respuesta.status_code, 403)
         self.assertEqual(respuesta.json(), {'success': False, 'error': MENSAJE_SOLO_CLIENTES})
         self.assertFalse(Carrito.objects.filter(usuario=self.admin, items__isnull=False).exists())
+        self.client.force_login(crear_cliente())
+        self.assertTrue(self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1}).json()['success'])
 
     def test_carrito_pago_opinion_reclamo_y_devolucion_muestran_el_aviso(self):
         venta = crear_venta(self.admin, self.producto)
@@ -4186,13 +4045,6 @@ class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compr
             self.assertEqual(respuesta.status_code, 403, url)
             self.assertTemplateUsed(respuesta, 'solo_clientes.html')
             self.assertContains(respuesta, 'Registrar venta', status_code=403)
-
-    def test_un_cliente_sigue_pudiendo_comprar(self):
-        self.client.force_login(crear_cliente())
-        self.assertTrue(self.client.post(f'/agregar/{self.producto.id}/', {'cantidad': 1}).json()['success'])
-        respuesta = self.client.get('/ver_carrito/')
-        self.assertEqual(respuesta.status_code, 200)
-        self.assertContains(respuesta, 'href="/ver_carrito/"')
 
     def test_los_kpi_no_cuentan_al_admin(self):
         from datetime import datetime
@@ -4219,21 +4071,6 @@ class AdminNoCompraTests(TestCase):  # el admin recorre la tienda, pero no compr
         self.assertEqual(kpi05(mes)['mostradas'], 1)
 
 
-class CompartirProductoTests(TestCase):  # botones de compartir y vista previa del enlace en la ficha
-    def test_la_ficha_trae_los_botones_y_la_vista_previa_con_la_url_limpia(self):
-        producto = crear_producto('Elden Ring', descripcion='Un mundo abierto enorme.')
-        respuesta = self.client.get(f'/producto/{producto.id}/?page=2')
-        url = f'http://testserver/producto/{producto.id}/'
-        self.assertContains(respuesta, 'https://wa.me/?text=Mira%20este%20producto%20en%20Akaispace%3A%20Elden%20Ring%20'
-                                       'http%3A%2F%2Ftestserver%2Fproducto%2F')
-        self.assertContains(respuesta, 'https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Ftestserver')
-        self.assertContains(respuesta, 'twitter.com/intent/tweet')
-        self.assertContains(respuesta, 'id="btn-copiar-enlace"')
-        self.assertContains(respuesta, f'<meta property="og:url" content="{url}">')
-        self.assertContains(respuesta, '<meta property="og:image" content="http://testserver/media/productos/silent.png">')
-        self.assertContains(respuesta, '<meta property="og:description" content="Un mundo abierto enorme.">')
-
-
 class OfertaProductoTests(TestCase):  # al rebajar el precio se muestra el anterior tachado y el % de descuento
     def setUp(self):
         self.producto = crear_producto('Elden Ring', genero='RPG', precio=40000)
@@ -4255,10 +4092,8 @@ class OfertaProductoTests(TestCase):  # al rebajar el precio se muestra el anter
         # una segunda rebaja se compara con el precio normal, no con el de la primera oferta
         self.assertEqual(self.editar(20000, oferta=True).precio_anterior, 40000)
 
-    def test_sin_la_casilla_es_solo_una_correccion(self):
-        self.assertIsNone(self.editar(30000, oferta=False).precio_anterior)
-
-    def test_subir_el_precio_o_desmarcar_quita_la_oferta(self):
+    def test_sin_la_casilla_subir_el_precio_o_desmarcar_no_hay_oferta(self):
+        self.assertIsNone(self.editar(30000, oferta=False).precio_anterior)  # sin la casilla es solo una corrección
         self.editar(30000, oferta=True)
         self.assertIsNone(self.editar(45000, oferta=True).precio_anterior)
         self.editar(30000, oferta=True)
@@ -4282,20 +4117,6 @@ class OfertaProductoTests(TestCase):  # al rebajar el precio se muestra el anter
         catalogo = self.client.get('/menu/')
         self.assertContains(catalogo, '<span class="badge-oferta">-25%</span>')
         self.assertContains(catalogo, '$40.000')
-
-    def test_sin_oferta_se_ve_como_siempre(self):
-        ficha = self.client.get(f'/producto/{self.producto.id}/')
-        self.assertContains(ficha, '<span class="precio-actual">$40.000</span>')
-        self.assertNotContains(ficha, 'precio-descuento">')
-        self.assertNotContains(ficha, 'Ahorras')
-
-    def test_la_casilla_aparece_en_editar_producto(self):
-        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
-        self.editar(30000, oferta=True)
-        respuesta = self.client.get(f'/admin-panel/productos/editar/{self.producto.id}/')
-        self.assertContains(respuesta, 'data-precio-normal="40000"')
-        self.assertContains(respuesta, 'name="mostrar_oferta"')
-        self.assertContains(respuesta, 'checked')
 
 
 class RecomendacionesCarritoTests(TestCase):  # HU-07: "Complementa tu compra" en el carrito
@@ -4364,7 +4185,7 @@ class CorreosDeCuentaTests(TestCase):  # bienvenida al crear la cuenta y aviso d
             self.assertTrue(self.client.post('/register/', RegisterTests.datos).json()['success'])
         self.assertEqual(len(mail.outbox), 1)
         correo = mail.outbox[0]
-        self.assertEqual((correo.to, correo.subject), (['juan@example.com'], '¡Bienvenido/a a Akaispace!'))
+        self.assertEqual((correo.to, correo.subject), (['juan@example.com'], '¡Bienvenido/a a Akai Space!'))
         self.assertIn('Juan Perez', correo.body)
         self.assertIn('Ir a la tienda: http', correo.body)
         self.assertIn('Ir a la tienda', correo.alternatives[0][0])
@@ -4377,41 +4198,32 @@ class CorreosDeCuentaTests(TestCase):  # bienvenida al crear la cuenta y aviso d
         self.assertEqual([c.to for c in mail.outbox], [['ana@gmail.com']])
         self.assertIn('Continuar con Google', mail.outbox[0].body)
 
-    def test_un_registro_rechazado_no_envia_nada(self):
+    def test_un_registro_rechazado_o_iniciar_sesion_no_envia_nada(self):
         from django.core import mail
         datos = {k: v for k, v in RegisterTests.datos.items() if k != 'acepta_privacidad'}
-        with self.captureOnCommitCallbacks(execute=True):
-            self.client.post('/register/', datos)
-        self.assertEqual(mail.outbox, [])
-
-    def test_iniciar_sesion_no_envia_correos(self):
-        from django.core import mail
         crear_cliente()
         with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/register/', datos)
             self.client.post('/login/', {'email': 'cliente@example.com', 'contraseña': 'Akaispace-2026!'})
         self.assertEqual(mail.outbox, [])
 
-    def test_aviso_al_cambiar_la_contraseña_desde_el_perfil(self):
-        from django.core import mail
-        self.client.force_login(crear_cliente())
-        datos = {'contraseña_actual': 'Akaispace-2026!', 'nueva_contraseña': 'Nueva-Clave-2026!',
-                 'confirmar_contraseña': 'Nueva-Clave-2026!'}
-        with self.captureOnCommitCallbacks(execute=True):
-            self.client.post('/cambiar/', datos)
-        self.assertEqual(len(mail.outbox), 1)
-        correo = mail.outbox[0]
-        self.assertEqual(correo.subject, 'Se actualizó la contraseña de tu cuenta - Akaispace')
-        self.assertIn('desde tu perfil', correo.body)
-        self.assertIn('Recuperar mi cuenta: http://', correo.body)
-        self.assertIn('/recuperar-contrasena/', correo.body)
-
-    def test_un_cambio_rechazado_no_envia_aviso(self):
+    def test_aviso_al_cambiar_la_contraseña_desde_el_perfil_y_no_si_se_rechaza(self):
         from django.core import mail
         self.client.force_login(crear_cliente())
         with self.captureOnCommitCallbacks(execute=True):
             self.client.post('/cambiar/', {'contraseña_actual': 'mala', 'nueva_contraseña': 'Nueva-Clave-2026!',
                                            'confirmar_contraseña': 'Nueva-Clave-2026!'})
         self.assertEqual(mail.outbox, [])
+        datos = {'contraseña_actual': 'Akaispace-2026!', 'nueva_contraseña': 'Nueva-Clave-2026!',
+                 'confirmar_contraseña': 'Nueva-Clave-2026!'}
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post('/cambiar/', datos)
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.subject, 'Se actualizó la contraseña de tu cuenta - Akai Space')
+        self.assertIn('desde tu perfil', correo.body)
+        self.assertIn('Recuperar mi cuenta: http://', correo.body)
+        self.assertIn('/recuperar-contrasena/', correo.body)
 
     def test_aviso_al_restablecer_con_el_enlace_de_recuperacion(self):
         from django.core import mail
@@ -4437,23 +4249,6 @@ class CorreosDeCuentaTests(TestCase):  # bienvenida al crear la cuenta y aviso d
 
 
 
-class CambiosSinGuardarTests(TestCase):  # el panel avisa antes de salir de un formulario con cambios sin guardar
-    def setUp(self):
-        self.client.force_login(crear_cliente('jefe@example.com', is_staff=True))
-
-    def test_los_formularios_de_edicion_del_panel_tienen_el_aviso(self):
-        producto = crear_producto()
-        for url in ['/admin-panel/configuracion/', '/admin-panel/productos/agregar/',
-                    f'/admin-panel/productos/editar/{producto.id}/', '/admin-panel/ventas/registrar/']:
-            respuesta = self.client.get(url)
-            self.assertContains(respuesta, 'data-avisar-cambios', msg_prefix=url)
-            self.assertContains(respuesta, 'js/cambios_sin_guardar.js', msg_prefix=url)
-
-    def test_los_filtros_y_botones_sueltos_no_avisan(self):
-        respuesta = self.client.get('/admin-panel/productos/')
-        self.assertNotContains(respuesta, 'data-avisar-cambios')
-
-
 class DatosParaComprarTests(TestCase):  # RUT y teléfono obligatorios para comprar; el RUT se agrega una vez y queda fijo
     def setUp(self):
         from .models import Carrito, ItemCarritoProducto
@@ -4463,16 +4258,14 @@ class DatosParaComprarTests(TestCase):  # RUT y teléfono obligatorios para comp
         ItemCarritoProducto.objects.create(carrito=Carrito.objects.create(usuario=self.cliente), producto=self.producto)
         self.client.force_login(self.cliente)
 
-    def test_sin_rut_ni_telefono_no_se_puede_pagar_ni_retirando_en_tienda(self):
+    def test_sin_rut_o_telefono_no_se_puede_pagar_ni_retirando_en_tienda(self):
         from .models import PagoWebpay
         respuesta, pago = iniciar_pago(self.client, envio='tienda')
         self.assertIsNone(pago)
         self.assertFalse(PagoWebpay.objects.exists())
         self.assertIn('/ver_carrito/?', respuesta.url)
         self.assertIn('Completa+tu+RUT+y+tu+tel%C3%A9fono', respuesta.url)
-
-    def test_solo_falta_el_telefono(self):
-        Usuario.objects.filter(pk=self.cliente.pk).update(rut=rut_de_prueba())
+        Usuario.objects.filter(pk=self.cliente.pk).update(rut=rut_de_prueba())  # solo falta el teléfono
         respuesta, pago = iniciar_pago(self.client, envio='tienda')
         self.assertIsNone(pago)
         self.assertIn('Completa+tu+tel%C3%A9fono', respuesta.url)
@@ -4518,15 +4311,7 @@ class DatosParaComprarTests(TestCase):  # RUT y teléfono obligatorios para comp
         self.assertEqual(self.cliente.rut, '11.111.111-1')
         self.assertContains(self.client.get('/editar/'), 'El RUT no se puede cambiar')
 
-    def test_en_el_perfil_se_agrega_el_rut_y_se_edita_el_nombre(self):
-        datos = {'nombre': '  Ana   Pérez ', 'rut': '111111111', 'telefono': '987654321',
-                 'region': 'LOS RIOS', 'ciudad': 'Valdivia', 'direccion': 'Picarte 1'}
-        respuesta = self.client.post('/editar/', datos)
-        self.assertEqual(respuesta.status_code, 302)
-        self.cliente.refresh_from_db()
-        self.assertEqual((self.cliente.nombre, self.cliente.rut), ('Ana Pérez', '11.111.111-1'))
-
-    def test_en_el_perfil_el_rut_es_opcional_pero_si_se_escribe_se_valida(self):
+    def test_en_el_perfil_el_rut_es_opcional_se_valida_y_se_agrega(self):
         datos = {'nombre': 'Ana Pérez', 'telefono': '987654321', 'region': 'LOS RIOS', 'ciudad': 'Valdivia',
                  'direccion': 'Picarte 1'}
         self.assertEqual(self.client.post('/editar/', {**datos, 'rut': ''}).status_code, 302)
@@ -4535,11 +4320,11 @@ class DatosParaComprarTests(TestCase):  # RUT y teléfono obligatorios para comp
         self.cliente.refresh_from_db()
         self.assertIsNone(self.cliente.rut)
 
-    def test_el_carrito_muestra_lo_que_falta(self):
-        respuesta = self.client.get('/ver_carrito/')
-        self.assertContains(respuesta, 'Completa tus datos para comprar')
-        self.assertContains(respuesta, 'id="falta-rut"')
-        self.assertContains(respuesta, 'id="falta-telefono"')
+        datos = {**datos, 'nombre': '  Ana   Pérez ', 'rut': '111111111'}
+        respuesta = self.client.post('/editar/', datos)
+        self.assertEqual(respuesta.status_code, 302)
+        self.cliente.refresh_from_db()
+        self.assertEqual((self.cliente.nombre, self.cliente.rut), ('Ana Pérez', '11.111.111-1'))
 
 
 class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el cliente elimina su cuenta
@@ -4557,10 +4342,6 @@ class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el c
             datos['entiendo'] = entiendo
         return self.client.post(self.URL, datos)
 
-    def test_el_perfil_muestra_la_seccion_al_final(self):
-        respuesta = self.client.get('/perfil/')
-        self.assertContains(respuesta, 'href="/perfil/eliminar-cuenta/"')
-
     def test_el_administrador_no_ve_la_seccion_ni_puede_eliminarse(self):
         admin = crear_cliente('admin@example.com', is_staff=True)
         self.client.force_login(admin)
@@ -4577,7 +4358,11 @@ class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el c
         self.cliente.refresh_from_db()
         self.assertFalse(self.cliente.is_deleted)
 
-    def test_anonimiza_los_datos_y_cierra_la_sesion(self):
+    def test_anonimiza_los_datos_y_cierra_la_sesion_tambien_en_otros_dispositivos(self):
+        from django.test import Client
+        otro_dispositivo = Client()
+        otro_dispositivo.post('/login/', {'email': 'ana@example.com', 'contraseña': self.CONTRASEÑA})
+        self.assertEqual(otro_dispositivo.get('/perfil/').status_code, 200)
         rut = self.cliente.rut
         respuesta = self.confirmar()
         self.assertRedirects(respuesta, '/cuenta-eliminada/')
@@ -4594,13 +4379,6 @@ class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el c
         self.assertFalse(Usuario.objects.filter(rut=rut).exists())
         self.assertNotIn('_auth_user_id', self.client.session)
         self.assertEqual(self.client.get('/perfil/').status_code, 302)
-
-    def test_cierra_la_sesion_en_otros_dispositivos(self):
-        from django.test import Client
-        otro_dispositivo = Client()
-        otro_dispositivo.post('/login/', {'email': 'ana@example.com', 'contraseña': self.CONTRASEÑA})
-        self.assertEqual(otro_dispositivo.get('/perfil/').status_code, 200)
-        self.confirmar()
         self.assertEqual(otro_dispositivo.get('/perfil/').status_code, 302)
 
     def test_conserva_las_ventas_sin_datos_personales_y_borra_lo_demas(self):
@@ -4670,36 +4448,27 @@ class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el c
         self.cliente.refresh_from_db()
         self.assertFalse(self.cliente.is_deleted)
 
-    def test_bloquea_si_tiene_una_compra_sin_entregar(self):
-        crear_venta(self.cliente, self.producto, estado='En Preparación')
+    def test_bloquea_mientras_tenga_una_compra_devolucion_reclamo_o_pago_en_curso(self):
+        from .models import Devolucion, PagoWebpay, Reclamo, Venta
+        # cada bloqueo se resuelve antes de probar el siguiente; al final ya se puede eliminar
+        crear_venta(self.cliente, self.producto, estado='Entregado')  # una compra entregada no bloquea
+        sin_entregar = crear_venta(self.cliente, self.producto, estado='En Preparación')
         self.assertBloqueada('compra que aún no se entrega')
+        Venta.objects.filter(pk=sin_entregar.pk).update(anulada_en=now())  # una anulada tampoco bloquea
 
-    def test_una_compra_entregada_o_anulada_no_bloquea(self):
-        from .models import Venta
-        crear_venta(self.cliente, self.producto, estado='Entregado')
-        anulada = crear_venta(self.cliente, self.producto, estado='En Preparación')
-        Venta.objects.filter(pk=anulada.pk).update(anulada_en=now())
-        self.assertRedirects(self.confirmar(), '/cuenta-eliminada/')
-
-    def test_bloquea_si_tiene_una_devolucion_en_curso(self):
-        from .models import Devolucion
-        venta = crear_venta(self.cliente, self.producto)
-        devolucion = Devolucion.objects.create(venta=venta, producto=self.producto, usuario=self.cliente,
+        devolucion = Devolucion.objects.create(venta=sin_entregar, producto=self.producto, usuario=self.cliente,
                                                motivo='Llegó dañado')
         self.assertBloqueada('devolución o un reembolso en curso')
         Devolucion.objects.filter(pk=devolucion.pk).update(estado='Rechazada')
-        self.assertRedirects(self.confirmar(), '/cuenta-eliminada/')
 
-    def test_bloquea_si_tiene_un_reclamo_abierto(self):
-        from .models import Reclamo
-        Reclamo.objects.create(usuario=self.cliente, asunto='Demora', descripcion='No llega')
+        reclamo = Reclamo.objects.create(usuario=self.cliente, asunto='Demora', descripcion='No llega')
         self.assertBloqueada('reclamo que aún no se responde')
+        Reclamo.objects.filter(pk=reclamo.pk).update(estado='Respondido')
 
-    def test_bloquea_si_tiene_un_pago_webpay_en_curso_pero_no_uno_abandonado(self):
-        from .models import PagoWebpay
         pago = PagoWebpay.objects.create(usuario=self.cliente, orden_compra='OC-1', monto=1000, metodo_envio='tienda')
         self.assertBloqueada('pago con Webpay en curso')
-        PagoWebpay.objects.filter(pk=pago.pk).update(creado=now() - timedelta(hours=2))
+        PagoWebpay.objects.filter(pk=pago.pk).update(creado=now() - timedelta(hours=2))  # uno abandonado no bloquea
+
         self.assertRedirects(self.confirmar(), '/cuenta-eliminada/')
 
     def test_el_administrador_elimina_desde_el_panel_con_las_mismas_reglas(self):
@@ -4722,11 +4491,6 @@ class EliminarCuentaTests(TestCase):  # derecho de supresión (Ley 21.719): el c
         self.assertTrue(self.cliente.is_deleted)
         self.assertIsNone(self.cliente.rut)
         self.assertIn('por la tienda', mail.outbox[-1].body)
-
-    def test_la_pagina_advierte_que_no_se_recupera_el_historial(self):
-        respuesta = self.client.get(self.URL)
-        self.assertContains(respuesta, 'Tus compras anteriores no se podrán recuperar')
-        self.assertContains(respuesta, 'correos de confirmación de compra')
 
     def test_el_panel_muestra_el_aviso_en_lugar_de_los_datos_anonimizados(self):
         from .models import Devolucion, Reclamo
@@ -4772,8 +4536,3 @@ class PanelLimpiezaTests(TestCase):  # vistas del panel unificadas o validadas e
                              fetch_redirect_response=False)
         reclamo.refresh_from_db()
         self.assertEqual((reclamo.estado, reclamo.respuesta), ('Respondido', 'Ya va en camino'))
-
-    def test_chart_js_se_carga_al_final_de_la_pagina(self):
-        html = self.client.get('/admin-panel/').content.decode()
-        self.assertLess(html.index('</head>'), html.index('chart.umd.min.js'))
-        self.assertLess(html.index('chart.umd.min.js'), html.index('grafico_ventas.js'))

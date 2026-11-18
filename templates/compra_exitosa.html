@@ -1,7 +1,7 @@
 {% extends "base_cuenta.html" %}
 {% load static custom_filters %}
 
-{% block title %}Compra Exitosa - Akaispace{% endblock %}
+{% block title %}Compra Exitosa - Akai Space{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'styles/styles_compra_exitosa.css' %}">
@@ -90,7 +90,7 @@
             <h5 class="card-title border-bottom pb-3 mb-3 fw-bold">Comprobante de pago</h5>
             <div class="row">
                 <div class="col-md-6">
-                    <div class="info-row"><span>Comercio</span><span class="text-end">Akaispace</span></div>
+                    <div class="info-row"><span>Comercio</span><span class="text-end">Akai Space</span></div>
                     <div class="info-row"><span>Orden de compra</span><span class="text-end">{{ pago.orden_compra }}</span></div>
                     <div class="info-row"><span>Monto pagado</span><span class="text-end">${{ pago.monto|formato_chileno }}</span></div>
                     <div class="info-row"><span>Fecha del pago</span><span class="text-end">{{ pago.fecha_transaccion|default:pago.creado|date:"d/m/Y H:i" }}</span></div>
