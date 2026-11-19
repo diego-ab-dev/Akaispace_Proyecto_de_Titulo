@@ -149,10 +149,6 @@ body {
   transition-duration: .3s;
 }
 
-
-
-
-/* Entrega elegida en el carrito (HU-08) */
 .entrega-elegida {
     display: flex;
     flex-direction: column;
@@ -177,8 +173,6 @@ body {
     color: #1C253B;
 }
 
-
-/* Pago con Webpay (HU-05) */
 .webpay-box {
     padding: 20px;
     border: 1px solid #e0e0e0;
@@ -213,11 +207,7 @@ body {
     cursor: wait;
 }
 
-
-/* ============ Pago responsive ============
-   escritorio grande (>= 1200px): pago a la izquierda y resumen a la derecha, con mucho aire (como antes)
-   escritorio chico (992-1199px): las mismas dos columnas con menos relleno, para que el resumen no quede angosto
-   tablet y celular (< 992px): una columna; el contenido se centra con un ancho máximo y el botón va a lo ancho */
+/* Pago responsive */
 @media (max-width: 1199px) {
     .left-panel {
         padding: 4rem 3rem;
@@ -243,7 +233,6 @@ body {
         padding: 28px 24px;
         justify-content: flex-start;
     }
-    /* el contenido de cada panel no se estira de más en tablet */
     .left-panel > *,
     .right-panel > * {
         width: 100%;
@@ -256,7 +245,6 @@ body {
         border-left: none;
         border-top: 1px solid #e0e0e0;
     }
-    /* "Regresar" deja de flotar en la esquina y queda alineado con el resto del contenido */
     .back-link {
         position: static;
         margin-bottom: 20px;

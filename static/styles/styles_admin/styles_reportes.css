@@ -1,6 +1,4 @@
-/* Panel > Dashboard, Reportes y Compras (HU-10).
-   Base sobria: superficies blancas con borde fino, texto en tres tonos y el color reservado para los datos.
-   Los colores de las series son los de una paleta validada para daltonismo (azul, naranjo, verde agua). */
+/* Panel > Dashboard, Reportes y Compras */
 
 .informe {
     --tinta: #1c253b;
@@ -26,7 +24,7 @@
     color: var(--tinta);
 }
 
-/* --- cabecera de la página --- */
+/* Cabecera de la página */
 
 .informe-cabecera {
     display: flex;
@@ -116,7 +114,7 @@
     margin-bottom: 0.75rem;
 }
 
-/* --- cifras destacadas --- */
+/* Cifras destacadas */
 
 .informe-cifras {
     display: grid;
@@ -178,7 +176,7 @@
     color: var(--mal);
 }
 
-/* --- paneles --- */
+/* Paneles */
 
 .informe-grid {
     display: grid;
@@ -274,14 +272,13 @@
     color: #7a1a12;
 }
 
-/* --- gráfico --- */
+/* Gráfico */
 
 .grafico {
     position: relative;
     height: 300px;
 }
 
-/* el panel del gráfico ocupa el alto de su fila y el gráfico crece con él */
 .panel-informe--grafico {
     display: flex;
     flex-direction: column;
@@ -344,7 +341,7 @@
     overflow: auto;
 }
 
-/* --- tablas --- */
+/* Tablas */
 
 .tabla-contenedor {
     overflow-x: auto;
@@ -421,7 +418,6 @@
     white-space: nowrap;
 }
 
-/* proporción dentro de una tabla (participación de cada canal o medio de pago) */
 .proporcion {
     display: flex;
     align-items: center;
@@ -454,7 +450,7 @@
     color: var(--tinta-2);
 }
 
-/* --- estados (siempre con ícono y texto, nunca solo color) --- */
+/* Estados */
 
 .estado {
     display: inline-flex;
@@ -482,7 +478,7 @@
     color: var(--mal);
 }
 
-/* --- tablero de KPI --- */
+/* Tablero de KPI */
 
 .kpis {
     list-style: none;
@@ -548,7 +544,7 @@
     margin-top: 0.6rem;
 }
 
-/* --- listas compactas del resumen --- */
+/* Listas compactas del resumen */
 
 .lista-informe {
     list-style: none;
@@ -621,13 +617,11 @@ a.lista-informe__texto:hover {
     font-weight: 600;
 }
 
-/* --- filtro de periodo y pestañas --- */
+/* Filtro de periodo y pestañas */
 
 .informe-pestanas {
     display: flex;
     gap: 0.25rem;
-    /* la línea inferior es una sombra interna: un borde con margen negativo en las pestañas
-       desbordaba 1px y mostraba una barra de scroll vertical */
     box-shadow: inset 0 -1px 0 var(--linea);
     margin-bottom: 1rem;
     overflow-x: auto;
@@ -712,7 +706,7 @@ a.lista-informe__texto:hover {
     color: var(--tenue);
 }
 
-/* --- formularios simples (caja, compras) --- */
+/* Formularios simples */
 
 .formulario-linea {
     display: grid;
@@ -821,7 +815,6 @@ a.lista-informe__texto:hover {
     }
 }
 
-/* Al imprimir un reporte solo queda el contenido */
 @media print {
     #header,
     #nav-bar,
@@ -859,9 +852,7 @@ a.lista-informe__texto:hover {
     border-color: var(--acento);
 }
 
-/* ============ Tablas de informes en celular ============
-   la tabla se desliza de lado dentro de su recuadro (.tabla-contenedor) en vez de partir los nombres
-   palabra por palabra; los montos no se cortan */
+/* Tablas de informes en celular */
 @media (max-width: 767px) {
     .tabla-contenedor .tabla-informe td:first-child {
         min-width: 150px;

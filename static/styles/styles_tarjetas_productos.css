@@ -1,4 +1,4 @@
-/* Tarjetas de productos relacionados y recomendados (ficha y home, HU-07) */
+/* Tarjetas de productos relacionados y recomendados */
 .card-relacionada {
     display: block;
     background: #ffffff;
@@ -59,7 +59,6 @@
     padding-bottom: 3rem;
 }
 
-/* producto sin imagen */
 .card-rel-img-wrapper .sin-imagen {
     font-size: 3rem;
     color: #A0AEC0;

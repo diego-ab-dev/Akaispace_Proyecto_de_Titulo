@@ -1,3 +1,4 @@
+"""Decoradores de acceso."""
 import logging
 from functools import wraps
 
@@ -33,8 +34,6 @@ def login_required_json(view_func):
     return wrapper
 
 
-# El admin puede recorrer la tienda, pero no compra ni opina como cliente: así sus pruebas no
-# descuentan stock ni ensucian los KPI. Van después de login_required / login_required_json.
 def solo_clientes(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):

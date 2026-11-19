@@ -13,7 +13,6 @@
     {% csrf_token %}
     <div data-resumen-errores hidden></div>
     {% include 'partials/errores_generales.html' %}
-    {# el correo no es un campo visible (lo verificó Google): sus errores van al resumen #}
     {% for error in form.email.errors %}<div class="alert alert-danger" data-error-general>{{ error }}</div>{% endfor %}
     {% include 'partials/consentimientos_registro.html' %}
     {{ redirect_field }}

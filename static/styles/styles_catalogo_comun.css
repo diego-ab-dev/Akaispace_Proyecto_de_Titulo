@@ -1,5 +1,4 @@
-/* Reglas compartidas por las páginas del catálogo: menú, categoría y búsqueda.
-   Se carga antes del CSS propio de cada página (styles_menu, styles_categoria, styles_busqueda). */
+/* Reglas compartidas por las páginas del catálogo */
 
 .section-products {
   padding: 80px 0 54px;
@@ -156,7 +155,6 @@
   font-size: 1rem;
 }
 
-
 .precioprod {
   color: #110b0b;
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -223,11 +221,9 @@
     border: 1px solid #ddd;
 }
 
-
 .page-item.active {
     background-color: #527e99;
 }
-
 
 @keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1 } }
 
@@ -243,7 +239,6 @@
 }
 
 .anim-down { animation-name: anim-down; }
-
 
 #notif-box {
     position: fixed;

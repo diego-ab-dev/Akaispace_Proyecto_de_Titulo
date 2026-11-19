@@ -94,7 +94,6 @@ body {
     margin-bottom: 5px;
 }
 
-
 .btn-ver-mas {
     background-color: #4e84a8; 
     color: white;
@@ -112,7 +111,6 @@ body {
     color: white;
 }
 
-
 .devolucion-product-name {
     display: -webkit-box;
     -webkit-line-clamp: 2;          
@@ -124,7 +122,6 @@ body {
     word-break: break-word;        
     cursor: help;                   
 }
-
 
 .estado-texto {
     font-weight: 700; 
@@ -146,9 +143,7 @@ body {
     color: #f44336; 
 }
 
-/* ============ Lista de devoluciones responsive ============
-   tablet y escritorio (>= 768px): imagen, datos, fecha y botón en una fila
-   celular (< 768px): imagen al lado de los datos; fecha y botón "Ver Más" (a todo el ancho) debajo */
+/* Lista de devoluciones responsive */
 @media (max-width: 991px) {
     .main-container {
         padding: 16px 4px;

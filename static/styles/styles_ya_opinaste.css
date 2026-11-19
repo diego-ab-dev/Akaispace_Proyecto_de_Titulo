@@ -81,7 +81,7 @@ body {
     margin-bottom: 5px !important; 
 }
 
-/* ============ Responsive ============ */
+/* Responsive */
 @media (max-width: 575px) {
     .message-card {
         padding: 28px 20px;

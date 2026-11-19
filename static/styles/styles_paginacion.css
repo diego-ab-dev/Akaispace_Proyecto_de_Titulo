@@ -1,5 +1,4 @@
-/* Paginación de los listados del cliente (catálogo, favoritos, compras, devoluciones, opiniones y reclamos).
-   Se carga antes de la hoja de cada página, que solo agrega sus diferencias (borde, color o márgenes). */
+/* Paginación de los listados del cliente */
 .pagination-wrapper {
     display: flex;
     justify-content: center;

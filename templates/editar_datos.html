@@ -25,7 +25,6 @@
               {% include "partials/error_campo.html" with campo=form.nombre %}
           </div>
 
-          {# el RUT se agrega una sola vez (las cuentas de Google no lo traen); después queda fijo #}
           <div class="mb-3" data-campo>
               <label for="rut" class="form-label">RUT</label>
               {% if rut_guardado %}

@@ -1,4 +1,4 @@
-"""Panel de administración: opciones de visualización de la tienda (HU-09)."""
+"""Panel: configuración de la tienda."""
 from datetime import timedelta
 
 from django.contrib import messages
@@ -28,6 +28,6 @@ def admin_configuracion(request):
         'kpi10': {'completos': completos, 'total': total, 'cumple': completos == total},
         'kpi05': tasa_de_clics(desde=now() - timedelta(days=30)),
         'categorias': Categoria.objects.all(),
-        'delivery': OPCIONES_ENVIO['delivery'],  # para recordar el precio real junto al texto del anuncio
+        'delivery': OPCIONES_ENVIO['delivery'],
         'visibles': {int(valor) for valor in form['categorias_visibles'].value() or [] if str(valor).isdigit()},
     })

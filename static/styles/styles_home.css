@@ -7,8 +7,6 @@ body {
   min-height: 100vh;
 }
 
-
-/*Fondo de principal oscuro*/
 #fondo {
   background-image: url("../images/home_fondo.webp");
   min-height: 100vh;
@@ -48,7 +46,6 @@ body {
   overflow-wrap: anywhere;
 }
 
-/*Parrafos de Akai Space*/
 .containerparrafo {
   display: flex;
   flex-direction: row;
@@ -76,12 +73,10 @@ body {
   color: #aaa;
 }
 
-/* separación entre secciones: solo vertical, el ancho lo da .container */
 .wrapper {
   margin: 10vh 0;
 }
 
-/* el texto justificado deja huecos grandes en pantallas angostas */
 .texto-justificado {
   text-align: left;
 }
@@ -92,7 +87,6 @@ body {
   }
 }
 
-/* los links #nosotros, #local y #redes no quedan tapados por el navbar fijo */
 html {
   scroll-padding-top: 80px;
 }
@@ -179,9 +173,7 @@ html {
     );
   }
 }
-/*Fin de las cards*/
 
-/* Estilos para la sección de Productos Nuevos / Videos */
 .video-placeholder-container {
   background-color: transparent;
 }
@@ -219,9 +211,7 @@ html {
     margin-bottom: 8px;
   }
 }
-/* Fin de Estilos para la sección de Productos Nuevos / Videos */
 
-/* Seccion de Redes sociales */
 .card-redes-simple {
   background-color: #ffffff;
   border-radius: 3px; 
@@ -286,9 +276,7 @@ html {
     margin-top: 20px;
   }
 }
-/* Fin de seccion de Redes sociales */
 
-/* Seccion del Local (mapa y horarios) */
 .card-local {
   background-color: #ffffff;
   border-radius: 3px;
@@ -389,7 +377,6 @@ html {
   }
 }
 
-/*Animaciones para los elementos en home*/
 @keyframes anim-fade-in {
   from {
     opacity: 0;
@@ -438,15 +425,12 @@ html {
 .paused * {
   animation-play-state: paused;
 }
-/*Fin de animaciones para los elementos en home*/
 
-/* el nombre de la red social baja de línea en pantallas angostas */
 .social-item > * {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-/* el video de "Nuevos lanzamientos" (iframe de 560 x 315) se ajusta al ancho de la columna manteniendo 16:9 */
 .video-placeholder iframe {
   width: 100%;
   max-width: 560px;
@@ -459,8 +443,6 @@ html {
   object-fit: contain;
 }
 
-/* "Nuevos lanzamientos" con imagen: mientras carga no tiene alto propio, así que el skeleton
-   (js/skeleton_imagenes.js) reserva un bloque 16:9 como el de los videos */
 .video-placeholder.img-skeleton {
   aspect-ratio: 16 / 9;
   max-width: 560px;

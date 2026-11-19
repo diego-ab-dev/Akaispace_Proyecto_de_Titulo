@@ -1,5 +1,4 @@
-// Favoritos (templates/favorite.html): quitar uno o varios favoritos y agregarlos al carrito.
-// La URL para quitar varios llega en el data- de su <script>.
+// Favoritos
 const datosFavoritos = document.currentScript.dataset;
 
     function getCSRFToken() {
@@ -11,7 +10,6 @@ const datosFavoritos = document.currentScript.dataset;
     return null;
 }
 
-// parte de seleccionar para eliminar
 var confirmModal = null;
 var toastNotification = null;
 
@@ -56,7 +54,6 @@ function mostrarToast(mensaje, claseFondo) {
     toastNotification.show();
 }
 
-// boton de eliminar
 function eliminarSeleccionados() {
     ensureBootstrapInstances();
 
@@ -84,7 +81,6 @@ function eliminarSeleccionados() {
     }
 }
 
-// ejecutar
 function actualizarListaFavoritos() {
     fetch(window.location.href)
         .then(response => response.text())
@@ -111,7 +107,6 @@ function actualizarListaFavoritos() {
         })
         .catch(err => console.error('Error actualizando la lista:', err));
 }
-
 
 function ejecutarEliminacion(checkboxes) {
     const idsToDelete = Array.from(checkboxes).map(cb => cb.value);

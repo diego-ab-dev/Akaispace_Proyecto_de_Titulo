@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <!--Seccion compras-->
+        <!-- Compras -->
         <div class="row g-4 mb-4"> 
             <div class="col-lg-4 col-md-5">
                 <div class="profile-card h-100">
@@ -68,7 +68,7 @@
                 </div>
             </div>
 
-            <!--datos del cliente-->
+            <!-- Datos del cliente -->
             <div class="col-lg-8 col-md-7">
                 <div class="profile-card h-100">
                     <div class="card-content user-details">
@@ -113,7 +113,7 @@
                         </div>
                     </div>
 
-                    <!-- HU-07: consentimiento de datos de navegación, se puede dar o retirar en cualquier momento -->
+                    <!-- Datos de navegación -->
                     <div class="consentimiento-navegacion mt-4" id="recomendaciones">
                         <h3 class="card-header-title">Recomendaciones personalizadas</h3>
                         <form method="post" action="{% url 'datos_navegacion' %}" id="formNavegacion">
@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        <!--seccion devoluciones-->
+        <!-- Devoluciones -->
         <div class="row g-4">
             <div class="col-md-6 col-lg-4">
                 <div class="profile-card h-100">
@@ -177,7 +177,7 @@
                 </div>
             </div>
 
-            <!--seccion opiniones-->
+            <!-- Opiniones -->
             <div class="col-md-6 col-lg-4">
                 <div class="profile-card h-100">
                     <h3 class="card-header-title text-center">Mis Opiniones</h3>
@@ -211,7 +211,7 @@
                 </div>
             </div>
 
-            <!--seccion reclamos-->
+            <!-- Reclamos -->
             <div class="col-md-12 col-lg-4">
                 <div class="profile-card h-100">
                     <h3 class="card-header-title text-center">Mis Reclamos</h3>
@@ -240,7 +240,7 @@
 
         </div>
 
-        <!-- derecho de supresión (Ley 21.719): el cliente elimina su cuenta de inmediato -->
+        <!-- Eliminar cuenta -->
         {% if not usuario.is_staff %}
         <div class="row g-4 mt-1">
             <div class="col-12">

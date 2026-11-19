@@ -1,27 +1,8 @@
-// Validación y avisos de los formularios (se carga en base.html para todas las páginas).
-//
-// Uso en una plantilla:
-//   <form method="post" data-validar [data-ajax]>
-//     <div data-campo> <input name="..." required ...> </div>   ← el mensaje de error va al final del contenedor
-//   </form>
-//
-// - Antes de enviar revisa todos los campos, muestra cada error bajo su campo y lleva la vista y el
-//   cursor al primero con error. Si hay errores, el formulario no se envía. Arriba del formulario
-//   ([data-resumen-errores]) solo aparece un aviso breve para lo que no es de un campo y el de éxito.
-// - Los mensajes salen de los atributos del campo: required, type="email", minlength, maxlength, pattern,
-//   min, max, y de data-validacion="rut|nombre|telefono|contraseña|imagen", data-igual-a="id de otro campo".
-//   Se pueden cambiar con data-msg-requerido, data-msg-formato y data-msg-igual.
-// - Con data-ajax el formulario se envía con fetch y espera JSON {success, message, errors, redirect};
-//   los errores del servidor ({campo: [mensajes]}) se muestran igual que los del navegador.
-// - Sin data-ajax el envío es normal; los errores que el servidor deja en la página con
-//   data-error-de="campo" (partials/error_campo.html) se marcan igual al cargar la página.
-// - Extras: data-contador (contador de caracteres con maxlength), data-formato="rut|digitos" y
-//   data-ciudades-de="id del select de región" (carga las ciudades de la región elegida).
-// La validación que vale es siempre la del servidor; esta solo avisa antes y con mensajes claros.
+// Validación y avisos de los formularios
 (function () {
     'use strict';
 
-    // ---------- validadores ----------
+    // Validadores
     function rutValido(valor) {
         const limpio = (valor || '').replace(/[.\-\s]/g, '').toUpperCase();
         if (!/^\d{7,8}[\dK]$/.test(limpio)) return false;
@@ -37,8 +18,6 @@
         return limpio.slice(-1) === esperado;
     }
 
-    // mismas reglas que limpiar_nombre() en forms.py: letras de cualquier idioma (tildes, ñ, ü...),
-    // espacios, apóstrofos, guiones y puntos
     const NOMBRE_VALIDO = /^[\p{L}\p{M}' ’.\-]+$/u;
 
     const VALIDADORES = {
@@ -56,7 +35,6 @@
             if ((nombre.match(/\p{L}/gu) || []).length < 2) return 'El nombre debe tener al menos 2 letras.';
             return '';
         },
-        // mismas reglas que AUTH_PASSWORD_VALIDATORS (el servidor además revisa las contraseñas comunes)
         'contraseña': function (valor) {
             if (valor.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
             if (!/\p{L}/u.test(valor) || !/\d/.test(valor)) return 'La contraseña debe tener al menos una letra y un número.';
@@ -67,8 +45,6 @@
         },
     };
 
-    // fotos: mismas reglas que validar_imagen() en forms.py (el servidor además abre el archivo
-    // para confirmar que de verdad es una imagen)
     const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     const EXTENSIONES_IMAGEN = /\.(jpe?g|png|webp|gif)$/i;
 
@@ -86,9 +62,7 @@
         return '';
     }
 
-    // revisa la foto apenas se elige o se arrastra; si no sirve, avisa y la quita del campo
     function revisarImagen(input) {
-        // sin archivo no hay nada que revisar (y se conserva el aviso de una foto recién rechazada)
         if (!input.files || input.files.length === 0) return false;
         const mensaje = mensajeImagen(input);
         if (mensaje) {
@@ -113,7 +87,6 @@
         });
     }
 
-    // devuelve el mensaje de error del campo, o '' si está bien
     function mensajeDe(control) {
         const d = control.dataset;
         const v = control.validity;
@@ -141,7 +114,6 @@
             if (control.tagName === 'SELECT') return 'Selecciona una opción de la lista.';
             return 'Completa este campo.';
         }
-        // el navegador acepta "nombre@correo" sin dominio; el servidor no, así que se avisa antes
         if (control.type === 'email' && (v.typeMismatch || !/^[^@\s]+@[^@\s]+\.[^@\s.]{2,}$/.test(valor))) {
             return d.msgFormato || 'Escribe un correo válido (por ejemplo: nombre@correo.cl).';
         }
@@ -169,7 +141,7 @@
         return '';
     }
 
-    // ---------- mensajes bajo cada campo ----------
+    // Mensajes bajo cada campo
     function contenedorDe(control) {
         return control.closest('[data-campo]') || control.parentElement;
     }
@@ -190,7 +162,6 @@
             error = document.createElement('div');
             error.className = 'invalid-feedback d-block mensaje-error';
             error.dataset.errorDe = control.name;
-            // el aviso va pegado al campo, antes del contador de caracteres
             const contador = contenedor.querySelector('.contador-caracteres');
             if (contador) contador.insertAdjacentElement('beforebegin', error);
             else contenedor.appendChild(error);
@@ -216,7 +187,7 @@
         });
     }
 
-    // ---------- resumen arriba del formulario ----------
+    // Resumen arriba del formulario
     function cajaResumen(form) {
         let caja = form.querySelector('[data-resumen-errores]');
         if (!caja) {
@@ -242,9 +213,6 @@
         caja.focus({ preventScroll: true });
     }
 
-    // errores: [{control, mensaje}] ; generales: [mensaje]
-    // Los errores de un campo se muestran solo bajo ese campo: se lleva la vista y el cursor al primero.
-    // Arriba del formulario solo aparece un aviso breve para lo que no es de un campo (p. ej. sin conexión).
     function mostrarResumen(form, errores, generales) {
         if (generales.length) {
             const caja = cajaResumen(form);
@@ -269,7 +237,6 @@
         }
     }
 
-    // el aviso general de arriba se va cuando la persona corrige algo
     function actualizarResumen(form) {
         if (form.querySelector('[data-resumen-errores].resumen-errores')) ocultarResumen(form);
     }
@@ -286,7 +253,7 @@
         enfocarResumen(caja);
     }
 
-    // ---------- validar el formulario completo ----------
+    // Validar el formulario completo
     function validar(form) {
         const errores = [];
         const vistos = new Set();
@@ -311,7 +278,6 @@
         return errores.length === 0;
     }
 
-    // errores del servidor: {campo: [mensajes]} (el campo "__all__" va solo en el resumen)
     function mostrarErroresServidor(form, errores, mensaje) {
         controlesDe(form).forEach(limpiarError);
         const lista = [];
@@ -331,7 +297,7 @@
         mostrarResumen(form, lista, generales);
     }
 
-    // ---------- envío ----------
+    // Envío
     function botonesDe(form) {
         return Array.from(form.querySelectorAll('button[type="submit"], button:not([type]), input[type="submit"]'));
     }
@@ -410,9 +376,6 @@
             enviarConFetch(form);
             return;
         }
-        // envío normal: se bloquea el botón para evitar enviarlo dos veces (después de los demás
-        // manejadores de la página, por si alguno cancela el envío; y después de que el navegador
-        // tome el valor del botón presionado)
         document.addEventListener('submit', function (final) {
             if (final.target === form && !final.defaultPrevented) {
                 setTimeout(function () { bloquearEnvio(form, true); }, 0);
@@ -420,7 +383,6 @@
         }, { once: true });
     }, true);
 
-    // al volver con el botón "atrás" el navegador puede mostrar la página guardada con el botón bloqueado
     window.addEventListener('pageshow', function (evento) {
         if (!evento.persisted) return;
         document.querySelectorAll('form[data-validar][aria-busy="true"]').forEach(function (form) {
@@ -428,14 +390,11 @@
         });
     });
 
-    // al corregir un campo con error, el aviso se va solo; al salir de un campo que se editó, se revisa
     function revisarEnVivo(evento) {
         const control = evento.target;
         if (!control.form || !control.form.matches('form[data-validar]') || !control.name) return;
         const yaTieneError = control.classList.contains('is-invalid');
         const salio = evento.type === 'focusout';
-        // si el foco pasa al botón de enviar no se avisa todavía: el aviso movería el botón y el clic
-        // se perdería; al enviar se revisa todo el formulario de una vez
         const destino = evento.relatedTarget;
         if (salio && destino && destino.form === control.form &&
             (destino.type === 'submit' || (destino.tagName === 'BUTTON' && !destino.getAttribute('type')))) return;
@@ -448,7 +407,6 @@
             limpiarError(control);
             actualizarResumen(control.form, control.name);
         }
-        // al cambiar la contraseña también se revisa su confirmación
         control.form.querySelectorAll('[data-igual-a="' + CSS.escape(control.id) + '"]').forEach(function (otro) {
             if (otro.classList.contains('is-invalid') && !mensajeDe(otro)) {
                 limpiarError(otro);
@@ -471,10 +429,9 @@
     });
     document.addEventListener('focusout', revisarEnVivo);
 
-    // ---------- extras ----------
+    // Extras
     function formatearRut(input) {
         let valor = input.value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
-        // la K solo puede ir al final
         valor = valor.slice(0, -1).replace(/K/g, '') + valor.slice(-1);
         if (valor.length < 2) {
             input.value = valor;
@@ -490,7 +447,6 @@
         const contador = document.createElement('small');
         contador.className = 'contador-caracteres';
         contador.setAttribute('aria-live', 'polite');
-        // va después del campo y, si el servidor dejó un aviso de error, después de ese aviso
         const contenedor = input.closest('[data-campo]') || input.parentElement;
         const error = contenedor.querySelector('[data-error-de="' + CSS.escape(input.name) + '"]');
         (error || input.closest('.form-floating, .input-group') || input).insertAdjacentElement('afterend', contador);
@@ -539,7 +495,6 @@
         }
 
         selectRegion.addEventListener('change', function () { cargar(false); });
-        // si el servidor no trajo las ciudades de la región ya elegida (p. ej. al volver atrás), se cargan
         if (selectRegion.value && selectCiudad.options.length <= 1) cargar(true);
         if (!selectRegion.value && selectCiudad.options.length <= 1) cargar(false);
     }
@@ -547,7 +502,6 @@
     function iniciar() {
         document.querySelectorAll('form[data-validar]').forEach(function (form) {
             form.noValidate = true;
-            // errores que dejó el servidor en la página: se arma el resumen con ellos
             const errores = [];
             form.querySelectorAll('[data-error-de]').forEach(function (error) {
                 const control = form.querySelector('[name="' + CSS.escape(error.dataset.errorDe) + '"]');
@@ -564,7 +518,6 @@
             input.addEventListener('input', function () { formatearRut(input); });
             if (input.value) formatearRut(input);
         });
-        // teléfono: solo dígitos; si se pega el número completo (+56 9 1234 5678) quedan los últimos 8
         document.querySelectorAll('input[data-formato="telefono"]').forEach(function (input) {
             input.addEventListener('input', function () {
                 let digitos = input.value.replace(/\D/g, '');

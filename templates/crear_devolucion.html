@@ -81,7 +81,6 @@
                             <p class="text-muted small mb-2">JPG, PNG, WEBP o GIF, de hasta {{ imagen_maxima_mb }} MB cada una. Haz clic en una foto elegida para verla en grande.</p>
 
                             {{ formset.management_form }}
-                            {# los avisos de las fotos van bajo la fila completa, para no correr los recuadros #}
                             <div class="fotos-evidencia" data-campo>
                             <div class="evidencia-container">
 
@@ -155,7 +154,7 @@
         </form>
     </div>
 
-<!-- vista grande de una foto elegida, antes de enviar la solicitud -->
+<!-- Vista previa de la foto -->
 <div class="modal fade" id="modalFotoEvidencia" tabindex="-1" aria-labelledby="tituloFotoEvidencia" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -185,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalElemento = document.getElementById("modalFotoEvidencia");
     const modal = new bootstrap.Modal(modalElemento);
     const imagenGrande = document.getElementById("imagenFotoEvidencia");
-    let fotoAbierta = null;  // la foto que se está viendo en el modal
+    let fotoAbierta = null;
 
     function configurarFoto(numero) {
         const input = document.getElementById("input_imagen" + numero);
@@ -194,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
         let urlVistaPrevia = null;
         let animacion = null;
 
-        // el recuadro siempre muestra lo que de verdad se va a enviar
         function mostrarVacio() {
             clearInterval(animacion);
             if (urlVistaPrevia) URL.revokeObjectURL(urlVistaPrevia);
@@ -237,7 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
             box.focus();
         }
 
-        // revisa el archivo elegido o arrastrado; si no sirve, el recuadro vuelve a quedar vacío
         function usarArchivoDelInput() {
             const archivo = input.files[0];
             if (archivo && Formularios.revisarImagen(input)) {
@@ -280,7 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const transferencia = new DataTransfer();
             transferencia.items.add(archivo);
             input.files = transferencia.files;
-            // al arrastrar no se aplica el filtro del explorador de archivos: se revisa aquí
             usarArchivoDelInput();
         });
 

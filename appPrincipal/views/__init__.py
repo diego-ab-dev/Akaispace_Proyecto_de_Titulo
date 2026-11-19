@@ -1,8 +1,4 @@
-"""Vistas de Akai Space, separadas por funcionalidad.
-
-Las del cliente están en este paquete y las del panel de administración en views/panel/.
-Todas se reexportan aquí para que urls.py pueda usarlas como views.<nombre>.
-"""
+"""Vistas de Akai Space."""
 from .carrito import (
     actualizar_cantidad_carrito, agregar_al_carrito, eliminar_del_carrito, eliminar_seleccionados_carrito,
     guardar_datos_envio, vaciar_carrito, ver_carrito,

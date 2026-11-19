@@ -1,4 +1,3 @@
-/* Lo común del panel (menú lateral, encabezado, variables) está en panel.css. */
 
 table {
         width: 100%;
@@ -51,8 +50,6 @@ table {
         border-radius: 20px;
     }
 
-
-/*Paginacion*/
 .pagination-wrapper {
     margin-top: 40px;
     margin-bottom: 60px; 
@@ -96,7 +93,6 @@ table {
     border-color: #dee2e6;
     cursor: default;
 }
-
 
 .page-item:first-child .page-link, 
 .page-item:last-child .page-link {

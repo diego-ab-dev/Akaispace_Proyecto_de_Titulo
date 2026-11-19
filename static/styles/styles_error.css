@@ -1,4 +1,4 @@
-/* Páginas de error: 404 (con navbar y footer) y 500 (sola). templates/404.html y templates/500.html */
+/* Páginas de error */
 
 body {
   background-color: #EEF1F4;
@@ -16,7 +16,6 @@ body {
   box-sizing: border-box;
 }
 
-/* la 500 no tiene navbar: ocupa toda la pantalla */
 .pagina-error-sola {
   min-height: 100vh;
   min-height: 100svh;
@@ -29,7 +28,6 @@ body {
   text-align: center;
 }
 
-/* "4 [control] 4" */
 .error-codigo {
   display: inline-flex;
   align-items: center;
@@ -81,7 +79,6 @@ body {
   color: #5b6475;
 }
 
-/* buscador */
 .error-buscar {
   display: flex;
   align-items: center;
@@ -136,7 +133,6 @@ body {
   background: #3f6f8f;
 }
 
-/* botones */
 .error-acciones {
   display: flex;
   flex-wrap: wrap;
@@ -183,7 +179,6 @@ body {
   color: #ffffff;
 }
 
-/* logo de la 500 */
 .error-logo {
   display: flex;
   width: fit-content;

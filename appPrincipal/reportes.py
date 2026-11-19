@@ -1,12 +1,4 @@
-"""Cálculos de los reportes y del tablero de KPI del panel (HU-10).
-
-Montos en pesos chilenos. Los precios y costos se guardan con IVA incluido (monto bruto); el neto se obtiene
-dividiendo por 1,19. Se consideran las ventas de todos los canales (web, tienda física y WhatsApp), sin las
-anuladas. Un detalle de venta sin costo_unitario (el producto no tenía costo registrado al venderse) no se
-puede usar para calcular ganancia, así que se excluye y el reporte informa qué productos quedaron fuera.
-
-Las fórmulas y metas de los KPI son las de la Tabla 13 del informe (formulación SMART).
-"""
+"""Reportes y KPI."""
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
@@ -22,11 +14,10 @@ IVA = 19
 MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre',
                 'octubre', 'noviembre', 'diciembre']
-DIAS_POR_DIA = 62  # hasta este largo, los gráficos agrupan por día; sobre él, por mes
+DIAS_POR_DIA = 62
 
 
 def neto(bruto):
-    """Monto sin IVA, redondeado al peso."""
     return round((bruto or 0) * 100 / (100 + IVA))
 
 
@@ -40,7 +31,6 @@ def porcentaje(parte, total):
 
 
 def variacion(actual, anterior):
-    """Variación porcentual frente al periodo anterior; None si el anterior es 0."""
     return round((actual - anterior) * 100 / anterior, 1) if anterior else None
 
 
@@ -48,7 +38,7 @@ def _inicio_del_dia(dia):
     return timezone.make_aware(datetime.combine(dia, time.min))
 
 
-# --- periodo de los reportes ---
+# Periodo de los reportes
 
 PERIODOS = [
     ('hoy', 'Hoy'),
@@ -63,7 +53,7 @@ PERIODOS = [
 @dataclass(frozen=True)
 class Periodo:
     desde: date
-    hasta: date  # incluido
+    hasta: date
     clave: str = 'personalizado'
 
     @property
@@ -72,7 +62,6 @@ class Periodo:
 
     @property
     def fin(self):
-        """Primer instante después del periodo (límite exclusivo)."""
         return _inicio_del_dia(self.hasta + timedelta(days=1))
 
     @property
@@ -85,7 +74,6 @@ class Periodo:
 
     @property
     def nombre(self):
-        """Ej.: "30 oct 2026", "1 al 30 oct 2026", "1 sep al 30 oct 2026"."""
         desde, hasta = self.desde, self.hasta
         mes = lambda dia: MESES[dia.month - 1].lower()
         if desde == hasta:
@@ -97,7 +85,6 @@ class Periodo:
         return f"{desde.day} al {hasta.day} {mes(hasta)} {hasta.year}"
 
     def anterior(self):
-        """Periodo con el que se compara: el mismo tramo del mes o año anterior, o los días inmediatamente previos."""
         if self.clave in ('mes', 'mes_anterior'):
             desde = self.desde - relativedelta(months=1)
             hasta = self.hasta - relativedelta(months=1)
@@ -132,8 +119,6 @@ def _leer_fecha(valor):
 
 
 def periodo_desde_request(datos):
-    """Lee el periodo de los parámetros GET: `periodo` (una clave de PERIODOS) o `desde` y `hasta`.
-    Devuelve (periodo, errores). Si las fechas no sirven, se usa "Este mes" y se informa por qué."""
     hoy = timezone.localdate()
     clave = datos.get('periodo', '')
     if clave in dict(PERIODOS):
@@ -153,10 +138,9 @@ def periodo_desde_request(datos):
     return Periodo(desde or hasta, hasta or hoy), []
 
 
-# --- ventas ---
+# Ventas
 
 def ventas_vigentes():
-    """Ventas confirmadas de todos los canales, sin las anuladas."""
     return Venta.objects.filter(anulada_en__isnull=True).exclude(datos_envio__estado='Anulada')
 
 
@@ -176,10 +160,9 @@ def totales_ventas(periodo):
 
 
 def _desglose(ventas, campo, opciones):
-    """Monto y número de ventas por cada opción de `campo`, incluidas las que no tienen ventas."""
     filas = {fila[campo]: fila for fila in ventas.values(campo).annotate(total=Sum('total'), cantidad=Count('id'))}
     total = sum(fila['total'] for fila in filas.values())
-    if '' in filas:  # ventas antiguas sin el dato registrado
+    if '' in filas:
         opciones = [*opciones, ('', 'Sin registrar')]
     resultado = []
     for clave, nombre in opciones:
@@ -202,7 +185,6 @@ def _etiqueta_mes(dia):
 
 
 def serie_ventas(periodo):
-    """Montos vendidos por canal, por día (periodos cortos) o por mes, para el gráfico de ventas."""
     if periodo.por_dia:
         tramos = [periodo.desde + timedelta(days=i) for i in range(periodo.dias)]
         etiquetas = [f"{dia:%d/%m}" for dia in tramos]
@@ -235,14 +217,13 @@ def ultimos_12_meses(hoy=None):
     return Periodo(hoy.replace(day=1) - relativedelta(months=11), hoy)
 
 
-# --- ganancia ---
+# Ganancia
 
 def _detalles_vendidos(periodo):
     return ProductoVenta.objects.filter(venta__in=ventas_del_periodo(periodo))
 
 
 def ganancia(periodo):
-    """Ganancia de los productos vendidos (sin el envío), en bruto y en neto, y el margen sobre la venta neta."""
     detalles = _detalles_vendidos(periodo)
     con_costo = detalles.filter(costo_unitario__isnull=False).aggregate(
         ventas=Sum(F('cantidad') * F('precio_unitario')),
@@ -281,7 +262,7 @@ def ganancia_por_categoria(periodo):
     return sorted(resultado, key=lambda fila: -fila['ganancia_neta'])
 
 
-# --- productos ---
+# Productos
 
 def mas_vendidos(periodo, limite=10):
     filas = (
@@ -294,16 +275,13 @@ def mas_vendidos(periodo, limite=10):
 
 
 def stock_critico():
-    """Productos vigentes con stock igual o menor a su stock crítico, los agotados primero."""
     return (Producto.objects.filter(stock__lte=F('stock_critico')).select_related('categoria', 'plataforma')
             .order_by('stock', 'nombre'))
 
 
-# --- caja, retiros y compras ---
+# Caja, retiros y compras
 
 def caja(periodo):
-    """Dinero recibido por medio de pago y movimientos de la caja de la tienda física. El efectivo de la caja
-    del periodo = ventas en efectivo + ingresos de dinero − retiros."""
     movimientos = MovimientoCaja.objects.filter(fecha__gte=periodo.inicio, fecha__lt=periodo.fin)
     sumas = movimientos.aggregate(
         ingresos=Sum('monto', filter=Q(tipo=MovimientoCaja.INGRESO)),
@@ -337,7 +315,7 @@ def compras(periodo):
     }
 
 
-# --- KPI (Tabla 13 del informe) ---
+# KPI
 
 META_KPI01 = 16
 META_KPI03 = 20
@@ -346,7 +324,6 @@ META_KPI10 = 100
 
 
 def mes_de(dia):
-    """Periodo del mes calendario de `dia`, completo (aunque no haya terminado)."""
     inicio = dia.replace(day=1)
     return Periodo(inicio, inicio + relativedelta(months=1, days=-1), 'mes')
 
@@ -355,16 +332,11 @@ def nombre_mes(periodo):
     return f"{MESES_LARGOS[periodo.desde.month - 1]} {periodo.desde.year}"
 
 
-# Los KPI miden el comportamiento de los clientes: no cuentan lo que hagan las cuentas de administrador
-# (compras de prueba, carritos abandonados, clics en recomendaciones). Las ventas presenciales no tienen
-# usuario, así que siguen contando donde corresponda. Los reportes de ventas sí incluyen todo, porque es plata real.
 def _sin_admin(consulta):
     return consulta.filter(Q(usuario__isnull=True) | Q(usuario__is_staff=False))
 
 
 def kpi01(mes, linea_base):
-    """Ventas web adicionales del mes: ventas web confirmadas del mes − ventas web del último mes en la plataforma
-    anterior. Sin línea base solo se informan las ventas web."""
     ventas_web = _sin_admin(ventas_del_periodo(mes).filter(canal=Venta.CANAL_WEB)).count()
     adicionales = None if linea_base is None else ventas_web - linea_base
     return {'ventas_web': ventas_web, 'linea_base': linea_base, 'valor': adicionales, 'meta': META_KPI01,
@@ -372,8 +344,6 @@ def kpi01(mes, linea_base):
 
 
 def kpi03(hasta):
-    """Tasa de recompra: clientes con dos o más compras / clientes con al menos una compra en los 6 meses que
-    terminan en `hasta` (ventana móvil). Solo cuentan las ventas asociadas a un cliente con cuenta."""
     ventana = Periodo(hasta - relativedelta(months=6) + timedelta(days=1), hasta)
     compras_por_cliente = (ventas_del_periodo(ventana).filter(usuario__isnull=False, usuario__is_staff=False)
                            .values('usuario').annotate(compras=Count('id')).values_list('compras', flat=True))
@@ -385,9 +355,6 @@ def kpi03(hasta):
 
 
 def kpi04(mes):
-    """Conversión del carrito: carritos con pago confirmado / carritos con al menos un producto, de los carritos
-    creados en el mes. Al pagarse, lo comprado sale del carrito, así que un carrito pagado cuenta como carrito con
-    productos aunque hoy esté vacío."""
     carritos = Carrito.todos.filter(creado_en__gte=mes.inicio, creado_en__lt=mes.fin, usuario__is_staff=False)
     pagados = carritos.filter(convertido_en__isnull=False).count()
     sin_pagar_con_productos = carritos.filter(convertido_en__isnull=True, items__isnull=False).distinct().count()
@@ -398,8 +365,6 @@ def kpi04(mes):
 
 
 def kpi05(mes):
-    """Tasa de clics en productos recomendados del mes (solo clientes que autorizaron sus datos de navegación).
-    Su meta se fija sobre la línea base de los dos primeros meses de operación."""
     datos = tasa_de_clics(desde=mes.inicio, hasta=mes.fin)
     return {**datos, 'valor': datos['tasa'], 'meta': None, 'cumple': None}
 
@@ -412,7 +377,6 @@ def kpi10():
 
 
 def tablero_kpi(linea_base_kpi01, hoy=None):
-    """Los cinco KPI que se calculan con datos de la plataforma, para el mes en curso."""
     hoy = hoy or timezone.localdate()
     mes = mes_de(hoy)
     return {
@@ -426,8 +390,6 @@ def tablero_kpi(linea_base_kpi01, hoy=None):
 
 
 def historial_kpi(linea_base_kpi01, meses=6, hoy=None):
-    """Valor mensual de KPI-01, KPI-03, KPI-04 y KPI-05 en los últimos `meses` meses (revisión mensual).
-    KPI-03 se mide al cierre de cada mes (o hoy, en el mes en curso)."""
     hoy = hoy or timezone.localdate()
     filas = []
     for atras in range(meses):

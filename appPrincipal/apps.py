@@ -1,3 +1,4 @@
+"""Configuración de la app."""
 from django.apps import AppConfig
 
 
@@ -6,4 +7,4 @@ class AppprincipalConfig(AppConfig):
     name = 'appPrincipal'
 
     def ready(self):
-        from appPrincipal import recomendaciones  # noqa: F401  conecta las señales del recálculo (HU-07)
+        from appPrincipal import recomendaciones  # noqa: F401

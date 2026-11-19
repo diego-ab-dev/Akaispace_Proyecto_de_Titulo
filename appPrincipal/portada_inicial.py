@@ -1,5 +1,4 @@
-"""Contenido inicial de la portada
-"""
+"""Contenido inicial de la portada."""
 from pathlib import Path
 
 from django.conf import settings

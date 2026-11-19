@@ -1,5 +1,4 @@
-/* Base de las páginas del panel con menú lateral (templates/admin_panel/base_admin.html).
-   Las hojas de cada página no repiten estas reglas: solo agregan lo suyo. */
+/* Base de las páginas del panel con menú lateral */
 :root{--header-height: 3rem;
     --nav-width: 68px;
     --first-color: #4e84a8;
@@ -8,14 +7,12 @@
     --body-font: 'Nunito', sans-serif;
     --normal-font-size: 1rem;
     --z-fixed: 100}*,::before,::after{box-sizing: border-box}
-  
 
 body{position: relative;
     margin: var(--header-height) 0 0 0;
     padding: 0 1rem;font-family: var(--body-font);
     font-size: var(--normal-font-size);
     transition: .5s}
-
 
 a{text-decoration: none}
 
@@ -162,7 +159,6 @@ a{text-decoration: none}
             }
         }
 
-/* Con 10 secciones el menú debe caber en pantallas de notebook. */
 .l-navbar .nav_logo {
     margin-bottom: 1.25rem;
 }
@@ -171,18 +167,12 @@ a{text-decoration: none}
     margin-bottom: 0.6rem;
 }
 
-/* nombre del admin en el encabezado: una línea con "…" que no tapa el botón del menú */
 .header h4.una-linea {
     max-width: calc(100vw - 180px);
     margin: 0;
 }
 
-
-/* ============ Menú del panel responsive ============
-   escritorio y tablet (>= 768px): barra fija de íconos que al abrirse muestra los nombres y corre el contenido (como antes)
-   celular (< 768px): el menú queda oculto; el botón lo abre ENCIMA del contenido, con nombres y un fondo oscuro.
-   El contenido no se corre (en un celular quedaría aplastado). Se cierra tocando fuera o eligiendo una sección.
-   Las reglas llevan #body-pd delante para ganarle a las reglas generales de arriba. */
+/* Menú del panel responsive */
 @media (max-width: 767px) {
     #body-pd {
         margin-top: var(--header-height);
@@ -199,7 +189,6 @@ a{text-decoration: none}
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
     #body-pd .l-navbar {
-        /* siempre sobre el fondo oscuro (z-index 1025), si no el fondo lo tapa y no se puede tocar nada */
         z-index: 1030;
         left: calc(-1 * (var(--nav-width) + 170px));
         width: calc(var(--nav-width) + 156px);
@@ -210,12 +199,10 @@ a{text-decoration: none}
         left: 0;
         box-shadow: 4px 0 18px rgba(0, 0, 0, 0.25);
     }
-    /* en pantallas bajas el menú se desplaza en vez de cortar "Salir" */
     #body-pd .l-navbar .nav {
         overflow-y: auto;
         padding-bottom: 1rem;
     }
-    /* fondo oscuro detrás del menú abierto */
     #body-pd.body-pd::before {
         content: "";
         position: fixed;
@@ -229,12 +216,7 @@ a{text-decoration: none}
     }
 }
 
-
-/* ============ Tablas de listados como tarjetas (tablet y celular) ============
-   Uso: <table class="tabla-tarjetas"> y en cada <td> un data-label con el nombre de su columna;
-   la celda de acciones lleva class="celda-acciones" y data-label="".
-   Bajo 992px cada fila es una tarjeta con "etiqueta ...... valor" y los botones al final (en tablet, 2 por fila);
-   en escritorio la tabla se ve como siempre. #body-pd le gana a las reglas de tabla de cada hoja. */
+/* Tablas de listados como tarjetas */
 @media (max-width: 991px) {
     #body-pd table.tabla-tarjetas,
     #body-pd table.tabla-tarjetas tbody,
@@ -287,14 +269,12 @@ a{text-decoration: none}
     #body-pd table.tabla-tarjetas td[data-label=""]::before {
         display: none;
     }
-    /* la primera columna (ID) es el título de la tarjeta */
     #body-pd table.tabla-tarjetas td:first-child {
         font-weight: 700;
         border-bottom: 1px solid #eef0f3;
         padding-bottom: 8px;
         margin-bottom: 2px;
     }
-    /* listas dentro de una celda (productos de una venta): a la derecha y sin cortar el nombre de más */
     #body-pd table.tabla-tarjetas td ul {
         min-width: 0;
         text-align: right;
@@ -302,7 +282,6 @@ a{text-decoration: none}
     #body-pd table.tabla-tarjetas td ul li {
         justify-content: flex-end;
     }
-    /* botones de la fila: abajo, separados por una línea */
     #body-pd table.tabla-tarjetas td.celda-acciones {
         justify-content: flex-end;
         align-items: center;
@@ -312,12 +291,10 @@ a{text-decoration: none}
         padding-top: 10px;
         border-top: 1px solid #eef0f3;
     }
-    /* imágenes de producto: miniatura */
     #body-pd table.tabla-tarjetas td img {
         max-width: 64px;
         height: auto;
     }
-    /* textos recortados con "…" en escritorio: aquí pueden usar el ancho de la tarjeta */
     #body-pd table.tabla-tarjetas td .admin-prod-name,
     #body-pd table.tabla-tarjetas td .admin-devolucion-name,
     #body-pd table.tabla-tarjetas td .celda-correo {
@@ -325,16 +302,12 @@ a{text-decoration: none}
     }
 }
 
-
-/* ============ Filtros y botones de los listados (celular) ============
-   Usuarios, Productos, Ventas, Reclamos y Devoluciones: menos relleno, buscadores a lo ancho, fechas de a dos
-   y botones de acción a todo el ancho. */
+/* Filtros y botones de los listados */
 @media (max-width: 767px) {
     #body-pd .height-100 {
         height: auto;
         padding: 12px 0 !important;
     }
-    /* Usuarios y Productos: buscador + botón verde "Agregar" */
     #body-pd .product-actions {
         flex-direction: column;
         align-items: stretch;
@@ -360,11 +333,9 @@ a{text-decoration: none}
     #body-pd .height-100 > form:not(.row):not(.d-flex) > select {
         width: 100%;
     }
-    /* el botón verde "Agregar" mantiene su ancho: su ícono está posicionado para ese tamaño */
     #body-pd .product-actions .button {
         align-self: flex-start;
     }
-    /* Reclamos: filtros en fila flexible */
     #body-pd form.d-flex.flex-wrap > .form-control,
     #body-pd form.d-flex.flex-wrap > .form-select,
     #body-pd form.d-flex.flex-wrap > .btn {
@@ -376,11 +347,9 @@ a{text-decoration: none}
         width: auto !important;
         min-width: 0;
     }
-    /* Ventas y Devoluciones: las fechas de a dos por fila */
     #body-pd form.row > div:has(> input[type="date"]) {
         width: 50%;
     }
-    /* Ventas: "Aplicar" y "Registrar venta" uno bajo otro, a lo ancho */
     #body-pd form.row .col-12.d-flex {
         flex-direction: column;
         gap: 10px;
@@ -389,17 +358,14 @@ a{text-decoration: none}
         width: 100%;
         margin-left: 0 !important;
     }
-    /* paginación: botones un poco más chicos */
     #body-pd .pagination {
         flex-wrap: wrap;
         justify-content: center;
     }
 }
 
-
-/* ============ Listados en tablet (768-991px) ============ */
+/* Listados en tablet */
 @media (max-width: 991px) {
-    /* Ventas: "(x1)" de cada producto no se parte */
     #body-pd table.tabla-tarjetas td ul {
         flex: 1 1 auto;
     }
@@ -416,7 +382,6 @@ a{text-decoration: none}
 }
 
 @media (min-width: 768px) and (max-width: 991px) {
-    /* tarjetas de a 2 por fila; el botón queda abajo aunque una tarjeta sea más alta que su vecina */
     #body-pd table.tabla-tarjetas tbody {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -433,7 +398,6 @@ a{text-decoration: none}
     #body-pd table.tabla-tarjetas td.celda-acciones {
         margin-top: auto;
     }
-    /* filtros de Ventas y Devoluciones: de a dos por fila en vez de 4 columnas truncadas */
     #body-pd form.row > [class*="col-md-"] {
         flex: 0 0 auto;
         width: 50%;

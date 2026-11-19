@@ -1,4 +1,4 @@
-"""Panel de administración: ventas, estado de los envíos y registro de ventas presenciales (HU-12)."""
+"""Panel: ventas y envíos."""
 import re
 
 from django.core.paginator import Paginator
@@ -70,8 +70,6 @@ LARGO_MAXIMO_MOTIVO_ANULACION = Venta._meta.get_field('motivo_anulacion').max_le
 
 
 def _pagada_con_webpay(venta):
-    """Una venta pagada con Webpay (aprobada o ya reembolsada) no se anula: el reembolso va por el flujo de
-    devolución."""
     return PagoWebpay.objects.filter(
         venta=venta, estado__in=[PagoWebpay.APROBADO, PagoWebpay.REEMBOLSADO]
     ).exists()
@@ -99,10 +97,9 @@ def detalle_venta(request, venta_id):
 def modificar_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
     if venta.canal != Venta.CANAL_WEB:
-        return redirect('detalle_venta', venta_id=venta.id)  # las ventas presenciales no tienen envío
+        return redirect('detalle_venta', venta_id=venta.id)
     envio = getattr(venta, 'datos_envio', None)
     if venta.anulada or (envio and envio.estado == 'Anulada'):
-        # una venta anulada ya devolvió el stock y el pago: cambiarle el estado la dejaría inconsistente
         return redirect('detalle_venta', venta_id=venta.id)
 
     error = None
@@ -146,7 +143,6 @@ def modificar_venta(request, venta_id):
 
         if envio is None:
             envio = Envio.objects.create(venta=venta)
-        # solo la primera vez que llega a cada estado: si el administrador lo corrige y vuelve, no se repite el aviso
         campo_fecha = Envio.FECHAS_ESTADO.get(estado_post)
         primera_vez = campo_fecha is not None and getattr(envio, campo_fecha) is None
         envio.numero_seguimiento = tracking_post
@@ -184,7 +180,6 @@ def anular_venta(request, venta_id):
             if error:
                 return _render_detalle_venta(request, venta, error_anulacion=error, motivo_anulacion=motivo)
 
-            # las ventas presenciales (HU-12) no tienen envío: basta con anulada_en
             if venta.canal == Venta.CANAL_WEB:
                 envio = envio or Envio(venta=venta)
                 envio.estado = "Anulada"
@@ -194,7 +189,6 @@ def anular_venta(request, venta_id):
             venta.anulada_por = request.user
             venta.save(update_fields=['anulada_en', 'motivo_anulacion', 'anulada_por'])
 
-            # solo las devoluciones recibidas ya repusieron su stock
             devuelto = dict(
                 venta.devoluciones.filter(estado='Recibida')
                 .values_list('producto_id').annotate(total=Sum('cantidad'))
@@ -225,8 +219,6 @@ def _productos_para_venta():
     return Producto.objects.select_related('categoria', 'plataforma').prefetch_related('imagenes_producto')
 
 
-# HU-12: el lector de código de barras escribe el código y presiona Enter, así que un código exacto
-# devuelve solo ese producto; si no, se busca por nombre o por parte del código.
 @admin_required
 def buscar_productos_venta(request):
     texto = request.GET.get('q', '').strip()
@@ -241,7 +233,6 @@ def buscar_productos_venta(request):
 
 
 def _items_del_formulario(datos):
-    """Une las filas del formulario por producto. Lanza ValueError si una cantidad no es válida."""
     cantidades = {}
     for producto_id, cantidad in zip(datos.getlist('producto'), datos.getlist('cantidad')):
         try:
@@ -255,7 +246,6 @@ def _items_del_formulario(datos):
 
 
 def _filas_ingresadas(datos):
-    """Si la venta no se pudo registrar, vuelve a mostrar los productos que el admin había agregado."""
     filas = [(int(producto_id), cantidad) for producto_id, cantidad
              in zip(datos.getlist('producto'), datos.getlist('cantidad')) if producto_id.isdigit()]
     productos = _productos_para_venta().in_bulk([producto_id for producto_id, _ in filas])
@@ -267,7 +257,6 @@ def _filas_ingresadas(datos):
 
 @admin_required
 def registrar_venta(request):
-    """HU-12: venta hecha en la tienda física o por WhatsApp. Descuenta el stock y queda en los reportes."""
     canal = request.POST.get('canal', Venta.CANAL_TIENDA)
     metodo_pago = request.POST.get('metodo_pago', '')
     error = None

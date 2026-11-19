@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'styles/styles_prod_detalle.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_tarjetas_productos.css' %}">
 <link rel="stylesheet" href="{% static 'styles/styles_compartir.css' %}">
-{# vista previa del enlace al compartirlo (WhatsApp, Facebook, X) #}
+{# Vista previa del enlace #}
 <meta property="og:type" content="product">
 <meta property="og:site_name" content="Akai Space">
 <meta property="og:title" content="{{ producto.nombre }} - ${{ producto.precio|formato_chileno }}{% with pct=producto|descuento %}{% if pct %} ({{ pct }}% de descuento){% endif %}{% endwith %}">
@@ -18,18 +18,12 @@
 <script src="{% static 'js/catalogo_acciones.js' %}" data-url-login="{% url 'login' %}" defer></script>
 {% endblock %}
 
-
 {% block content %}
-    {# también muestra el aviso que llega por ?notif= (p. ej. al volver de dejar una opinión) #}
     <div id="notif-box" class="notif {{ request.GET.type }}">
         <span id="notif-msg">{{ request.GET.notif }}</span>
     </div>
 
-    <!--Nav de la web-->
-<!--Fin del nav-->
-
-
-<!--detalle del producto-->
+<!-- Detalle del producto -->
 <section class="ficha-producto">
     <div class="container ficha-caja rounded shadow-sm">
         <div class="row">
@@ -157,7 +151,6 @@
                                 title="Copiar enlace" aria-label="Copiar enlace">
                             <i class="fa-solid fa-link" aria-hidden="true"></i>
                         </button>
-                        {# en el celular abre el menú de compartir del teléfono (Instagram, Telegram, correo...) #}
                         <button type="button" class="compartir-btn compartir-mas" id="btn-compartir-nativo" hidden
                                 title="Más opciones" aria-label="Más opciones para compartir">
                             <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
@@ -193,7 +186,7 @@
         </div>
     </div>
 
-    <!--Seccion opiniones (se puede ocultar en Configuración del panel)-->
+    <!-- Opiniones -->
    {% if config_sitio.mostrar_opiniones %}
    <div class="container mt-4 mb-5">
         <div class="row">
@@ -213,7 +206,6 @@
                             <small class="text-muted">{{ total_opiniones }} opinion{{ total_opiniones|pluralize:"es" }}</small>
                         </div>
                     </div>
-
 
                     <div class="ratings-list">
                         {% for r in ratings %}
@@ -243,7 +235,6 @@
                 <div class="p-3 p-sm-4 rounded shadow-sm" style="background-color: #fafafa;">
                     <h5 class="fw-bold mb-4 text-dark">Comentarios Recientes</h5>
 
-                    {# invitación a opinar: solo a quien compró y recibió/retiró el producto (views/opiniones.py) #}
                     {% if estado_opinion == "opinar" %}
                     <div class="invitar-opinar mb-4">
                         <i class="fas fa-box-open invitar-opinar-icono" aria-hidden="true"></i>
@@ -355,15 +346,10 @@
     {% endif %}
 </section>
 
-
-
-
 <script>
-    // funcion para cambiar imagen
     function changeImage(element, newSrc) {
         const mainImage = document.querySelector('.slide');
 
-        // con skeleton si la nueva imagen aún no está en caché, con fundido si ya lo está (js/skeleton_imagenes.js)
         if (window.cambiarImagenConSkeleton) {
             window.cambiarImagenConSkeleton(mainImage, newSrc, mainImage.closest('.zoom-container'));
         } else {
@@ -379,7 +365,6 @@
 
     document.addEventListener('DOMContentLoaded', function() {
 
-        // miniatura inicial
         const firstThumb = document.querySelector('.option img');
         if (firstThumb) {
             firstThumb.classList.add('active-thumb');
@@ -388,7 +373,6 @@
         const notifBox = document.getElementById('notif-box');
         const notifMsg = document.getElementById('notif-msg');
 
-        // aviso que vino en la URL: se muestra y se quita de la barra de direcciones para que no se repita al recargar
         if (notifBox && notifMsg && notifMsg.textContent.trim() !== '') {
             notifBox.classList.add('show');
             setTimeout(() => { notifBox.classList.remove('show'); }, 3000);
@@ -398,7 +382,6 @@
             window.history.replaceState({}, '', url);
         }
 
-        // descripción
         const descContent = document.getElementById('desc-content');
         const descFade = document.getElementById('desc-fade');
         const btnToggle = document.getElementById('btn-toggle-desc');
@@ -424,7 +407,6 @@
             }
         }
 
-        // compartir: copiar enlace y menú nativo del celular (si el navegador lo permite)
         const compartir = document.querySelector('.compartir');
         if (compartir) {
             const datos = { title: compartir.dataset.titulo, text: compartir.dataset.texto, url: compartir.dataset.url };
@@ -449,7 +431,6 @@
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(datos.url).then(copiado, () => avisar('No se pudo copiar el enlace.', 'error'));
                 } else {
-                    // navegadores sin la API del portapapeles (o sitio sin https)
                     const campo = document.createElement('textarea');
                     campo.value = datos.url;
                     campo.setAttribute('readonly', '');
@@ -467,12 +448,11 @@
             if (navigator.share) {
                 btnNativo.hidden = false;
                 btnNativo.addEventListener('click', function () {
-                    navigator.share(datos).catch(() => {});  // si el usuario cierra el menú, no pasa nada
+                    navigator.share(datos).catch(() => {});
                 });
             }
         }
 
-        //  zoom de Imagen
         const zoomContainer = document.querySelector('.zoom-container');
         const zoomImage = document.querySelector('.zoom-image');
 

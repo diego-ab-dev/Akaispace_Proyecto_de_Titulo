@@ -1,5 +1,4 @@
-"""Panel de administración: compras de mercadería a proveedores (HU-10, reporte de compras).
-Al marcar una compra como recibida se suma al stock y el costo de cada producto pasa a ser el de esa compra."""
+"""Panel: compras a proveedores."""
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -45,7 +44,6 @@ def _numero(valor, minimo, mensaje):
 
 
 def _lineas_del_formulario(datos):
-    """Une las filas del formulario por producto: {producto_id: (cantidad, costo_unitario)}."""
     lineas = {}
     for producto_id, cantidad, costo in zip(datos.getlist('producto'), datos.getlist('cantidad'),
                                             datos.getlist('costo_unitario')):
@@ -82,7 +80,6 @@ def _proveedor(datos):
 
 
 def crear_compra(datos):
-    """Registra la compra con su detalle. Si `recibida` viene marcado, suma al stock de inmediato."""
     try:
         fecha = parse_date(datos.get('fecha') or '') or timezone.localdate()
     except ValueError:
@@ -109,7 +106,6 @@ def crear_compra(datos):
 
 
 def _filas_ingresadas(datos):
-    """Si la compra no se pudo registrar, vuelve a mostrar los productos que se habían agregado."""
     filas = [(int(producto_id), cantidad, costo) for producto_id, cantidad, costo
              in zip(datos.getlist('producto'), datos.getlist('cantidad'), datos.getlist('costo_unitario'))
              if producto_id.isdigit()]

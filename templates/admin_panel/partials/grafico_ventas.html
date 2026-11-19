@@ -1,8 +1,4 @@
 {% load custom_filters %}
-{% comment %}
-Gráfico de ventas por canal (HU-10). Recibe `serie` (reportes.serie_ventas), e `id_grafico`.
-Incluye la leyenda y una tabla con los mismos datos, para no depender solo del color.
-{% endcomment %}
 <ul class="leyenda" aria-label="Canales">
     {% for canal in serie.series %}
     <li><span class="marca marca--{{ canal.clave }}"></span>{{ canal.nombre }}</li>

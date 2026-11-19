@@ -1,4 +1,4 @@
-"""Solicitudes de devolución del cliente."""
+"""Devoluciones del cliente."""
 from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required

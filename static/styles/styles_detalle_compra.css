@@ -150,7 +150,6 @@ body {
     z-index: 0;
 }
 
-
 .step-item {
     position: relative;
     z-index: 2;
@@ -174,7 +173,6 @@ body {
     z-index: 3;
 }
 
-
 .step-item.active .step-icon {
     background-color: #D4AF37;
     border-color: #D4AF37;
@@ -185,7 +183,6 @@ body {
     color: #D4AF37;
 }
 
-
 .step-item.completed .step-icon {
     background-color: #E5C97A; 
     border-color: #E5C97A;
@@ -195,7 +192,6 @@ body {
 .step-item.completed .step-label {
     color: #E5C97A;
 }
-
 
 .step-label {
     font-weight: 800;
@@ -253,7 +249,6 @@ body {
 }
 .payment-header { font-weight: 700; font-size: 0.9rem; margin-bottom: 5px; }
 .payment-info { display: flex; justify-content: space-between; align-items: center; color: #666; font-size: 0.9rem;}
-
 
 .button {
   --width: 100%;
@@ -348,7 +343,6 @@ body {
     color: white; 
 }
 
-
 #notif-box {
     position: fixed;
     top: 20px;
@@ -401,7 +395,6 @@ body {
     background: #888;
 }
 
-
 .product-left {
     display: flex;
     align-items: center;
@@ -422,7 +415,6 @@ body {
     margin-top: 3px;
 }
 
-
 .address-text-limit {
     display: -webkit-box;
     -webkit-line-clamp: 3;        
@@ -440,8 +432,6 @@ body {
     color: #333;
 }
 
-
-/* Aviso de retiro en tienda (HU-08) */
 .aviso-retiro {
     padding: 14px 16px;
     border: 1px solid #e0e0e0;
@@ -469,18 +459,14 @@ body {
     color: #1C253B;
 }
 
-/* nombres de producto sin espacios: se cortan dentro de sus 2 líneas en vez de salirse */
 .product-name {
     overflow-wrap: anywhere;
 }
 
-/* en celular el nombre del producto no puede ser más ancho que su fila */
 .product-name {
     max-width: min(300px, 100%);
 }
 
-/* si no hay espacio (celular o nombres largos), los botones "Opinar" / "Devolver" bajan a otra línea
-   en vez de aplastar la columna del producto */
 .product-item {
     flex-wrap: wrap;
     gap: 12px;
@@ -490,23 +476,17 @@ body {
     flex: 1 1 220px;
 }
 
-
-/* la etiqueta "Dirección:" / "Retiro en:" no se parte cuando la dirección es larga */
 .address-details .d-flex > strong {
     flex-shrink: 0;
 }
 
-/* datos del pago uno bajo otro (método, tarjeta, orden): lado a lado quedaban en columnas muy angostas */
 .payment-info {
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
 }
 
-/* ============ Detalle de compra responsive ============
-   escritorio (>= 992px): productos y envío a la izquierda, resumen en la barra lateral derecha
-   tablet (768-991px): el resumen baja como una tarjeta más, debajo del envío
-   celular (< 768px): además la línea de tiempo del envío pasa a ser vertical y los botones van a lo ancho */
+/* Detalle de compra responsive */
 @media (max-width: 991px) {
     .main-container {
         flex-direction: column;
@@ -561,7 +541,6 @@ body {
     .product-name {
         font-size: 1rem;
     }
-    /* sin scroll interno: la lista de productos crece con la página */
     .productos-scroll {
         max-height: none;
         overflow: visible;
@@ -571,7 +550,6 @@ body {
         width: 100%;
         gap: 10px;
     }
-    /* compras no entregadas: sin botones, el contenedor vacío no deja un hueco */
     .product-actions:not(:has(*)) {
         display: none;
     }
@@ -586,9 +564,6 @@ body {
         font-size: 0.9rem;
     }
 
-    /* línea de tiempo vertical:  (o) En Preparación
-                                   |   12/11/2026 10:30
-                                  (o) Enviado ...       */
     .shipping-timeline {
         flex-direction: column;
         align-items: stretch;

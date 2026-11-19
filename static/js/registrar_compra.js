@@ -1,5 +1,4 @@
-// Panel > Compras > Registrar compra (HU-10): buscar productos por nombre o código de barras y armar la compra.
-// El servidor vuelve a validar todo al registrar.
+// Panel > Compras > Registrar compra
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("form-compra");
   const buscador = document.getElementById("buscar-producto");
@@ -11,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const boton = document.getElementById("btn-registrar");
   const urlBuscar = form.dataset.urlBuscar;
 
-  const items = new Map(); // id del producto -> { cantidad, costo, subtotal }
+  const items = new Map();
   const pesos = (monto) => "$" + monto.toLocaleString("es-CL");
   const entero = (input) => parseInt(input.value, 10) || 0;
 
@@ -161,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const respuesta = await fetch(`${urlBuscar}?q=${encodeURIComponent(texto)}`);
       const datos = await respuesta.json();
-      return numero === ultimaBusqueda ? datos.productos : null; // descarta respuestas de búsquedas anteriores
+      return numero === ultimaBusqueda ? datos.productos : null;
     } catch (error) {
       aviso.textContent = "No se pudo buscar. Recarga la página e inténtalo de nuevo.";
       return null;
@@ -182,7 +181,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 250);
   });
 
-  // El lector de código de barras escribe el código y presiona Enter: si hay un solo producto, se agrega.
   buscador.addEventListener("keydown", async (evento) => {
     if (evento.key === "Escape") cerrarResultados();
     if (evento.key !== "Enter") return;
@@ -211,10 +209,9 @@ document.addEventListener("DOMContentLoaded", function () {
       evento.preventDefault();
       return;
     }
-    boton.disabled = true; // evita registrar dos veces con doble clic
+    boton.disabled = true;
   });
 
-  // si el servidor rechazó la compra, se vuelven a mostrar los productos que se habían agregado
   JSON.parse(document.getElementById("items-ingresados").textContent).forEach((producto) => {
     if (!items.has(producto.id)) crearFila(producto, producto.cantidad, producto.costo);
   });

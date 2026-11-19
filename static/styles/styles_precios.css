@@ -1,4 +1,4 @@
-/* precios con oferta (partials/precio.html): precio anterior tachado, precio nuevo y % de descuento */
+/* Precios con oferta */
 :root {
     --oferta-rojo: #E0313E;
     --oferta-rojo-suave: #FDECEE;
@@ -46,12 +46,10 @@
     box-shadow: 0 3px 8px rgba(224, 49, 62, 0.25);
 }
 
-/* centrado cuando la tarjeta centra el texto */
 .text-center .precio {
     align-items: center;
 }
 
-/* ficha del producto: "Ahorras $X" */
 .precio-ahorro {
     display: inline-flex;
     align-items: center;
@@ -65,7 +63,6 @@
     font-weight: 600;
 }
 
-/* insignia sobre la foto en las tarjetas del catálogo (la de "Nuevo"/"¡Últimos!" va a la izquierda) */
 .badge-oferta {
     position: absolute;
     top: 0;
@@ -79,7 +76,6 @@
     font-weight: 800;
 }
 
-/* panel: casilla "Mostrar como oferta" en Editar producto */
 .oferta-box {
     margin-top: 10px;
     padding: 12px 14px;
@@ -122,7 +118,6 @@
     font-size: 0.8rem;
 }
 
-/* panel: etiqueta en la lista de productos */
 .etiqueta-oferta {
     display: inline-block;
     margin-left: 6px;

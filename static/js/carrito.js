@@ -1,12 +1,8 @@
-// Carrito (templates/carrito.html): cantidades, eliminar productos, datos de envío y resumen del pedido.
-// Script clásico (no módulo): el HTML llama a eliminarItem, abrirModal, cargarCiudades, guardarEnvio y cerrarModal.
-// Lo que viene del servidor llega en los data- de su <script> y en los json_script regiones-ciudades y opciones-envio.
+// Carrito
 const datosCarrito = document.currentScript.dataset;
 
-// lista de regiones y ciudades para el modal (viene de appPrincipal/constants.py)
 const regionesCiudades = JSON.parse(document.getElementById('regiones-ciudades').textContent);
 
-// la región y la ciudad pueden quedar vacías: solo hacen falta para los despachos
 function cargarRegiones() {
     const selectRegion = document.getElementById("input-region");
     selectRegion.innerHTML = '<option value="">Selecciona una región</option>';
@@ -25,7 +21,6 @@ function cargarCiudades() {
     });
 }
 
-// formato de pesos chilenos para los valores numericos
 function formatoChileno(valor) {
     return new Intl.NumberFormat('es-CL', {
         style: 'currency',
@@ -34,8 +29,7 @@ function formatoChileno(valor) {
     }).format(valor);
 }
 
-// ---- opciones de entrega (HU-08) ----
-// precios y reglas vienen de appPrincipal/envios.py; el servidor vuelve a calcular todo al pagar
+// Opciones de entrega
 const opcionesEnvio = JSON.parse(document.getElementById('opciones-envio').textContent);
 const CIUDAD_TIENDA = datosCarrito.ciudadTienda;
 let subtotalActual = Number(datosCarrito.subtotal);
@@ -62,10 +56,9 @@ function disponibleEn(opcion, ciudad) {
     return true;
 }
 
-// muestra solo las opciones que sirven para la ciudad del cliente y recalcula envío y total
 function actualizarEntrega() {
     const ciudadElem = document.getElementById('envio-ciudad');
-    if (!ciudadElem) return;  // carrito vacío
+    if (!ciudadElem) return;
     const ciudad = ciudadElem.innerText.trim();
 
     document.querySelectorAll('.entrega-opcion').forEach(label => {
@@ -111,10 +104,7 @@ setTimeout(() => {
 }, 3000);
 }
 
-// ---- contadores y totales ----
-// Se calculan con lo que se ve en pantalla (cantidad de cada fila × su precio), así cambian al
-// instante con cada clic y nunca quedan desfasados si una respuesta del servidor llega tarde.
-// El servidor vuelve a calcular todo al pagar.
+// Contadores y totales
 function textoItems(cantidad) {
     return cantidad + (cantidad === 1 ? ' ítem' : ' ítems');
 }
@@ -140,10 +130,8 @@ function recalcularResumen() {
     actualizarEntrega();
 }
 
-// ---- cantidades del carrito ----
-// La cantidad cambia solo con los botones - / + (no se escribe), así que nunca pasa del stock.
-// Se guarda en el servidor medio segundo después del último clic: varios clics seguidos son un solo guardado.
-const guardadosPendientes = new Map();  // producto_id -> promesa del guardado en curso
+// Cantidades del carrito
+const guardadosPendientes = new Map();
 const temporizadores = new Map();
 
 function stepperDe(input) {
@@ -154,18 +142,17 @@ function mostrarCantidad(input, cantidad) {
     input.value = cantidad;
     const stepper = stepperDe(input);
     stepper.querySelector('.cantidad-valor').textContent = cantidad;
-    // el "-" se desactiva en 1 (para sacar el producto está la ✖) y el "+" al llegar al stock
     stepper.querySelector('[data-paso="-1"]').disabled = cantidad <= 1;
     stepper.querySelector('[data-paso="1"]').disabled = cantidad >= parseInt(input.dataset.stock, 10);
 }
 
 function marcarError(input, mensaje) {
     const elem = document.getElementById(`error-${input.dataset.item}`);
-    if (elem) elem.textContent = mensaje;  // la fila pudo haberse eliminado mientras tanto
+    if (elem) elem.textContent = mensaje;
 }
 
 function volverACantidadGuardada(input, mensaje) {
-    if (!input.isConnected) return;  // la fila se eliminó mientras tanto
+    if (!input.isConnected) return;
     mostrarCantidad(input, parseInt(input.dataset.confirmada, 10));
     marcarError(input, mensaje);
     recalcularResumen();
@@ -186,7 +173,6 @@ function actualizarCantidad(input) {
             input.dataset.confirmada = formData.get('cantidad');
             return true;
         }
-        // el servidor la rechazó (por ejemplo el stock bajó mientras tanto): se vuelve a la guardada
         volverACantidadGuardada(input, data.error || 'No se pudo actualizar la cantidad.');
         return false;
     })
@@ -205,13 +191,12 @@ function actualizarCantidad(input) {
     return guardado;
 }
 
-// guarda ya (sin esperar el temporizador) si hay un cambio sin guardar
 function guardarAhora(input) {
     clearTimeout(temporizadores.get(input.dataset.item));
     temporizadores.delete(input.dataset.item);
     const pendiente = guardadosPendientes.get(input.dataset.item);
     if (pendiente && input.dataset.enviando === input.value) {
-        return pendiente;  // ese mismo valor ya se está guardando
+        return pendiente;
     }
     if (input.value !== input.dataset.confirmada) {
         input.dataset.enviando = input.value;
@@ -228,7 +213,6 @@ document.querySelectorAll('.btn-cantidad').forEach(boton => {
     boton.addEventListener('click', function () {
         const input = this.closest('form').querySelector('.input-cantidad');
         const stock = parseInt(input.dataset.stock, 10);
-        // nunca más del stock ni menos de 1 (si el stock bajó a 0, el servidor rechaza y avisa)
         const nueva = Math.max(Math.min(parseInt(input.value, 10) + parseInt(this.dataset.paso, 10), stock), 1);
         mostrarCantidad(input, nueva);
         marcarError(input, '');
@@ -238,12 +222,10 @@ document.querySelectorAll('.btn-cantidad').forEach(boton => {
     });
 });
 
-// "Proceder a la compra" espera a que se guarden las cantidades y no avanza si alguna falló
 const formProceder = document.getElementById('form-proceder');
 if (formProceder) {
     formProceder.addEventListener('submit', function (e) {
         e.preventDefault();
-        // sin RUT o teléfono no se puede comprar (el servidor también lo revisa): se abren "Tus datos"
         const datosCompra = document.getElementById('datos-compra');
         if (datosCompra && (!datosCompra.dataset.tieneRut || !datosCompra.dataset.tieneTelefono)) {
             abrirModal('Completa tu RUT y tu teléfono para continuar con la compra.');
@@ -264,11 +246,9 @@ if (formProceder) {
     });
 }
 
-// ---- eliminar productos: de a uno (✖), los seleccionados o vaciar el carrito ----
-// el token se lee antes de borrar filas, porque cada fila trae su propio csrfmiddlewaretoken
+// Eliminar productos
 const csrfCarrito = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
 
-// deja la página igual a la de un carrito que ya estaba vacío al entrar (con su título y contador)
 function mostrarCarritoVacio() {
     document.querySelector('.acciones-carrito')?.remove();
     const lista = document.querySelector('.products-scroll-container');
@@ -285,10 +265,8 @@ function mostrarCarritoVacio() {
     }
 }
 
-// saca del carrito (en pantalla) los ítems que el servidor confirmó como eliminados
 function quitarItems(ids) {
     ids.forEach(id => {
-        // si había un cambio de cantidad esperando para guardarse, ya no se envía
         clearTimeout(temporizadores.get(String(id)));
         temporizadores.delete(String(id));
         const row = document.getElementById(`item-${id}`);
@@ -321,12 +299,10 @@ function enviarEliminacion(url, ids) {
     });
 }
 
-// eliminar un item del carrito y que se actualice en tiempo real
 function eliminarItem(itemId, element) {
     enviarEliminacion(element.getAttribute('data-url'), [itemId]);
 }
 
-// selección múltiple
 function actualizarSeleccion() {
     const checks = document.querySelectorAll('.check-item');
     const marcados = document.querySelectorAll('.check-item:checked').length;
@@ -356,7 +332,6 @@ document.querySelectorAll('.check-item').forEach(check => {
     check.addEventListener('change', actualizarSeleccion);
 });
 
-// confirmación antes de borrar varios productos
 const modalConfirmarElem = document.getElementById('modal-confirmar-eliminar');
 const modalConfirmar = modalConfirmarElem ? new bootstrap.Modal(modalConfirmarElem) : null;
 let accionPendiente = null;
@@ -371,7 +346,6 @@ function confirmarEliminacion(texto, accion) {
     modalConfirmar.show();
 }
 
-// al abrir el modal se esconde el tooltip del ícono, para que no quede flotando
 modalConfirmarElem?.addEventListener('show.bs.modal', () => {
     document.querySelectorAll('.btn-icono-carrito').forEach(boton => bootstrap.Tooltip.getInstance(boton)?.hide());
 });
@@ -402,9 +376,7 @@ document.getElementById('btn-vaciar-carrito')?.addEventListener('click', functio
 
 actualizarSeleccion();
 
-// ---- "Complementa tu compra": agregar una recomendación sin salir del carrito ----
-// Primero se guardan las cantidades pendientes y después se recarga, para que la lista, los totales y
-// las recomendaciones (que ya no deben incluir lo agregado) queden al día.
+// "Complementa tu compra"
 document.querySelectorAll('.reco-agregar').forEach(boton => {
     boton.addEventListener('click', function () {
         const datos = new FormData();
@@ -487,12 +459,10 @@ document.querySelectorAll('.reco-agregar').forEach(boton => {
 
     actualizarEntrega();
 
-    // cerrar modal
     function cerrarModal() {
         document.getElementById("modal-envio").style.display = "none";
     }
 
-    // guardar datos de envio cambiados
     function guardarEnvio() {
         limpiarErroresModal();
         const data = new FormData();
@@ -516,7 +486,6 @@ document.querySelectorAll('.reco-agregar').forEach(boton => {
                 document.getElementById("envio-region").innerText = data.region;
                 document.getElementById("envio-ciudad").innerText = data.ciudad;
                 document.getElementById("envio-direccion").innerText = data.direccion;
-                // el RUT ya quedó guardado: en adelante se muestra fijo
                 if (inputRut && data.rut) {
                     inputRut.value = data.rut;
                     inputRut.disabled = true;
@@ -527,7 +496,7 @@ document.querySelectorAll('.reco-agregar').forEach(boton => {
                 datosCompra.dataset.tieneTelefono = data.telefono ? '1' : '';
                 ['falta-rut', 'falta-telefono', 'btn-completar-datos'].forEach(id => document.getElementById(id)?.remove());
                 cerrarModal();
-                actualizarEntrega();  // al cambiar de ciudad cambian las opciones de entrega
+                actualizarEntrega();
             } else {
                 const errores = data.errors || {};
                 let porCampo = false;

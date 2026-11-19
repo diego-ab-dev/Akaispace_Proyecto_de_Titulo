@@ -1,7 +1,4 @@
-/* Navbar de la tienda (templates/partials/navbar.html). Es el único lugar con sus estilos: base_tienda.html
-   lo carga después del CSS de cada página y todo va bajo .nav-tienda, así las reglas generales de una página
-   (a, img, input, form, button, * ...) no lo deforman.
-   Tamaños: escritorio > 1200px | menú lateral <= 1200px | sin saludo/login arriba <= 800px | celular <= 480px */
+/* Navbar de la tienda */
 
 .nav-tienda {
   --nav-alto: 70px;
@@ -19,7 +16,6 @@
   line-height: 1.5;
 }
 
-/* neutraliza reglas generales de las páginas */
 .nav-tienda *,
 .nav-tienda *::before,
 .nav-tienda *::after {
@@ -56,7 +52,7 @@
   position: relative;
 }
 
-/* ---------- logo ---------- */
+/* Logo */
 .nav-tienda .logo {
   flex-shrink: 0;
   display: flex;
@@ -84,7 +80,7 @@
   margin: 0;
 }
 
-/* ---------- links ---------- */
+/* Links */
 .nav-tienda .nav-links {
   height: 100%;
   line-height: var(--nav-alto);
@@ -126,7 +122,6 @@
   transition: transform 0.3s ease;
 }
 
-/* megamenú de categorías */
 .nav-tienda .links li .mega-menu-box {
   display: none;
   position: absolute;
@@ -222,7 +217,7 @@
   font-size: 13px;
 }
 
-/* ---------- botón Iniciar Sesión ---------- */
+/* Botón Iniciar Sesión */
 .nav-tienda button {
   --primary-color: #FFFFFF;
   --secondary-color: #000000;
@@ -285,7 +280,7 @@
   right: 0;
 }
 
-/* ---------- saludo del usuario con su menú ---------- */
+/* Saludo del usuario con su menú */
 .nav-tienda .login-desktop {
   display: flex;
   align-items: center;
@@ -408,7 +403,7 @@
   background-color: #4e84a8;
 }
 
-/* ---------- favoritos y carrito ---------- */
+/* Favoritos y carrito */
 .nav-tienda .icons {
   display: flex;
   align-items: center;
@@ -427,7 +422,7 @@
   color: var(--nav-acento);
 }
 
-/* ---------- buscador ---------- */
+/* Buscador */
 .nav-tienda .search-box {
   position: relative;
   height: 40px;
@@ -489,14 +484,13 @@
   font-size: 16px;
 }
 
-/* ---------- menú lateral (solo en pantallas chicas) ---------- */
+/* Menú lateral */
 .nav-tienda .icono-menu,
 .nav-tienda .nav-links .sidebar-logo,
 .nav-tienda .sidebar-login {
   display: none;
 }
 
-/* en escritorio el megamenú se abre al pasar el mouse */
 @media (min-width: 1201px) {
   .nav-tienda .links > li:hover > .mega-menu-box,
   .nav-tienda .links > li:focus-within > .mega-menu-box {
@@ -666,7 +660,6 @@
   .nav-tienda .search-box {
     width: 32px;
   }
-  /* el buscador ocupa el ancho de la pantalla (con 16px a cada lado) */
   .nav-tienda .search-box .input-box {
     position: fixed;
     left: 16px;
@@ -698,9 +691,7 @@
   }
 }
 
-/* ---------- barra de anuncio (Configuración del panel) ----------
-   La de .nav-tienda es la visible; la copia --espacio queda en el flujo de la página, invisible, y empuja el
-   contenido lo mismo que mide la barra (aunque el texto ocupe dos líneas en el celular). */
+/* Barra de anuncio */
 .anuncio-barra {
   box-sizing: border-box;
   display: flex;
@@ -725,7 +716,6 @@
   margin-right: 8px;
   color: #00D2D5;
 }
-/* .nav-tienda delante: le gana a .nav-tienda button (el estilo del botón Iniciar Sesión) */
 .nav-tienda .anuncio-cerrar,
 .anuncio-barra--espacio .anuncio-cerrar {
   position: absolute;

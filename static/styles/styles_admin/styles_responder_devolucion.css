@@ -133,7 +133,6 @@ body {
     color: #4E84A8; 
 }
 
-
 textarea {
     width: 100%;
     border: 1px solid #d1d5db;
@@ -177,7 +176,6 @@ textarea:focus {
 .form-check-input:checked + i {
     transform: scale(1.2);
 }
-
 
 .btn-row {
     display: flex;
@@ -262,9 +260,7 @@ textarea:focus {
     }
 }
 
-/* ============ Responder devolución responsive ============
-   en celular el título deja de flotar sobre la tarjeta (en 2 líneas quedaba cortado arriba),
-   la tarjeta tiene menos relleno y Aprobar / Rechazar caben lado a lado */
+/* Responder devolución responsive */
 @media (max-width: 767px) {
     body {
         padding: 16px 12px 40px;

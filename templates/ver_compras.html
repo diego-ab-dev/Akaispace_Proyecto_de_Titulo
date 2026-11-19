@@ -52,7 +52,6 @@
                 <tbody>
                     {% for compra in page_obj %}
                     <tr>
-                        {# data-label: en celular la tabla se muestra como tarjetas y cada dato lleva su etiqueta #}
                         <td class="text-center fw-bold celda-id">{{ compra.id }}</td>
                         <td class="fw-bold" data-label="Total">${{ compra.total|formato_chileno }}</td>
                         <td data-label="Fecha">{{ compra.fecha|date:"d/m/Y" }}</td>
@@ -90,7 +89,7 @@
                 </tbody>
             </table>
         </div>
-        <!-- Paginacion -->
+        <!-- Paginación -->
         <div class="pagination-wrapper">
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}&orden={{ orden }}" class="page-nav">

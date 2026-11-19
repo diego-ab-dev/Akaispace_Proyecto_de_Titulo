@@ -1,14 +1,10 @@
+"""Admin de Django."""
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.html import format_html
 from .models import Categoria, Genero, Opinion, PagoWebpay, Plataforma, Producto, Reclamo, Usuario, Venta
 
-# Configuración del admin de Django (/admin/), disponible solo con DEBUG=True (ver Akaispace/urls.py).
-# No es el panel de la tienda: ese es /admin-panel/ (appPrincipal/views/panel/).
-# Las tablas "ItemCarritoProducto" y "Carrito" no aparecen en el panel de admin ya que no tiene mucho sentido que las pueda ver.
-# Las tablas con clave primaria compuesta (detalle_venta, item_carrito, detalle_compra, favorito, detalle_pago_webpay y
-# similitud_producto) no se registran: el admin de Django no las admite.
 
 class ProductoAdmin(admin.ModelAdmin):
     list_display = ("codigo_de_barra", "nombre", "precio", "stock", "imagen_display", "categoria", "plataforma", "genero",
@@ -50,7 +46,6 @@ class UsuarioAdmin(UserAdmin):
     search_fields = ("nombre", "email", "rut", "telefono")
     ordering = ("email",)
     list_per_page = 20
-    # se elimina desde el panel o el perfil (anonimiza); marcarlo aquí dejaría los datos personales
     readonly_fields = ("is_deleted", "deleted_at")
 
     fieldsets = (
@@ -82,7 +77,6 @@ class VentaAdmin(admin.ModelAdmin):
     def estado_envio(self, obj):
         envio = getattr(obj, 'datos_envio', None)
         return envio.estado if envio else '-'
-
 
 
 class ReclamoAdmin(admin.ModelAdmin):

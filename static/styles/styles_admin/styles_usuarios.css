@@ -1,11 +1,8 @@
-/* Lo común del panel (menú lateral, encabezado, variables) está en panel.css. */
 
 .height-100{
     padding: 2rem;
     background-color: #EEF1F4;
 }
-
-
 
 form {
     display: flex;
@@ -32,7 +29,6 @@ form select {
     background-color: #344266;
     color: #ffffff;
 }
-
 
 table {
     width: 100%;
@@ -73,15 +69,10 @@ table td a:hover {
     color: #346480;
 }
 
-
-
-
-
 .product-actions {
     display: flex;
     justify-content: space-between;
 }
-
 
 .button {
   position: relative;
@@ -141,7 +132,6 @@ table td a:hover {
   border: 1px solid #2e8644;
 }
 
-
 .btn-more {
     color: #1C253B;
 }
@@ -150,8 +140,6 @@ table td a:hover {
     color: #344266;
 }
 
-
-/*Paginacion*/
 .pagination-wrapper {
     margin-top: 40px;
     margin-bottom: 60px; 
@@ -193,28 +181,23 @@ table td a:hover {
     cursor: default;
 }
 
-
 .page-item:first-child .page-link, 
 .page-item:last-child .page-link {
     border-radius: 50% !important;
 }
-/* en pantallas angostas los filtros y el botón "Agregar Usuario" bajan a otra línea en vez de salirse */
 .product-actions {
     flex-wrap: wrap;
     gap: 10px;
 }
 
-/* correo en la tabla de usuarios: una línea con "…" (el completo está en el title y en el detalle) */
 .celda-correo {
     max-width: 240px;
 }
 
-/* el buscador también baja de línea en pantallas angostas */
 .search-form {
     flex-wrap: wrap;
 }
 
-/* buscador de usuarios: sus campos bajan de línea en pantallas angostas */
 .product-actions form {
     display: flex;
     flex-wrap: wrap;

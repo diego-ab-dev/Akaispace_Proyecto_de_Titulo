@@ -1,7 +1,4 @@
-"""Checkout: pago con Webpay Plus, resultado del pago y comprobante de compra.
-
-La lógica del pago está en appPrincipal/pagos.py; aquí solo están las páginas.
-"""
+"""Pago con Webpay Plus y comprobante de compra."""
 import logging
 from urllib.parse import urlencode
 
@@ -34,7 +31,6 @@ def seleccionar_pago(request):
     if 'envio' in request.GET:
         request.session['metodo_envio'] = request.GET['envio']
     metodo_envio = request.session.get('metodo_envio')
-    # se valida en el servidor aunque el carrito ya lo revise: nadie paga sin RUT, teléfono ni dirección de despacho
     error_datos = pagos.validar_datos_comprador(usuario) or envios.validar_eleccion(metodo_envio, usuario)
     if error_datos:
         return _volver_al_carrito(error_datos)
@@ -119,7 +115,6 @@ def resultado_pago(request, pago_id):
     return render(request, 'pago_fallido.html', {'pago': pago})
 
 
-# comprobante de compra NO tributario: no reemplaza a la boleta electrónica del SII
 @login_required
 def ver_comprobante(request, venta_id):
     ventas = Venta.objects.all() if request.user.is_staff else Venta.objects.filter(usuario=request.user)

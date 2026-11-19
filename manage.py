@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""Utilidad de línea de comandos de Django."""
 import os
 import sys
 
 
 def main():
-    """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Akaispace.settings')
     try:
         from django.core.management import execute_from_command_line

@@ -1,8 +1,4 @@
-// Catálogo (menú, categoría, búsqueda y ficha de producto): agregar al carrito y marcar favorito sin recargar.
-// Uso: <script src="{% static 'js/catalogo_acciones.js' %}" data-url-login="{% url 'login' %}" defer></script>
-// - Formularios .form-agregar y .form-favorito: se envían con fetch y la vista responde JSON
-//   {success, message} o {error}; error 'not_logged_in' lleva al login y vuelve a esta página.
-// - El aviso usa el #notif-box de la página (clases notif show success | error | favorite).
+// Catálogo
 (function () {
     'use strict';
 
@@ -41,7 +37,7 @@
                 } else if (data.error === 'not_logged_in') {
                     irAlLogin();
                 } else {
-                    avisar(data.error, 'error');  // sin stock suficiente o cantidad inválida
+                    avisar(data.error, 'error');
                 }
             }).catch((error) => console.error('Error carrito:', error));
         }

@@ -1,6 +1,4 @@
-/* Páginas de "Mi cuenta" con navbar y footer (templates/base_cuenta.html).
-   Varias hojas de estas páginas centraban todo el body con flex y height: 100vh; aquí el body vuelve a ser
-   normal (navbar arriba, contenido, footer abajo) y el centrado pasa al <main> cuando la página lo pide. */
+/* Páginas de "Mi cuenta" con navbar y footer */
 body.pagina-cuenta {
   display: block !important;
   height: auto !important;

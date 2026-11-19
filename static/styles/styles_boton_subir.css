@@ -1,5 +1,4 @@
-/* Botón "volver arriba" (templates/partials/boton_subir.html). Mismo azul del navbar con el acento cian:
-   el anillo se llena según cuánto se ha bajado en la página. */
+/* Botón "volver arriba" */
 .boton-subir {
   --subir-tam: 52px;
   --subir-fondo: #1C253B;
@@ -58,7 +57,6 @@
   transition: transform 0.2s ease;
 }
 
-/* anillo de progreso */
 .boton-subir-anillo {
   position: absolute;
   inset: 0;
@@ -85,7 +83,6 @@
   transition: stroke-dashoffset 0.1s linear;
 }
 
-/* celular: más chico y más pegado a la esquina */
 @media (max-width: 575px) {
   .boton-subir {
     --subir-tam: 44px;

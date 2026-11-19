@@ -1,8 +1,5 @@
-/* Tarjetas de producto del catálogo (menú, categoría y búsqueda): tamaño adaptable a la pantalla.
-   Se carga después del CSS de cada página. Grilla en las plantillas: col-6 col-md-4 col-xl-3
-   = 2 productos por fila en celular, 3 en tablet y 4 en escritorio. */
+/* Tarjetas de producto del catálogo */
 
-/* la imagen mantiene la proporción de una carátula en vez de medir siempre 400 px de alto */
 .section-products .single-product .part-1 {
   height: auto;
   max-height: none;
@@ -17,7 +14,6 @@
   overflow-wrap: anywhere;
 }
 
-/* en pantallas táctiles no hay "hover": la tarjeta no salta al tocarla */
 @media (hover: none) {
   .section-products .single-product:hover {
     transform: none;
@@ -25,7 +21,6 @@
   }
 }
 
-/* tablet */
 @media (max-width: 991px) {
   .section-products .single-product {
     padding: 14px;
@@ -43,8 +38,6 @@
     margin-top: 100px;
     padding-top: 30px;
   }
-  /* en el menú la grilla va después del carrusel: sus slides son flotantes (Bootstrap), así que la grilla
-     baja con clear en vez de la pila de <br> que usa el escritorio */
   #myCarousel .carousel-inner > br {
     display: none;
   }
@@ -55,7 +48,6 @@
   }
 }
 
-/* celular: 2 por fila, todo un poco más compacto */
 @media (max-width: 575px) {
   .section-products .row.gy-4 {
     --bs-gutter-x: 12px;
@@ -110,7 +102,6 @@
     font-size: 0.7rem;
   }
 
-  /* menos espacio vacío entre el carrusel / título y la grilla */
   .section-products {
     margin-top: 80px;
     padding: 20px 0 30px;
@@ -120,7 +111,6 @@
   }
 }
 
-/* celulares muy angostos */
 @media (max-width: 360px) {
   .section-products .single-product .btn-detalles,
   .section-products .single-product .btn-carrito {
@@ -129,7 +119,6 @@
   }
 }
 
-/* carrusel del menú: el texto y la imagen dejan espacio a las flechas para que no queden encima */
 @media (min-width: 768px) {
   #myCarousel .carousel-item .container {
     padding-left: 104px;
@@ -137,7 +126,6 @@
   }
 }
 
-/* paginación: los círculos nunca se aplastan; el recuadro usa el ancho disponible en vez de 150 px fijos por lado */
 .pagination-wrapper .page-item,
 .pagination-wrapper .page-nav {
   flex-shrink: 0;
@@ -177,8 +165,6 @@
   }
 }
 
-/* en celular solo se ven la primera, la última y las vecinas de la actual (page-lejos se oculta y lo
-   reemplaza un "..."); si quedan dos "..." seguidos se muestra uno */
 .pagination-wrapper .page-dots-movil {
   display: none;
 }
@@ -208,14 +194,12 @@
   }
 }
 
-/* botones de la tarjeta: antes tomaban borde, negrita y espacio de una regla global "button" de cada página */
 .section-products .btn-carrito {
   border: 0;
   font-weight: bold;
   gap: 0.6em;
 }
 
-/* íconos que aparecen sobre la imagen al pasar el mouse (carrito, favorito, ver) */
 .section-products .btn-icon {
   box-sizing: border-box;
   display: flex;

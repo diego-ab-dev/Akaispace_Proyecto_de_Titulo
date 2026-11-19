@@ -3,8 +3,6 @@ body {
   font-family: "Poppins", sans-serif;
 }
 
-
-/* imagen */
 .card-img-left {
   flex: 0 0 42%;
   max-width: 42%;
@@ -69,7 +67,6 @@ body {
   color: #ffffff;
 }
 
-/* consentimientos del registro */
 .consentimientos {
   border-top: 1px solid #dee2e6;
   padding-top: 1rem;
@@ -110,7 +107,6 @@ body {
   font-weight: 600;
 }
 
-/* títulos de cada grupo de campos */
 .titulo-seccion {
   color: #1C253B;
   font-size: 0.8rem;

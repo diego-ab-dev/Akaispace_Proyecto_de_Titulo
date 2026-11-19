@@ -1,11 +1,10 @@
 {% load static %}
-{% comment %}Header y navbar lateral del panel. El link activo se marca según la URL actual.{% endcomment %}
 {% with n=request.resolver_match.url_name %}
 <header class="header" id="header">
     <div class="header_toggle"> <i class='bx bx-menu' id="header-toggle"></i> </div>
     <div class="min-w-0"><h4 class="una-linea" title="{{ request.user.nombre }}">{{ request.user.nombre }}</h4></div>
 </header>
-<!--navbar lateral-->
+<!-- Navbar lateral -->
 <div class="l-navbar" id="nav-bar">
     <nav class="nav">
         <div> <a href="{% url 'admin_dashboard' %}" class="nav_logo"> <img src="{% static 'images/akaispace_favicon.webp' %}" alt="Logo Akai Space" style="height: 26px; width: 26px;"> <span class="nav_logo-name">Akai Space Admin</span> </a>

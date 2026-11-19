@@ -93,7 +93,6 @@ h1 {
     color: white;
 }
 
-
 .estado-texto {
     font-weight: 700; 
 }
@@ -106,11 +105,7 @@ h1 {
     color: #4CAF50; 
 }
 
-
-/* ============ Lista de reclamos responsive ============
-   escritorio (>= 992px): cada reclamo en una fila de 4 columnas
-   tablet (768-991px): datos y asunto lado a lado; descripción y botón en la fila de abajo
-   celular (< 768px): todo en una columna y el botón "Ver Más" a todo el ancho */
+/* Lista de reclamos responsive */
 @media (max-width: 991px) {
     .main-container {
         padding: 16px 4px;

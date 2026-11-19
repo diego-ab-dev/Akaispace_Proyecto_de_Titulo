@@ -12,7 +12,6 @@
     <span id="notif-msg">{{ request.GET.notif }}</span>
 </div>
 
-
 <div class="main-container">
     <div class="left-column">
         <div class="page-header">
@@ -135,7 +134,7 @@
                     {% endwith %}
                 </div>
 
-                {# aviso para retiro en tienda: qué hacer según el estado del pedido #}
+                {# Aviso para retiro en tienda #}
                 {% if compra.es_retiro_en_tienda %}
                     {% if compra.datos_envio.estado == 'Listo para retiro' %}
                     <div class="aviso-retiro aviso-retiro-listo mt-4">
@@ -169,7 +168,7 @@
 
     </div>
 
-    <!--detalles de la compra-->
+    <!-- Detalles de la compra -->
     <div class="right-sidebar">
         <div class="sidebar-date text-center">
             Compra Realizada el {{ compra.fecha|date:"d \\d\\e F \\d\\e\\l Y \\a \\l\\a\\s H:i" }}
@@ -226,7 +225,6 @@
             </form>
         {% endif %}
 
-
         <a href="{% url 'crear_reclamo' compra.id %}" class="btn-reclamo">
             Agregar Reclamo <i class="fa-solid fa-circle-exclamation"></i>
         </a>
@@ -238,7 +236,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     const estado = "{{ compra.datos_envio.estado }}";
 
-    // pasos de la línea de tiempo según el tipo de entrega (Venta.estados_envio)
     const estadosOrdenados = JSON.parse(document.getElementById("estados-envio").textContent);
 
     const index = estadosOrdenados.indexOf(estado);
@@ -248,7 +245,6 @@ document.addEventListener("DOMContentLoaded", function () {
     let progreso = (index / maxIndex) * 100;
     progreso = Math.max(0, Math.min(100, progreso));
 
-    // el CSS decide si la línea avanza a lo ancho (escritorio) o hacia abajo (celular)
     document.getElementById("shippingProgress").style.setProperty("--progreso", progreso / 100);
 
     document.querySelectorAll(".step-item").forEach((step, i) => {

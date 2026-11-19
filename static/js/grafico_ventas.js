@@ -1,6 +1,4 @@
-// Panel > Dashboard y Reportes (HU-10): gráfico de ventas por canal (columnas apiladas, Chart.js).
-// Uso: <canvas data-grafico-ventas="id-del-json"></canvas>, donde el json_script trae
-// {etiquetas: [...], series: [{clave, nombre, datos: [...]}], totales: [...]}.
+// Gráfico de ventas por canal
 (function () {
   const COLORES = { web: "#2a78d6", tienda: "#eb6834", whatsapp: "#1baf7a" };
   const TINTA = "#4f5866";
@@ -16,7 +14,6 @@
     return pesos(monto);
   }
 
-  // Solo el segmento de arriba de cada columna lleva las esquinas redondeadas; la base queda recta.
   function esElDeArriba(contexto) {
     const datasets = contexto.chart.data.datasets;
     for (let i = contexto.datasetIndex + 1; i < datasets.length; i++) {
@@ -38,7 +35,6 @@
           data: serie.datos,
           backgroundColor: COLORES[serie.clave],
           hoverBackgroundColor: COLORES[serie.clave],
-          // 2px del color de la superficie separan los segmentos apilados
           borderColor: "#ffffff",
           borderWidth: { top: 2, right: 0, bottom: 0, left: 0 },
           borderSkipped: false,
@@ -53,7 +49,7 @@
         animation: { duration: 250 },
         interaction: { mode: "index", intersect: false },
         plugins: {
-          legend: { display: false }, // la leyenda va en HTML, sobre el gráfico
+          legend: { display: false },
           tooltip: {
             backgroundColor: "#1c253b",
             padding: 10,

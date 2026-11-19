@@ -1,4 +1,4 @@
-"""Filtros compartidos por los listados del panel de administración."""
+"""Panel: filtros de los listados."""
 from datetime import datetime, time, timedelta
 
 from django.utils import timezone

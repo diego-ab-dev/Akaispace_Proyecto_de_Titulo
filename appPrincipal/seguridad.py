@@ -1,3 +1,4 @@
+"""Validaciones de seguridad."""
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
 
@@ -14,7 +15,6 @@ def email_para_axes(request, credentials):
 
 
 def login_bloqueado(request, original_response=None, credentials=None):
-    """Respuesta de django-axes cuando se supera el límite de intentos de login."""
     return render(request, 'login.html', {'errors': {'email': MENSAJE_LOGIN_BLOQUEADO}}, status=429)
 
 

@@ -1,4 +1,4 @@
-"""Panel de administración: usuarios."""
+"""Panel: usuarios."""
 import logging
 
 from django.contrib import messages
@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 @admin_required
 def admin_usuarios(request):
-    """Lista de usuarios con búsqueda por nombre o RUT y filtro de administradores."""
     query = request.GET.get('q', '').strip()
     filtro = request.GET.get('filtro', 'nombre')
     es_admin = request.GET.get('es_admin', '')
@@ -43,14 +42,12 @@ def admin_usuarios(request):
     })
 
 
-# los formularios de búsqueda apuntan a esta URL; es la misma lista con los filtros aplicados
 buscar_usuarios = admin_usuarios
 
 
 @admin_required
 @require_POST
 def eliminar_usuario(request, usuario_id):
-    # misma eliminación que hace el cliente desde su perfil: anonimiza y conserva las ventas (eliminacion_cuenta.py)
     usuario = get_object_or_404(Usuario, id=usuario_id)
     if usuario == request.user:
         messages.error(request, "No puedes eliminar tu propia cuenta.")

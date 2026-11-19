@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block content %}
-    <!--tabla-->
+    <!-- Tabla -->
     <div class="height-100">
         <div class="product-actions">
             <form method="get" action="{% url 'admin_productos' %}" class="search-form">
@@ -89,11 +89,10 @@
             </tbody>
         </table>
         </div>
-        <!-- Paginacion -->
+        <!-- Paginación -->
         <div class="pagination-wrapper d-flex justify-content-center">
             <ul class="pagination">
 
-                <!-- Botón anterior -->
                 <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
                     {% if page_obj.has_previous %}
                         <a class="page-link custom-page-link"
@@ -105,7 +104,6 @@
                     {% endif %}
                 </li>
 
-                <!-- Números -->
                 {% for num in page_obj.paginator.page_range %}
                     {% if num == page_obj.number %}
                         <li class="page-item active">
@@ -121,7 +119,6 @@
                     {% endif %}
                 {% endfor %}
 
-                <!-- Botón siguiente -->
                 <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
                     {% if page_obj.has_next %}
                         <a class="page-link custom-page-link"
@@ -136,7 +133,7 @@
             </ul>
         </div>
     </div>
-    <!--modal para confirmacion-->
+    <!-- Modal de confirmación -->
     <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -158,7 +155,6 @@
 <form id="form-eliminar" method="post" hidden>{% csrf_token %}</form>
 <script>
 
-    // para el modal de confirmacion
     let enlaceEliminar;
 
     function confirmarEliminacion(event, elemento) {
@@ -169,7 +165,6 @@
     }
     document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
         if (enlaceEliminar) {
-            // eliminar cambia datos: se envía por POST (con el token CSRF), no con un link
             const formEliminar = document.getElementById('form-eliminar');
             formEliminar.action = enlaceEliminar.href;
             formEliminar.submit();

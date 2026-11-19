@@ -11,9 +11,8 @@
 {% block navbar %}{% include "partials/navbar.html" with menu_simple=True %}{% endblock %}
 
 {% block content %}
-  <!--Nav de la web-->
 
-  <!--Fondo Principal con nombre de la tienda y frase-->
+  <!-- Portada -->
   <div id="fondo">
     <div class="text container">
       <h1 class="fw-bold fst-italic text-center">Akai Space</h1>
@@ -23,7 +22,7 @@
     </div>
   </div>
 
-  <!--Parrafos-->
+  <!-- Párrafos -->
   <a id="nosotros"></a>
   <div class="cont container">
     <section id="bienvenida" class="paused">
@@ -45,7 +44,7 @@
     </section>
   </div>
 
-  <!--Cards-->
+  <!-- Tarjetas -->
   <section id="acciones" class="wrapper paused">
     <div class="container">
       <div class="row">
@@ -102,7 +101,7 @@
     </div>
   </section>
 
-{# Apartado de Nuevos Lanzamientos: se edita en el panel de administración (Portada > Nuevos lanzamientos) #}
+{# Nuevos lanzamientos #}
 {% if portada.lanzamientos %}
 <section class="wrapper paused">
     <div class="container cont-vid">
@@ -112,7 +111,6 @@
         </div>
       </div>
       {% for lanzamiento in portada.lanzamientos %}
-      {# se alternan: video a la izquierda en los impares y a la derecha en los pares #}
       <div class="row align-items-center anim-up{% if not forloop.last %} mb-5{% endif %}">
         <div class="col-md-6 mb-4 mb-md-0{% if forloop.counter|divisibleby:2 %} order-1 order-md-2{% endif %}">
           <div class="video-placeholder-container">
@@ -140,14 +138,14 @@
   </section>
 {% endif %}
 
-{# HU-07: recomendaciones, si el admin las activó en Configuración #}
+{# Recomendaciones #}
 {% if recomendaciones.productos %}
 <section class="wrapper paused recomendaciones-home">
   {% include "partials/tarjetas_productos.html" with productos=recomendaciones.productos titulo=recomendaciones.titulo %}
 </section>
 {% endif %}
 
-<!--Local fisico: mapa y horarios-->
+<!-- Local físico -->
 <a id="local"></a>
   <section class="wrapper paused">
     <div class="container">
@@ -181,7 +179,6 @@
                 <span class="local-estado" id="local-estado"></span>
               </div>
 
-              {# data-dia sigue a Date.getDay(): 0 = domingo #}
               <ul class="local-horario">
                 <li data-dia="1"><span>Lunes</span><span>10:00 - 19:30</span></li>
                 <li data-dia="2"><span>Martes</span><span>10:00 - 19:30</span></li>
@@ -204,7 +201,7 @@
     </div>
   </section>
 
-<!--redes sociales-->
+<!-- Redes sociales -->
 <a id="redes"></a>
   <section class="wrapper paused">
     <div class="container">
@@ -257,7 +254,6 @@
     return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
   }
 
-  // Marca el día de hoy en el horario del local y si está abierto ahora (hora de Chile)
   (function () {
     const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
     const dia = ahora.getDay();
