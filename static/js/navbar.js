@@ -1,4 +1,4 @@
-// Navbar de la tienda (templates/partials/navbar.html): buscador, menú lateral en pantallas chicas y submenús.
+// Navbar de la tienda
 (function () {
   const nav = document.querySelector(".nav-tienda");
   if (!nav) return;
@@ -9,7 +9,6 @@
   const menuCloseBtn = nav.querySelector(".nav-links .icono-cerrar");
   const enMenuLateral = () => window.matchMedia("(max-width: 1200px)").matches;
 
-  // los íconos con role="button" (menú, cerrar, lupa) también responden a Enter y Espacio
   nav.querySelectorAll('i[role="button"]').forEach(function (icono) {
     icono.addEventListener("keydown", function (e) {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -18,7 +17,6 @@
     });
   });
 
-  // "Hola, usuario" solo despliega su submenú: no salta al inicio de la página
   const linkCuenta = nav.querySelector('.login-desktop .link[href="#"]');
   if (linkCuenta) linkCuenta.addEventListener("click", function (e) { e.preventDefault(); });
 
@@ -40,17 +38,15 @@
     if (menuOpenBtn) menuOpenBtn.addEventListener("click", abrirMenu);
     if (menuCloseBtn) menuCloseBtn.addEventListener("click", cerrarMenu);
 
-    // los links a secciones del home (#nosotros, #local...) cierran el menú lateral
     navLinks.querySelectorAll('.links a[href^="#"]:not([href="#"])').forEach(function (link) {
       link.addEventListener("click", function () {
         if (navLinks.style.left === "0px") cerrarMenu();
       });
     });
 
-    // en el menú lateral cada categoría (flecha o nombre) abre solo su propio submenú
     navLinks.querySelectorAll(".links > li.con-submenu").forEach(function (li) {
       const alternar = function (e) {
-        e.preventDefault(); // el nombre es href="#": no salta al inicio de la página
+        e.preventDefault();
         if (!enMenuLateral()) return;
         const abierto = li.classList.toggle("abierto");
         if (nombre) nombre.setAttribute("aria-expanded", abierto ? "true" : "false");
@@ -61,7 +57,6 @@
       if (nombre) nombre.addEventListener("click", alternar);
     });
 
-    // al volver a escritorio el menú lateral queda cerrado
     window.matchMedia("(max-width: 1200px)").addEventListener("change", function (mq) {
       if (!mq.matches) navLinks.style.left = "";
     });

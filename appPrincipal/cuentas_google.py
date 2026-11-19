@@ -1,13 +1,4 @@
-"""Inicio de sesión y registro con Google (HU-02, django-allauth).
-
-- El registro con correo y contraseña es el propio (vista register, con los consentimientos de HU-01),
-  así que el de allauth (/accounts/signup/) queda cerrado; solo se crean cuentas nuevas desde Google.
-- Si ya existe una cuenta con el correo de Google, se inicia sesión en ella directamente.
-- Si el correo es nuevo, antes de crear la cuenta se piden los mismos consentimientos del registro
-  (RegistroGoogleForm); el correo es el que verificó Google y no se puede cambiar.
-- Usuario no tiene username y exige `nombre`: al crear la cuenta desde Google se usa el nombre del
-  perfil de Google (o la parte del correo antes de la @ si Google no lo entrega).
-"""
+"""Inicio de sesión y registro con Google."""
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.forms import SignupForm
@@ -24,11 +15,9 @@ class AdaptadorCuenta(DefaultAccountAdapter):
         return False
 
     def get_login_redirect_url(self, request):
-        # igual que el login propio: el administrador entra a su panel
         return reverse('admin_dashboard' if request.user.is_staff else 'home')
 
     def render_mail(self, template_prefix, email, context, headers=None):
-        # los correos de allauth llevan el mismo 'responder a' que los de la tienda
         mensaje = super().render_mail(template_prefix, email, context, headers)
         mensaje.reply_to = correos.responder_a() or []
         return mensaje
@@ -48,14 +37,12 @@ class AdaptadorCuentaGoogle(DefaultSocialAccountAdapter):
 
 
 class RegistroGoogleForm(SignupForm):
-    # mismos campos y mensajes que el registro propio (HU-01)
     declaracion_edad = UsuarioCustomForm.base_fields['declaracion_edad']
     acepta_privacidad = UsuarioCustomForm.base_fields['acepta_privacidad']
     autoriza_datos_navegacion = UsuarioCustomForm.base_fields['autoriza_datos_navegacion']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # el correo lo verificó Google: un campo deshabilitado ignora lo que llegue por POST
         if 'email' in self.fields:
             self.fields['email'].disabled = True
 
@@ -68,5 +55,4 @@ class RegistroGoogleForm(SignupForm):
             user.datos_navegacion_autorizados_en = momento_consentimiento
         user.save(update_fields=['declaracion_edad', 'privacidad_aceptada_en', 'privacidad_version',
                                  'datos_navegacion_autorizados_en'])
-        # solo al crear la cuenta: si el correo de Google ya tenía cuenta, se inicia sesión sin pasar por aquí
         correos.enviar_bienvenida(user, con_google=True)

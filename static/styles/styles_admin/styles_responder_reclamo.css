@@ -168,7 +168,7 @@ textarea {
     }
 }
 
-/* ============ Responder reclamo responsive ============ */
+/* Responder reclamo responsive */
 @media (max-width: 767px) {
     body {
         padding: 16px 12px 32px;
@@ -186,7 +186,6 @@ textarea {
     .descripcion-box {
         overflow-wrap: anywhere;
     }
-    /* 16px: en iPhone un campo con letra más chica hace zoom al tocarlo */
     textarea {
         font-size: 1rem;
     }

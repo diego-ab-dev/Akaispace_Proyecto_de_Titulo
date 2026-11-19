@@ -62,7 +62,6 @@ body {
   height: auto;
   max-width: 100%;
 }
-/* el catálogo usa el mismo ancho que el carrusel */
 #myCarousel .container,
 .section-products .container {
   max-width: 1430px;
@@ -335,9 +334,6 @@ a:hover {
     }
 }
 
-
-/* imagen del carrusel: mientras carga no tiene alto propio, así que el skeleton
-   (js/skeleton_imagenes.js) reserva un bloque fijo */
 #myCarousel .carrusel-img.img-skeleton {
   height: 320px;
   border-radius: 12px;

@@ -1,4 +1,4 @@
-"""Lista de favoritos."""
+"""Favoritos."""
 import json
 
 from django.contrib.auth.decorators import login_required
@@ -59,7 +59,6 @@ def agregar_favorito(request, producto_id):
         'agregado': agregado  
     })
 
-# los favoritos se identifican por el producto: la clave primaria es (usuario, producto)
 @login_required_json
 @require_http_methods(["DELETE"])
 def eliminar_favorito(request, producto_id):

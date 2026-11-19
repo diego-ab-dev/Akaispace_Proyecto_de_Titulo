@@ -67,8 +67,6 @@ a:hover {
   color: #ffffff;
 }
 
-/* aviso flotante (agregar al carrito / favoritos) */
-
 #notif-box.favorite {
     background-color: #e83e8c;
 }

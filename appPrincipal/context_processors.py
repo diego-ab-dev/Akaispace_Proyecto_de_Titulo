@@ -1,3 +1,4 @@
+"""Context processors."""
 from django.urls import reverse
 from django.utils.functional import SimpleLazyObject
 
@@ -9,7 +10,6 @@ def usuario_context(request):
     usuario = request.user if request.user.is_authenticated else None
     return {'usuario': usuario}
 
-# Contenido de portada que el admin edita en el panel (modelo Destacado).
 class Portada:
 
     def __init__(self):
@@ -40,8 +40,6 @@ def url_categoria(categoria_id, plataforma=None):
 
 
 def armar_menu_navbar(portada):
-    """Los menús del navbar sin las categorías ocultas (Categoria.visible_en_menu); un grupo o menú
-    sin categorías visibles no se muestra."""
     visibles = dict(Categoria.objects.filter(visible_en_menu=True).values_list('nombre', 'id'))
     menus = []
     for menu in MENU_NAVBAR:
@@ -57,8 +55,6 @@ def armar_menu_navbar(portada):
 
 
 def portada_context(request):
-    """Lo que el admin edita en el panel: la portada (Destacado), las opciones de visualización
-    (ConfiguracionSitio) y, a partir de ellas, el menú del navbar. Todo se carga solo si la página lo usa."""
     portada = Portada()
     configuracion = SimpleLazyObject(ConfiguracionSitio.actual)
     return {

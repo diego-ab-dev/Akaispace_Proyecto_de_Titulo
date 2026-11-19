@@ -1,13 +1,4 @@
-"""Optimiza las fotos que ya estaban subidas antes de que la subida las achicara (imagenes.py).
-
-Las pesadas o muy grandes se pasan a WebP y la base de datos queda apuntando a la versión nueva. Un mismo
-archivo puede estar en varias filas (por ejemplo, la imagen genérica de una categoría): se convierte una vez
-y se actualizan todas. Los originales quedan en media/ salvo que se pida --borrar-originales.
-
-    python manage.py optimizar_imagenes --probar              # solo muestra lo que haría
-    python manage.py optimizar_imagenes                       # convierte y conserva los originales
-    python manage.py optimizar_imagenes --borrar-originales   # convierte y borra los originales
-"""
+"""Comando: optimizar imágenes subidas."""
 import os
 
 from django.core.files.base import ContentFile
@@ -35,7 +26,6 @@ class Command(BaseCommand):
                             help='Borra de media/ los archivos originales después de convertirlos.')
 
     def handle(self, *args, probar=False, borrar_originales=False, **options):
-        # ruta -> lado máximo (si la usan dos tablas, el mayor)
         rutas = {}
         for modelo, lado in CAMPOS:
             for ruta in modelo.objects.exclude(imagen='').exclude(imagen__isnull=True).values_list('imagen', flat=True):

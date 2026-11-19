@@ -144,10 +144,7 @@ body {
     padding-right: 2.5rem; 
 }
 
-
-
-/* ============ Responsive ============
-   celular: menos relleno y los botones Guardar / Cancelar se reparten el ancho de la tarjeta */
+/* Responsive */
 @media (max-width: 575px) {
     .edit-container,
     .pass-card {

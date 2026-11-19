@@ -1,6 +1,6 @@
-"""Datos fijos compartidos por formularios, vistas y plantillas."""
+"""Datos fijos del sitio."""
 
-# ciudades disponibles por región (los formularios validan que la ciudad sea de la región)
+# Ciudades por región
 REGIONES_CIUDADES = {
     'ARICA Y PARINACOTA': ['Arica', 'Putre'],
     'TARAPACA': ['Iquique', 'Alto Hospicio'],
@@ -20,7 +20,7 @@ REGIONES_CIUDADES = {
     'MAGALLANES': ['Punta Arenas', 'Puerto Natales'],
 }
 
-# nombre completo de cada región, para los <select>
+# Nombre de cada región
 REGIONES = [
     ('ARICA Y PARINACOTA', 'Región de Arica y Parinacota'),
     ('TARAPACA', 'Región de Tarapacá'),
@@ -48,8 +48,7 @@ POLITICA_PRIVACIDAD_FECHA = '24 de octubre de 2026'
 TERMINOS_VERSION = '1.0'
 TERMINOS_FECHA = '6 de octubre de 2026'
 
-# Datos del responsable del tratamiento que aparecen en la política.
-# El RUT es ficticio
+# Responsable del tratamiento de datos
 RESPONSABLE_DATOS = {
     'nombre_comercial': 'Akai Space',
     'razon_social': 'Carlos Fuentes Riquelme',
@@ -60,8 +59,7 @@ RESPONSABLE_DATOS = {
     'proveedor_hosting': 'Amazon Web Services (AWS), con servidores en São Paulo, Brasil',
 }
 
-# Condiciones y política de retracto que se envían en el correo de confirmación de compra
-# Siguen la Ley 19.496 del Consumidor
+# Condiciones de compra y retracto
 CONDICIONES_COMPRA = [
     'Garantía legal de 6 meses desde que recibes el producto: si presenta una falla, puedes elegir '
     'entre su cambio, reparación o la devolución del dinero.',
@@ -79,9 +77,7 @@ POLITICA_RETRACTO = [
 ]
 
 
-# Menús de categorías del navbar. Cada entrada es (categoría, código de plataforma o None, etiqueta) y
-# enlaza a esa categoría filtrada por la plataforma. El admin oculta una categoría completa desde el panel
-# (Configuración, Categoria.visible_en_menu); oculta sigue existiendo y sus productos siguen a la venta.
+# Menús de categorías del navbar
 MENU_NAVBAR = [
     {
         'nombre': 'Videojuegos', 'promo': 'menu_videojuegos',

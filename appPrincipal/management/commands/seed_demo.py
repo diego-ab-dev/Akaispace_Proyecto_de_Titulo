@@ -1,3 +1,4 @@
+"""Comando: cargar datos de demo."""
 import shutil
 from pathlib import Path
 
@@ -10,11 +11,10 @@ from appPrincipal.models import Destacado, Producto, Usuario
 
 FIXTURES_DIR = Path(__file__).resolve().parents[2] / 'fixtures'
 
-# Cuentas de prueba para desarrollo. Nunca usar en producción.
 USUARIOS_DEMO = [
     {
         'email': 'admin@gmail.com',
-        'password': 'Akaispace-Admin-2026',  # nosec B105 (cuenta de demo documentada en el README)
+        'password': 'Akaispace-Admin-2026',  # nosec B105
         'nombre': 'Admin',
         'rut': '12.343.455-2',
         'telefono': '+56 9 45533453',
@@ -26,7 +26,7 @@ USUARIOS_DEMO = [
     },
     {
         'email': 'user@gmail.com',
-        'password': 'Akaispace-Cliente-2026',  # nosec B105 (cuenta de demo documentada en el README)
+        'password': 'Akaispace-Cliente-2026',  # nosec B105
         'nombre': 'Usuario',
         'rut': '75.292.177-6',
         'telefono': '+56 9 45645354',
@@ -45,7 +45,6 @@ class Command(BaseCommand):
             raise CommandError('seed_demo solo se puede ejecutar con DEBUG=True.')
         verbose = options['verbosity'] > 0
 
-        # productos de ejemplo
         call_command('loaddata', 'productos_demo', verbosity=0)
         origen = FIXTURES_DIR / 'demo_media'
         destino = Path(settings.MEDIA_ROOT)
@@ -58,12 +57,10 @@ class Command(BaseCommand):
         if verbose:
             self.stdout.write('Productos de ejemplo cargados.')
 
-        # carrusel, lanzamientos y promos del navbar enlazados a los productos de ejemplo
         portada_inicial.cargar(Destacado, Producto)
         if verbose:
             self.stdout.write('Portada de ejemplo lista.')
 
-        # usuarios de prueba
         for datos in USUARIOS_DEMO:
             datos = dict(datos)
             email = datos.pop('email')
@@ -73,7 +70,6 @@ class Command(BaseCommand):
                 Usuario.objects.create_user(email=email, password=password, **datos)
                 estado = 'creado'
             else:
-                # restablece la contraseña de prueba por si cambió
                 usuario.set_password(password)
                 usuario.save()
                 estado = 'ya existía, contraseña restablecida'

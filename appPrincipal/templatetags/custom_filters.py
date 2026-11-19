@@ -1,8 +1,8 @@
+"""Filtros de plantilla."""
 from django import template
 
 register = template.Library()
 
-# Formatea un número al estilo chileno
 @register.filter
 def formato_chileno(valor):
     if not isinstance(valor, (int, float)):
@@ -33,11 +33,8 @@ def valor_absoluto(valor):
     return abs(valor) if isinstance(valor, (int, float)) else valor
 
 
-# Ofertas: el producto guarda su precio anterior cuando el admin lo rebaja (ver ProductoForm).
-# El % se redondea hacia abajo para no anunciar más descuento del real; bajo 1% no se muestra oferta.
 @register.filter
 def descuento(producto):
-    """Porcentaje de rebaja del producto (ej. 25), o 0 si no está en oferta."""
     anterior, precio = getattr(producto, 'precio_anterior', None), getattr(producto, 'precio', None)
     if not anterior or precio is None or anterior <= precio:
         return 0
@@ -46,5 +43,4 @@ def descuento(producto):
 
 @register.filter
 def ahorro(producto):
-    """Pesos que se ahorra el cliente con la oferta, o 0."""
     return producto.precio_anterior - producto.precio if descuento(producto) else 0

@@ -1,4 +1,4 @@
-"""Páginas legales del sitio."""
+"""Páginas legales."""
 from django.shortcuts import render
 
 from appPrincipal.constants import (

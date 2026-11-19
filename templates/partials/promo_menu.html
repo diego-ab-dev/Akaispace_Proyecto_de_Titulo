@@ -1,8 +1,3 @@
-{% comment %}
-Tarjeta promocional de un menú del navbar. Se incluye con:
-  destacado: el Destacado de esa sección (portada.menu_...) o None
-  texto_link, color_etiqueta (opcional), vacio: mensaje si el admin no configuró ninguno
-{% endcomment %}
 <div class="promo-card">
     {% if destacado %}
     <a href="{% if destacado.producto_disponible %}{% url 'producto_detalle' destacado.producto_disponible.id %}{% else %}#{% endif %}" class="text-decoration-none">

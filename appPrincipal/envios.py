@@ -1,5 +1,4 @@
-"""Opciones de entrega del checkout: precios, dónde se ofrecen y estados de cada una.
-"""
+"""Opciones de entrega."""
 from appPrincipal.constants import REGIONES, RESPONSABLE_DATOS
 
 CIUDAD_TIENDA = 'Valdivia'
@@ -56,7 +55,7 @@ OPCIONES_ENVIO = {
     },
 }
 
-# transportistas
+# Transportistas
 TRANSPORTISTAS_ENCOMIENDA = ['Bluexpress', 'Starken', 'Chilexpress', 'Correos de Chile']
 
 

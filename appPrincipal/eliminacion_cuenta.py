@@ -1,23 +1,4 @@
-"""Eliminación de la cuenta (derecho de supresión, Ley 21.719 y política de privacidad).
-
-El cliente la elimina desde su perfil, de inmediato y sin que intervenga el administrador; el administrador
-también puede eliminar una cuenta desde el panel. En ambos casos:
-
-1. No se permite mientras haya algo en curso que necesite contactar al cliente (motivos_para_no_eliminar):
-   una compra web pagada sin entregar, un pago Webpay recién iniciado, una devolución sin terminar
-   (incluido un reembolso pendiente) o un reclamo sin responder.
-2. Se borra lo que solo sirve al cliente: historial de navegación y recomendaciones (HU-07), opiniones,
-   favoritos, el carrito vigente y sus vínculos de inicio de sesión (correos de allauth y la cuenta de Google).
-3. Se conservan, sin datos personales, las ventas, pagos, devoluciones y reclamos: el negocio debe guardarlos
-   por obligación tributaria y de protección al consumidor (la Ley 21.719 permite conservar datos por una
-   obligación legal). Se vacía la dirección de entrega que guardan las ventas y los pagos, que ya no se
-   necesita una vez entregada la compra.
-4. Usuario.anonimizar() reemplaza nombre, correo, RUT, teléfono y dirección, desactiva la cuenta y cierra la
-   sesión en todos los dispositivos.
-5. Se avisa por correo a la dirección original, después de confirmar los cambios.
-
-Todo ocurre en una sola transacción: o se aplica completo o no se aplica nada.
-"""
+"""Eliminación de la cuenta."""
 import logging
 from datetime import timedelta
 
@@ -33,8 +14,6 @@ from appPrincipal.recomendaciones import cambiar_consentimiento_navegacion
 
 logger = logging.getLogger(__name__)
 
-# Un pago Webpay iniciado hace menos de esto puede estar en curso (el formulario de Transbank expira antes);
-# los más antiguos que siguen "pendientes" son pagos abandonados y no bloquean la eliminación.
 PAGO_EN_CURSO = timedelta(hours=1)
 ENVIO_TERMINADO = ['Entregado', 'Anulada']
 
@@ -46,7 +25,6 @@ class CuentaNoEliminable(Exception):
 
 
 def motivos_para_no_eliminar(usuario):
-    """Lista de mensajes para el cliente; vacía si la cuenta se puede eliminar."""
     if usuario.is_staff:
         return ['Las cuentas de administrador no se eliminan desde aquí.']
 
@@ -69,9 +47,7 @@ def motivos_para_no_eliminar(usuario):
 
 
 def eliminar_cuenta(usuario, por_administrador=False):
-    """Elimina y anonimiza la cuenta. Lanza CuentaNoEliminable si hay algo en curso."""
     with transaction.atomic():
-        # bloquea la fila: dos solicitudes simultáneas (o una compra que termina justo ahora) no se cruzan
         usuario = Usuario.objects.select_for_update().get(pk=usuario.pk)
         if usuario.is_deleted:
             return usuario
@@ -81,20 +57,18 @@ def eliminar_cuenta(usuario, por_administrador=False):
 
         nombre, email = usuario.nombre, usuario.email
 
-        cambiar_consentimiento_navegacion(usuario, autoriza=False)  # borra navegación y recomendaciones
+        cambiar_consentimiento_navegacion(usuario, autoriza=False)
         Opinion.objects.filter(usuario=usuario).delete()
         Favorito.objects.filter(usuario=usuario).delete()
-        Carrito.objects.filter(usuario=usuario).delete()  # solo el vigente; los pagados quedan para KPI-04
+        Carrito.objects.filter(usuario=usuario).delete()
         Venta.objects.filter(usuario=usuario).update(direccion_envio=None)
         PagoWebpay.objects.filter(usuario=usuario).update(direccion_envio='')
 
         EmailAddress.objects.filter(user=usuario).delete()
-        SocialAccount.objects.filter(user=usuario).delete()  # sus tokens se borran en cascada
+        SocialAccount.objects.filter(user=usuario).delete()
 
         usuario.anonimizar()
 
-        # intentos de inicio de sesión (django-axes): se borran los vigentes y el registro de seguridad
-        # queda con el correo anónimo
         AccessAttempt.objects.filter(username=email).delete()
         AccessLog.objects.filter(username=email).update(username=usuario.email)
         AccessFailureLog.objects.filter(username=email).update(username=usuario.email)

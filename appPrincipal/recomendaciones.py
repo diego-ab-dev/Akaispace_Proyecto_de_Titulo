@@ -1,30 +1,4 @@
-"""Recomendaciones de productos con filtrado basado en contenido (HU-07).
-
-Cada producto se representa como un documento de etiquetas ("cat_videojuegos plat_ps5 fam_playstation
-gen_rpg") y se compara con TF-IDF y similitud del coseno. El prototipo y la justificación de cada decisión
-están en notebooks/hu07_similitud_productos.ipynb.
-
-- calcular_similitudes(): guarda en SimilitudProducto los 10 productos más similares a cada producto.
-- registrar_interaccion(): guarda las vistas de fichas y lo agregado al carrito, solo con consentimiento.
-- cambiar_consentimiento_navegacion(): el cliente da o retira la autorización desde su perfil.
-- recomendar(): elige qué mostrar según el consentimiento y el historial del cliente (arranque en frío):
-  personalizadas si autorizó sus datos de navegación y tiene historial; si no, los similares al producto
-  de la ficha, o los más vendidos en la página principal. En la ficha, las personalizadas mezclan el
-  historial con el producto que se está viendo.
-- recomendar_para_carrito(): "Complementa tu compra" en el carrito: productos de la misma familia de
-  plataforma pero de otra categoría (ej. accesorios PlayStation para un juego de PS5), luego similares y
-  luego los más vendidos.
-- registrar_mostradas() y marcar_clic(): registran las recomendaciones mostradas y sus clics (KPI-05), solo
-  de clientes que autorizaron sus datos de navegación; tasa_de_clics() calcula el KPI.
-- eliminar_navegacion_antigua(): aplica el plazo de conservación de la política de privacidad (24 meses).
-  La ejecuta a diario el comando mantener_recomendaciones. Al eliminar una cuenta se borra su navegación (Usuario.anonimizar()).
-
-Los empates (muy frecuentes, porque hay pocos atributos) se resuelven por unidades vendidas y después
-por id, para que el resultado sea siempre el mismo.
-
-Las similitudes se recalculan solas cuando se crea o elimina un producto o cambia su categoría, plataforma
-o género (señales al final de este archivo). Un cambio de precio o de stock no las afecta.
-"""
+"""Recomendaciones de productos."""
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -45,18 +19,11 @@ from appPrincipal.models import (Carrito, InteraccionProducto, Producto, Product
 
 TOP_SIMILARES = 10
 CANTIDAD_RECOMENDACIONES = 4
-# peso de cada interacción en el perfil del cliente
 PESOS = {InteraccionProducto.VISTA: 1, InteraccionProducto.CARRITO: 2}
 PESO_COMPRA = 3
-# recargar la misma ficha dentro de este plazo no cuenta como otra vista
 VENTANA_VISTAS = timedelta(minutes=30)
-# lo visto en este plazo suma al perfil, pero no se recomienda (sería recomendar lo que el cliente ya conoce)
 VISTOS_RECIENTES = timedelta(days=7)
-# en la ficha, parte del perfil que corresponde al producto que se está viendo (el resto es el historial).
-# Es una proporción y no un peso, para que cuente lo mismo con 3 interacciones que con 300. Es mayor que 0,5
-# para que la página mande: con 0,5 empatan lo idéntico al historial y lo idéntico al producto de la ficha
 PESO_PRODUCTO_ACTUAL = 0.6
-# plazo de conservación de los datos de navegación (política de privacidad, sección 7)
 CONSERVACION_NAVEGACION = timedelta(days=730)
 
 PERSONALIZADAS = 'personalizadas'
@@ -86,7 +53,6 @@ def etiqueta(prefijo, valor):
 
 
 def documento(producto):
-    """Ej.: "cat_videojuegos plat_ps5 fam_playstation gen_rpg". Los atributos vacíos no generan etiqueta."""
     etiquetas = [etiqueta('cat', producto.categoria.nombre)]
     if producto.plataforma_id:
         etiquetas += [etiqueta('plat', producto.plataforma.codigo), etiqueta('fam', producto.plataforma.familia)]
@@ -96,17 +62,14 @@ def documento(producto):
 
 
 def _catalogo():
-    """Productos vigentes (sin los eliminados) y su matriz TF-IDF, en el mismo orden."""
     productos = list(Producto.objects.select_related('categoria', 'plataforma', 'genero').order_by('id'))
     if not productos:
         return productos, None
-    # cada palabra es una etiqueta; tf siempre vale 1, así que el peso lo pone el IDF
-    vectorizador = TfidfVectorizer(token_pattern=r'\S+', lowercase=False)  # nosec B106 (es una expresión regular, no una contraseña)
+    vectorizador = TfidfVectorizer(token_pattern=r'\S+', lowercase=False)  # nosec B106
     return productos, vectorizador.fit_transform([documento(producto) for producto in productos])
 
 
 def unidades_vendidas():
-    """{producto_id: unidades vendidas} en las ventas no anuladas, de todos los canales."""
     return dict(
         ProductoVenta.objects.filter(venta__anulada_en__isnull=True)
         .values('producto').annotate(unidades=Sum('cantidad')).values_list('producto', 'unidades')
@@ -114,21 +77,17 @@ def unidades_vendidas():
 
 
 def _ordenar(puntajes, productos, vendidos):
-    """Índices con puntaje > 0, del mayor al menor puntaje; los empates, por unidades vendidas y luego id.
-    El puntaje se redondea a 4 decimales (los que guarda SimilitudProducto) para que un empate lo sea."""
     indices = [i for i in range(len(productos)) if round(puntajes[i], 4) > 0]
     return sorted(indices, key=lambda i: (-round(puntajes[i], 4), -vendidos.get(productos[i].id, 0),
                                           productos[i].id))
 
 
 def calcular_similitudes():
-    """Recalcula el top 10 de similares de todo el catálogo y reemplaza el cálculo anterior.
-    Los pares sin ninguna etiqueta en común (puntaje 0) no se guardan. Devuelve cuántas filas guardó."""
     productos, matriz = _catalogo()
     filas = []
     if len(productos) > 1:
         similitud = cosine_similarity(matriz)
-        np.fill_diagonal(similitud, 0)  # un producto no es similar a sí mismo
+        np.fill_diagonal(similitud, 0)
         vendidos = unidades_vendidas()
         fecha = now()
         for i, producto in enumerate(productos):
@@ -144,7 +103,6 @@ def calcular_similitudes():
 
 
 def cobertura_atributos():
-    """KPI-10: (productos con los atributos que exige su categoría, total de productos vigentes)."""
     productos = Producto.objects.all()
     incompletos = productos.filter(Q(categoria__requiere_plataforma=True, plataforma__isnull=True)
                                    | Q(categoria__requiere_genero=True, genero__isnull=True)).count()
@@ -162,7 +120,6 @@ def _eliminar_navegacion(usuario):
 
 
 def eliminar_navegacion_antigua():
-    """Borra las interacciones y las recomendaciones registradas hace más de 24 meses. Devuelve cuántas borró."""
     limite = now() - CONSERVACION_NAVEGACION
     interacciones, _ = InteraccionProducto.objects.filter(fecha__lt=limite).delete()
     recomendaciones, _ = Recomendacion.objects.filter(mostrada_en__lt=limite).delete()
@@ -170,8 +127,6 @@ def eliminar_navegacion_antigua():
 
 
 def cambiar_consentimiento_navegacion(usuario, autoriza):
-    """Da o retira la autorización de usar los datos de navegación. Al retirarla se eliminan el historial y
-    las recomendaciones registradas del cliente, como indica la política de privacidad (sección 10)."""
     with transaction.atomic():
         if autoriza:
             if usuario.datos_navegacion_autorizados_en is None:
@@ -183,8 +138,6 @@ def cambiar_consentimiento_navegacion(usuario, autoriza):
 
 
 def registrar_interaccion(usuario, producto, tipo):
-    """Guarda que el cliente vio la ficha o agregó el producto al carrito, solo si autorizó el uso de sus
-    datos de navegación. Devuelve True si se guardó."""
     if not autorizo_datos_navegacion(usuario):
         return False
     if tipo == InteraccionProducto.VISTA and usuario.interacciones.filter(
@@ -195,7 +148,6 @@ def registrar_interaccion(usuario, producto, tipo):
 
 
 def _historial(usuario):
-    """{producto_id: peso} con las vistas, lo agregado al carrito y lo comprado, y el conjunto de comprados."""
     pesos = {}
     for producto_id, tipo in usuario.interacciones.values_list('producto_id', 'tipo'):
         pesos[producto_id] = pesos.get(producto_id, 0) + PESOS[tipo]
@@ -219,8 +171,6 @@ def _vistos_recientes(usuario):
 
 
 def _personalizadas(usuario, excluidos, vendidos, cantidad, producto=None):
-    """Promedio ponderado de los vectores de los productos del historial, comparado con todo el catálogo.
-    En la ficha (`producto`), el perfil se mezcla con el vector del producto según PESO_PRODUCTO_ACTUAL."""
     pesos, comprados = _historial(usuario)
     productos, matriz = _catalogo()
     indice = {producto.id: i for i, producto in enumerate(productos)}
@@ -256,9 +206,6 @@ def _mas_vendidos(excluidos, vendidos, cantidad):
 
 
 def recomendar(usuario, producto=None, cantidad=CANTIDAD_RECOMENDACIONES):
-    """Recomendaciones para la ficha de `producto`, o para la página principal si `producto` es None.
-    Nunca incluye el producto de la ficha ni productos sin stock. Con consentimiento, tampoco lo que el
-    cliente ya compró o tiene en el carrito, y las personalizadas tampoco lo que vio en los últimos 7 días."""
     vendidos = unidades_vendidas()
     excluidos = {producto.id} if producto else set()
     if autorizo_datos_navegacion(usuario):
@@ -273,9 +220,6 @@ def recomendar(usuario, producto=None, cantidad=CANTIDAD_RECOMENDACIONES):
 
 
 def _complementos(en_carrito, excluidos, vendidos):
-    """Productos de la misma familia de plataforma que lo del carrito, pero de otra categoría (ej. con un juego
-    de PS5, accesorios o consolas PlayStation). Primero los de la misma plataforma exacta, luego los más vendidos.
-    Es una regla simple en vez de "comprados juntos", que necesitaría muchas más ventas para funcionar."""
     pares = {(p.categoria_id, p.plataforma.familia) for p in en_carrito if p.plataforma_id}
     if not pares:
         return []
@@ -287,7 +231,6 @@ def _complementos(en_carrito, excluidos, vendidos):
 
 
 def _similares_a_varios(productos, excluidos, vendidos):
-    """Similares a cualquiera de `productos`; si un producto es similar a varios, cuenta su mejor puntaje."""
     mejores = {}
     for similar in (SimilitudProducto.objects.filter(producto__in=productos, producto_similar__is_deleted=False,
                                                      producto_similar__stock__gt=0)
@@ -301,10 +244,6 @@ def _similares_a_varios(productos, excluidos, vendidos):
 
 
 def recomendar_para_carrito(usuario, cantidad=CANTIDAD_RECOMENDACIONES):
-    """Recomendaciones del carrito: complementos de lo que lleva, luego similares y, si faltan, los más
-    vendidos. Nunca lo que ya está en el carrito ni productos sin stock; con consentimiento, tampoco lo que
-    el cliente ya compró. Se basa en lo que hay en el carrito ahora (como la ficha en el producto que se ve),
-    no en el historial de navegación. Con el carrito vacío muestra los más vendidos."""
     vendidos = unidades_vendidas()
     carrito = Carrito.objects.filter(usuario=usuario).first()
     en_carrito = [item.producto for item in carrito.items.select_related('producto__plataforma')] if carrito else []
@@ -325,12 +264,9 @@ def recomendar_para_carrito(usuario, cantidad=CANTIDAD_RECOMENDACIONES):
     return Recomendaciones(COMPLEMENTOS, elegidos)
 
 
-# --- KPI-05: recomendaciones mostradas y clics ---
+# KPI-05: recomendaciones mostradas y clics
 
 def registrar_mostradas(usuario, productos, ubicacion):
-    """Registra cada producto recomendado que se le mostró al cliente, con su posición desde 1. Solo con
-    consentimiento; si no, devuelve una lista vacía. Uno por uno (no bulk_create) porque MySQL no devuelve
-    los id de un bulk_create y cada tarjeta necesita el suyo para el enlace del clic."""
     if not autorizo_datos_navegacion(usuario):
         return []
     return [Recomendacion.objects.create(usuario=usuario, producto=producto, ubicacion=ubicacion, posicion=posicion)
@@ -338,8 +274,6 @@ def registrar_mostradas(usuario, productos, ubicacion):
 
 
 def marcar_clic(usuario, recomendacion_id):
-    """Marca el primer clic en una recomendación del propio cliente. Devuelve el producto recomendado, o None
-    si la recomendación no existe o es de otro cliente."""
     if not usuario.is_authenticated:
         return None
     recomendacion = Recomendacion.objects.filter(id=recomendacion_id, usuario=usuario).first()
@@ -352,8 +286,6 @@ def marcar_clic(usuario, recomendacion_id):
 
 
 def tasa_de_clics(desde=None, hasta=None):
-    """KPI-05: {'mostradas', 'clics', 'tasa'} de las recomendaciones mostradas desde `desde` y antes de `hasta`
-    (o todas). La tasa es un porcentaje, o None si no se ha mostrado ninguna. No cuenta las cuentas de administrador."""
     recomendaciones = Recomendacion.objects.filter(usuario__is_staff=False)
     if desde is not None:
         recomendaciones = recomendaciones.filter(mostrada_en__gte=desde)
@@ -364,7 +296,7 @@ def tasa_de_clics(desde=None, hasta=None):
     return {'mostradas': mostradas, 'clics': clics, 'tasa': round(clics / mostradas * 100, 1) if mostradas else None}
 
 
-# --- recálculo automático al modificar el catálogo ---
+# Recálculo automático al modificar el catálogo
 
 ATRIBUTOS_SIMILITUD = ['categoria_id', 'plataforma_id', 'genero_id', 'is_deleted']
 _pausa = threading.local()
@@ -372,7 +304,6 @@ _pausa = threading.local()
 
 @contextmanager
 def sin_recalculo_automatico():
-    """Para cargas masivas (seed_catalogo): no recalcula por cada producto; quien lo usa recalcula al final."""
     _pausa.activa = True
     try:
         yield
@@ -384,7 +315,7 @@ def _cambia_la_similitud(producto, update_fields):
     if update_fields is not None:
         campos = {campo.removesuffix('_id') for campo in update_fields}
         if not campos & {atributo.removesuffix('_id') for atributo in ATRIBUTOS_SIMILITUD}:
-            return False  # ej. la venta que descuenta stock
+            return False
     anterior = Producto.todos.filter(pk=producto.pk).values(*ATRIBUTOS_SIMILITUD).first() if producto.pk else None
     return anterior is None or any(anterior[atributo] != getattr(producto, atributo)
                                    for atributo in ATRIBUTOS_SIMILITUD)
@@ -400,6 +331,5 @@ def _marcar_recalculo(sender, instance, update_fields=None, raw=False, **kwargs)
 @receiver(post_delete, sender=Producto)
 def _recalcular(sender, instance, signal, **kwargs):
     if signal is post_delete or getattr(instance, '_recalcular_similitudes', False):
-        # después del commit, una vez que el cambio quedó guardado
         transaction.on_commit(calcular_similitudes)
 

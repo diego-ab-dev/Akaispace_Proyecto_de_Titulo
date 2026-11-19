@@ -130,8 +130,7 @@ body {
     vertical-align: top;
 }
 
-/* ============ Responsive (celular) ============
-   "Volver Atrás" arriba y el título debajo (ver la plantilla), menos relleno y textos largos que no se salen */
+/* Responsive */
 @media (max-width: 767px) {
     .main-container {
         padding: 16px 12px 32px;

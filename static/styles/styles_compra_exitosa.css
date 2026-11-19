@@ -90,7 +90,6 @@ body {
     color: #ffffff;
 }
 
-
 .button {
   --width: 120px;
   --height: 35px;
@@ -162,9 +161,6 @@ body {
   top: 0; 
 }
 
-
-
-
 .btn-compras {
     background-color: #4e84a8;
     color: #ffffff;
@@ -223,8 +219,7 @@ body {
     padding: 0 16px;
 }
 
-
-/* ============ Compra exitosa / pago no completado responsive ============ */
+/* Compra exitosa / pago no completado responsive */
 .info-row {
     gap: 16px;
 }
@@ -258,7 +253,6 @@ body {
     .info-grid {
         gap: 8px 14px;
     }
-    /* botones Comprobante / Ir a mis compras / Intentar de nuevo a todo el ancho */
     .acciones-compra {
         flex-direction: column;
         align-items: stretch !important;

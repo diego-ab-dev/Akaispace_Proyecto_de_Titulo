@@ -1,13 +1,4 @@
-"""Carga el catálogo de prueba desde fixtures/catalogo.csv (HU-07: catálogo con atributos completos, KPI-10).
-
-- Cada fila se identifica por su código de barras: si el producto no existe se crea, y si existe se actualizan
-  sus atributos (nombre, descripción, categoría, plataforma y género). El precio, el costo y el stock de un
-  producto que ya existe no se tocan, para no deshacer ventas ni cambios hechos desde el panel.
-- Un producto que el administrador eliminó (borrado lógico) sigue eliminado.
-- Los productos sin imágenes reciben la imagen genérica de su categoría (fixtures/catalogo_media).
-- Si una fila tiene un error, no se carga nada.
-- Al terminar se recalculan las similitudes de las recomendaciones (una vez, no por cada producto).
-"""
+"""Comando: cargar catálogo de prueba."""
 import csv
 from pathlib import Path
 
@@ -28,7 +19,6 @@ ATRIBUTOS_CATALOGO = ['nombre', 'descripcion', 'categoria', 'plataforma', 'gener
 
 
 def imagen_generica(categoria):
-    """Ruta dentro de media/ de la imagen genérica de la categoría, copiándola si aún no está."""
     nombre = f"productos/generico_{slugify(categoria.nombre).replace('-', '_')}.png"
     if not default_storage.exists(nombre):
         origen = FIXTURES_DIR / 'catalogo_media' / nombre
@@ -101,13 +91,11 @@ class Command(BaseCommand):
     def _leer(self, ruta):
         if not ruta.exists():
             raise CommandError(f'No existe el archivo {ruta}.')
-        # utf-8-sig: acepta también el CSV guardado desde Excel, que agrega un BOM al inicio
         with ruta.open(encoding='utf-8-sig', newline='') as archivo:
             lector = csv.DictReader(archivo)
             faltantes = [columna for columna in COLUMNAS if columna not in (lector.fieldnames or [])]
             if faltantes:
                 raise CommandError(f'Al CSV le faltan las columnas: {", ".join(faltantes)}.')
-            # la fila 1 es el encabezado
             return [(numero, fila) for numero, fila in enumerate(lector, start=2)]
 
     def _datos(self, fila, categorias, plataformas, generos):

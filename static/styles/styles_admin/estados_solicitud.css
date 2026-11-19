@@ -1,5 +1,4 @@
-/* Estado de devoluciones y reclamos en el panel: punto de color + texto.
-   Se usa con la clase del estado en minúsculas: estado-solicitud--{{ estado|slugify }} */
+/* Estado de devoluciones y reclamos en el panel */
 .estado-solicitud {
     display: inline-flex;
     align-items: center;
@@ -38,7 +37,6 @@
     color: #b42318;
 }
 
-/* en el detalle el estado va como encabezado de la tarjeta */
 .estado-solicitud--grande {
     font-size: 1.05rem;
 }

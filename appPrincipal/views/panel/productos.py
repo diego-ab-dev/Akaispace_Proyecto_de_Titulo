@@ -1,4 +1,4 @@
-"""Panel de administración: productos."""
+"""Panel: productos."""
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
@@ -66,7 +66,6 @@ def admin_productos(request):
     })
 
 def _errores_json(form, formset):
-    """Errores del producto y de sus imágenes, con el name del campo como clave (lo usa el JS de la plantilla)."""
     errores = dict(form.errors)
     for form_imagen in formset.forms:
         for campo, mensajes in form_imagen.errors.items():
@@ -77,7 +76,6 @@ def _errores_json(form, formset):
 
 
 def _guardar_producto(request, producto, plantilla, contexto):
-    """Crea o edita un producto junto con sus imágenes (formset de hasta 6)."""
     es_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES, instance=producto)

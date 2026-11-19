@@ -97,7 +97,6 @@
                 {% endif %}
             </div>
 
-
             <div class="action-buttons">
                 <a href="{% url 'eliminar_producto' producto.id %}" 
                    class="btn-custom btn-eliminar"
@@ -117,7 +116,7 @@
         </div>
     </div>
 
-    <!--modal para confirmacion-->
+    <!-- Modal de confirmación -->
     <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -138,7 +137,6 @@
 
 <form id="form-eliminar" method="post" hidden>{% csrf_token %}</form>
 <script>
-    // para el modal de confirmacion
 let enlaceEliminar;
 
     function confirmarEliminacion(event, elemento) {
@@ -149,7 +147,6 @@ let enlaceEliminar;
     }
     document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
         if (enlaceEliminar) {
-            // eliminar cambia datos: se envía por POST (con el token CSRF), no con un link
             const formEliminar = document.getElementById('form-eliminar');
             formEliminar.action = enlaceEliminar.href;
             formEliminar.submit();

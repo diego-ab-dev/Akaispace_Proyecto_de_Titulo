@@ -1,21 +1,4 @@
-"""Recepción de devoluciones y reembolso en Webpay Plus.
-
-Una devolución pasa por dos pasos: el administrador la aprueba (solo se avisa al cliente cómo entregar o enviar el
-producto) y, cuando recibe e inspecciona el producto, registra la recepción: ahí se repone el stock y, si la venta
-web se pagó con Webpay, se pide el reembolso a Transbank.
-
-Reglas de Transbank (https://www.transbankdevelopers.cl/producto/webpay#anulaciones-y-reversas y
-https://www.transbankdevelopers.cl/referencia/webpay#reversar-o-anular-un-pago):
-- La anulación se pide con refund(token, monto) y se puede hacer hasta 90 días después de la venta.
-- Débito y prepago admiten anulación total y parcial. En crédito, la parcial solo existe para venta normal y
-  cuotas emisor: las cuotas comercio (sin interés: SI, S2, NC) solo se anulan por el total.
-- Respuesta: REVERSED (reversa, sin más datos) o NULLIFIED, que es exitosa con response_code 0.
-
-Las ventas presenciales y por WhatsApp (HU-12) no pasan por Webpay: se reembolsan en el terminal o en efectivo.
-Si Transbank no reembolsa, la devolución igual queda recibida y el reembolso queda pendiente: el administrador lo
-hace en el portal de Transbank y lo anota con "Registrar reembolso manual". Una devolución recibida de una venta
-pagada con Webpay sin monto_reembolso es un reembolso pendiente.
-"""
+"""Devoluciones y reembolsos."""
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
@@ -30,33 +13,32 @@ from appPrincipal.models import Devolucion, PagoWebpay, Producto, ProductoVenta,
 logger = logging.getLogger(__name__)
 
 PLAZO_ANULACION_WEBPAY = timedelta(days=90)
-TIPOS_PAGO_SIN_ANULACION_PARCIAL = {'SI', 'S2', 'NC'}  # cuotas comercio
+TIPOS_PAGO_SIN_ANULACION_PARCIAL = {'SI', 'S2', 'NC'}
 
 REALIZADO = 'realizado'
 PENDIENTE_MANUAL = 'pendiente_manual'
 
 
 class OperacionNoPermitida(Exception):
-    """La devolución no está en el estado que la acción necesita."""
+    pass
 
 
 @dataclass
 class ResultadoReembolso:
-    realizado: bool  # Transbank devolvió el dinero
+    realizado: bool
     monto: int
-    motivo: str = ''  # por qué no se reembolsó
-    guardado: bool = True  # False si Transbank reembolsó pero no se pudo anotar en la base de datos
+    motivo: str = ''
+    guardado: bool = True
 
 
 @dataclass
 class _Solicitud:
-    """Lo que se le pide a Transbank, calculado en la primera transacción."""
     pago_id: int
     orden_compra: str
     token: str
     monto: int
     saldo: int
-    motivo: str | None  # si no corresponde llamar a Transbank
+    motivo: str | None
 
 
 def _pesos(monto):
@@ -76,7 +58,6 @@ def _monto_productos(devolucion):
 
 
 def _saldo(devolucion, pago):
-    """Lo pagado menos lo ya reembolsado por otras devoluciones de la misma venta."""
     ya_reembolsado = Devolucion.objects.filter(venta=devolucion.venta, monto_reembolso__isnull=False).exclude(
         pk=devolucion.pk
     ).aggregate(total=Sum('monto_reembolso'))['total'] or 0
@@ -114,7 +95,6 @@ def _preparar_solicitud(devolucion):
 
 
 def _pedir_reembolso(devolucion, solicitud):
-    """Llama a Transbank (fuera de cualquier transacción). Devuelve el resultado y la respuesta."""
     motivo, respuesta = solicitud.motivo, None
     if motivo is None:
         try:
@@ -149,7 +129,6 @@ def _guardar_reembolso(devolucion, solicitud, resultado, respuesta):
             pago = PagoWebpay.objects.select_for_update().get(id=solicitud.pago_id)
             _marcar_pago_si_quedo_en_cero(pago, solicitud.monto, solicitud.saldo, respuesta)
     except Exception:
-        # la devolución ya está Recibida: no se puede volver a pedir el reembolso a Transbank
         logger.exception("Transbank reembolsó pero NO se guardó el reembolso: devolución %s, orden %s, monto %s. "
                          "Anotarlo con 'Registrar reembolso manual'.",
                          devolucion.id, solicitud.orden_compra, solicitud.monto)
@@ -159,17 +138,11 @@ def _guardar_reembolso(devolucion, solicitud, resultado, respuesta):
 
 
 def registrar_recepcion(devolucion_id):
-    """Aprobada -> Recibida: repone el stock y, si la venta se pagó con Webpay, pide el reembolso.
-
-    1. En una transacción: cambia el estado y repone el stock.
-    2. Fuera de la transacción: llama a Transbank.
-    3. En otra transacción: guarda monto_reembolso, fecha_reembolso y el estado del pago.
-    Devuelve la devolución y el ResultadoReembolso (None si la venta no se pagó con Webpay)."""
     with transaction.atomic():
         devolucion = Devolucion.objects.select_for_update().get(id=devolucion_id)
         if devolucion.estado != 'Aprobada':
             raise OperacionNoPermitida("Solo se registra la recepción de una devolución aprobada.")
-        if not _venta_anulada(devolucion.venta):  # al anular la venta ya se repuso el stock
+        if not _venta_anulada(devolucion.venta):
             Producto.todos.filter(id=devolucion.producto_id).update(stock=F('stock') + devolucion.cantidad)
         devolucion.estado = 'Recibida'
         devolucion.save(update_fields=['estado'])
@@ -184,8 +157,6 @@ def registrar_recepcion(devolucion_id):
 
 
 def registrar_reembolso_manual(devolucion_id, monto_texto):
-    """Anota un reembolso hecho a mano en el portal de Transbank, sin llamar a Transbank.
-    Lanza OperacionNoPermitida o ValueError con un mensaje para el administrador."""
     with transaction.atomic():
         devolucion = Devolucion.objects.select_for_update().get(id=devolucion_id)
         pago = _pago_webpay(devolucion.venta, bloquear=True)
@@ -209,7 +180,6 @@ def registrar_reembolso_manual(devolucion_id, monto_texto):
 
 
 def estado_reembolso(devolucion):
-    """REALIZADO, PENDIENTE_MANUAL o None (no se ha recibido o la venta no se pagó con Webpay)."""
     if devolucion.monto_reembolso is not None:
         return REALIZADO
     if devolucion.estado == 'Recibida' and _pago_webpay(devolucion.venta) is not None:
@@ -218,7 +188,6 @@ def estado_reembolso(devolucion):
 
 
 def reembolso_pendiente(devolucion):
-    """Monto sugerido y saldo máximo para el reembolso manual, o None si no hay reembolso pendiente."""
     if estado_reembolso(devolucion) != PENDIENTE_MANUAL:
         return None
     saldo = _saldo(devolucion, _pago_webpay(devolucion.venta))

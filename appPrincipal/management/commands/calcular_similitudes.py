@@ -1,5 +1,4 @@
-"""Recalcula las similitudes entre productos (HU-07). Se ejecuta solo al modificar el catálogo; este comando
-sirve para la carga inicial o para forzarlo a mano."""
+"""Comando: recalcular similitudes."""
 from django.core.management.base import BaseCommand
 
 from appPrincipal.recomendaciones import calcular_similitudes

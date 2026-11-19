@@ -21,7 +21,6 @@
             <div class="alert alert-danger" role="alert">{{ error }}</div>
             {% endif %}
 
-            {# HU-05: el pago se hace en el sitio de Transbank; aquí nunca se piden datos de la tarjeta #}
             <div class="webpay-box">
                 <p class="webpay-titulo">Webpay Plus · Transbank</p>
                 <p class="mb-2">Paga con tarjeta de crédito, débito o prepago.</p>
@@ -83,7 +82,6 @@
     </div>
 
 <script>
-    // evita abrir dos transacciones con un doble clic
     document.getElementById('form-pagar').addEventListener('submit', function () {
         const boton = this.querySelector('button');
         boton.disabled = true;

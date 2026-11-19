@@ -1,3 +1,4 @@
+"""Modelos."""
 import re
 
 from django.conf import settings
@@ -10,10 +11,6 @@ from django.utils.timezone import localdate, now
 from django.utils.translation import gettext_lazy as _
 
 from appPrincipal.envios import OPCIONES_ENVIO, costo_envio, estados_para, lleva_seguimiento
-
-# Todas las tablas propias llevan nombre en minúscula y sin prefijo (db_table), y cada columna su
-# comentario (db_comment), para generar el diagrama y el diccionario de datos desde MySQL.
-# Los montos son enteros en pesos chilenos (CLP) con IVA incluido.
 
 
 class UsuarioManager(BaseUserManager):
@@ -40,7 +37,7 @@ class UsuarioManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
-# clase Usuario
+# Usuario
 class Usuario(AbstractUser):
     MAYOR_18 = 'mayor_18'
     AUTORIZACION_TUTOR = 'autorizacion_tutor'
@@ -54,7 +51,6 @@ class Usuario(AbstractUser):
     last_name = None
 
     id = models.BigAutoField(primary_key=True, db_comment="Identificador del usuario.")
-    # columnas heredadas de AbstractUser: se redeclaran igual que en Django solo para comentarlas
     password = models.CharField(_("password"), max_length=128,
                                 db_comment="Hash de la contraseña generado por Django (algoritmo PBKDF2).")
     last_login = models.DateTimeField(_("last login"), blank=True, null=True,
@@ -128,15 +124,9 @@ class Usuario(AbstractUser):
         super().save(*args, **kwargs)
 
     NOMBRE_ANONIMO = 'Cuenta eliminada'
-    DOMINIO_ANONIMO = 'akaispace.invalid'  # dominio reservado (RFC 2606): nunca recibe correo
+    DOMINIO_ANONIMO = 'akaispace.invalid'
 
     def anonimizar(self):
-        """Supresión de datos (Ley 21.719): reemplaza los datos que identifican al cliente y desactiva la cuenta.
-        La fila se conserva porque las ventas, devoluciones y reclamos la referencian (respaldo contable y
-        tributario); sin nombre, correo, RUT, teléfono ni dirección ya no identifica a nadie. El correo y el
-        RUT quedan libres, así la persona puede volver a registrarse. Al cambiar la contraseña por una no
-        utilizable, Django cierra la sesión en todos los dispositivos.
-        Borra también su navegación; el resto de la limpieza la hace eliminacion_cuenta.eliminar_cuenta()."""
         self.nombre = self.NOMBRE_ANONIMO
         self.email = f'eliminado-{self.pk}@{self.DOMINIO_ANONIMO}'
         self.rut = None
@@ -150,12 +140,10 @@ class Usuario(AbstractUser):
         self.is_deleted = True
         self.deleted_at = now()
         self.save()
-        # la navegación (HU-07) no es un dato que la ley obligue a conservar (política de privacidad, sección 7)
         self.interacciones.all().delete()
         self.recomendaciones.all().delete()
 
     def delete(self, *args, **kwargs):
-        # borrado lógico: nunca se borra la fila (hard_delete() lo hace solo si no tiene ventas)
         self.anonimizar()
 
     def hard_delete(self):
@@ -171,10 +159,8 @@ class Usuario(AbstractUser):
         return self.nombre
 
 
-# Catálogo: categoría, plataforma y género son tablas propias (HU-07, HU-09, KPI-10).
-# Se cargan con datos fijos en la migración 0011; el admin no las edita desde el panel.
+# Catálogo
 class PorNombreManager(models.Manager):
-    """Permite usar el nombre como clave natural en los fixtures."""
     campo_natural = 'nombre'
 
     def get_by_natural_key(self, valor):
@@ -266,7 +252,7 @@ class Genero(models.Model):
         return (self.nombre,)
 
 
-# borrado lógico de productos
+# Borrado lógico de productos
 class ProductoQuerySet(models.QuerySet):
     def delete(self):
         return self.update(is_deleted=True, deleted_at=now())
@@ -280,7 +266,7 @@ class ProductoManager(models.Manager.from_queryset(ProductoQuerySet)):
         return super().get_queryset().filter(is_deleted=False)
 
 
-# clase Producto
+# Producto
 class Producto(models.Model):
     MAXIMO_IMAGENES = 6
 
@@ -360,19 +346,15 @@ class Producto(models.Model):
         super().delete()
 
     def imagenes(self):
-        """Archivos de las imágenes del producto, la principal primero.
-        En los listados conviene hacer prefetch_related('imagenes_producto')."""
         return [imagen.imagen for imagen in self.imagenes_producto.all()]
 
     @property
     def imagen_principal(self):
-        """Archivo de la imagen principal, o de la primera si ninguna está marcada; None si no tiene."""
         imagenes = self.imagenes()
         return imagenes[0] if imagenes else None
 
     @property
     def categoria_texto(self):
-        """Ej.: "Videojuegos PlayStation 5" o "Funko Pop"."""
         if self.plataforma_id:
             return f"{self.categoria.nombre} {self.plataforma.nombre}"
         return self.categoria.nombre
@@ -384,15 +366,13 @@ class Producto(models.Model):
         return round(sum(opinion.puntuacion for opinion in opiniones) / len(opiniones), 1)
 
 
-# clase ImagenProducto: hasta 6 imágenes por producto (límite del formulario)
+# ImagenProducto
 class ImagenProducto(models.Model):
     id = models.BigAutoField(primary_key=True, db_comment="Identificador de la imagen.")
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='imagenes_producto',
                                  db_comment="Producto al que pertenece la imagen (FK a producto).")
     imagen = models.ImageField(upload_to='productos/',
                                db_comment="Ruta del archivo dentro de media/ (carpeta productos/).")
-    # True = principal; NULL = secundaria. MySQL no tiene índices únicos parciales, así que la
-    # restricción única (producto, es_principal), que ignora los NULL, asegura una sola principal.
     es_principal = models.BooleanField(
         null=True, default=None,
         db_comment="1 si es la imagen principal del producto; NULL si es secundaria. "
@@ -418,13 +398,11 @@ class CarritoVigenteManager(models.Manager):
         return super().get_queryset().filter(vigente=True)
 
 
-# clase Carrito: cada usuario tiene un carrito vigente; al pagarse queda en el historial (KPI-04)
+# Carrito
 class Carrito(models.Model):
     id = models.BigAutoField(primary_key=True, db_comment="Identificador del carrito.")
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='carritos',
                                 db_comment="Dueño del carrito (FK a usuario).")
-    # True = carrito en uso; NULL = ya se pagó. La restricción única ignora los NULL,
-    # así la BD permite un solo carrito vigente por usuario y muchos en el historial.
     vigente = models.BooleanField(
         null=True, default=True,
         db_comment="1 si es el carrito en uso; NULL si ya se pagó y quedó en el historial (KPI-04).",
@@ -446,7 +424,6 @@ class Carrito(models.Model):
         ]
 
     def cerrar(self):
-        """Deja el carrito en el historial como convertido en compra."""
         self.vigente = None
         self.convertido_en = now()
         self.save(update_fields=['vigente', 'convertido_en'])
@@ -457,7 +434,7 @@ class Carrito(models.Model):
         )
 
 
-# clase de ItemCarritoProducto
+# ItemCarritoProducto
 class ItemCarritoProducto(models.Model):
     pk = models.CompositePrimaryKey('carrito_id', 'producto_id')
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items',
@@ -471,7 +448,7 @@ class ItemCarritoProducto(models.Model):
         db_table_comment = "Productos de cada carrito. Clave primaria compuesta (carrito_id, producto_id)."
 
 
-# clase Venta
+# Venta
 class Venta(models.Model):
     ENVIO_CHOICES = [
         ('tienda', 'Retiro en tienda'),
@@ -499,7 +476,6 @@ class Venta(models.Model):
         (PAGO_TRANSFERENCIA, 'Transferencia'),
     ]
     id = models.BigAutoField(primary_key=True, db_comment="Identificador y número de la venta.")
-    # las ventas presenciales (HU-12) pueden no tener un cliente con cuenta
     usuario = models.ForeignKey(
         Usuario, on_delete=models.PROTECT, null=True, blank=True, related_name='ventas',
         db_comment="Cliente que compró (FK a usuario). NULL en ventas presenciales sin cuenta (HU-12).",
@@ -538,7 +514,6 @@ class Venta(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="ventas_anuladas",
         db_comment="Administrador que anuló la venta. NULL en ventas vigentes",
     )
-    # si el correo falla, el comando reenviar_confirmaciones lo reintenta (Ley 19.496, ventas a distancia)
     confirmacion_enviada = models.BooleanField(
         default=False,
         db_comment="Indica si se envió el correo de confirmación de compra (HU-06). Las ventas web con 0 se "
@@ -586,7 +561,7 @@ class Venta(models.Model):
         return lleva_seguimiento(self.metodo_envio)
 
 
-# clase ProductoVenta: detalle de la venta, un producto una sola vez por venta
+# ProductoVenta
 class ProductoVenta(models.Model):
     pk = models.CompositePrimaryKey('venta_id', 'producto_id')
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='producto_venta',
@@ -619,7 +594,7 @@ class ProductoVenta(models.Model):
         return f"{self.producto.nombre} (Cantidad: {self.cantidad})"
 
 
-# clase Opinion
+# Opinion
 class Opinion(models.Model):
     id = models.BigAutoField(primary_key=True, db_comment="Identificador de la opinión.")
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="opiniones",
@@ -651,7 +626,7 @@ class Opinion(models.Model):
         return f"{self.usuario.nombre} - {self.producto.nombre} ({self.puntuacion} estrellas)"
 
 
-# clase Reclamo
+# Reclamo
 class Reclamo(models.Model):
     ESTADO_CHOICES = [
         ('Abierto', 'Abierto'),
@@ -663,8 +638,6 @@ class Reclamo(models.Model):
         ('tienda', 'Tienda física'),
     ]
     id = models.BigAutoField(primary_key=True, db_comment="Identificador del reclamo.")
-    # KPI-08: el admin registra también los reclamos recibidos por WhatsApp o en tienda,
-    # que pueden venir de personas sin cuenta (se guardan su nombre y contacto)
     usuario = models.ForeignKey(
         Usuario, on_delete=models.PROTECT, null=True, blank=True, related_name='reclamos',
         db_comment="Cliente que reclama (FK a usuario). NULL si el reclamo llegó por otro canal sin cuenta.",
@@ -695,12 +668,12 @@ class Reclamo(models.Model):
         return f"Reclamo {self.id} - {self.asunto}"
 
 
-# clase Devolucion
+# Devolucion
 class Devolucion(models.Model):
     ESTADO_CHOICES = [
         ('Pendiente', 'Pendiente'),
-        ('Aprobada', 'Aprobada'),  # se espera que el cliente entregue o envíe el producto
-        ('Recibida', 'Recibida'),  # la tienda recibió e inspeccionó el producto: se repuso el stock
+        ('Aprobada', 'Aprobada'),
+        ('Recibida', 'Recibida'),
         ('Rechazada', 'Rechazada'),
     ]
     MAXIMO_IMAGENES = 3
@@ -732,8 +705,6 @@ class Devolucion(models.Model):
     fecha_reembolso = models.DateTimeField(null=True, blank=True,
                                            db_comment="Fecha y hora del reembolso. NULL si no se ha reembolsado.")
 
-    # La FK compuesta (venta_id, producto_id) -> detalle_venta la crea la migración 0017 con SQL:
-    # Django 5.2 no permite declarar una ForeignKey hacia un modelo con clave primaria compuesta.
     class Meta:
         db_table = 'devolucion'
         db_table_comment = ("Solicitudes de devolución de productos de una venta (derecho a retracto y garantía). "
@@ -753,7 +724,7 @@ class Devolucion(models.Model):
         self.save()
 
 
-# clase ImagenDevolucion: fotos de evidencia de una devolución (hasta 3, límite del formulario)
+# ImagenDevolucion
 class ImagenDevolucion(models.Model):
     id = models.BigAutoField(primary_key=True, db_comment="Identificador de la imagen.")
     devolucion = models.ForeignKey(Devolucion, on_delete=models.CASCADE, related_name='imagenes',
@@ -770,7 +741,7 @@ class ImagenDevolucion(models.Model):
         return f"Imagen de la devolución {self.devolucion_id}"
 
 
-# clase Envio
+# Envio
 class Envio(models.Model):
     ESTADO_CHOICES = [
         ('En Preparación', 'En Preparación'),
@@ -829,9 +800,6 @@ class Envio(models.Model):
         return f"Envío #{self.id} para Venta {self.venta.id}"
 
     def guardar_estado(self, nuevo_estado):
-        """Cada fecha registra la primera vez que el pedido llegó a ese estado. Si el administrador vuelve a un estado
-        anterior y avanza de nuevo, no se reescribe: así la fecha de entrega, que fija el plazo de devolución, no se
-        puede correr."""
         campo = self.FECHAS_ESTADO.get(nuevo_estado)
         if campo and getattr(self, campo) is None:
             setattr(self, campo, now())
@@ -844,14 +812,12 @@ class Envio(models.Model):
 
     @property
     def estado_para_mostrar(self):
-        """Un retiro en tienda entregado se muestra como "Retirado"."""
         if self.estado == 'Entregado' and self.venta.es_retiro_en_tienda:
             return 'Retirado'
         return self.estado
 
 
-
-# clase Comprobante: comprobante de compra NO tributario (no reemplaza la boleta del SII)
+# Comprobante
 class Comprobante(models.Model):
     id = models.BigAutoField(primary_key=True, db_comment="Identificador del comprobante.")
     venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='comprobante',
@@ -868,7 +834,7 @@ class Comprobante(models.Model):
         return f"Comprobante #{self.id} - Venta {self.venta.id}"
 
 
-# clase PagoWebpay
+# PagoWebpay
 class PagoWebpay(models.Model):
     PENDIENTE = 'pendiente'
     APROBADO = 'aprobado'
@@ -965,7 +931,7 @@ class PagoWebpay(models.Model):
         self.fecha_transaccion = parse_datetime(fecha) if fecha else None
 
 
-# clase DetallePagoWebpay: productos que cubre el pago, fijados al iniciarlo (el carrito puede cambiar mientras paga)
+# DetallePagoWebpay
 class DetallePagoWebpay(models.Model):
     pk = models.CompositePrimaryKey('pago_id', 'producto_id')
     pago = models.ForeignKey(PagoWebpay, on_delete=models.CASCADE, related_name='detalles',
@@ -981,7 +947,7 @@ class DetallePagoWebpay(models.Model):
         db_table_comment = "Productos de cada pago Webpay. Clave primaria compuesta (pago_id, producto_id)."
 
 
-# clase Favorito
+# Favorito
 class Favorito(models.Model):
     pk = models.CompositePrimaryKey('usuario_id', 'producto_id')
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE,
@@ -997,7 +963,7 @@ class Favorito(models.Model):
         return f"{self.usuario} - {self.producto}"
 
 
-# clase Destacado
+# Destacado
 class Destacado(models.Model):
     SECCION_CARRUSEL = 'carrusel'
     SECCION_LANZAMIENTOS = 'lanzamientos'
@@ -1073,7 +1039,7 @@ def youtube_embed_url(url):
     return f"https://www.youtube-nocookie.com/embed/{m.group(1)}" if m else ''
 
 
-# clase ConfiguracionSitio: opciones de visualización de la tienda que el admin cambia desde el panel
+# ConfiguracionSitio
 class ConfiguracionSitio(models.Model):
     RELACIONADOS_CATEGORIA = 'categoria'
     RELACIONADOS_ALEATORIOS = 'aleatorios'
@@ -1089,7 +1055,6 @@ class ConfiguracionSitio(models.Model):
     LARGO_MAXIMO_ANUNCIO = 150
 
     id = models.BigAutoField(primary_key=True, db_comment="Identificador. La tabla tiene un único registro con id 1.")
-    # barra delgada sobre el navbar de la tienda; el visitante puede cerrarla durante su visita
     mostrar_anuncio = models.BooleanField(default=True, verbose_name="Mostrar la barra de anuncio",
                                           db_comment="Indica si la tienda muestra la barra de anuncio sobre el navbar.")
     texto_anuncio = models.CharField(
@@ -1107,12 +1072,10 @@ class ConfiguracionSitio(models.Model):
                                             db_comment="Indica si se muestran las etiquetas Nuevo y Últimos (HU-09).")
     mostrar_stock = models.BooleanField(default=True, verbose_name="Mostrar el stock disponible en la ficha",
                                         db_comment="Indica si la ficha muestra el stock disponible (HU-09).")
-    # HU-07: se habilita cuando el catálogo tiene sus atributos completos (KPI-10)
     mostrar_recomendaciones = models.BooleanField(
         default=False, verbose_name="Mostrar recomendaciones personalizadas",
         db_comment="Indica si se muestran recomendaciones personalizadas (HU-07). Se habilita con KPI-10 cumplido.",
     )
-    # HU-10: KPI-01 = ventas web del mes menos las del último mes en la plataforma anterior
     kpi01_linea_base = models.PositiveIntegerField(
         null=True, blank=True, verbose_name="Ventas web del último mes en la plataforma anterior",
         db_comment="Línea base de KPI-01: ventas web del último mes en la plataforma anterior. "
@@ -1131,7 +1094,6 @@ class ConfiguracionSitio(models.Model):
 
     @classmethod
     def actual(cls):
-        """La configuración es un único registro; si no existe se crea con los valores por defecto."""
         configuracion, _ = cls.objects.get_or_create(pk=1)
         return configuracion
 
@@ -1140,7 +1102,7 @@ class ConfiguracionSitio(models.Model):
         super().save(*args, **kwargs)
 
 
-# clase Proveedor: a quién le compra mercadería la tienda (reporte de compras, HU-10)
+# Proveedor
 class Proveedor(models.Model):
     id = models.BigAutoField(primary_key=True, db_comment="Identificador del proveedor.")
     nombre = models.CharField(max_length=100, db_comment="Nombre o razón social del proveedor.")
@@ -1164,7 +1126,7 @@ class Proveedor(models.Model):
         return self.nombre
 
 
-# clase Compra: ingreso de mercadería al inventario (HU-10). El stock sube al marcarla como recibida.
+# Compra
 class Compra(models.Model):
     PENDIENTE = 'pendiente'
     RECIBIDA = 'recibida'
@@ -1201,8 +1163,6 @@ class Compra(models.Model):
         self.save(update_fields=['total'])
 
     def marcar_recibida(self):
-        """Suma al stock lo comprado, deja como costo de cada producto el de esta compra (para el reporte de
-        ganancia) y marca la compra como recibida. Devuelve False si ya lo estaba."""
         with transaction.atomic():
             compra = Compra.objects.select_for_update().get(pk=self.pk)
             if compra.estado == self.RECIBIDA:
@@ -1217,7 +1177,7 @@ class Compra(models.Model):
         return True
 
 
-# clase DetalleCompra
+# DetalleCompra
 class DetalleCompra(models.Model):
     pk = models.CompositePrimaryKey('compra_id', 'producto_id')
     compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='detalles',
@@ -1240,7 +1200,7 @@ class DetalleCompra(models.Model):
         return f"{self.producto.nombre} (Cantidad: {self.cantidad})"
 
 
-# clase MovimientoCaja: dinero que se saca o ingresa a la caja de la tienda física (reportes de caja y retiros, HU-10)
+# MovimientoCaja
 class MovimientoCaja(models.Model):
     RETIRO = 'retiro'
     INGRESO = 'ingreso'
@@ -1266,8 +1226,7 @@ class MovimientoCaja(models.Model):
         return f"{self.get_tipo_display()} de ${self.monto}"
 
 
-# clase InteraccionProducto: navegación del cliente que alimenta las recomendaciones (HU-07).
-# Solo se registra si el cliente autorizó el uso de sus datos de navegación.
+# InteraccionProducto
 class InteraccionProducto(models.Model):
     VISTA = 'vista'
     CARRITO = 'carrito'
@@ -1295,8 +1254,7 @@ class InteraccionProducto(models.Model):
         return f"{self.usuario} - {self.producto} ({self.tipo})"
 
 
-# clase SimilitudProducto: resultado del filtrado basado en contenido (HU-07). Se guardan los 10 productos
-# más similares a cada producto, según TF-IDF y similitud del coseno sobre categoría, plataforma y género.
+# SimilitudProducto
 class SimilitudProducto(models.Model):
     pk = models.CompositePrimaryKey('producto_id', 'producto_similar_id')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='similitudes',
@@ -1322,7 +1280,7 @@ class SimilitudProducto(models.Model):
         return f"{self.producto_id} ~ {self.producto_similar_id} ({self.puntaje})"
 
 
-# clase Recomendacion: cada producto recomendado que se le mostró a un cliente y si hizo clic (KPI-05)
+# Recomendacion
 class Recomendacion(models.Model):
     UBICACIONES = [
         ('home', 'Página principal'),

@@ -1,5 +1,4 @@
-"""Conexión con Webpay Plus de Transbank
-"""
+"""Conexión con Webpay Plus."""
 import logging
 
 import requests
@@ -16,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ErrorWebpay(Exception):
-    """Transbank respondió con error o no se pudo conectar."""
+    pass
 
 
 def es_integracion():

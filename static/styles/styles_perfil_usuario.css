@@ -123,7 +123,6 @@ a {
     align-items: center;
 }
 
-
 .profile-card {
     background-color: #fafafa;
     border-radius: 15px;
@@ -182,8 +181,6 @@ a {
     transform: translateY(-2px);
 }
 
-
-
 .button-more {
   display: flex;
   align-items: center;
@@ -225,8 +222,6 @@ a {
   transform: translateY(0px);
 }
 
-
-
 .btn-blue-custom {
     background-color: #4E84A8; 
     color: white;
@@ -263,7 +258,6 @@ a {
     font-size: 1rem;
     line-height: 1.5;
 }
-
 
 #notif-box {
     position: fixed;
@@ -311,7 +305,6 @@ a {
 .estado-entregado { color: #198754; font-weight: bold; }     
 .estado-anulada { color: #dc3545; font-weight: bold; }
 
-/* HU-07: consentimiento de datos de navegación */
 .consentimiento-navegacion {
     border-top: 1px solid #e3e6ec;
     padding-top: 1rem;
@@ -321,7 +314,6 @@ a {
     border: none;
 }
 
-/* Eliminar mi cuenta: al final del perfil, separada del resto con borde rojo */
 .zona-eliminar {
     border-left: 4px solid #b10000;
 }
@@ -352,12 +344,8 @@ a {
     }
 }
 
-/* ============ Perfil responsive ============
-   escritorio (>= 992px): compras + datos arriba, devoluciones / opiniones / reclamos en 3 columnas
-   tablet (768-991px): devoluciones y opiniones en 2 columnas, reclamos a todo el ancho
-   celular (< 768px): todo en una columna; el título va arriba y "Regresar" / "Salir" en una fila debajo */
+/* Perfil responsive */
 
-/* pantallas táctiles: no hay hover, así que los botones muestran su texto e ícono desde el inicio */
 @media (hover: none) {
     .button-more .button-text,
     .button-more .iconer {
@@ -420,7 +408,6 @@ a {
         font-size: 0.95rem;
         margin-bottom: 8px;
     }
-    /* los textos largos (correo, dirección) se cortan dentro de la tarjeta */
     .profile-text-limit,
     .profile-product-name {
         min-width: 0;
@@ -435,7 +422,6 @@ a {
     .consentimiento-navegacion p {
         font-size: 0.92rem;
     }
-    /* el aviso flotante no se sale de la pantalla y queda bajo la barra de navegación */
     #notif-box {
         top: 80px;
         left: 12px;

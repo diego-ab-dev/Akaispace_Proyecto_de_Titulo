@@ -53,7 +53,6 @@ h1 {
     font-weight: 300;
 }
 
-/*Botones */
 .buttons-row {
     display: flex;
     gap: 20px; 
@@ -90,7 +89,7 @@ h1 {
     color: white;
 }
 
-/* ============ Ingreso de reclamo responsive ============ */
+/* Ingreso de reclamo responsive */
 @media (max-width: 767px) {
     .reclamo-card {
         padding: 32px 28px;
@@ -112,7 +111,6 @@ h1 {
     .form-label {
         font-size: 1rem;
     }
-    /* 16px: en iPhone un campo con letra más chica hace zoom al tocarlo */
     .form-control {
         font-size: 1rem;
     }

@@ -1,4 +1,4 @@
-"""Panel de administración: portada del sitio (carrusel, nuevos lanzamientos y promos del navbar)."""
+"""Panel: portada del sitio."""
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST

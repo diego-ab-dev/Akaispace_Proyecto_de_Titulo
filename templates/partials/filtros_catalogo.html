@@ -1,8 +1,3 @@
-{% comment %}
-Panel de filtros del catálogo (género, plataforma y precio).
-Uso: {% include "partials/filtros_catalogo.html" %} con `filtros` en el contexto (ver filtrar_catalogo).
-El selector "Ordenar" de cada página se une a este formulario con form="form-filtros".
-{% endcomment %}
 <form method="get" id="form-filtros" class="filtros-catalogo" novalidate>
     {% if query %}<input type="hidden" name="buscar" value="{{ query }}">{% endif %}
 

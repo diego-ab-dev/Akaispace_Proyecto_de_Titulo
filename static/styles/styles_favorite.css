@@ -20,8 +20,6 @@ main {
   margin-top: 100px;
 }
 
-
-/* whish list principal */
 .wishlist-container {
     min-height: 500px; 
 }
@@ -84,23 +82,19 @@ main {
     }
 }
 
-
 .page-item {
     border: 1px solid #ddd;
 }
-
 
 .page-item.active {
     background-color: #527e99;
 }
 
-
-/* ============ Favoritos responsive ============ */
+/* Favoritos responsive */
 .favoritos-main {
     padding: 3rem 0;
 }
 
-/* la imagen mantiene su tamaño; el texto es el que se ajusta */
 .item-image {
     width: 100px;
     height: 100px;
@@ -115,7 +109,6 @@ main {
     white-space: nowrap;
 }
 
-/* la imagen y el nombre llevan a la ficha (también si el producto está sin stock) */
 .fav-enlace-imagen {
     display: flex;
     align-items: center;
@@ -136,7 +129,6 @@ main {
     text-decoration: underline;
 }
 
-/* tablet: menos separación para que el nombre tenga espacio */
 @media (max-width: 991px) {
     .wishlist-item .item-image {
         width: 84px;
@@ -152,7 +144,6 @@ main {
     }
 }
 
-/* celular: imagen y datos lado a lado, botón a lo ancho debajo */
 @media (max-width: 575px) {
     main.favoritos-main {
         margin-top: 64px;
@@ -197,7 +188,6 @@ main {
     .wishlist-item .item-image img {
         max-height: 60px;
     }
-    /* deja espacio a la casilla de la esquina */
     .wishlist-item .item-details {
         padding-right: 28px;
     }

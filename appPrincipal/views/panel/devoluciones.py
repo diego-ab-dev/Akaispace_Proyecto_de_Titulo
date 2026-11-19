@@ -1,4 +1,4 @@
-"""Panel de administración: devoluciones."""
+"""Panel: devoluciones."""
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -78,14 +78,11 @@ def responder_devolucion(request, devolucion_id):
             if devolucion.estado != 'Pendiente':
                 return redirect('detalle_devolucion', devolucion_id=devolucion.id)
 
-            # aprobar solo avisa al cliente cómo entregar o enviar el producto: el stock y el reembolso
-            # se procesan cuando el administrador registra la recepción
             devolucion.estado = 'Aprobada' if accion == 'aceptar' else 'Rechazada'
             devolucion.respuesta_admin = respuesta
             devolucion.fecha_resolucion = now()
             devolucion.save()
 
-            # el aviso al cliente sale solo si la resolución quedó guardada
             transaction.on_commit(lambda: correos.enviar_resolucion_devolucion(devolucion))
 
         if devolucion.estado == 'Aprobada':
@@ -132,7 +129,6 @@ def _mensaje_recepcion(request, devolucion, reembolso):
 @admin_required
 @require_POST
 def registrar_recepcion_devolucion(request, devolucion_id):
-    """Aprobada -> Recibida, después de recibir e inspeccionar el producto."""
     get_object_or_404(Devolucion, id=devolucion_id)
     try:
         devolucion, reembolso = reembolsos.registrar_recepcion(devolucion_id)
@@ -147,7 +143,6 @@ def registrar_recepcion_devolucion(request, devolucion_id):
 @admin_required
 @require_POST
 def registrar_reembolso_manual(request, devolucion_id):
-    """Anota un reembolso que el administrador hizo a mano en el portal de Transbank."""
     get_object_or_404(Devolucion, id=devolucion_id)
     try:
         devolucion = reembolsos.registrar_reembolso_manual(devolucion_id, request.POST.get('monto', ''))

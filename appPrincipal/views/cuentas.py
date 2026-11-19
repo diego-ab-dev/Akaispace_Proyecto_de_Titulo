@@ -1,4 +1,4 @@
-"""Inicio de sesión, registro, cierre de sesión y recuperación de contraseña."""
+"""Cuentas: inicio de sesión, registro y recuperación de contraseña."""
 import logging
 
 from axes.utils import reset as reset_axes
@@ -90,14 +90,12 @@ def register(request):
                 datos_navegacion_autorizados_en=momento_consentimiento if datos['autoriza_datos_navegacion'] else None,
             )
         except IntegrityError as e:
-            # dos registros simultáneos con el mismo correo o RUT: la base de datos frena el segundo
             campo = 'email' if 'email' in str(e) else 'rut' if 'rut' in str(e) else None
             mensaje = {'email': 'El correo ya está registrado.', 'rut': 'El RUT ya está registrado.'}.get(
                 campo, 'No pudimos crear tu cuenta. Inténtalo de nuevo.')
             return JsonResponse({'success': False, 'message': mensaje,
                                  'errors': {campo or '__all__': [mensaje]}}, status=400)
 
-        # tras registrarse queda con la sesión iniciada, como en cualquier tienda en línea
         auth_login(request, usuario, backend='django.contrib.auth.backends.ModelBackend')
         logger.info("Registro: usuario %s", usuario.pk)
         correos.enviar_bienvenida(usuario)
@@ -115,8 +113,6 @@ def logout(request):
 
 
 class RecuperarContraseñaView(PasswordResetView):
-    # con django.contrib.sites (lo usa allauth) Django tomaría el dominio del Site para el
-    # enlace del correo; se usa el dominio con que el cliente entró al sitio
     def form_valid(self, form):
         self.extra_email_context = {'domain': self.request.get_host()}
         return super().form_valid(form)

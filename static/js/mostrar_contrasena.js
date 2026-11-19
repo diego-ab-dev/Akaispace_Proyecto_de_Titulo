@@ -1,13 +1,9 @@
-// Agrega el botón del ojo (mostrar/ocultar) a todos los campos de contraseña de la página.
-// Se carga en base.html, así que cualquier <input type="password"> nuevo lo trae solo.
-// Para excluir un campo: <input type="password" data-sin-ojo>.
+// Mostrar u ocultar contraseña
 (function () {
     function agregarOjo(input) {
         if (input.dataset.ojoListo || input.hasAttribute('data-sin-ojo')) return;
         input.dataset.ojoListo = '1';
 
-        // En los form-floating el botón va dentro del mismo contenedor (para no romper la etiqueta);
-        // en los demás se envuelve el campo en un contenedor propio.
         let contenedor = input.parentElement;
         if (!contenedor.classList.contains('form-floating')) {
             contenedor = document.createElement('div');

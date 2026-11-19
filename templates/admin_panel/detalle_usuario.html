@@ -56,7 +56,7 @@
                 <span class="info-value">{% if usuario.is_staff %}Si{% else %}No{% endif %}</span>
             </div>
 
-            <!-- consentimientos del registro (HU-01); las cuentas creadas desde el panel no los tienen -->
+            <!-- Consentimientos del registro -->
             <div class="info-group">
                 <span class="info-label">Política de privacidad:</span>
                 <span class="info-value">
@@ -87,7 +87,7 @@
 
         </div>
     </div>
-    <!--modal para confirmacion-->
+    <!-- Modal de confirmación -->
     <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -106,10 +106,8 @@
         </div>
     </div> 
 
-
 <form id="form-eliminar" method="post" hidden>{% csrf_token %}</form>
 <script>
-    // para modal al eliminar
     let enlaceEliminar;
     function confirmarEliminacion(event, elemento) {
         event.preventDefault();
@@ -119,7 +117,6 @@
     }
     document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
         if (enlaceEliminar) {
-            // eliminar cambia datos: se envía por POST (con el token CSRF), no con un link
             const formEliminar = document.getElementById('form-eliminar');
             formEliminar.action = enlaceEliminar.href;
             formEliminar.submit();

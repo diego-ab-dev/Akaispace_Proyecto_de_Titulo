@@ -8,11 +8,8 @@
 {% endblock %}
 
 {% block content %}
-    <!--Nav de la web-->
-<!--fin del nav-->
 
-
-<!--Contenido-->
+<!-- Contenido -->
 <div id="carrito-container">
     <div class="card">
     <div id="mensaje-error" {% if not request.GET.notif %}style="display:none;"{% endif %}
@@ -70,7 +67,6 @@
                                     <form class="d-inline" method="POST" action="{% url 'actualizar_cantidad_carrito' %}" id="form-{{ item.producto_id }}">
                                         {% csrf_token %}
                                         <input type="hidden" name="producto_id" value="{{ item.producto_id }}">
-                                        {# la cantidad solo cambia con los botones (no se escribe), así nunca pasa del stock #}
                                         <input type="hidden" name="cantidad" class="input-cantidad" value="{{ item.cantidad }}"
                                                data-item="{{ item.producto_id }}" data-confirmada="{{ item.cantidad }}" data-stock="{{ item.producto.stock }}"
                                                data-precio="{{ item.producto.precio|default:0 }}">
@@ -103,7 +99,7 @@
                 </div>
             </div>
 
-            <!--RESUMEN DEL CARRITO-->
+            <!-- Resumen del carrito -->
             <div class="col-lg-4 summary">
             <div><h5><b>Resumen</b></h5></div>
             <hr>
@@ -116,7 +112,6 @@
                 </div>
             </div>
             {% if productos %}
-            {# lo que solo existe con productos; al vaciar el carrito se reemplaza por el aviso (mostrarCarritoVacio) #}
             <div id="resumen-compra">
             <div class="row">
                 <div class="col">Envío</div>
@@ -134,8 +129,7 @@
                 </div>
             </div>
 
-
-            {# lo necesario para comprar: RUT y teléfono siempre; la dirección solo para los despachos #}
+            {# Tus datos #}
             <div class="envio-box mt-3 p-3" id="datos-compra"
                  data-tiene-rut="{% if usuario.rut %}1{% endif %}" data-tiene-telefono="{% if usuario.telefono %}1{% endif %}">
                 <div class="d-flex justify-content-between">
@@ -156,7 +150,7 @@
                 {% endif %}
             </div>
 
-            {# HU-08: opciones de entrega; las que no aplican a la ciudad del cliente se ocultan (ver actualizarEntrega) #}
+            {# Opciones de entrega #}
             <div class="entrega-box mt-3">
                 <b>¿Cómo quieres recibir tu compra?</b>
                 {% for opcion in opciones_envio %}
@@ -168,7 +162,6 @@
                         <span class="entrega-precio"></span>
                     </span>
                     <span class="entrega-resumen">{{ opcion.resumen }}</span>
-                    {# el detalle solo se ve en la opción elegida, para que la lista no se alargue #}
                     <span class="entrega-descripcion">{{ opcion.descripcion }}</span>
                 </label>
                 {% endfor %}
@@ -188,7 +181,7 @@
             {% endif %}
         </div>
 
-        <!--Modal para editar el envio-->
+        <!-- Modal para editar el envío -->
         <div id="modal-envio" class="modal-envio">
             <div class="modal-content-envio">
                 <h5><b>Tus datos</b></h5>
@@ -239,7 +232,7 @@
         </div>
         </div>
 
-        {# HU-07: recomendaciones del carrito (complementos de lo que lleva); se activan en Configuración del panel #}
+        {# Recomendaciones #}
         {% if recomendaciones and recomendaciones.productos %}
         <section class="recos-carrito" aria-labelledby="recos-carrito-titulo">
             <div class="recos-cabecera">
@@ -271,7 +264,7 @@
     </div>
 </div>
 
-<!--modal para confirmar la eliminación de varios productos-->
+<!-- Modal de eliminación -->
 <div class="modal fade" id="modal-confirmar-eliminar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">

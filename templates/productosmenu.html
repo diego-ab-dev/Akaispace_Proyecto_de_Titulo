@@ -20,10 +20,9 @@
     <span id="notif-msg">{{ request.GET.notif }}</span>
 </div>
 
-<!--carrusel principal-->
+<!-- Carrusel principal -->
   <div id="myCarousel" class="carousel slide carousel-fade">
     <div class="carousel-inner">
-      {# los slides se editan en el panel de administración (Portada > Carrusel del menú) #}
       {% for slide in portada.carrusel %}
       <div class="carousel-item{% if forloop.first %} active{% endif %}">
         <div class="mask flex-center">
@@ -66,7 +65,7 @@
     </div>
   </div>
 
-      <!--seccion de productos-->
+      <!-- Productos -->
       <section class="section-products">
         <div class="container">
 
@@ -177,7 +176,7 @@
         </div>
       </section>
 
-      <!-- Paginacion -->
+      <!-- Paginación -->
       <div class="pagination-wrapper">
           {% if page_obj.has_previous %}
               <a href="?{% param_replace page=page_obj.previous_page_number %}" class="page-nav">
@@ -195,7 +194,6 @@
                   <span class="page-item active">{{ num }}</span>
 
               {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-                  {# en celular se ocultan las páginas a 2 de distancia (page-lejos) y se marcan con ... #}
                   {% if num == page_obj.number|add:'-2' and num != 1 %}<span class="page-dots page-dots-movil">...</span>{% endif %}<a href="?{% param_replace page=num %}" class="page-item{% if num == page_obj.number|add:'-2' and num != 1 or num == page_obj.number|add:'2' and num != page_obj.paginator.num_pages %} page-lejos{% endif %}">{{ num }}</a>{% if num == page_obj.number|add:'2' and num != page_obj.paginator.num_pages %}<span class="page-dots page-dots-movil">...</span>{% endif %}
 
               {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
@@ -216,21 +214,18 @@
       </div>
 
 <script>
-  // carrusel principal (espera a Bootstrap, que se carga con defer)
   const carrusel = document.querySelector('#myCarousel');
   document.addEventListener('DOMContentLoaded', () => {
     new bootstrap.Carousel(carrusel, { interval: 3000, ride: 'carousel' });
   });
 
-  // todos los slides con el alto del más alto (cada portada mide distinto): así el catálogo no sube ni
-  // baja al cambiar de slide. Se mide al cargar las imágenes y de nuevo si cambia el ancho de la ventana.
   function igualarAltoCarrusel() {
     const slides = carrusel.querySelectorAll('.carousel-item');
     slides.forEach((slide) => { slide.style.minHeight = ''; });
     let alto = 0;
     slides.forEach((slide) => {
       const oculto = getComputedStyle(slide).display === 'none';
-      if (oculto) slide.style.display = 'block';  // los slides inactivos no ocupan espacio: se muestran un instante para medirlos
+      if (oculto) slide.style.display = 'block';
       alto = Math.max(alto, slide.offsetHeight);
       if (oculto) slide.style.display = '';
     });

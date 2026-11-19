@@ -1,4 +1,4 @@
-"""Perfil del cliente: resumen, edición de datos, cambio de contraseña y eliminación de la cuenta."""
+"""Perfil del cliente."""
 from urllib.parse import urlencode
 
 from django.contrib.auth import logout as auth_logout, update_session_auth_hash
@@ -39,7 +39,6 @@ def perfil(request):
 @login_required
 @require_POST
 def datos_navegacion(request):
-    """HU-07: el cliente autoriza o retira el uso de sus datos de navegación para las recomendaciones."""
     autoriza = request.POST.get('autoriza') == 'on'
     cambiar_consentimiento_navegacion(request.user, autoriza)
     mensaje = ('Activaste las recomendaciones personalizadas.' if autoriza else
@@ -63,7 +62,6 @@ def cambiar_contraseña(request):
 
     return render(request, 'cambiar_contrausu.html', {
         'form': form,
-        # las cuentas creadas con Google no tienen contraseña: la crean con "¿Olvidaste tu contraseña?"
         'sin_contraseña': not usuario.has_usable_password(),
     })
 
@@ -76,13 +74,12 @@ def editar_perfil(request):
         if form.is_valid():
             campos = ['nombre', 'telefono', 'direccion', 'region', 'ciudad']
             if not usuario.rut and form.cleaned_data['rut']:
-                campos.append('rut')  # se agrega una sola vez; después queda fijo
+                campos.append('rut')
             for campo in campos:
                 setattr(usuario, campo, form.cleaned_data[campo])
             try:
                 usuario.save(update_fields=campos)
             except IntegrityError:
-                # otro cliente guardó el mismo RUT justo antes: la base de datos frena el segundo
                 form.add_error('rut', 'El RUT ya está registrado en otra cuenta.')
             else:
                 aviso = urlencode({'notif': 'Tus datos se actualizaron correctamente.', 'type': 'success'})
@@ -108,8 +105,6 @@ def editar_perfil(request):
 
 @login_required
 def eliminar_cuenta(request):
-    """Derecho de supresión: el cliente elimina su cuenta de inmediato, confirmando con su contraseña
-    (o su correo si la cuenta es solo de Google). Ver eliminacion_cuenta.py."""
     usuario = request.user
     motivos = motivos_para_no_eliminar(usuario)
     form = EliminarCuentaForm(usuario=usuario)
@@ -119,7 +114,7 @@ def eliminar_cuenta(request):
             try:
                 eliminar_y_anonimizar(usuario)
             except CuentaNoEliminable as error:
-                motivos = error.motivos  # algo cambió entre que abrió la página y confirmó
+                motivos = error.motivos
             else:
                 auth_logout(request)
                 return redirect('cuenta_eliminada')

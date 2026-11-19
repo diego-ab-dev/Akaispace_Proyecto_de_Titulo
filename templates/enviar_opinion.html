@@ -14,7 +14,7 @@
         <h1 title="Tu opinión de {{ producto.nombre }}">
             Tu opinión de "{{ producto.nombre }}"
         </h1>
-        <!--Formulario-->
+        <!-- Formulario -->
         <form method="post" id="opinionForm" data-validar>
             {% csrf_token %}
             <div data-resumen-errores hidden></div>
@@ -51,8 +51,6 @@
     </div>
 
 <script>
-    // las estrellas parten vacías; se pintan hasta la puntuación elegida (los radios son los que se envían)
-    // y al pasar el mouse muestran una vista previa de la nota
     (function () {
         const contenedor = document.getElementById('starContainer');
         const radios = document.querySelectorAll('.estrella-radio');

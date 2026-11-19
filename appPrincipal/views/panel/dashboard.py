@@ -1,4 +1,4 @@
-"""Panel de administración: resumen del negocio (HU-10). Los cálculos están en appPrincipal/reportes.py."""
+"""Panel: resumen del negocio."""
 from django.shortcuts import render
 from django.utils import timezone
 

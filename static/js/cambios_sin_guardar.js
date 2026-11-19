@@ -1,12 +1,4 @@
-/*
- * Aviso de cambios sin guardar (panel de administración).
- *
- * Se activa en los formularios con el atributo data-avisar-cambios. Al abrir la página se guarda cómo
- * está cada formulario; si el admin intenta irse y algo cambió (y no lo guardó), se le avisa:
- *  - al hacer clic en un enlace de la página: ventana propia con "Seguir editando" / "Salir sin guardar";
- *  - al cerrar la pestaña, recargar o usar "atrás": el aviso del navegador (su texto no se puede cambiar).
- * Si el admin cambia algo y lo deja como estaba, no se avisa. Al presionar Guardar tampoco.
- */
+// Aviso de cambios sin guardar
 (function () {
     'use strict';
 
@@ -14,11 +6,10 @@
     if (!formularios.length) return;
 
     const estadoInicial = new Map();
-    let enviando = false;      // se presionó Guardar: la página se va a ir (o se recarga con errores)
-    let saliendo = false;      // el admin ya confirmó "Salir sin guardar"
+    let enviando = false;
+    let saliendo = false;
     let temporizadorEnvio = null;
 
-    // foto del formulario: nombre y valor de cada campo (los que agrega el JS también cuentan)
     function foto(form) {
         const datos = [];
         Array.from(form.elements).forEach(campo => {
@@ -43,14 +34,10 @@
         return formularios.some(form => estadoInicial.has(form) && foto(form) !== estadoInicial.get(form));
     }
 
-    // la foto inicial se toma cuando la página terminó de cargar, después de que los scripts de cada
-    // pantalla dejaron listos sus campos (por ejemplo la casilla de oferta en Editar producto)
     window.addEventListener('load', () => {
         setTimeout(() => formularios.forEach(form => estadoInicial.set(form, foto(form))), 0);
     });
 
-    // Guardar: no se avisa. Si el formulario se envía por fetch y vuelve con errores, el aviso
-    // regresa cuando el admin vuelve a escribir o a los pocos segundos.
     formularios.forEach(form => {
         form.addEventListener('submit', () => {
             enviando = true;
@@ -61,14 +48,13 @@
         form.addEventListener('change', () => { enviando = false; });
     });
 
-    // cerrar la pestaña, recargar o "atrás": aviso del navegador
     window.addEventListener('beforeunload', evento => {
         if (!hayCambios()) return;
         evento.preventDefault();
-        evento.returnValue = '';  // necesario en Chrome y Edge
+        evento.returnValue = '';
     });
 
-    // ---- ventana propia para los enlaces ----
+    // Ventana propia para los enlaces
     let modal = null;
     let destino = null;
 
@@ -109,7 +95,6 @@
     document.addEventListener('click', evento => {
         const enlace = evento.target.closest('a[href]');
         if (!enlace || evento.defaultPrevented) return;
-        // abrir en otra pestaña no hace perder nada
         if (evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
         if (enlace.target === '_blank' || enlace.hasAttribute('download')) return;
         const href = enlace.getAttribute('href');

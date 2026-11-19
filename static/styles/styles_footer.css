@@ -1,5 +1,4 @@
-/* Footer de la tienda (templates/partials/footer.html). Lo carga base_tienda.html después del CSS de cada página;
-   footer.footer-tienda gana a las reglas sueltas de las páginas (footer, a, p, h5...) para que se vea igual en todas. */
+/* Footer de la tienda */
 footer.footer-tienda {
   background-color: #1C253B;
   color: #ffffff;
@@ -40,7 +39,6 @@ footer.footer-tienda .parrafo-footer {
   overflow-wrap: anywhere;
 }
 
-/* barra del copyright: los enlaces bajan de línea en vez de salirse en el celular */
 footer.footer-tienda > div:last-child {
   font-size: 0.9rem;
   line-height: 1.8;

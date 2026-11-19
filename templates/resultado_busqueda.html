@@ -51,8 +51,6 @@
 {% endblock %}
 
 {% block content %}
-    <!--Nav de la web-->
-    <!--fin del nav-->
 
     <div id="notif-box" class="notif {{ request.GET.type }}">
         <span id="notif-msg">{{ request.GET.notif }}</span>
@@ -166,7 +164,7 @@
           </div>
         </section>
 
-        <!-- Paginacion -->
+        <!-- Paginación -->
       <div class="pagination-wrapper">
           {% if page_obj.has_previous %}
               <a href="?{% param_replace page=page_obj.previous_page_number %}" class="page-nav">
@@ -184,7 +182,6 @@
                   <span class="page-item active">{{ num }}</span>
 
               {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-                  {# en celular se ocultan las páginas a 2 de distancia (page-lejos) y se marcan con ... #}
                   {% if num == page_obj.number|add:'-2' and num != 1 %}<span class="page-dots page-dots-movil">...</span>{% endif %}<a href="?{% param_replace page=num %}" class="page-item{% if num == page_obj.number|add:'-2' and num != 1 or num == page_obj.number|add:'2' and num != page_obj.paginator.num_pages %} page-lejos{% endif %}">{{ num }}</a>{% if num == page_obj.number|add:'2' and num != page_obj.paginator.num_pages %}<span class="page-dots page-dots-movil">...</span>{% endif %}
 
               {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
@@ -203,6 +200,5 @@
               </span>
           {% endif %}
       </div>
-
 
 {% endblock %}

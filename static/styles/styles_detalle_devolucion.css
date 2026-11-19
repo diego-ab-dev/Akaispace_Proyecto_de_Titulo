@@ -98,7 +98,6 @@ h1 {
     font-size: 1.1rem;
 }
 
-
 .divider {
     border-top: 1px solid #eee;
     margin: 25px 0;
@@ -190,7 +189,6 @@ h1 {
     to {opacity: 1;}
 }
 
-
 .estado-texto {
     font-weight: 700; 
 }
@@ -252,7 +250,6 @@ h1 {
     color: #4e84a8;
 }
 
-
 .btn-ver-compra {
     display: block;
     width: 100%;
@@ -290,7 +287,6 @@ h1 {
     height: 100%;              
     opacity: 0.7;             
 }
-/* montos grandes en celular: no se salen de su columna */
 .refund-amount {
     overflow-wrap: anywhere;
 }
@@ -301,10 +297,7 @@ h1 {
     }
 }
 
-
-/* ============ Detalle de devolución responsive ============
-   escritorio (>= 992px): solicitud y respuesta lado a lado
-   tablet y celular: la respuesta va debajo; en celular el reembolso baja bajo el producto */
+/* Detalle de devolución responsive */
 @media (max-width: 991px) {
     .main-container {
         padding: 16px 4px;
@@ -363,7 +356,6 @@ h1 {
 }
 
 @media (max-width: 575px) {
-    /* el reembolso pasa bajo el producto, separado por una línea en vez de la barra lateral */
     .reembolso-col {
         border-left: 0 !important;
         border-top: 1px solid #dee2e6;

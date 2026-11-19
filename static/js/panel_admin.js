@@ -17,12 +17,10 @@ document.addEventListener("DOMContentLoaded", function () {
       alternarMenu(!nav.classList.contains("show"));
     });
 
-    // en celular el menú va encima del contenido: se cierra al tocar fuera de él o al elegir una sección
     const esCelular = window.matchMedia("(max-width: 767px)");
     document.addEventListener("click", (evento) => {
       const fuera = !nav.contains(evento.target) && !toggle.contains(evento.target);
       if (esCelular.matches && nav.classList.contains("show") && fuera) {
-        // el toque solo cierra el menú: no activa lo que había debajo del fondo oscuro
         evento.preventDefault();
         evento.stopPropagation();
         alternarMenu(false);

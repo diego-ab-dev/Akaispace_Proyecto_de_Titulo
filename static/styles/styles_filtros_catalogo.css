@@ -1,4 +1,4 @@
-/* Panel de filtros del catálogo: menú, búsqueda y categorías */
+/* Panel de filtros del catálogo */
 
 .filtros-catalogo {
     background-color: #ffffff;
@@ -133,7 +133,6 @@
     color: #6c757d;
 }
 
-/* filtro activo: texto + una × cuadrada para quitarlo */
 .chip-filtro {
     display: inline-flex;
     align-items: center;

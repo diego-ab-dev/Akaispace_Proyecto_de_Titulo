@@ -1,7 +1,4 @@
-"""Reenvía el correo de confirmación de las compras web cuyo envío falló (HU-06, Ley 19.496: confirmación escrita
-en las ventas a distancia). Toma las ventas pagadas con Webpay sin confirmación, creadas hace más de 5 minutos (para
-no cruzarse con el envío normal al aprobarse el pago) y hace menos de 7 días. Se programa cada 15 minutos (por
-ejemplo, con cron en el servidor)."""
+"""Comando: reenviar confirmaciones de compra."""
 import logging
 from datetime import timedelta
 
@@ -28,8 +25,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         enviadas = fallidas = 0
         for venta in confirmaciones_pendientes():
-            # se marca antes de enviar con un update condicional: si otra instancia del comando ya la tomó,
-            # el update no afecta filas y esta no la envía
             if not Venta.objects.filter(pk=venta.pk, confirmacion_enviada=False).update(confirmacion_enviada=True):
                 continue
             try:

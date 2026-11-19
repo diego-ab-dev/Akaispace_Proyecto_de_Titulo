@@ -4,7 +4,6 @@
     overflow-x: hidden;
   }
 
-  
 .main_image img {
   width: 100%;
   height: 100%;
@@ -77,7 +76,6 @@
   display: flex;
   justify-content: space-between;
 }
-
 
 .main_image {
   width: auto;
@@ -163,9 +161,7 @@ h5 {
   line-height: 0;
 }
 
-
 @media only screen and (max-width: 768px) {
-
 
   .left, .right {
       width: 100%;
@@ -184,13 +180,11 @@ h5 {
   
 @media only screen and (max-width: 511px) {
 
-
   .option img {
       width: 60px;
       height: 60px;
   }
 }
-
 
 @keyframes anim-fade-in { from { opacity: 0; } to { opacity: 1 } }		
 
@@ -211,7 +205,6 @@ h5 {
 	animation-play-state: paused;
 }
 
-/* From Uiverse.io by vinodjangid07 */ 
 .CartBtn {
   width: 200px;
   height: 50px;
@@ -289,7 +282,6 @@ h5 {
   transform: scale(0.95);
   transition-duration: .5s;
 }
-
 
 .progress {
     background-color: #e9ecef;
@@ -449,8 +441,7 @@ h2, h3, h5 {
     .icon-circle { width: 40px; height: 40px; font-size: 1rem; }
 }
 
-/* ============ Ficha responsive ============
-   escritorio (>= 992px): imagen y datos lado a lado | tablet y celular: uno debajo del otro */
+/* Ficha responsive */
 .ficha-producto {
   margin-top: 100px;
   margin-bottom: 50px;
@@ -461,14 +452,12 @@ h2, h3, h5 {
   padding: 3rem;
 }
 
-/* imagen principal: cuadrada y del ancho de su columna (máx. 500 px) */
 .zoom-container {
   height: auto;
   aspect-ratio: 1 / 1;
   max-height: 500px;
 }
 
-/* miniaturas en una sola fila; si no caben se deslizan de lado en vez de salirse de la columna */
 .ficha-miniaturas {
   display: flex;
   gap: 8px;
@@ -486,7 +475,6 @@ h2, h3, h5 {
   scroll-snap-align: start;
 }
 
-/* texto justificado solo con columnas anchas (en angostas deja huecos grandes) */
 .texto-justificado {
   text-align: left;
 }
@@ -497,7 +485,6 @@ h2, h3, h5 {
   }
 }
 
-/* ruta "Inicio / producto": el nombre largo se corta con ... en una sola línea */
 .ficha-producto .breadcrumb {
   flex-wrap: nowrap;
   min-width: 0;
@@ -510,13 +497,11 @@ h2, h3, h5 {
   text-overflow: ellipsis;
 }
 
-/* paginación de opiniones: baja de línea si hay muchas páginas */
 #seccion-opiniones .pagination {
   flex-wrap: wrap;
   gap: 4px 0;
 }
 
-/* en pantallas táctiles no hay "hover": la imagen no queda ampliada al tocarla */
 @media (hover: none) {
   .zoom-container {
     cursor: default;
@@ -544,7 +529,6 @@ h2, h3, h5 {
     padding: 1rem;
     border-radius: 12px !important;
   }
-  /* el recuadro ocupa el ancho de la pantalla con 12 px a los lados */
   .ficha-producto > .container,
   .ficha-producto > .container.mt-4 {
     max-width: calc(100% - 24px);
@@ -561,7 +545,6 @@ h2, h3, h5 {
   .precio-ficha {
     font-size: 1.6rem;
   }
-  /* cantidad y botón: el botón ocupa el resto del ancho */
   .form-agregar .CartBtn {
     width: auto;
     min-width: 0;
@@ -580,7 +563,6 @@ h2, h3, h5 {
   }
 }
 
-/* stock: ícono + texto de color, sin "pastilla" */
 .stock-texto {
     display: inline-flex;
     align-items: center;
@@ -600,7 +582,6 @@ h2, h3, h5 {
     color: #b42318;
 }
 
-/* invitación a opinar (sección de opiniones): solo la ve quien compró y recibió o retiró el producto */
 .invitar-opinar {
   display: flex;
   align-items: center;
@@ -641,13 +622,11 @@ h2, h3, h5 {
 }
 .invitar-opinar-espera .invitar-opinar-icono { color: #4E84A8; }
 
-/* en el celular el botón baja y ocupa todo el ancho */
 @media (max-width: 575px) {
   .invitar-opinar { flex-wrap: wrap; }
   .btn-invitar-opinar { width: 100%; text-align: center; }
 }
 
-/* etiqueta bajo el nombre de quien opinó y además compró y recibió el producto */
 .compra-verificada {
   display: block;
   font-size: 0.75rem;

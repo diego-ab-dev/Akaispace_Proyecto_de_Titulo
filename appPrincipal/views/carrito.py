@@ -46,9 +46,7 @@ def agregar_al_carrito(request, producto_id):
         item.save()
     else:
         ItemCarritoProducto.objects.create(carrito=carrito, producto=producto, cantidad=cantidad)
-    # HU-07: historial para las recomendaciones (solo si el cliente lo autorizó)
     registrar_interaccion(request.user, producto, InteraccionProducto.CARRITO)
-    # KPI-05: agregarlo desde una recomendación del carrito cuenta como clic en ella
     recomendacion_id = _leer_entero(request.POST.get('recomendacion'))
     if recomendacion_id:
         marcar_clic(request.user, recomendacion_id)
@@ -60,7 +58,6 @@ def agregar_al_carrito(request, producto_id):
     })
 
 
-# los ítems del carrito se identifican por el producto: la clave primaria es (carrito, producto)
 @login_required_json
 @solo_clientes_json
 @require_POST
@@ -98,7 +95,6 @@ def eliminar_seleccionados_carrito(request):
         return JsonResponse({'success': False, 'error': 'Selecciona al menos un producto.'}, status=400)
 
     carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
-    # los ids son de productos; solo se borran los de este carrito, los demás se ignoran
     items = carrito.items.filter(producto_id__in=ids)
     eliminados = list(items.values_list('producto_id', flat=True))
     if not eliminados:
@@ -193,7 +189,6 @@ def ver_carrito(request):
 @solo_clientes_json
 @require_POST
 def guardar_datos_envio(request):
-    """"Tus datos" del carrito: RUT (si falta), teléfono y, para los despachos, la dirección."""
     usuario = request.user
     form = DatosCompraForm(request.POST, usuario=usuario)
     if not form.is_valid():
@@ -203,7 +198,7 @@ def guardar_datos_envio(request):
     datos = form.cleaned_data
     campos = ['telefono', 'region', 'ciudad', 'direccion']
     if not usuario.rut:
-        campos.append('rut')  # se agrega una sola vez; después queda fijo
+        campos.append('rut')
     for campo in campos:
         setattr(usuario, campo, datos[campo])
     try:

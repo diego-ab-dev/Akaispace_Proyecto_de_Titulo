@@ -1,5 +1,4 @@
-// Botón "volver arriba" (templates/partials/boton_subir.html): aparece después de bajar un poco más de
-// media pantalla y el anillo marca cuánto se ha recorrido de la página.
+// Botón "volver arriba"
 (function () {
   const boton = document.getElementById("boton-subir");
   if (!boton) return;

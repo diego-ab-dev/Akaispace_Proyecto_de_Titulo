@@ -94,7 +94,6 @@ h2 {
     padding: 8px 40px;
 }
 
-
 .modal {
     display: none; 
     position: fixed;
@@ -123,7 +122,6 @@ h2 {
     max-width: 500px;
     z-index: 1060; 
 }
-
 
 body.modal-open {
     padding-right: 0; 

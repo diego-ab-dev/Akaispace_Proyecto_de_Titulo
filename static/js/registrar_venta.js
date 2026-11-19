@@ -1,5 +1,4 @@
-// Panel > Registrar venta (HU-12): buscar productos por nombre o código de barras y armar la venta.
-// El servidor vuelve a validar todo (stock, cantidades, medio de pago) al confirmar.
+// Panel > Registrar venta
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("form-venta");
   const buscador = document.getElementById("buscar-producto");
@@ -16,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const modal = new bootstrap.Modal(document.getElementById("confirmarVentaModal"));
   const urlBuscar = form.dataset.urlBuscar;
 
-  const items = new Map(); // id del producto -> { producto, input, subtotal, alerta }
+  const items = new Map();
   let confirmada = false;
 
   const pesos = (monto) => "$" + monto.toLocaleString("es-CL");
@@ -202,7 +201,7 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const respuesta = await fetch(`${urlBuscar}?q=${encodeURIComponent(texto)}`);
       const datos = await respuesta.json();
-      return numero === ultimaBusqueda ? datos.productos : null; // descarta respuestas de búsquedas anteriores
+      return numero === ultimaBusqueda ? datos.productos : null;
     } catch (error) {
       avisar("No se pudo buscar. Recarga la página e inténtalo de nuevo.");
       return null;
@@ -223,7 +222,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 250);
   });
 
-  // El lector de código de barras escribe el código y presiona Enter: si hay un solo producto, se agrega.
   buscador.addEventListener("keydown", async (evento) => {
     if (evento.key === "Escape") cerrarResultados();
     if (evento.key !== "Enter") return;
@@ -254,7 +252,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   recibido.addEventListener("input", calcularVuelto);
 
-  // Antes de registrar se muestra un resumen; Enter en una cantidad tampoco envía sin confirmar.
   form.addEventListener("submit", (evento) => {
     if (confirmada) return;
     evento.preventDefault();
@@ -278,7 +275,6 @@ document.addEventListener("DOMContentLoaded", function () {
     form.submit();
   });
 
-  // si el servidor rechazó la venta, se vuelven a mostrar los productos que se habían agregado
   JSON.parse(document.getElementById("items-ingresados").textContent).forEach((producto) => {
     if (!items.has(producto.id)) crearFila(producto, producto.cantidad);
   });

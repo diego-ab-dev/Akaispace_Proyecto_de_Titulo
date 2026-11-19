@@ -9,7 +9,6 @@ body {
   min-height: 100vh;
 }
 
-
 #carrito {
   position: relative;
   margin-top: 100px;
@@ -233,7 +232,6 @@ a:hover {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 
 .modal-envio {
     display: none;
@@ -463,7 +461,7 @@ a:hover {
   color: #777;
 }
 
-/* ---- selección múltiple y vaciar carrito ---- */
+/* Selección múltiple y vaciar carrito */
 .acciones-carrito {
     display: flex;
     flex-wrap: wrap;
@@ -518,7 +516,6 @@ a:hover {
     gap: 12px;
 }
 
-/* basurero de "eliminar seleccionados": solo el ícono, sin fondo ni borde en ningún estado */
 #carrito-container .btn-icono-carrito,
 #carrito-container .btn-icono-carrito:hover,
 #carrito-container .btn-icono-carrito:focus,
@@ -560,7 +557,6 @@ a:hover {
     cursor: not-allowed;
 }
 
-/* "Vaciar carrito": botón chico, no compite con "Proceder a la compra" */
 #carrito-container .btn-vaciar-carrito {
     font-size: 0.8rem;
     font-weight: 600;
@@ -581,7 +577,6 @@ a:hover {
     transform: scale(0.97);
 }
 
-/* burbuja con la cantidad de productos seleccionados */
 .contador-seleccionados {
     position: absolute;
     top: -4px;
@@ -608,7 +603,7 @@ a:hover {
     }
 }
 
-/* ---- "Complementa tu compra": recomendaciones del carrito (HU-07) ---- */
+/* "Complementa tu compra" */
 .recos-carrito {
   padding: 4vh 5vh 5vh;
   background: linear-gradient(180deg, #F3F6F9 0%, #FFFFFF 100%);
@@ -733,7 +728,6 @@ a:hover {
   color: #1C253B;
 }
 
-/* le gana al estilo general de los botones del carrito (#carrito-container button) */
 #carrito-container .reco-agregar {
   margin-top: auto;
   width: 100%;
@@ -782,13 +776,12 @@ a:hover {
   .reco-img { height: 110px; }
 }
 
-/* con recomendaciones abajo, las columnas de arriba ya no redondean sus esquinas inferiores */
 @media (min-width: 768px) {
   .card:has(.recos-carrito) .cart { border-bottom-left-radius: 0; }
   .card:has(.recos-carrito) .summary { border-bottom-right-radius: 0; }
 }
 
-/* ---- "Tus datos": RUT, teléfono y dirección para comprar ---- */
+/* "Tus datos" */
 .dato-faltante {
   display: inline-block;
   margin-left: 6px;
@@ -880,7 +873,6 @@ a:hover {
   color: #B10000;
 }
 
-/* sin error no se muestra nada (el ícono de error de styles_formularios.css va en el ::before) */
 .campo-error-modal:empty {
   display: none;
 }
@@ -907,12 +899,8 @@ a:hover {
   border-radius: 0 4px 4px 0;
 }
 
+/* Carrito responsive */
 
-/* ============ Carrito responsive ============
-   escritorio (>= 992px): productos y resumen lado a lado (como antes)
-   tablet y celular: el resumen va debajo a todo el ancho; en celular cada producto se ordena en dos filas */
-
-/* columnas apiladas: tablet y celular */
 @media (max-width: 991px) {
   #carrito-container {
     padding-top: 90px;
@@ -943,12 +931,10 @@ a:hover {
   .back-to-shop {
     margin-top: 1.5rem;
   }
-  /* sin scroll interno: la lista de productos crece con la página */
   .products-scroll-container {
     max-height: none;
     overflow: visible;
   }
-  /* botón de pagar a lo ancho */
   #form-proceder {
     padding-bottom: 0;
   }
@@ -957,7 +943,6 @@ a:hover {
   }
 }
 
-/* celular */
 @media (max-width: 575px) {
   #carrito-container {
     padding-top: 76px;
@@ -978,8 +963,6 @@ a:hover {
     margin-bottom: 0;
   }
 
-  /* cada producto: [casilla] [imagen] [nombre .......... ✖]
-                                     [cantidad ...... precio] */
   .products-scroll-container .main {
     display: grid !important;
     grid-template-columns: auto 60px minmax(0, 1fr) auto;
@@ -1043,7 +1026,6 @@ a:hover {
     margin: 0;
   }
 
-  /* "Seleccionar todo" y los botones en una sola fila */
   .acciones-carrito {
     flex-wrap: wrap;
     row-gap: 8px;
@@ -1054,7 +1036,6 @@ a:hover {
   }
 }
 
-/* modal "Tus datos": nunca más ancho ni más alto que la pantalla */
 .modal-content-envio {
   width: min(350px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
@@ -1062,7 +1043,6 @@ a:hover {
   overflow-y: auto;
 }
 
-/* celulares muy angostos: el precio va bajo el nombre y la cantidad en su propia fila, sin montarse */
 @media (max-width: 380px) {
   .products-scroll-container .main {
     grid-template-columns: auto 52px minmax(0, 1fr) auto;
@@ -1080,8 +1060,6 @@ a:hover {
   }
 }
 
-/* la foto de cada producto del carrito es cuadrada desde que se pinta: así no cambia el alto de la fila
-   al cargar y el skeleton (js/skeleton_imagenes.js) tiene dónde verse */
 .main > .col-img img {
   aspect-ratio: 1 / 1;
   object-fit: contain;

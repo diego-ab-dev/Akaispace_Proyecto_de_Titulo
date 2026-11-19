@@ -1,5 +1,4 @@
-"""Registro de ventas (web y presenciales) y flujo de pago con Webpay Plus
-"""
+"""Registro de ventas y pago con Webpay Plus."""
 import logging
 import secrets
 
@@ -15,9 +14,6 @@ MEDIOS_PAGO_PRESENCIALES = [Venta.PAGO_TARJETA, Venta.PAGO_EFECTIVO, Venta.PAGO_
 CANALES_PRESENCIALES = [Venta.CANAL_TIENDA, Venta.CANAL_WHATSAPP]
 
 
-# Crea la venta con su detalle y descuenta el stock; si algún producto no alcanza, no se registra nada.
-# `items`: [{'producto_id', 'cantidad', 'precio_unitario'}]; sin precio_unitario se cobra el precio actual.
-# Se llama dentro de transaction.atomic(): los productos quedan bloqueados hasta que termine.
 def _registrar_venta(items, **datos_venta):
     bloqueados = Producto.todos.select_for_update().filter(
         id__in=[item['producto_id'] for item in items]
@@ -47,7 +43,6 @@ def _registrar_venta(items, **datos_venta):
     return venta
 
 
-# Registra la venta: descuenta el stock, crea el envío y emite el comprobante (no tributario)
 def crear_venta(usuario, items, metodo_envio, direccion_envio, metodo_pago):
     if not items:
         raise ValueError("Tu carrito está vacío.")
@@ -64,8 +59,6 @@ def crear_venta(usuario, items, metodo_envio, direccion_envio, metodo_pago):
     return venta
 
 
-# HU-12: venta en la tienda física o por WhatsApp que el admin registra en el panel. No tiene cliente
-# con cuenta ni envío, y no pasa por Webpay: el cobro se hace en el terminal, en efectivo o por transferencia.
 def crear_venta_presencial(items, canal, metodo_pago):
     if canal not in CANALES_PRESENCIALES:
         raise ValueError("Selecciona si la venta fue en la tienda física o por WhatsApp.")
@@ -80,9 +73,6 @@ def crear_venta_presencial(items, canal, metodo_pago):
 
 
 def validar_datos_comprador(usuario):
-    """Para comprar hacen falta RUT y teléfono (la tienda verifica quién retira y contacta para la entrega).
-    Las cuentas creadas con Google no los traen: se completan en "Tus datos" del carrito. Devuelve el
-    mensaje de error, o None si están."""
     faltan = [dato for dato, valor in [('tu RUT', usuario.rut), ('tu teléfono', usuario.telefono)] if not valor]
     if faltan:
         return f"Completa {' y '.join(faltan)} en «Tus datos» para continuar con la compra."
@@ -92,7 +82,6 @@ def validar_datos_comprador(usuario):
 def _nueva_orden_compra():
     return f"AKA{secrets.token_hex(6).upper()}"
 
-# Crea el PagoWebpay pendiente y la transacción en Transbank
 def iniciar_pago(usuario, carrito, metodo_envio, url_retorno):
     items = list(carrito.items.select_related('producto'))
     subtotal = sum(item.cantidad * item.producto.precio for item in items)
@@ -105,7 +94,6 @@ def iniciar_pago(usuario, carrito, metodo_envio, url_retorno):
             metodo_envio=metodo_envio,
             direccion_envio=envios.direccion_de_entrega(metodo_envio, usuario),
         )
-        # lo que se paga queda fijado aquí: el cliente puede seguir cambiando su carrito mientras paga
         DetallePagoWebpay.objects.bulk_create([
             DetallePagoWebpay(pago=pago, producto_id=item.producto_id, cantidad=item.cantidad,
                               precio_unitario=item.producto.precio)
@@ -144,8 +132,6 @@ def _sacar_del_carrito(pago):
             en_carrito.delete()
 
 
-# Saca lo comprado del carrito y lo deja en el historial como pagado (KPI-04).
-# Lo que el cliente agregó mientras pagaba pasa a un carrito vigente nuevo.
 def _cerrar_carrito(pago):
     _sacar_del_carrito(pago)
     carrito = pago.carrito

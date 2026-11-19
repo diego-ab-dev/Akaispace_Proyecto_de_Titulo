@@ -1,6 +1,4 @@
-"""Tarea diaria de las recomendaciones (HU-07): borra la navegación con más de 24 meses (plazo de la política de
-privacidad) y recalcula las similitudes, para que el desempate por unidades vendidas use las ventas del día.
-Se programa una vez al día (por ejemplo, con cron en el servidor)."""
+"""Comando: mantención diaria de recomendaciones."""
 from django.core.management.base import BaseCommand
 
 from appPrincipal.recomendaciones import calcular_similitudes, eliminar_navegacion_antigua

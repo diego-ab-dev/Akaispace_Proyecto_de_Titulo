@@ -1,4 +1,4 @@
-"""Panel de administración: reportes de gestión y tablero de KPI (HU-10). Los cálculos están en appPrincipal/reportes.py."""
+"""Panel: reportes y KPI."""
 from urllib.parse import urlencode
 
 from django.contrib import messages

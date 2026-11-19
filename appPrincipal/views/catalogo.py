@@ -1,4 +1,4 @@
-"""Home, menú de productos, ficha de producto y categorías."""
+"""Catálogo: home, menú, ficha de producto y categorías."""
 import re
 
 from django.core.paginator import Paginator
@@ -15,12 +15,10 @@ from appPrincipal.views.opiniones import ENVIO_RECIBIDO, estado_para_opinar
 
 
 def productos_para_listado(productos):
-    """Carga de una vez lo que muestran las tarjetas: categoría, plataforma, género e imágenes."""
     return productos.select_related('categoria', 'plataforma', 'genero').prefetch_related('imagenes_producto')
 
 
 def plataformas_por_familia():
-    """[(familia, [plataformas])] en el orden de la tabla, para el <select> con <optgroup>."""
     grupos = {}
     for plataforma in Plataforma.objects.all():
         grupos.setdefault(plataforma.get_familia_display(), []).append(plataforma)
@@ -28,7 +26,6 @@ def plataformas_por_familia():
 
 
 def _leer_precio(valor):
-    """Acepta "15000", "15.000" o "$15.000". Devuelve (precio, es_valido)."""
     valor = valor.replace('$', '').replace('.', '').strip()
     if not valor:
         return None, True
@@ -38,8 +35,6 @@ def _leer_precio(valor):
 
 
 def filtrar_catalogo(request, productos, con_plataforma=True):
-    """Aplica los filtros de género, plataforma y rango de precio que vienen en la URL.
-    El género llega como su id y la plataforma como su código (ej. ps5)."""
     generos = list(Genero.objects.all())
     texto_genero = request.GET.get('genero', '')
     genero = next((g for g in generos if str(g.id) == texto_genero), None)
@@ -67,7 +62,6 @@ def filtrar_catalogo(request, productos, con_plataforma=True):
     if precio_max is not None:
         productos = productos.filter(precio__lte=precio_max)
 
-    # etiquetas de los filtros aplicados, cada una con el enlace para quitarla
     aplicados = []
     if genero:
         aplicados.append((f"Género: {genero.nombre}", ['genero']))
@@ -102,16 +96,12 @@ def filtrar_catalogo(request, productos, con_plataforma=True):
 
 
 def recomendaciones_para(request, producto=None):
-    """HU-07: recomendaciones listas para las tarjetas, o None si el admin no las activó en Configuración.
-    Las que se muestran a un cliente que autorizó sus datos quedan registradas (KPI-05) y su tarjeta enlaza
-    a clic_recomendacion, que marca el clic antes de abrir la ficha."""
     if not ConfiguracionSitio.actual().mostrar_recomendaciones:
         return None
     return _preparar_recomendaciones(request, recomendar(request.user, producto), 'ficha' if producto else 'home')
 
 
 def recomendaciones_carrito(request):
-    """HU-07: "Complementa tu compra" en el carrito, o None si el admin no activó las recomendaciones."""
     if not ConfiguracionSitio.actual().mostrar_recomendaciones:
         return None
     return _preparar_recomendaciones(request, recomendar_para_carrito(request.user), 'carrito')
@@ -122,12 +112,11 @@ def _preparar_recomendaciones(request, recomendaciones, ubicacion):
     mostradas = registrar_mostradas(request.user, recomendaciones.productos, ubicacion)
     for recomendado, mostrada in zip(recomendaciones.productos, mostradas):
         recomendado.url_recomendacion = reverse('clic_recomendacion', args=[mostrada.id])
-        recomendado.id_recomendacion = mostrada.id  # el botón "Agregar" del carrito también cuenta como clic
+        recomendado.id_recomendacion = mostrada.id
     return recomendaciones
 
 
 def clic_recomendacion(request, recomendacion_id):
-    """HU-07, KPI-05: enlace intermedio de una recomendación; marca el clic y abre la ficha del producto."""
     producto = marcar_clic(request.user, recomendacion_id)
     if producto is None:
         raise Http404
@@ -138,7 +127,6 @@ def home(request):
     return render(request, 'home.html', {'recomendaciones': recomendaciones_para(request)})
 
 def _pagina_de_catalogo(request, productos):
-    """Orden, página de 16 productos y favoritos del cliente: lo común del menú, la búsqueda y las categorías."""
     orden = request.GET.get('orden')
     productos = productos_para_listado(productos).order_by(
         {'precio_asc': 'precio', 'precio_desc': '-precio'}.get(orden, '-id'))
@@ -174,7 +162,6 @@ def producto_detalle(request, producto_id):
         Producto.objects.select_related('categoria', 'plataforma', 'genero').prefetch_related('imagenes_producto'),
         id=producto_id,
     )
-    # HU-07: historial para las recomendaciones (solo si el cliente lo autorizó)
     registrar_interaccion(request.user, producto, InteraccionProducto.VISTA)
     rango_cantidad = range(1, producto.stock + 1)
 
@@ -184,7 +171,6 @@ def producto_detalle(request, producto_id):
     page_number = request.GET.get('page')
     opiniones = paginator.get_page(page_number)
 
-    # "Compra verificada": autores de esta página que compraron y recibieron el producto (una consulta)
     autores_verificados = set(
         ProductoVenta.objects.filter(producto=producto, venta__datos_envio__estado=ENVIO_RECIBIDO,
                                      venta__usuario__in=[op.usuario_id for op in opiniones])
@@ -193,7 +179,6 @@ def producto_detalle(request, producto_id):
     for op in opiniones:
         op.compra_verificada = op.usuario_id in autores_verificados
 
-    # promedio, total y cantidad por estrella en una sola consulta
     resumen = producto.opiniones.aggregate(
         avg=Avg('puntuacion'), total=Count('id'),
         **{f'estrellas_{n}': Count('id', filter=Q(puntuacion=n)) for n in range(1, 6)},
@@ -217,8 +202,6 @@ def producto_detalle(request, producto_id):
             "percent": round(percent, 1)
         })
 
-    # qué relacionados se muestran lo decide el admin en Configuración del panel; si activó las
-    # recomendaciones (HU-07), estas reemplazan a los relacionados
     configuracion = ConfiguracionSitio.actual()
     productos_relacionados = Producto.objects.none()
     titulo_relacionados = 'También te podría interesar'
@@ -237,11 +220,8 @@ def producto_detalle(request, producto_id):
     if request.user.is_authenticated:
         es_favorito = Favorito.objects.filter(usuario=request.user, producto=producto).exists()
 
-    # invitación a opinar en la sección de opiniones (solo si el admin las muestra en el sitio)
     estado_opinion = estado_para_opinar(request.user, producto) if configuracion.mostrar_opiniones else None
 
-    # botones de compartir y vista previa del enlace (Open Graph): siempre la URL limpia de la ficha,
-    # sin ?page= de las opiniones, y la imagen con dominio para que WhatsApp o Facebook la muestren
     url_compartir = request.build_absolute_uri(reverse('producto_detalle', args=[producto.id]))
     imagen = producto.imagen_principal
     imagen_compartir = request.build_absolute_uri(imagen.url) if imagen else ''
@@ -273,7 +253,6 @@ def productos_por_categoria(request, categoria_id, plataforma=None):
         plataforma = get_object_or_404(Plataforma, codigo=plataforma)
         productos = productos.filter(plataforma=plataforma)
         nombre_categoria = f"{categoria.nombre} {plataforma.nombre}"
-    # si la URL ya fija la plataforma, o la categoría no la usa, no se muestra ese filtro
     con_plataforma = plataforma is None and categoria.requiere_plataforma
     productos, filtros = filtrar_catalogo(request, productos, con_plataforma=con_plataforma)
     return render(request, 'productos_por_categoria.html', {

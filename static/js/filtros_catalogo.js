@@ -1,5 +1,4 @@
-// Filtros del catálogo: no envía los campos vacíos (URLs más limpias) y
-// el selector "Ordenar" envía el mismo formulario para no perder los filtros.
+// Filtros del catálogo
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('form-filtros');
     if (!form) return;
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // si el usuario vuelve con el botón "atrás", reactiva los campos deshabilitados
     window.addEventListener('pageshow', function () {
         document.querySelectorAll('#form-filtros [disabled], [form="form-filtros"][disabled]').forEach(function (campo) {
             campo.disabled = false;

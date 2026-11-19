@@ -54,7 +54,6 @@ h1 {
     box-shadow: 0 6px 15px rgba(0,0,0,0.06);
 }
 
-
 .product-img-container {
     width: 100px;
     height: 100px;
@@ -125,7 +124,6 @@ h1 {
     color: #000;
 }
 
-
 .opinion-link {
     text-decoration: none !important; 
     color: inherit !important; 
@@ -137,15 +135,11 @@ h1 {
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 
-/* nombres de producto sin espacios: se cortan en vez de salirse */
 .product-name {
     overflow-wrap: anywhere;
 }
 
-
-/* ============ Lista de opiniones responsive ============
-   escritorio (>= 992px): imagen, producto, fecha y comentario en una fila
-   tablet y celular: imagen al lado del producto y la puntuación; fecha y comentario debajo */
+/* Lista de opiniones responsive */
 @media (max-width: 991px) {
     .main-container {
         padding: 16px 4px;
@@ -207,7 +201,6 @@ h1 {
     }
 }
 
-/* producto sin imagen */
 .product-img-container .sin-imagen {
     width: 100%;
     height: 100%;

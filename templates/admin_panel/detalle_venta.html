@@ -146,7 +146,6 @@
                     {% endfor %}
                 </div>
 
-
                 <div class="data-row mt-4">
                     <span class="data-label">Estado:</span> 
                     {% include "partials/estado_envio.html" with venta=venta %}
@@ -207,7 +206,6 @@ setTimeout(() => {
     if (toast) toast.remove();
 }, 4000);
 {% if error_anulacion and not pagada_con_webpay %}
-// si el motivo no fue válido, se vuelve a abrir la confirmación con lo que el admin escribió
 document.addEventListener('DOMContentLoaded', () => {
     bootstrap.Modal.getOrCreateInstance(document.getElementById('anularModal')).show();
 });

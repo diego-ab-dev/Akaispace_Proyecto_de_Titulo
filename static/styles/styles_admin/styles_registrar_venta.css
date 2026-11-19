@@ -1,4 +1,4 @@
-/* Panel > Ventas > Registrar venta (HU-12). Usa la base visual de styles_portada.css y styles_configuracion.css */
+/* Panel > Ventas > Registrar venta */
 
 .venta-presencial__grid {
     display: grid;
@@ -184,7 +184,6 @@
 
 @media (max-width: 992px) {
     .venta-presencial__grid {
-        /* minmax(0, ...): la columna puede achicarse aunque haya una palabra muy larga */
         grid-template-columns: minmax(0, 1fr);
     }
 }

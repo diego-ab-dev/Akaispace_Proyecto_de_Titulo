@@ -1,27 +1,4 @@
-"""Correos que envía la tienda.
-
-- Confirmación de compra: se envía al aprobarse el pago con Webpay. Si falla, la reenvía el comando
-  reenviar_confirmaciones.
-- Pedido listo para retiro: se envía la primera vez que el administrador marca un retiro en tienda como
-  "Listo para retiro", con la dirección y el horario de la tienda.
-- Pedido enviado: la primera vez que una encomienda pasa a "Enviado", con el transportista y el número de
-  seguimiento (el panel lo exige para ese estado). Los demás estados de la encomienda no se avisan: el
-  transportista ya informa el seguimiento.
-- Pedido en reparto: la primera vez que un Delivery Express en Valdivia pasa a "En Reparto", con la dirección de
-  entrega.
-- Resolución de devolución: se envía cuando el administrador aprueba (con las instrucciones para entregar o enviar
-  el producto) o rechaza una solicitud.
-- Recepción de devolución: se envía cuando la tienda recibe el producto, e indica si el reembolso se hizo en Webpay
-  o se gestionará a mano.
-- Recuperación de contraseña: la envía Django (PasswordResetView).
-- Bienvenida: una sola vez, al crear la cuenta (formulario o Google).
-- Contraseña actualizada: aviso de seguridad al cambiarla desde el perfil o restablecerla con el enlace de
-  recuperación, con un enlace para recuperar la cuenta si el cambio no lo hizo el cliente.
-- Cuenta eliminada: confirma la eliminación y anonimización de la cuenta, y qué datos se conservan por ley.
-
-Todos son correos de la cuenta o de una compra (transaccionales), no publicidad. No se avisa cada inicio de
-sesión: sería un correo en cada visita.
-"""
+"""Correos de la tienda."""
 import logging
 
 from django.conf import settings
@@ -39,8 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 def responder_a():
-    """'Responder a' de todos los correos: CONTACT_EMAIL si está definido. El remitente (DEFAULT_FROM_EMAIL)
-    es una dirección sin buzón del dominio verificado en SES."""
     return [settings.CONTACT_EMAIL] if settings.CONTACT_EMAIL else None
 
 
@@ -58,8 +33,6 @@ def _enviar(asunto, plantilla, contexto, destinatario):
 
 
 def _al_confirmar(funcion, *args):
-    """Envía el correo cuando la cuenta o el cambio ya quedaron guardados (si algo se deshace, no se envía).
-    Si el correo falla, _enviar lo deja en el log: el cliente nunca ve un error por esto."""
     transaction.on_commit(lambda: funcion(*args))
 
 
@@ -101,7 +74,6 @@ def _enviar_contraseña_actualizada(usuario, como):
 
 
 def enviar_contraseña_actualizada(usuario, como=CAMBIADA):
-    """`como`: CAMBIADA (desde el perfil) o RESTABLECIDA (con el enlace de recuperación)."""
     _al_confirmar(_enviar_contraseña_actualizada, usuario, como)
 
 
@@ -116,12 +88,11 @@ def _enviar_cuenta_eliminada(nombre, email, por_administrador):
     }
     enviado = _enviar("Tu cuenta fue eliminada - Akai Space", 'cuenta_eliminada', contexto, email)
     if enviado:
-        logger.info("Aviso de cuenta eliminada enviado")  # sin el correo: la cuenta ya está anonimizada
+        logger.info("Aviso de cuenta eliminada enviado")
     return enviado
 
 
 def enviar_cuenta_eliminada(nombre, email, por_administrador=False):
-    """Recibe el nombre y el correo originales: al enviarse, la cuenta ya está anonimizada."""
     _al_confirmar(_enviar_cuenta_eliminada, nombre, email, por_administrador)
 
 
@@ -187,7 +158,6 @@ def enviar_resolucion_devolucion(devolucion):
 
 
 def enviar_recepcion_devolucion(devolucion, reembolso=None):
-    """`reembolso`: el ResultadoReembolso de Webpay, o None si la venta no se pagó con Webpay."""
     item = devolucion.venta.producto_venta.filter(producto=devolucion.producto).first()
     contexto = {
         'devolucion': devolucion,
@@ -235,8 +205,6 @@ def _enviar_pedido_en_reparto(venta):
 
 
 def avisar_estado_envio(venta, envio, estado):
-    """Avisa al cliente los estados que le sirven saber. La vista lo llama solo la primera vez que el pedido
-    llega a cada estado, para no repetir el correo si el administrador corrige el estado."""
     if estado == 'Listo para retiro':
         enviar_listo_para_retiro(venta)
     elif estado == 'Enviado':

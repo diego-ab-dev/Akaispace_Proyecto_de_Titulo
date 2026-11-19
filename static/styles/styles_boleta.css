@@ -18,12 +18,10 @@ body {
 
 .tabla-productos { width: 100%; font-size: 12px; margin-bottom: 10px; }
 .tabla-productos td { padding: 2px 0; }
-/* td.precio: la clase global .precio (styles_precios.css) es inline-flex y sacaba la celda de la tabla */
 .tabla-productos td.precio { display: table-cell; text-align: right; }
 
 .totales { border-top: 1px dashed #000; padding-top: 5px; font-size: 14px; }
 .row-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; margin-top: 5px;}
-
 
 .btn-print {
     display: block; width: 100%; padding: 10px; background: #000; color: #fff;
@@ -36,8 +34,7 @@ body {
     .btn-print { display: none; }
     .boleta-container { box-shadow: none; width: 100%; margin: 0; padding: 0; }
 }
-/* ============ Comprobante responsive ============
-   en escritorio la boleta mide lo mismo que antes (380px + relleno); en celulares ocupa el ancho disponible sin salirse */
+/* Comprobante responsive */
 .boleta-container {
     box-sizing: border-box;
     width: 420px;

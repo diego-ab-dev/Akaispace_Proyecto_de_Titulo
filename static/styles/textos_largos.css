@@ -1,17 +1,9 @@
-/*
- * Textos largos en toda la web (nombres, correos, productos, direcciones, códigos de seguimiento...).
- * Se carga en base.html, así que aplica en todas las páginas.
- *
- * El caso que más deforma es una palabra sin espacios (un correo, un código, "aaaaaaaa..."): el navegador
- * no tiene dónde hacer el salto de línea y la caja crece hasta romper el diseño.
- */
+/* Textos largos en toda la web */
 
-/* red de seguridad: una palabra que no cabe en su línea se parte en vez de salirse de la caja */
 body {
     overflow-wrap: break-word;
 }
 
-/* los botones llevan textos de la interfaz ("Guardar", "Cancelar"), no datos: nunca se parten letra por letra */
 button,
 .btn,
 input[type="submit"],
@@ -19,14 +11,11 @@ input[type="button"] {
     overflow-wrap: normal;
 }
 
-/* para datos que el usuario escribe (nombres, correos, títulos): se cortan donde haga falta, también dentro
-   de filas flex y celdas, y la caja puede achicarse */
 .texto-largo {
     overflow-wrap: anywhere;
     min-width: 0;
 }
 
-/* una sola línea con "…" (el texto completo va en el atributo title) */
 .una-linea {
     display: block;
     min-width: 0;
@@ -36,7 +25,6 @@ input[type="button"] {
     text-overflow: ellipsis;
 }
 
-/* en una fila flex (d-flex), el hijo con texto necesita esto para poder achicarse */
 .min-w-0 {
     min-width: 0;
 }

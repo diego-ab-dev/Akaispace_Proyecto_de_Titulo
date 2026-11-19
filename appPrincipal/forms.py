@@ -1,3 +1,4 @@
+"""Formularios."""
 from django import forms
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.password_validation import validate_password
@@ -18,7 +19,7 @@ import unicodedata
 logger = logging.getLogger(__name__)
 
 
-# validacion de rut
+# Validación de RUT
 def calcular_dv(cuerpo):
     suma = 0
     multiplicador = 2
@@ -46,19 +47,14 @@ def normalizar_rut(rut):
     return f"{int(cuerpo):,}".replace(',', '.') + '-' + dv
 
 
-# ---------- validaciones compartidas por los formularios de cuentas ----------
-# Los mismos límites se repiten en los atributos de los <input> (maxlength, pattern) para avisar
-# antes de enviar, pero la validación que vale es siempre la del servidor.
+# Validaciones de cuentas
 
-NOMBRE_MAXIMO = 100            # igual que Usuario.nombre
+NOMBRE_MAXIMO = 100
 DIRECCION_MAXIMA = 100
 SIGNOS_PERMITIDOS_EN_NOMBRE = " '’-."
 
 
 def limpiar_nombre(valor):
-    """Nombre de una persona. Acepta cualquier letra de Unicode (tildes, ñ, ü, ç, etc.), espacios,
-    apóstrofos, guiones y puntos (O'Higgins, Pérez-Cotapos, Mª José), como recomienda la W3C para
-    nombres de personas; rechaza números y otros símbolos. Normaliza a NFC y quita espacios repetidos."""
     nombre = ' '.join(unicodedata.normalize('NFC', valor or '').split())
     if not nombre:
         raise ValidationError('Ingresa tu nombre.', code='required')
@@ -75,8 +71,6 @@ def limpiar_nombre(valor):
 
 
 def normalizar_telefono(valor):
-    """Celular chileno: 8 dígitos después del +56 9. Acepta '12345678', '912345678' o '+56 9 1234 5678'
-    y lo guarda siempre como '+56 9 12345678'."""
     digitos = ''.join(caracter for caracter in (valor or '') if caracter.isdigit())
     if len(digitos) == 11 and digitos.startswith('569'):
         digitos = digitos[3:]
@@ -99,8 +93,6 @@ def limpiar_direccion(valor):
 
 
 def validar_region_y_ciudad(form, requerido=True):
-    """Valida que la ciudad pertenezca a la región. Con requerido=False ambos pueden quedar vacíos,
-    pero si se llena uno hay que llenar el otro."""
     region = form.cleaned_data.get('region') or ''
     ciudad = form.cleaned_data.get('ciudad') or ''
     if 'region' in form.errors:
@@ -116,8 +108,6 @@ def validar_region_y_ciudad(form, requerido=True):
 
 
 def errores_para_json(form):
-    """{'campo': [mensajes]} en el orden de los campos del formulario, más el primer mensaje
-    (para respuestas JSON de formularios que se envían con fetch)."""
     errores = {}
     for nombre in [*form.fields, '__all__']:
         if nombre in form.errors:
@@ -136,8 +126,6 @@ def _correo_o_rut_en_uso(campo, valor, mensajes):
 
 
 def rut_para_completar(valor):
-    """RUT que un cliente agrega a su cuenta (las de Google no lo traen). Una vez guardado queda fijo:
-    para corregirlo hay que escribir a la tienda."""
     if not (valor or '').strip():
         raise ValidationError('Ingresa tu RUT.', code='required')
     rut = normalizar_rut(valor)
@@ -149,7 +137,6 @@ def rut_para_completar(valor):
 
 
 class DatosCuentaForm(forms.Form):
-    """Datos personales de una cuenta nueva (registro del cliente y creación desde el panel)."""
     telefono_requerido = True
     direccion_requerida = True
     ubicacion_requerida = True
@@ -210,7 +197,6 @@ class DatosCuentaForm(forms.Form):
 
 
 class ContraseñaNuevaMixin(forms.Form):
-    """Contraseña + confirmación, validadas con AUTH_PASSWORD_VALIDATORS (RNF-01)."""
     contraseña = forms.CharField(strip=False, error_messages={'required': 'Ingresa una contraseña.'})
     confirmar_contraseña = forms.CharField(strip=False, error_messages={'required': 'Repite tu contraseña.'})
 
@@ -228,19 +214,17 @@ class ContraseñaNuevaMixin(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        # el validador de similitud compara con el nombre y el correo que se están registrando
         self.validar_contraseña_nueva(Usuario(email=cleaned_data.get('email') or '',
                                               nombre=cleaned_data.get('nombre') or ''))
         return cleaned_data
 
 
-# formulario de registro del cliente (HU-01)
+# Registro del cliente
 class UsuarioCustomForm(DatosCuentaForm, ContraseñaNuevaMixin):
     field_order = ['rut', 'nombre', 'email', 'telefono', 'region', 'ciudad', 'direccion',
                    'contraseña', 'confirmar_contraseña', 'declaracion_edad', 'acepta_privacidad',
                    'autoriza_datos_navegacion']
 
-    # HU-01: declaración de edad obligatoria al registrarse
     declaracion_edad = forms.ChoiceField(
         choices=Usuario.DECLARACIONES_EDAD, widget=forms.RadioSelect,
         error_messages={'required': 'Debes declarar tu edad para crear tu cuenta.',
@@ -252,8 +236,7 @@ class UsuarioCustomForm(DatosCuentaForm, ContraseñaNuevaMixin):
     autoriza_datos_navegacion = forms.BooleanField(required=False)
 
 
-# formulario para crear un usuario desde el panel: teléfono y dirección son opcionales
-# (una cuenta de administrador no los necesita; el cliente puede completarlos en su perfil)
+# Usuario creado desde el panel
 class CrearUsuarioAdminForm(DatosCuentaForm, ContraseñaNuevaMixin):
     telefono_requerido = False
     direccion_requerida = False
@@ -265,15 +248,13 @@ class CrearUsuarioAdminForm(DatosCuentaForm, ContraseñaNuevaMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # el administrador llena los datos de otra persona: mensajes sin "tu"
         for campo, mensaje in [('rut', 'Ingresa el RUT.'), ('nombre', 'Ingresa el nombre.'),
                                ('email', 'Ingresa el correo electrónico.'), ('contraseña', 'Ingresa una contraseña.'),
                                ('confirmar_contraseña', 'Repite la contraseña.')]:
             self.fields[campo].error_messages['required'] = mensaje
 
 
-# datos que el cliente edita en su perfil. El RUT solo se puede agregar si la cuenta no lo tiene
-# (las creadas con Google); una vez guardado queda fijo.
+# Perfil del cliente
 class EditarPerfilForm(forms.Form):
     nombre = forms.CharField(max_length=NOMBRE_MAXIMO, strip=False, error_messages={
         'required': 'Ingresa tu nombre.', 'max_length': f'El nombre puede tener hasta {NOMBRE_MAXIMO} caracteres.'})
@@ -288,7 +269,7 @@ class EditarPerfilForm(forms.Form):
         self.usuario = usuario
         super().__init__(*args, **kwargs)
         if usuario.rut:
-            self.fields['rut'].disabled = True  # lo que llegue por POST se ignora
+            self.fields['rut'].disabled = True
 
     def clean_nombre(self):
         return limpiar_nombre(self.cleaned_data['nombre'])
@@ -297,7 +278,7 @@ class EditarPerfilForm(forms.Form):
         if self.usuario.rut:
             return self.usuario.rut
         valor = self.cleaned_data['rut']
-        return rut_para_completar(valor) if valor.strip() else ''  # en el perfil es opcional; al comprar no
+        return rut_para_completar(valor) if valor.strip() else ''
 
     def clean_telefono(self):
         return normalizar_telefono(self.cleaned_data['telefono'])
@@ -312,8 +293,7 @@ class EditarPerfilForm(forms.Form):
         return cleaned_data
 
 
-# "Tus datos" en el carrito: lo que hace falta para comprar. RUT (si la cuenta no lo tiene) y teléfono son
-# obligatorios; la dirección solo hace falta para los despachos, así que puede quedar vacía si se retira en tienda.
+# Datos del carrito
 class DatosCompraForm(forms.Form):
     rut = forms.CharField(max_length=12, required=False)
     telefono = forms.CharField(max_length=20, required=False)
@@ -383,8 +363,6 @@ class CambiarContraseñaForm(forms.Form):
 
 
 class EliminarCuentaForm(forms.Form):
-    """Confirmación para eliminar la cuenta: la contraseña o, en las cuentas creadas solo con Google (sin
-    contraseña), el correo de la cuenta escrito a mano."""
     confirmacion = forms.CharField(strip=False)
     entiendo = forms.BooleanField(error_messages={
         'required': 'Marca la casilla para confirmar que entiendes que no se puede deshacer.'})
@@ -419,15 +397,12 @@ class ReclamoForm(forms.Form):
         'max_length': f'La descripción puede tener hasta {DESCRIPCION_MAXIMA} caracteres.',
     })
 
-# form para recuperar contraseña (HU-11): a diferencia del de Django, también incluye las cuentas
-# creadas solo con Google (sin contraseña utilizable), para que puedan definir una
+# Recuperar contraseña
 class RecuperarContraseñaForm(PasswordResetForm):
     def get_users(self, email):
         usuarios = Usuario._default_manager.filter(email__iexact=email, is_active=True, is_deleted=False)
         return (u for u in usuarios if _mismo_correo(email, u.email))
 
-    # el mismo correo que arma Django (y, como Django, si falla solo se registra), con el 'responder a'
-    # de los demás correos de la tienda
     def send_mail(self, subject_template_name, email_template_name, context, from_email, to_email,
                   html_email_template_name=None):
         asunto = ''.join(loader.render_to_string(subject_template_name, context).splitlines())
@@ -441,12 +416,10 @@ class RecuperarContraseñaForm(PasswordResetForm):
             logger.exception("No se pudo enviar el correo de recuperación de contraseña: usuario %s",
                              context['user'].pk)
 
-# compara correos sin distinguir mayúsculas ni formas unicode equivalentes (NFKC + casefold),
-# igual que hace Django internamente, sin depender de su función privada
 def _mismo_correo(correo1, correo2):
     return unicodedata.normalize('NFKC', correo1).casefold() == unicodedata.normalize('NFKC', correo2).casefold()
 
-# form para opiniones
+# Opiniones
 class OpinionForm(forms.ModelForm):
     COMENTARIO_MAXIMO = 1000
 
@@ -466,7 +439,7 @@ class OpinionForm(forms.ModelForm):
         self.fields['comentario'].validators.append(validators.MaxLengthValidator(
             self.COMENTARIO_MAXIMO, message=f'El comentario puede tener hasta {self.COMENTARIO_MAXIMO} caracteres.'))
 
-# form para devoluciones
+# Devoluciones
 class SolicitudDevolucionForm(forms.Form):
     DESCRIPCION_MAXIMA = 1000
 
@@ -487,29 +460,20 @@ class SolicitudDevolucionForm(forms.Form):
         ))
 
 
-# fotos de evidencia de la devolución: hasta 3, todas opcionales
-# ---------- fotos que se suben (devoluciones, productos y portada) ----------
-# Se acepta solo lo que el navegador muestra como foto. El formato real se revisa abriendo el archivo
-# con Pillow (forms.ImageField), no por el nombre ni por el tipo que declara el navegador, que se pueden
-# falsear; un .txt renombrado a .jpg no pasa.
+# Fotos subidas
 FORMATOS_IMAGEN = {'JPEG': '.jpg', 'PNG': '.png', 'WEBP': '.webp', 'GIF': '.gif'}
 EXTENSIONES_IMAGEN = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 IMAGEN_MAXIMA_MB = 8
 MENSAJE_FORMATO_IMAGEN = 'Solo se aceptan fotos JPG, PNG, WEBP o GIF.'
 ACCEPT_IMAGEN = 'image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif'
-# atributos del <input type="file">: filtran el explorador de archivos y static/js/formularios.js
-# avisa apenas se elige un archivo que no sirve (la validación que vale es validar_imagen)
 ATRIBUTOS_IMAGEN = {'accept': ACCEPT_IMAGEN, 'data-validacion': 'imagen', 'data-max-mb': str(IMAGEN_MAXIMA_MB)}
 ERRORES_IMAGEN = {'invalid_image': f'El archivo no es una foto válida. {MENSAJE_FORMATO_IMAGEN}',
                   'invalid_extension': MENSAJE_FORMATO_IMAGEN}
 
 
 def validar_imagen(imagen, lado_maximo=LADO_MAXIMO):
-    """Valida una foto recién subida: formato real, extensión y peso. Deja la extensión del archivo
-    igual a su formato real (un PNG llamado foto.jpg se guarda como foto.png). Si es pesada o muy
-    grande, la achica y la pasa a WebP (imagenes.py)."""
     if not isinstance(imagen, UploadedFile):
-        return imagen  # foto que ya estaba guardada (edición sin cambiarla)
+        return imagen
     formato = getattr(getattr(imagen, 'image', None), 'format', None)
     nombre, extension = os.path.splitext(imagen.name)
     if formato not in FORMATOS_IMAGEN or extension.lower() not in EXTENSIONES_IMAGEN:
@@ -522,7 +486,7 @@ def validar_imagen(imagen, lado_maximo=LADO_MAXIMO):
     return optimizar_subida(imagen, lado_maximo)
 
 
-# fotos de evidencia de la devolución: hasta 3, todas opcionales
+# Fotos de la devolución
 class ImagenDevolucionForm(forms.ModelForm):
     class Meta:
         model = ImagenDevolucion
@@ -539,12 +503,10 @@ ImagenDevolucionFormSet = forms.inlineformset_factory(
 )
 
 
-# administracion
+# Administración
 
-# form de producto en admin
+# Producto
 class ProductoForm(forms.ModelForm):
-    # Oferta: al rebajar el precio, el precio de antes queda guardado y la tienda lo muestra tachado con el %.
-    # Si el cambio fue para corregir un error, el admin desmarca la casilla y no se anuncia rebaja.
     mostrar_oferta = forms.BooleanField(
         required=False, label='Mostrar como oferta',
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
@@ -577,8 +539,6 @@ class ProductoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['plataforma'].empty_label = 'Sin plataforma'
         self.fields['genero'].empty_label = 'Sin género'
-        # precio "normal" contra el que se compara la rebaja: el anterior si ya está en oferta, si no el actual.
-        # Se guarda aquí porque al validar el formulario la instancia ya toma el precio nuevo.
         self.precio_normal = None
         if self.instance and self.instance.pk:
             self.fields['codigo_de_barra'].disabled = True
@@ -601,7 +561,6 @@ class ProductoForm(forms.ModelForm):
             raise forms.ValidationError("El nombre es demasiado largo (máximo 60 caracteres).")
         return nombre
 
-    # valida codigo de barra: es único también entre los productos eliminados
     def clean_codigo_de_barra(self):
         codigo = (self.cleaned_data.get('codigo_de_barra') or '').strip() or None
 
@@ -616,7 +575,6 @@ class ProductoForm(forms.ModelForm):
 
         return codigo
 
-    # valida límite de stock
     def clean_stock(self):
         stock = self.cleaned_data.get('stock')
 
@@ -632,7 +590,7 @@ class ProductoForm(forms.ModelForm):
         return stock
 
 
-# imágenes del producto: hasta 6; una se marca como principal con el radio "principal" del formulario
+# Imágenes del producto
 class ImagenProductoForm(forms.ModelForm):
     class Meta:
         model = ImagenProducto
@@ -646,7 +604,6 @@ class ImagenProductoForm(forms.ModelForm):
 
 class BaseImagenProductoFormSet(forms.BaseInlineFormSet):
     def imagenes_conservadas(self):
-        """[(posición en el formulario, ImagenProducto)] de los espacios que quedan con imagen."""
         conservadas = []
         for posicion, form in enumerate(self.forms):
             if form.cleaned_data.get('DELETE') or not form.instance.imagen:
@@ -660,13 +617,10 @@ class BaseImagenProductoFormSet(forms.BaseInlineFormSet):
             raise forms.ValidationError("Sube al menos una imagen del producto.")
 
     def guardar(self, principal):
-        """Guarda las imágenes en el orden de los espacios del formulario. `principal` es la posición
-        elegida como imagen principal; si esa posición quedó vacía, la principal es la primera."""
         producto = self.instance
         conservadas = self.imagenes_conservadas()
         posiciones = [posicion for posicion, _ in conservadas]
         elegida = principal if principal in posiciones else posiciones[0]
-        # se quita la marca de principal antes de asignarla, para no chocar con la restricción única
         producto.imagenes_producto.update(es_principal=None)
         for form in self.forms:
             if form.cleaned_data.get('DELETE') and form.instance.pk:
@@ -684,7 +638,7 @@ ImagenProductoFormSet = forms.inlineformset_factory(
 )
 
 
-# form de la portada (carrusel, nuevos lanzamientos y promos del navbar) en el panel
+# Portada
 class DestacadoForm(forms.ModelForm):
     class Meta:
         model = Destacado
@@ -746,7 +700,6 @@ def mensaje_maximo_visibles(seccion):
 
 
 class ConfiguracionSitioForm(forms.ModelForm):
-    # en el panel se marcan las categorías que SÍ se ven en el navbar (Categoria.visible_en_menu)
     categorias_visibles = forms.ModelMultipleChoiceField(
         queryset=Categoria.objects.all(),
         required=False,
@@ -775,7 +728,7 @@ class ConfiguracionSitioForm(forms.ModelForm):
                 Categoria.objects.filter(visible_en_menu=True).values_list('id', flat=True))
 
     def clean_texto_anuncio(self):
-        return ' '.join(self.cleaned_data['texto_anuncio'].split())  # una sola línea, sin espacios de más
+        return ' '.join(self.cleaned_data['texto_anuncio'].split())
 
     def clean(self):
         datos = super().clean()
@@ -785,14 +738,13 @@ class ConfiguracionSitioForm(forms.ModelForm):
 
     def save(self, commit=True):
         configuracion = super().save(commit)
-        # lista de ids y no queryset: MySQL no permite un UPDATE con subconsulta sobre la misma tabla
         visibles = [categoria.id for categoria in self.cleaned_data['categorias_visibles']]
         Categoria.objects.filter(id__in=visibles).update(visible_en_menu=True)
         Categoria.objects.exclude(id__in=visibles).update(visible_en_menu=False)
         return configuracion
 
 
-# HU-10: retiro o ingreso de dinero en la caja de la tienda física
+# Movimientos de caja
 class MovimientoCajaForm(forms.ModelForm):
     tipo = forms.ChoiceField(choices=[(MovimientoCaja.RETIRO, 'Retiro'), (MovimientoCaja.INGRESO, 'Ingreso')],
                              initial=MovimientoCaja.RETIRO, widget=forms.RadioSelect,

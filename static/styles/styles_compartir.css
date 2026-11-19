@@ -1,4 +1,4 @@
-/* botones de compartir de la ficha del producto */
+/* Botones de compartir de la ficha del producto */
 .compartir {
     display: flex;
     align-items: center;
@@ -20,7 +20,6 @@
     gap: 10px;
 }
 
-/* se fijan todas las propiedades porque styles_prod_detalle.css le da estilos a todos los <button> */
 .compartir-btn,
 .compartir-btn:hover {
     box-sizing: border-box;
@@ -60,7 +59,6 @@
     transform: translateY(0) scale(0.94);
 }
 
-/* al pasar el mouse cada botón toma el color de su red */
 .compartir-whatsapp:hover, .compartir-whatsapp:focus-visible { background-color: #25D366; }
 .compartir-facebook:hover, .compartir-facebook:focus-visible { background-color: #1877F2; }
 .compartir-x:hover, .compartir-x:focus-visible { background-color: #000; }
