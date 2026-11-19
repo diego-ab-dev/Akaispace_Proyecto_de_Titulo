@@ -16,8 +16,12 @@ Parameters:
     AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
   RepositorioGithub:
     Type: String
-    Default: diego-ab-dev/Akaispace_Proyecto_de_Titulo
-    Description: Repositorio (duenio/nombre) que puede usar el rol akaispace-github-deploy.
+    Default: diego-ab-dev@185845901/Akaispace_Proyecto_de_Titulo@1100789614
+    AllowedPattern: '^[^/@]+@\d+/[^/@]+@\d+$'
+    Description: >-
+      Repositorio que puede usar el rol akaispace-github-deploy, en el formato de sujeto inmutable de GitHub
+      (duenio@id/nombre@id), que es el que el repositorio envia en el token OIDC (ver
+      gh api repos/OWNER/REPO/actions/oidc/customization/sub, campo sub_claim_prefix).
   AccesoAdminDb:
     Type: String
     Default: 'no'
@@ -289,7 +293,8 @@ Resources:
         - sts.amazonaws.com
 
   # Solo las etiquetas v* (job imagen) y los environments pruebas y produccion pueden usar el rol: el
-  # repositorio es publico y ni los pull requests ni otras ramas lo necesitan.
+  # repositorio es publico y ni los pull requests ni otras ramas lo necesitan. Los IDs numericos del sujeto
+  # inmutable no cambian si alguien borra el repositorio y crea otro con el mismo nombre.
   RolGithub:
     Type: AWS::IAM::Role
     Properties:
