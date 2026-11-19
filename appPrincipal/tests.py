@@ -1327,6 +1327,18 @@ class AvisoEstadoEnvioTests(TestCase):
         self.cambiar_estado(venta, 'Enviado', transportista='Bluexpress')
         self.assertEqual(len(mail.outbox), 0)
 
+    @override_settings(DEFAULT_FROM_EMAIL='Akai Space <no-reply@akaispace.shop>', CONTACT_EMAIL='contacto@example.com')
+    def test_avisos_salen_del_remitente_y_se_responden_al_contacto(self):
+        from django.core import mail
+        self.cambiar_estado(self.venta_con('por_pagar'), 'Enviado', transportista='Starken',
+                            numero_seguimiento='STK123456')
+        self.cambiar_estado(self.venta_con('delivery'), 'En Reparto')
+        self.cambiar_estado(self.venta_con('tienda'), 'Listo para retiro')
+        self.assertEqual(len(mail.outbox), 3)
+        for correo in mail.outbox:
+            self.assertEqual(correo.from_email, 'Akai Space <no-reply@akaispace.shop>')
+            self.assertEqual(correo.reply_to, ['contacto@example.com'])
+
 
 class AnularVentaTests(TestCase):
     def setUp(self):
@@ -1877,6 +1889,18 @@ class RecuperarContraseñaTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['cliente@example.com'])
         self.assertIn('1 hora', mail.outbox[0].body)
+
+    def test_sale_del_remitente_y_se_responde_al_contacto_si_esta_definido(self):
+        from django.core import mail
+        with self.settings(DEFAULT_FROM_EMAIL='Akai Space <no-reply@akaispace.shop>',
+                           CONTACT_EMAIL='contacto@example.com'):
+            self.pedir_enlace()
+        with self.settings(CONTACT_EMAIL=''):
+            self.pedir_enlace()
+        self.assertEqual(mail.outbox[0].from_email, 'Akai Space <no-reply@akaispace.shop>')
+        self.assertEqual(mail.outbox[0].reply_to, ['contacto@example.com'])
+        self.assertEqual(mail.outbox[1].reply_to, [])
+        self.assertIn('/recuperar-contrasena/', mail.outbox[0].body)
 
     def test_no_recibe_enlace_un_correo_no_registrado_eliminado_o_inactivo(self):
         from django.core import mail

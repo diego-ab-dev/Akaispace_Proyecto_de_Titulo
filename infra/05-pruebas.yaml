@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - instancia de pruebas (Fase 10.1, Tabla 32): akaispace-pruebas, t4g.small en la subred publica de
+  sa-east-1b, akaispace-test-sg (sin acceso a RDS), rol de pruebas y MySQL 8.4 en un contenedor. Se mantiene
+  detenida (Stop, nunca Terminate) salvo cuando se usa. Encendida ~US$0,036 por hora; detenida, solo el disco.
+  Despues de crearla (o de recrear 04-app) hay que registrarla en akaispace-test-tg.
+
+Parameters:
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id
+    Description: Parametro publico de Canonical con la AMI de Ubuntu 24.04 LTS arm64.
+
+Resources:
+  Pruebas:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: t4g.small
+      IamInstanceProfile: !ImportValue akaispace-perfil-test
+      Monitoring: false
+      PropagateTagsToVolumeOnCreation: true
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 2
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          SubnetId: !ImportValue akaispace-subred-publica-b
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: true
+          GroupSet:
+            - !ImportValue akaispace-test-sg
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: akaispace-pruebas
+        - Key: Ambiente
+          Value: test
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          exec > /var/log/user-data.log 2>&1
+
+          AMBIENTE=test
+          ACCOUNT_ID=${AWS::AccountId}
+          REGION=${AWS::Region}
+          DIR=/opt/akaispace
+
+          # 1. Docker, AWS CLI y agente de CloudWatch (ARM)
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get install -y docker.io docker-compose-v2 openssl
+          systemctl enable --now docker
+          snap wait system seed.loaded
+          snap install aws-cli --classic
+          curl -fsSL --retry 5 -o /tmp/cwagent.deb https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+          dpkg -i -E /tmp/cwagent.deb
+
+          # 2. Carpetas y certificado autofirmado (tramo balanceador -> instancia)
+          mkdir -p $DIR/certs /var/log/akaispace/nginx /var/log/akaispace/app
+          chown 1000:1000 /var/log/akaispace/app
+          openssl req -x509 -nodes -newkey rsa:2048 -days 3650 -subj "/CN=akaispace" \
+            -keyout $DIR/certs/selfsigned.key -out $DIR/certs/selfsigned.crt
+
+          cat > $DIR/ambiente.conf <<EOF
+          AMBIENTE=$AMBIENTE
+          REGION=$REGION
+          REGISTRY=$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+          EOF
+
+          # 3. Script de despliegue (lo usan el arranque y GitHub Actions)
+          cat > $DIR/desplegar.sh <<'EOF'
+          #!/bin/bash
+          set -euo pipefail
+          source /opt/akaispace/ambiente.conf
+          cd /opt/akaispace
+          /snap/bin/aws ssm get-parameters-by-path --region "$REGION" --path "/akaispace/$AMBIENTE" \
+            --with-decryption --query 'Parameters[*].[Name,Value]' --output text \
+            | while IFS=$'\t' read -r name value; do echo "${!name##*/}=${!value}"; done > .env.nuevo
+          echo "REGISTRY=$REGISTRY" >> .env.nuevo
+          echo "AWS_DEFAULT_REGION=$REGION" >> .env.nuevo
+          chmod 600 .env.nuevo && mv .env.nuevo .env
+          /snap/bin/aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+          docker compose pull
+          docker compose up -d --remove-orphans
+          EOF
+          chmod 700 $DIR/desplegar.sh
+
+          # 4. Contenedores: igual que produccion, mas MySQL 8.4 con datos ficticios en el disco de la instancia
+          cat > $DIR/docker-compose.yml <<'EOF'
+          services:
+            db:
+              image: mysql:8.4
+              restart: always
+              environment:
+                MYSQL_DATABASE: ${!DB_NAME}
+                MYSQL_USER: ${!DB_USER}
+                MYSQL_PASSWORD: ${!DB_PASSWORD}
+                MYSQL_ROOT_PASSWORD: ${!DB_ROOT_PASSWORD}
+              volumes:
+                - dbdata:/var/lib/mysql
+            web:
+              image: ${!REGISTRY}/akaispace-web:${!IMAGE_TAG}
+              env_file: .env
+              restart: always
+              depends_on:
+                - db
+              volumes:
+                - /var/log/akaispace/app:/app/logs
+            nginx:
+              image: ${!REGISTRY}/akaispace-nginx:${!IMAGE_TAG}
+              restart: always
+              depends_on:
+                - web
+              ports:
+                - "443:443"
+              volumes:
+                - ./certs:/etc/nginx/certs:ro
+                - /var/log/akaispace/nginx:/var/log/nginx
+          volumes:
+            dbdata:
+          EOF
+
+          # 5. Tareas programadas de la seccion 11.2.5 (hora UTC)
+          cat > /etc/cron.d/akaispace <<'EOF'
+          */15 * * * * root cd /opt/akaispace && docker compose exec -T web python manage.py reenviar_confirmaciones >> /var/log/akaispace/app/cron.log 2>&1
+          30 7 * * * root cd /opt/akaispace && docker compose exec -T web python manage.py mantener_recomendaciones >> /var/log/akaispace/app/cron.log 2>&1
+          EOF
+
+          # 6. Rotacion de logs para no llenar el disco
+          cat > /etc/logrotate.d/akaispace <<'EOF'
+          /var/log/akaispace/*/*.log {
+            daily
+            rotate 7
+            missingok
+            notifempty
+            compress
+            delaycompress
+            copytruncate
+          }
+          EOF
+
+          # 7. Agente de CloudWatch: envia los registros (sin metricas personalizadas)
+          cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF
+          {"logs": {"logs_collected": {"files": {"collect_list": [
+            {"file_path": "/var/log/akaispace/nginx/access.log", "log_group_name": "/akaispace/$AMBIENTE/nginx-access", "log_stream_name": "{instance_id}"},
+            {"file_path": "/var/log/akaispace/nginx/error.log", "log_group_name": "/akaispace/$AMBIENTE/nginx-error", "log_stream_name": "{instance_id}"},
+            {"file_path": "/var/log/akaispace/app/gunicorn-access.log", "log_group_name": "/akaispace/$AMBIENTE/gunicorn-access", "log_stream_name": "{instance_id}"},
+            {"file_path": "/var/log/akaispace/app/gunicorn-error.log", "log_group_name": "/akaispace/$AMBIENTE/gunicorn-error", "log_stream_name": "{instance_id}"},
+            {"file_path": "/var/log/akaispace/app/cron.log", "log_group_name": "/akaispace/$AMBIENTE/cron", "log_stream_name": "{instance_id}"}
+          ]}}}}
+          EOF
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s \
+            -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+
+          # 8. Primer despliegue
+          $DIR/desplegar.sh
+
+Outputs:
+  InstanciaPruebas:
+    Value: !Ref Pruebas
+    Export:
+      Name: akaispace-pruebas-id

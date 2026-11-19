@@ -22,3 +22,7 @@ respaldos/
 # Reportes de cobertura (coverage.py)
 .coverage
 htmlcov/
+
+
+CLAUDE.md
+docs/

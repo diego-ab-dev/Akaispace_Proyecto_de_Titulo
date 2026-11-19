@@ -2,10 +2,19 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import include, path
 from appPrincipal import views
 
+
+# Comprobación de estado del balanceador. No usa la base de datos: si RDS fallara, el autoescalado
+# reemplazaría instancias sanas una y otra vez.
+def health(request):
+    return HttpResponse('ok')
+
+
 urlpatterns = [
+    path('health/', health),
     # Cliente
      
     # Home

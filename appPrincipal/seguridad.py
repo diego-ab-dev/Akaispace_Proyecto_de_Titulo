@@ -14,6 +14,12 @@ def email_para_axes(request, credentials):
     return (email or '').strip().lower()
 
 
+# En AWS, Nginx toma la IP que el balanceador agrega a X-Forwarded-For (solo si la petición viene de la VPC)
+# y la reenvía en X-Real-IP; sin Nginx, se usa la IP de la conexión.
+def ip_cliente(request):
+    return request.META.get('HTTP_X_REAL_IP') or request.META.get('REMOTE_ADDR')
+
+
 def login_bloqueado(request, original_response=None, credentials=None):
     return render(request, 'login.html', {'errors': {'email': MENSAJE_LOGIN_BLOQUEADO}}, status=429)
 

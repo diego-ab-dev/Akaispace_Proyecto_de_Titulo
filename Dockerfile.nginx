@@ -1,0 +1,6 @@
+ARG WEB_IMAGE
+FROM ${WEB_IMAGE} AS web
+FROM nginx:1.30.7-alpine
+RUN rm /etc/nginx/conf.d/default.conf
+COPY deploy/nginx.conf /etc/nginx/conf.d/akaispace.conf
+COPY --from=web /app/staticfiles /usr/share/nginx/static

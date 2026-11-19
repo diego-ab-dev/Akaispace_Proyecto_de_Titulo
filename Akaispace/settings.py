@@ -17,6 +17,13 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+
+# HTTPS termina en el balanceador; Nginx reenvía X-Forwarded-Proto. Sin SECURE_SSL_REDIRECT: de HTTP a
+# HTTPS se encarga el balanceador.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 
 # Application definition
@@ -75,6 +82,8 @@ WSGI_APPLICATION = 'Akaispace.wsgi.application'
 
 # Database
 
+# TLS verificado hacia RDS solo en producción, donde DB_SSL_CA apunta al certificado de RDS de la imagen
+DB_SSL_CA = config('DB_SSL_CA', default='')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -83,7 +92,11 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default=''),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='3306'),
-        'OPTIONS': {'charset': 'utf8mb4'},
+        'CONN_MAX_AGE': 60,
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            **({'ssl_mode': 'VERIFY_IDENTITY', 'ssl': {'ca': DB_SSL_CA}} if DB_SSL_CA else {}),
+        },
     }
 }
 
@@ -133,6 +146,8 @@ AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
 AXES_RESET_ON_SUCCESS = True
 AXES_USERNAME_CALLABLE = 'appPrincipal.seguridad.email_para_axes'
 AXES_LOCKOUT_CALLABLE = 'appPrincipal.seguridad.login_bloqueado'
+# Detrás del balanceador, la IP del cliente la entrega Nginx en X-Real-IP
+AXES_CLIENT_IP_CALLABLE = 'appPrincipal.seguridad.ip_cliente'
 
 # Google (django-allauth)
 SITE_ID = 1
@@ -165,14 +180,16 @@ WEBPAY_TIMEOUT = config('WEBPAY_TIMEOUT', default=30, cast=int)
 
 
 # Correo
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='email-smtp.sa-east-1.amazonaws.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_TIMEOUT = 10
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Akai Space <akaispacevaldivia@gmail.com>')
+# El remitente es del dominio verificado en SES y no tiene buzón: las respuestas van a CONTACT_EMAIL
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Akai Space <no-reply@akaispace.shop>')
+CONTACT_EMAIL = config('CONTACT_EMAIL', default='')
 SITIO_URL = config('SITIO_URL', default='http://localhost:8000').rstrip('/')
 PASSWORD_RESET_TIMEOUT = 60 * 60
 
@@ -193,6 +210,25 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Imágenes en S3 (bucket privado, URLs firmadas); los estáticos los sirve Nginx. Sin claves de AWS: boto3
+# usa el rol IAM de la instancia.
+if config('USE_S3', default=False, cast=bool):
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': {
+                'bucket_name': config('AWS_STORAGE_BUCKET_NAME'),
+                'region_name': 'sa-east-1',
+                'location': config('AWS_LOCATION', default=''),
+                'querystring_auth': True,
+                'querystring_expire': 3600,
+                'file_overwrite': False,
+                'signature_version': 's3v4',
+            },
+        },
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    }
 
 # Clave primaria por defecto
 
@@ -223,10 +259,13 @@ LOGGING = {
     'handlers': {
         'console': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
     },
+    # Gunicorn guarda la consola en gunicorn-error.log, que el agente envía a CloudWatch
+    'root': {'handlers': ['console'], 'level': 'WARNING'},
     'loggers': {
         'appPrincipal': {
             'handlers': ['console'],
             'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
         },
     },
 }

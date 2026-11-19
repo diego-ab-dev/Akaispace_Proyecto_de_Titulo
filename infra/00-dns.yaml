@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - DNS del dominio de demostracion (Route 53). Esta pila no se borra
+  al apagar la plataforma. Costo: US$0,50 al mes por la zona.
+
+Parameters:
+  Dominio:
+    Type: String
+    Default: akaispace.shop
+    Description: Dominio de demostracion (nunca el sitio real del propietario).
+
+Resources:
+  Zona:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref Dominio
+      HostedZoneConfig:
+        Comment: Akaispace - dominio de demostracion de la tesis
+      HostedZoneTags:
+        - Key: Proyecto
+          Value: akaispace
+
+  # Correo (Fase 6): identidad de dominio de SES con Easy DKIM RSA 2048
+  IdentidadSes:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: !Ref Dominio
+      DkimAttributes:
+        SigningEnabled: true
+      DkimSigningAttributes:
+        NextSigningKeyLength: RSA_2048_BIT
+
+  # Los 3 registros CNAME que SES usa para comprobar la firma DKIM
+  Dkim1:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Zona
+      Name: !GetAtt IdentidadSes.DkimDNSTokenName1
+      Type: CNAME
+      TTL: '1800'
+      ResourceRecords:
+        - !GetAtt IdentidadSes.DkimDNSTokenValue1
+
+  Dkim2:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Zona
+      Name: !GetAtt IdentidadSes.DkimDNSTokenName2
+      Type: CNAME
+      TTL: '1800'
+      ResourceRecords:
+        - !GetAtt IdentidadSes.DkimDNSTokenValue2
+
+  Dkim3:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Zona
+      Name: !GetAtt IdentidadSes.DkimDNSTokenName3
+      Type: CNAME
+      TTL: '1800'
+      ResourceRecords:
+        - !GetAtt IdentidadSes.DkimDNSTokenValue3
+
+  Dmarc:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Zona
+      Name: !Sub _dmarc.${Dominio}
+      Type: TXT
+      TTL: '1800'
+      ResourceRecords:
+        - '"v=DMARC1; p=none;"'
+
+Outputs:
+  ZonaId:
+    Description: ID de la zona alojada
+    Value: !Ref Zona
+    Export:
+      Name: akaispace-zona-id
+  Nameservers:
+    Description: Nameservers para poner como Custom DNS en Namecheap
+    Value: !Join [',', !GetAtt Zona.NameServers]

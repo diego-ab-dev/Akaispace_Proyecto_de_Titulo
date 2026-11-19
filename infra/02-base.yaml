@@ -1,0 +1,479 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - base (Fases 3.1-3.3, 4.1, 4.3, 4.4 y certificado de la Fase 5): bucket S3, repositorios
+  ECR y su replicacion a us-east-1, grupo de parametros y grupo de subredes de RDS (sin la base),
+  roles de las instancias, tema SNS, certificado ACM y grupos de registros /akaispace/prod/* y
+  /akaispace/test/* (30 dias). Sin costo por hora.
+
+Parameters:
+  Dominio:
+    Type: String
+    Default: akaispace.shop
+    Description: Dominio de demostracion (nunca el sitio real del propietario).
+  CorreoAlertas:
+    Type: String
+    Description: Correo que recibe las alarmas (debe confirmar la suscripcion).
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+  RepositorioGithub:
+    Type: String
+    Default: diego-ab-dev/Akaispace_Proyecto_de_Titulo
+    Description: Repositorio (duenio/nombre) que puede usar el rol akaispace-github-deploy.
+  AccesoAdminDb:
+    Type: String
+    Default: 'no'
+    AllowedValues: ['no', 'si']
+    Description: >-
+      'si' solo mientras se crea el usuario de la aplicacion en RDS: deja que las instancias de produccion
+      lean /akaispace/admin/*. El resto del tiempo 'no' (Deny explicito).
+
+Conditions:
+  ConAccesoAdminDb: !Equals [!Ref AccesoAdminDb, 'si']
+  SinAccesoAdminDb: !Equals [!Ref AccesoAdminDb, 'no']
+
+Resources:
+  # 3.1 Imagenes de productos y devoluciones: privado, con versionado; se ven con URLs firmadas
+  Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub akaispace-imagenes-${AWS::AccountId}
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: borrar-versiones-antiguas-30-dias
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  PoliticaBucket:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: SoloConTls
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !GetAtt Bucket.Arn
+              - !Sub '${Bucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+
+  # 4.1 Repositorios: etiquetas inmutables, escaneo basico al subir y solo las 10 imagenes mas recientes
+  RepoWeb:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: akaispace-web
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Conservar las 10 imagenes mas recientes",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+          "action":{"type":"expire"}}]}
+
+  RepoNginx:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: akaispace-nginx
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Conservar las 10 imagenes mas recientes",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+          "action":{"type":"expire"}}]}
+
+  # Copia de las imagenes en us-east-1 (solo las que se suban despues de crear la regla)
+  ReplicacionEcr:
+    Type: AWS::ECR::ReplicationConfiguration
+    Properties:
+      ReplicationConfiguration:
+        Rules:
+          - Destinations:
+              - Region: us-east-1
+                RegistryId: !Ref AWS::AccountId
+            RepositoryFilters:
+              - Filter: akaispace-
+                FilterType: PREFIX_MATCH
+
+  # 3.2 MySQL rechaza cualquier conexion sin TLS
+  GrupoParametrosRds:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      DBParameterGroupName: akaispace-mysql84
+      Family: mysql8.4
+      Description: Akaispace - MySQL 8.4 con TLS obligatorio
+      Parameters:
+        require_secure_transport: '1'
+        # Igual al MySQL 8.4 de desarrollo (valor por defecto de MySQL); RDS por defecto no trae el modo estricto
+        sql_mode: ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+
+  # 3.3 Solo las subredes privadas
+  GrupoSubredesRds:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: akaispace-db-subnets
+      DBSubnetGroupDescription: Akaispace - subredes privadas de sa-east-1a y sa-east-1b
+      SubnetIds:
+        - !ImportValue akaispace-subred-privada-a
+        - !ImportValue akaispace-subred-privada-b
+
+  # 4.3 Instancias de produccion: Session Manager, registros, imagenes, sus parametros y el bucket
+  RolProd:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: akaispace-ec2-prod-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Policies:
+        - PolicyName: akaispace-prod-app
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParametersByPath
+                  - ssm:GetParameters
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod/*
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt Bucket.Arn
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub '${Bucket.Arn}/*'
+
+  # Contrasena maestra de RDS (/akaispace/admin/, fuera del .env de la aplicacion). AmazonSSMManagedInstanceCore
+  # permite ssm:GetParameter sobre cualquier parametro, por eso el Deny explicito. Se quita solo mientras
+  # deploy/db-crear-usuario.sh crea el usuario de la aplicacion (AccesoAdminDb=si).
+  SinAdminDbProd:
+    Type: AWS::IAM::RolePolicy
+    Condition: SinAccesoAdminDb
+    Properties:
+      RoleName: !Ref RolProd
+      PolicyName: akaispace-sin-admin-db
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Deny
+            Action: ssm:GetParameter*
+            Resource:
+              - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin
+              - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin/*
+
+  ConAdminDbProd:
+    Type: AWS::IAM::RolePolicy
+    Condition: ConAccesoAdminDb
+    Properties:
+      RoleName: !Ref RolProd
+      PolicyName: akaispace-admin-db-temporal
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: ssm:GetParameter
+            Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin/DB_MASTER_PASSWORD
+
+  PerfilProd:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: akaispace-ec2-prod-role
+      Roles:
+        - !Ref RolProd
+
+  # 4.4 Instancia de pruebas: solo su ruta de parametros y su carpeta del bucket. El Deny es necesario
+  # porque AmazonSSMManagedInstanceCore permite leer parametros de cualquier ruta.
+  RolTest:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: akaispace-ec2-test-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Policies:
+        - PolicyName: akaispace-test-app
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParametersByPath
+                  - ssm:GetParameters
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/test
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/test/*
+              - Sid: SinParametrosDeProduccion
+                Effect: Deny
+                Action: ssm:GetParameter*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod/*
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin/*
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt Bucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix: pruebas/*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub '${Bucket.Arn}/pruebas/*'
+
+  PerfilTest:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: akaispace-ec2-test-role
+      Roles:
+        - !Ref RolTest
+
+  # Fase 9.1: GitHub Actions entra a AWS con OIDC, sin claves guardadas en GitHub
+  ProveedorGithub:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+
+  # Solo las etiquetas v* (job imagen) y los environments pruebas y produccion pueden usar el rol: el
+  # repositorio es publico y ni los pull requests ni otras ramas lo necesitan.
+  RolGithub:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: akaispace-github-deploy
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref ProveedorGithub
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  - !Sub repo:${RepositorioGithub}:ref:refs/tags/v*
+                  - !Sub repo:${RepositorioGithub}:environment:pruebas
+                  - !Sub repo:${RepositorioGithub}:environment:produccion
+      Policies:
+        - PolicyName: akaispace-github-deploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:PutImage
+                Resource:
+                  - !GetAtt RepoWeb.Arn
+                  - !GetAtt RepoNginx.Arn
+              - Effect: Allow
+                Action: ssm:PutParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod/IMAGE_TAG
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/test/IMAGE_TAG
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript
+                  - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+              - Effect: Allow
+                Action:
+                  - ssm:GetCommandInvocation
+                  - ec2:DescribeInstances
+                  - autoscaling:DescribeAutoScalingGroups
+                  - autoscaling:DescribeInstanceRefreshes
+                  - rds:DescribeDBSnapshots
+                Resource: '*'
+              - Effect: Allow
+                Action: autoscaling:StartInstanceRefresh
+                Resource: !Sub arn:${AWS::Partition}:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/akaispace-prod-asg
+              # AddTagsToResource: la base copia sus etiquetas a los snapshots (CopyTagsToSnapshot)
+              - Effect: Allow
+                Action:
+                  - rds:CreateDBSnapshot
+                  - rds:AddTagsToResource
+                Resource:
+                  - !Sub arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:akaispace-prod
+                  - !Sub arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:snapshot:*
+
+  # Fase 8: destino de las alarmas
+  TemaAlertas:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: akaispace-alertas
+      DisplayName: Akaispace alertas
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref CorreoAlertas
+
+  # Fase 5: en sa-east-1, la misma region del balanceador; CloudFormation crea los registros de validacion
+  Certificado:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref Dominio
+      SubjectAlternativeNames:
+        - !Sub www.${Dominio}
+        - !Sub pruebas.${Dominio}
+      ValidationMethod: DNS
+      KeyAlgorithm: RSA_2048
+      DomainValidationOptions:
+        - DomainName: !Ref Dominio
+          HostedZoneId: !ImportValue akaispace-zona-id
+        - DomainName: !Sub www.${Dominio}
+          HostedZoneId: !ImportValue akaispace-zona-id
+        - DomainName: !Sub pruebas.${Dominio}
+          HostedZoneId: !ImportValue akaispace-zona-id
+
+  # Registros del agente de CloudWatch (Fase 7.2): aqui y no en 04-app, para que no se borren al apagar
+  # y existan con 30 dias antes de que el agente los cree sin retencion.
+  RegProdNginxAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/nginx-access
+      RetentionInDays: 30
+  RegProdNginxError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/nginx-error
+      RetentionInDays: 30
+  RegProdGunicornAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/gunicorn-access
+      RetentionInDays: 30
+  RegProdGunicornError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/gunicorn-error
+      RetentionInDays: 30
+  RegProdCron:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/cron
+      RetentionInDays: 30
+  RegTestNginxAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/nginx-access
+      RetentionInDays: 30
+  RegTestNginxError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/nginx-error
+      RetentionInDays: 30
+  RegTestGunicornAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/gunicorn-access
+      RetentionInDays: 30
+  RegTestGunicornError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/gunicorn-error
+      RetentionInDays: 30
+  RegTestCron:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/cron
+      RetentionInDays: 30
+
+Outputs:
+  Bucket:
+    Value: !Ref Bucket
+    Export:
+      Name: akaispace-bucket
+  RepoWebUri:
+    Value: !GetAtt RepoWeb.RepositoryUri
+  RepoNginxUri:
+    Value: !GetAtt RepoNginx.RepositoryUri
+  GrupoParametrosRds:
+    Value: !Ref GrupoParametrosRds
+    Export:
+      Name: akaispace-rds-parametros
+  GrupoSubredesRds:
+    Value: !Ref GrupoSubredesRds
+    Export:
+      Name: akaispace-rds-subredes
+  PerfilProd:
+    Value: !Ref PerfilProd
+    Export:
+      Name: akaispace-perfil-prod
+  PerfilTest:
+    Value: !Ref PerfilTest
+    Export:
+      Name: akaispace-perfil-test
+  TemaAlertas:
+    Value: !Ref TemaAlertas
+    Export:
+      Name: akaispace-tema-alertas
+  RolGithub:
+    Description: Variable AWS_ROLE_ARN de GitHub Actions
+    Value: !GetAtt RolGithub.Arn
+  Certificado:
+    Value: !Ref Certificado
+    Export:
+      Name: akaispace-certificado

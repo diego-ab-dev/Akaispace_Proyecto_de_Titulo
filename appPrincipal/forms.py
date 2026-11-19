@@ -5,12 +5,18 @@ from django.contrib.auth.password_validation import validate_password
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
 from .constants import REGIONES, REGIONES_CIUDADES
+from .correos import responder_a
 from .imagenes import LADO_MAXIMO, LADO_MAXIMO_PORTADA, optimizar_subida
 from .models import (Categoria, ConfiguracionSitio, Destacado, Devolucion, ImagenDevolucion, ImagenProducto,
                      MovimientoCaja, Opinion, Producto, Usuario, youtube_embed_url)
+import logging
 import os
 import unicodedata
+
+logger = logging.getLogger(__name__)
 
 
 # Validación de RUT
@@ -396,6 +402,19 @@ class RecuperarContraseñaForm(PasswordResetForm):
     def get_users(self, email):
         usuarios = Usuario._default_manager.filter(email__iexact=email, is_active=True, is_deleted=False)
         return (u for u in usuarios if _mismo_correo(email, u.email))
+
+    def send_mail(self, subject_template_name, email_template_name, context, from_email, to_email,
+                  html_email_template_name=None):
+        asunto = ''.join(loader.render_to_string(subject_template_name, context).splitlines())
+        mensaje = EmailMultiAlternatives(asunto, loader.render_to_string(email_template_name, context),
+                                         from_email, [to_email], reply_to=responder_a())
+        if html_email_template_name is not None:
+            mensaje.attach_alternative(loader.render_to_string(html_email_template_name, context), 'text/html')
+        try:
+            mensaje.send()
+        except Exception:
+            logger.exception("No se pudo enviar el correo de recuperación de contraseña: usuario %s",
+                             context['user'].pk)
 
 def _mismo_correo(correo1, correo2):
     return unicodedata.normalize('NFKC', correo1).casefold() == unicodedata.normalize('NFKC', correo2).casefold()

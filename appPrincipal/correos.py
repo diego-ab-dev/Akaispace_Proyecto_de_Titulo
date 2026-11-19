@@ -15,10 +15,14 @@ from appPrincipal.models import Venta
 logger = logging.getLogger(__name__)
 
 
+def responder_a():
+    return [settings.CONTACT_EMAIL] if settings.CONTACT_EMAIL else None
+
+
 def _enviar(asunto, plantilla, contexto, destinatario):
     texto = render_to_string(f'correos/{plantilla}.txt', contexto)
     html = render_to_string(f'correos/{plantilla}.html', contexto)
-    mensaje = EmailMultiAlternatives(asunto, texto, to=[destinatario])
+    mensaje = EmailMultiAlternatives(asunto, texto, to=[destinatario], reply_to=responder_a())
     mensaje.attach_alternative(html, 'text/html')
     try:
         mensaje.send()

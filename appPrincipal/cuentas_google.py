@@ -17,6 +17,11 @@ class AdaptadorCuenta(DefaultAccountAdapter):
     def get_login_redirect_url(self, request):
         return reverse('admin_dashboard' if request.user.is_staff else 'home')
 
+    def render_mail(self, template_prefix, email, context, headers=None):
+        mensaje = super().render_mail(template_prefix, email, context, headers)
+        mensaje.reply_to = correos.responder_a() or []
+        return mensaje
+
 
 class AdaptadorCuentaGoogle(DefaultSocialAccountAdapter):
     def is_open_for_signup(self, request, sociallogin):

@@ -1,0 +1,465 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - aplicacion (Fase 7): grupos de destino HTTPS (prod y pruebas), Application Load Balancer con
+  listener 443 con regla por Host para pruebas, listener 80 que redirige a HTTPS, plantilla de lanzamiento
+  t4g.small (Ubuntu 24.04 arm64, IMDSv2 con hop limit 2), autoescalado 1 a 2 con CPU al 70%, las 3 alarmas
+  de la Fase 8, la comprobacion de estado de Route 53 y los registros Alias.
+  COBRA POR HORA (~US$2 al dia con 1 instancia). Requiere 01-red, 02-base y 03-datos.
+
+Parameters:
+  Dominio:
+    Type: String
+    Default: akaispace.shop
+    Description: Dominio de demostracion (nunca el sitio real del propietario).
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id
+    Description: Parametro publico de Canonical con la AMI de Ubuntu 24.04 LTS arm64.
+
+Resources:
+  # 7.3 Grupos de destino: HTTPS hasta Nginx (certificado autofirmado), comprobacion en /health/
+  GrupoProd:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: akaispace-prod-tg
+      TargetType: instance
+      Protocol: HTTPS
+      Port: 443
+      VpcId: !ImportValue akaispace-vpc-id
+      HealthCheckProtocol: HTTPS
+      HealthCheckPath: /health/
+      Matcher:
+        HttpCode: '200'
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      HealthCheckIntervalSeconds: 15
+      HealthCheckTimeoutSeconds: 5
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '30'
+
+  GrupoTest:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: akaispace-test-tg
+      TargetType: instance
+      Protocol: HTTPS
+      Port: 443
+      VpcId: !ImportValue akaispace-vpc-id
+      HealthCheckProtocol: HTTPS
+      HealthCheckPath: /health/
+      Matcher:
+        HttpCode: '200'
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      HealthCheckIntervalSeconds: 15
+      HealthCheckTimeoutSeconds: 5
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '30'
+
+  # 7.4 Balanceador en las dos subredes publicas
+  Balanceador:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: akaispace-alb
+      Type: application
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      Subnets:
+        - !ImportValue akaispace-subred-publica-a
+        - !ImportValue akaispace-subred-publica-b
+      SecurityGroups:
+        - !ImportValue akaispace-alb-sg
+      LoadBalancerAttributes:
+        - Key: routing.http.drop_invalid_header_fields.enabled
+          Value: 'true'
+
+  ListenerHttps:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Balanceador
+      Protocol: HTTPS
+      Port: 443
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - CertificateArn: !ImportValue akaispace-certificado
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref GrupoProd
+
+  # HTTP solo redirige a HTTPS (301), para que http://akaispace.shop llegue al sitio
+  ListenerHttp:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Balanceador
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            Host: '#{host}'
+            Path: '/#{path}'
+            Query: '#{query}'
+            StatusCode: HTTP_301
+
+  ReglaPruebas:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ListenerHttps
+      Priority: 10
+      Conditions:
+        - Field: host-header
+          HostHeaderConfig:
+            Values:
+              - !Sub pruebas.${Dominio}
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref GrupoTest
+
+  # 7.2 Plantilla de lanzamiento
+  Plantilla:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: akaispace-prod-lt
+      LaunchTemplateData:
+        ImageId: !Ref AmiId
+        InstanceType: t4g.small
+        IamInstanceProfile:
+          Name: !ImportValue akaispace-perfil-prod
+        MetadataOptions:
+          HttpEndpoint: enabled
+          HttpTokens: required
+          # 2: los contenedores tambien reciben las credenciales del rol (S3)
+          HttpPutResponseHopLimit: 2
+        Monitoring:
+          Enabled: false
+        NetworkInterfaces:
+          - DeviceIndex: 0
+            AssociatePublicIpAddress: true
+            DeleteOnTermination: true
+            Groups:
+              - !ImportValue akaispace-app-sg
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 20
+              VolumeType: gp3
+              Encrypted: true
+              DeleteOnTermination: true
+        TagSpecifications:
+          - ResourceType: volume
+            Tags:
+              - Key: Name
+                Value: akaispace-prod
+              - Key: Proyecto
+                Value: akaispace
+          - ResourceType: network-interface
+            Tags:
+              - Key: Name
+                Value: akaispace-prod
+              - Key: Proyecto
+                Value: akaispace
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            set -euxo pipefail
+            exec > /var/log/user-data.log 2>&1
+
+            AMBIENTE=prod
+            ACCOUNT_ID=${AWS::AccountId}
+            REGION=${AWS::Region}
+            DIR=/opt/akaispace
+
+            # 1. Docker, AWS CLI y agente de CloudWatch (ARM)
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -y
+            apt-get install -y docker.io docker-compose-v2 openssl
+            systemctl enable --now docker
+            snap wait system seed.loaded
+            snap install aws-cli --classic
+            curl -fsSL --retry 5 -o /tmp/cwagent.deb https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+            dpkg -i -E /tmp/cwagent.deb
+
+            # 2. Carpetas y certificado autofirmado (tramo balanceador -> instancia)
+            mkdir -p $DIR/certs /var/log/akaispace/nginx /var/log/akaispace/app
+            chown 1000:1000 /var/log/akaispace/app
+            openssl req -x509 -nodes -newkey rsa:2048 -days 3650 -subj "/CN=akaispace" \
+              -keyout $DIR/certs/selfsigned.key -out $DIR/certs/selfsigned.crt
+
+            cat > $DIR/ambiente.conf <<EOF
+            AMBIENTE=$AMBIENTE
+            REGION=$REGION
+            REGISTRY=$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+            EOF
+
+            # 3. Script de despliegue (lo usan el arranque y GitHub Actions)
+            cat > $DIR/desplegar.sh <<'EOF'
+            #!/bin/bash
+            set -euo pipefail
+            source /opt/akaispace/ambiente.conf
+            cd /opt/akaispace
+            /snap/bin/aws ssm get-parameters-by-path --region "$REGION" --path "/akaispace/$AMBIENTE" \
+              --with-decryption --query 'Parameters[*].[Name,Value]' --output text \
+              | while IFS=$'\t' read -r name value; do echo "${!name##*/}=${!value}"; done > .env.nuevo
+            echo "REGISTRY=$REGISTRY" >> .env.nuevo
+            echo "AWS_DEFAULT_REGION=$REGION" >> .env.nuevo
+            chmod 600 .env.nuevo && mv .env.nuevo .env
+            /snap/bin/aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+            docker compose pull
+            docker compose up -d --remove-orphans
+            EOF
+            chmod 700 $DIR/desplegar.sh
+
+            # 4. Contenedores
+            cat > $DIR/docker-compose.yml <<'EOF'
+            services:
+              web:
+                image: ${!REGISTRY}/akaispace-web:${!IMAGE_TAG}
+                env_file: .env
+                restart: always
+                volumes:
+                  - /var/log/akaispace/app:/app/logs
+              nginx:
+                image: ${!REGISTRY}/akaispace-nginx:${!IMAGE_TAG}
+                restart: always
+                depends_on:
+                  - web
+                ports:
+                  - "443:443"
+                volumes:
+                  - ./certs:/etc/nginx/certs:ro
+                  - /var/log/akaispace/nginx:/var/log/nginx
+            EOF
+
+            # 5. Tareas programadas de la seccion 11.2.5 (hora UTC)
+            cat > /etc/cron.d/akaispace <<'EOF'
+            */15 * * * * root cd /opt/akaispace && docker compose exec -T web python manage.py reenviar_confirmaciones >> /var/log/akaispace/app/cron.log 2>&1
+            30 7 * * * root cd /opt/akaispace && docker compose exec -T web python manage.py mantener_recomendaciones >> /var/log/akaispace/app/cron.log 2>&1
+            EOF
+
+            # 6. Rotacion de logs para no llenar el disco
+            cat > /etc/logrotate.d/akaispace <<'EOF'
+            /var/log/akaispace/*/*.log {
+              daily
+              rotate 7
+              missingok
+              notifempty
+              compress
+              delaycompress
+              copytruncate
+            }
+            EOF
+
+            # 7. Agente de CloudWatch: envia los registros (sin metricas personalizadas)
+            cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<EOF
+            {"logs": {"logs_collected": {"files": {"collect_list": [
+              {"file_path": "/var/log/akaispace/nginx/access.log", "log_group_name": "/akaispace/$AMBIENTE/nginx-access", "log_stream_name": "{instance_id}"},
+              {"file_path": "/var/log/akaispace/nginx/error.log", "log_group_name": "/akaispace/$AMBIENTE/nginx-error", "log_stream_name": "{instance_id}"},
+              {"file_path": "/var/log/akaispace/app/gunicorn-access.log", "log_group_name": "/akaispace/$AMBIENTE/gunicorn-access", "log_stream_name": "{instance_id}"},
+              {"file_path": "/var/log/akaispace/app/gunicorn-error.log", "log_group_name": "/akaispace/$AMBIENTE/gunicorn-error", "log_stream_name": "{instance_id}"},
+              {"file_path": "/var/log/akaispace/app/cron.log", "log_group_name": "/akaispace/$AMBIENTE/cron", "log_stream_name": "{instance_id}"}
+            ]}}}}
+            EOF
+            /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s \
+              -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+
+            # 8. Primer despliegue
+            $DIR/desplegar.sh
+
+  # 7.5 Autoescalado: 1 a 2 instancias, la nueva arranca antes de retirar la anterior
+  Autoescalado:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: akaispace-prod-asg
+      LaunchTemplate:
+        LaunchTemplateId: !Ref Plantilla
+        Version: !GetAtt Plantilla.LatestVersionNumber
+      VPCZoneIdentifier:
+        - !ImportValue akaispace-subred-publica-a
+        - !ImportValue akaispace-subred-publica-b
+      TargetGroupARNs:
+        - !Ref GrupoProd
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 600
+      MinSize: '1'
+      MaxSize: '2'
+      DesiredCapacity: '1'
+      DefaultInstanceWarmup: 300
+      InstanceMaintenancePolicy:
+        MinHealthyPercentage: 100
+        MaxHealthyPercentage: 200
+      Tags:
+        - Key: Name
+          Value: akaispace-prod
+          PropagateAtLaunch: true
+        - Key: Ambiente
+          Value: prod
+          PropagateAtLaunch: true
+        - Key: Proyecto
+          Value: akaispace
+          PropagateAtLaunch: true
+
+  EscaladoCpu:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName: !Ref Autoescalado
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+        TargetValue: 70
+
+  # Fase 8: las 3 alarmas de la seccion 11.2.2, con aviso a akaispace-alertas (al dispararse y al volver a OK)
+  AlarmaAlb5xx:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: akaispace-alb-5xx
+      AlarmDescription: Errores 5xx generados por el balanceador (incluye la pagina de mantencion)
+      Namespace: AWS/ApplicationELB
+      MetricName: HTTPCode_ELB_5XX_Count
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt Balanceador.LoadBalancerFullName
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue akaispace-tema-alertas]
+      OKActions: [!ImportValue akaispace-tema-alertas]
+
+  AlarmaNoSanas:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: akaispace-instancias-no-sanas
+      AlarmDescription: Instancias de produccion que no pasan /health/
+      Namespace: AWS/ApplicationELB
+      MetricName: UnHealthyHostCount
+      Dimensions:
+        - Name: TargetGroup
+          Value: !GetAtt GrupoProd.TargetGroupFullName
+        - Name: LoadBalancer
+          Value: !GetAtt Balanceador.LoadBalancerFullName
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue akaispace-tema-alertas]
+      OKActions: [!ImportValue akaispace-tema-alertas]
+
+  AlarmaRdsCpu:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: akaispace-rds-cpu
+      AlarmDescription: CPU de RDS sobre 80% durante 15 minutos
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: akaispace-prod
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue akaispace-tema-alertas]
+      OKActions: [!ImportValue akaispace-tema-alertas]
+
+  # Comprobacion de estado de Route 53 (Tabla 42: cada 30 s, 3 fallos). Su alarma y su tema SNS estan en
+  # us-east-1 (pila akaispace-06-alarma-dns), porque Route 53 publica ahi sus metricas.
+  ComprobacionDns:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref Dominio
+        Port: 443
+        ResourcePath: /health/
+        EnableSNI: true
+        RequestInterval: 30
+        FailureThreshold: 3
+      HealthCheckTags:
+        - Key: Name
+          Value: akaispace-prod-health
+        - Key: Proyecto
+          Value: akaispace
+
+  # 7.6 Registros Alias hacia el balanceador
+  DnsRaiz:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !ImportValue akaispace-zona-id
+      Name: !Ref Dominio
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt Balanceador.DNSName
+        HostedZoneId: !GetAtt Balanceador.CanonicalHostedZoneID
+        EvaluateTargetHealth: false
+
+  DnsWww:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !ImportValue akaispace-zona-id
+      Name: !Sub www.${Dominio}
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt Balanceador.DNSName
+        HostedZoneId: !GetAtt Balanceador.CanonicalHostedZoneID
+        EvaluateTargetHealth: false
+
+  DnsPruebas:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !ImportValue akaispace-zona-id
+      Name: !Sub pruebas.${Dominio}
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt Balanceador.DNSName
+        HostedZoneId: !GetAtt Balanceador.CanonicalHostedZoneID
+        EvaluateTargetHealth: false
+
+Outputs:
+  BalanceadorDns:
+    Value: !GetAtt Balanceador.DNSName
+  BalanceadorArn:
+    Value: !Ref Balanceador
+    Export:
+      Name: akaispace-alb-arn
+  BalanceadorNombreCompleto:
+    Value: !GetAtt Balanceador.LoadBalancerFullName
+    Export:
+      Name: akaispace-alb-nombre
+  ListenerHttps:
+    Value: !Ref ListenerHttps
+    Export:
+      Name: akaispace-listener-https
+  ListenerHttp:
+    Value: !Ref ListenerHttp
+    Export:
+      Name: akaispace-listener-http
+  ComprobacionDns:
+    Description: Parametro HealthCheckId de la pila akaispace-06-alarma-dns (us-east-1)
+    Value: !Ref ComprobacionDns
+  GrupoProd:
+    Value: !Ref GrupoProd
+    Export:
+      Name: akaispace-prod-tg
+  GrupoProdNombreCompleto:
+    Value: !GetAtt GrupoProd.TargetGroupFullName
+    Export:
+      Name: akaispace-prod-tg-nombre
+  GrupoTest:
+    Value: !Ref GrupoTest
+    Export:
+      Name: akaispace-test-tg
+  Autoescalado:
+    Value: !Ref Autoescalado
+    Export:
+      Name: akaispace-asg
