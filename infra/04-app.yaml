@@ -1,8 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
   Akaispace - aplicacion (Fase 7): grupos de destino HTTPS (prod y pruebas), Application Load Balancer con
-  listener 443 y regla por Host para pruebas, plantilla de lanzamiento t4g.small (Ubuntu 24.04 arm64,
-  IMDSv2 con hop limit 2), autoescalado 1 a 2 con CPU al 70% y registros Alias de Route 53.
+  listener 443 con regla por Host para pruebas, listener 80 que redirige a HTTPS, plantilla de lanzamiento
+  t4g.small (Ubuntu 24.04 arm64, IMDSv2 con hop limit 2), autoescalado 1 a 2 con CPU al 70%, las 3 alarmas
+  de la Fase 8, la comprobacion de estado de Route 53 y los registros Alias.
   COBRA POR HORA (~US$2 al dia con 1 instancia). Requiere 01-red, 02-base y 03-datos.
 
 Parameters:
@@ -86,6 +87,23 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref GrupoProd
+
+  # HTTP solo redirige a HTTPS (301), para que http://akaispace.shop llegue al sitio
+  ListenerHttp:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Balanceador
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            Host: '#{host}'
+            Path: '/#{path}'
+            Query: '#{query}'
+            StatusCode: HTTP_301
 
   ReglaPruebas:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -294,6 +312,85 @@ Resources:
           PredefinedMetricType: ASGAverageCPUUtilization
         TargetValue: 70
 
+  # Fase 8: las 3 alarmas de la seccion 11.2.2, con aviso a akaispace-alertas (al dispararse y al volver a OK)
+  AlarmaAlb5xx:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: akaispace-alb-5xx
+      AlarmDescription: Errores 5xx generados por el balanceador (incluye la pagina de mantencion)
+      Namespace: AWS/ApplicationELB
+      MetricName: HTTPCode_ELB_5XX_Count
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !GetAtt Balanceador.LoadBalancerFullName
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue akaispace-tema-alertas]
+      OKActions: [!ImportValue akaispace-tema-alertas]
+
+  AlarmaNoSanas:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: akaispace-instancias-no-sanas
+      AlarmDescription: Instancias de produccion que no pasan /health/
+      Namespace: AWS/ApplicationELB
+      MetricName: UnHealthyHostCount
+      Dimensions:
+        - Name: TargetGroup
+          Value: !GetAtt GrupoProd.TargetGroupFullName
+        - Name: LoadBalancer
+          Value: !GetAtt Balanceador.LoadBalancerFullName
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue akaispace-tema-alertas]
+      OKActions: [!ImportValue akaispace-tema-alertas]
+
+  AlarmaRdsCpu:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: akaispace-rds-cpu
+      AlarmDescription: CPU de RDS sobre 80% durante 15 minutos
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: akaispace-prod
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!ImportValue akaispace-tema-alertas]
+      OKActions: [!ImportValue akaispace-tema-alertas]
+
+  # Comprobacion de estado de Route 53 (Tabla 42: cada 30 s, 3 fallos). Su alarma y su tema SNS estan en
+  # us-east-1 (pila akaispace-06-alarma-dns), porque Route 53 publica ahi sus metricas.
+  ComprobacionDns:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        Type: HTTPS
+        FullyQualifiedDomainName: !Ref Dominio
+        Port: 443
+        ResourcePath: /health/
+        EnableSNI: true
+        RequestInterval: 30
+        FailureThreshold: 3
+      HealthCheckTags:
+        - Key: Name
+          Value: akaispace-prod-health
+        - Key: Proyecto
+          Value: akaispace
+
   # 7.6 Registros Alias hacia el balanceador
   DnsRaiz:
     Type: AWS::Route53::RecordSet
@@ -343,6 +440,13 @@ Outputs:
     Value: !Ref ListenerHttps
     Export:
       Name: akaispace-listener-https
+  ListenerHttp:
+    Value: !Ref ListenerHttp
+    Export:
+      Name: akaispace-listener-http
+  ComprobacionDns:
+    Description: Parametro HealthCheckId de la pila akaispace-06-alarma-dns (us-east-1)
+    Value: !Ref ComprobacionDns
   GrupoProd:
     Value: !Ref GrupoProd
     Export:

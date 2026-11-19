@@ -1,0 +1,142 @@
+# Flujo de 7 pasos de la seccion 11.2.5 (Fase 9.4 de docs/guia-aws.md).
+# - Pull request a main: pruebas, Bandit y pip-audit (job pruebas-codigo, sin acceso a AWS).
+# - Etiqueta vX.Y.Z: imagenes ARM en ECR, despliegue en pruebas y, con aprobacion, en produccion.
+# GitHub entra a AWS con OIDC (rol akaispace-github-deploy), que solo acepta etiquetas v* y los
+# environments pruebas y produccion. No hay claves de AWS guardadas en GitHub.
+name: CI/CD
+on:
+  pull_request:
+    branches: [main]
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+env:
+  AWS_REGION: sa-east-1
+  REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.sa-east-1.amazonaws.com
+
+jobs:
+  pruebas-codigo:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci
+          MYSQL_DATABASE: akaispace_db
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      SECRET_KEY: ci-solo-pruebas
+      DEBUG: 'False'
+      ALLOWED_HOSTS: localhost
+      DB_NAME: akaispace_db
+      DB_USER: root
+      DB_PASSWORD: ci
+      DB_HOST: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: |
+          sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev pkg-config
+          pip install -r requirements.txt bandit pip-audit
+      - run: bandit -r . -x ./venv -ll
+      # Riesgo aceptado: PYSEC-2026-1605 (marshmallow, DoS en Schema.load con many=True). transbank-sdk 6.1.0,
+      # la ultima, exige marshmallow<=3.26.1 y solo lo usa para leer respuestas de Transbank. Quitar cuando
+      # transbank-sdk acepte marshmallow 3.26.2 o superior.
+      - run: pip-audit -r requirements.txt --ignore-vuln PYSEC-2026-1605
+      - run: python manage.py test
+
+  imagen:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: pruebas-codigo
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: sa-east-1
+      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - run: |
+          docker buildx build --platform linux/arm64 --provenance=false --sbom=false \
+            -t $REGISTRY/akaispace-web:$GITHUB_REF_NAME --push .
+          docker buildx build --platform linux/arm64 --provenance=false --sbom=false -f Dockerfile.nginx \
+            --build-arg WEB_IMAGE=$REGISTRY/akaispace-web:$GITHUB_REF_NAME \
+            -t $REGISTRY/akaispace-nginx:$GITHUB_REF_NAME --push .
+
+  desplegar-pruebas:
+    needs: imagen
+    runs-on: ubuntu-latest
+    environment: pruebas
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: sa-east-1
+      - run: |
+          aws ssm put-parameter --name /akaispace/test/IMAGE_TAG --value "$GITHUB_REF_NAME" --overwrite
+          INSTANCIA=$(aws ec2 describe-instances \
+            --filters Name=tag:Name,Values=akaispace-pruebas Name=instance-state-name,Values=running \
+            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          if [ "$INSTANCIA" = "None" ]; then echo "La instancia akaispace-pruebas esta detenida: enciendela antes de publicar la etiqueta."; exit 1; fi
+          bash deploy/ssm.sh "$INSTANCIA" "/opt/akaispace/desplegar.sh && cd /opt/akaispace && docker compose exec -T web python manage.py migrate --noinput"
+          sleep 20
+          curl -fsS https://pruebas.akaispace.shop/health/
+          curl -fsS -o /dev/null https://pruebas.akaispace.shop/
+
+  desplegar-produccion:
+    needs: desplegar-pruebas
+    runs-on: ubuntu-latest
+    environment: produccion
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: sa-east-1
+      - name: Snapshot previo
+        run: |
+          SNAP=antes-${GITHUB_REF_NAME//./-}
+          aws rds create-db-snapshot --db-instance-identifier akaispace-prod --db-snapshot-identifier $SNAP
+          aws rds wait db-snapshot-available --db-snapshot-identifier $SNAP
+      - name: Migraciones (una sola vez)
+        run: |
+          aws ssm put-parameter --name /akaispace/prod/IMAGE_TAG --value "$GITHUB_REF_NAME" --overwrite
+          INSTANCIA=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names akaispace-prod-asg \
+            --query 'AutoScalingGroups[0].Instances[?LifecycleState==`InService`]|[0].InstanceId' --output text)
+          bash deploy/ssm.sh "$INSTANCIA" "/opt/akaispace/desplegar.sh && cd /opt/akaispace && docker compose exec -T web python manage.py migrate --noinput"
+      - name: Reemplazo de instancias de a una
+        run: |
+          ID=$(aws autoscaling start-instance-refresh --auto-scaling-group-name akaispace-prod-asg \
+            --preferences '{"MinHealthyPercentage":100,"MaxHealthyPercentage":200,"InstanceWarmup":300}' \
+            --query InstanceRefreshId --output text)
+          for i in $(seq 1 90); do
+            sleep 20
+            ESTADO=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name akaispace-prod-asg \
+              --instance-refresh-ids $ID --query 'InstanceRefreshes[0].Status' --output text)
+            echo "$ESTADO"
+            [ "$ESTADO" = "Successful" ] && break
+            case "$ESTADO" in Failed|Cancelled|RollbackSuccessful|RollbackFailed) exit 1 ;; esac
+          done
+          [ "$ESTADO" = "Successful" ]
+      - name: Pruebas de humo
+        run: |
+          curl -fsS https://akaispace.shop/health/
+          curl -fsS -o /dev/null https://akaispace.shop/

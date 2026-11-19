@@ -16,7 +16,7 @@ joblib==1.6.0
 marshmallow==3.26.1
 mysqlclient==2.3.0
 numpy==2.5.4
-oauthlib==4.0.0
+oauthlib==4.0.1
 packaging==26.3
 pillow==13.0.0
 pycparser==3.11

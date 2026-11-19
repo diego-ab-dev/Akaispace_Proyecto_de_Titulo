@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - alarma de la comprobacion de estado de Route 53 (Fase 8). SE DESPLIEGA EN us-east-1, porque Route 53
+  publica ahi la metrica HealthCheckStatus. La comprobacion esta en 04-app (sa-east-1); si 04-app se recrea,
+  actualizar esta pila con el nuevo HealthCheckId. Se borra en la eliminacion total.
+
+Parameters:
+  HealthCheckId:
+    Type: String
+    AllowedPattern: '^[0-9a-f-]{36}$'
+    Description: Salida ComprobacionDns de la pila akaispace-04-app.
+  CorreoAlertas:
+    Type: String
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+    Description: Correo que recibe la alarma (debe confirmar la suscripcion).
+
+Rules:
+  SoloUsEast1:
+    Assertions:
+      - Assert: !Equals [!Ref AWS::Region, us-east-1]
+        AssertDescription: Esta pila va en us-east-1 (metricas de Route 53).
+
+Resources:
+  TemaDns:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: akaispace-alertas-dns
+      DisplayName: Akaispace sitio caido
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref CorreoAlertas
+
+  AlarmaDns:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: akaispace-route53-health
+      AlarmDescription: https://akaispace.shop/health/ no responde desde los verificadores de Route 53
+      Namespace: AWS/Route53
+      MetricName: HealthCheckStatus
+      Dimensions:
+        - Name: HealthCheckId
+          Value: !Ref HealthCheckId
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      # Sin datos (por ejemplo, con 04-app borrada) no se considera caida
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref TemaDns]
+      OKActions: [!Ref TemaDns]
+
+Outputs:
+  TemaDns:
+    Value: !Ref TemaDns

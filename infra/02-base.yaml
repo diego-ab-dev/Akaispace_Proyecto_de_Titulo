@@ -14,6 +14,10 @@ Parameters:
     Type: String
     Description: Correo que recibe las alarmas (debe confirmar la suscripcion).
     AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+  RepositorioGithub:
+    Type: String
+    Default: diego-ab-dev/Akaispace_Proyecto_de_Titulo
+    Description: Repositorio (duenio/nombre) que puede usar el rol akaispace-github-deploy.
   AccesoAdminDb:
     Type: String
     Default: 'no'
@@ -276,6 +280,86 @@ Resources:
       Roles:
         - !Ref RolTest
 
+  # Fase 9.1: GitHub Actions entra a AWS con OIDC, sin claves guardadas en GitHub
+  ProveedorGithub:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+
+  # Solo las etiquetas v* (job imagen) y los environments pruebas y produccion pueden usar el rol: el
+  # repositorio es publico y ni los pull requests ni otras ramas lo necesitan.
+  RolGithub:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: akaispace-github-deploy
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref ProveedorGithub
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  - !Sub repo:${RepositorioGithub}:ref:refs/tags/v*
+                  - !Sub repo:${RepositorioGithub}:environment:pruebas
+                  - !Sub repo:${RepositorioGithub}:environment:produccion
+      Policies:
+        - PolicyName: akaispace-github-deploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:PutImage
+                Resource:
+                  - !GetAtt RepoWeb.Arn
+                  - !GetAtt RepoNginx.Arn
+              - Effect: Allow
+                Action: ssm:PutParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod/IMAGE_TAG
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/test/IMAGE_TAG
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript
+                  - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+              - Effect: Allow
+                Action:
+                  - ssm:GetCommandInvocation
+                  - ec2:DescribeInstances
+                  - autoscaling:DescribeAutoScalingGroups
+                  - autoscaling:DescribeInstanceRefreshes
+                  - rds:DescribeDBSnapshots
+                Resource: '*'
+              - Effect: Allow
+                Action: autoscaling:StartInstanceRefresh
+                Resource: !Sub arn:${AWS::Partition}:autoscaling:${AWS::Region}:${AWS::AccountId}:autoScalingGroup:*:autoScalingGroupName/akaispace-prod-asg
+              # AddTagsToResource: la base copia sus etiquetas a los snapshots (CopyTagsToSnapshot)
+              - Effect: Allow
+                Action:
+                  - rds:CreateDBSnapshot
+                  - rds:AddTagsToResource
+                Resource:
+                  - !Sub arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:akaispace-prod
+                  - !Sub arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:snapshot:*
+
   # Fase 8: destino de las alarmas
   TemaAlertas:
     Type: AWS::SNS::Topic
@@ -386,6 +470,9 @@ Outputs:
     Value: !Ref TemaAlertas
     Export:
       Name: akaispace-tema-alertas
+  RolGithub:
+    Description: Variable AWS_ROLE_ARN de GitHub Actions
+    Value: !GetAtt RolGithub.Arn
   Certificado:
     Value: !Ref Certificado
     Export:
