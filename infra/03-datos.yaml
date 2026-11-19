@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Akaispace - datos (Fase 3.4): RDS MySQL 8.4 db.t4g.micro Single-AZ en sa-east-1a, 20 GB gp3 sin
+  autoescalado, cifrada, sin acceso publico, TLS obligatorio (grupo akaispace-mysql84), respaldos (RetencionRespaldos)
+  con copia en us-east-1 (ReplicarRespaldos), y el parametro /akaispace/prod/DB_HOST. COBRA POR HORA (~US$1 al dia).
+  Apagar: actualizar con ProteccionBorrado=false y borrar la pila (queda un snapshot final).
+  Encender: crear la pila con SnapshotId = ese snapshot.
+
+Parameters:
+  SnapshotId:
+    Type: String
+    Default: ''
+    Description: >-
+      Vacio = base nueva. Con un snapshot = restaurar desde el. Una vez restaurada, mantener el mismo valor en
+      las actualizaciones siguientes (cambiarlo o vaciarlo reemplaza la base).
+  VersionMysql:
+    Type: String
+    Default: 8.4.13
+    AllowedPattern: '^8\.4\.\d+$'
+    Description: Version 8.4.x (la mas reciente al crear; RDS aplica las menores en la ventana de mantencion).
+  ProteccionBorrado:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: "'false' solo justo antes de borrar la pila para apagar."
+  RetencionRespaldos:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 35
+    Description: >-
+      Dias de respaldo automatico (y de la copia en us-east-1). 7 segun la Tabla 42 de la tesis; el plan
+      gratuito de AWS acepta como maximo 1 (FreeTierRestrictionError), por eso hoy se despliega con 1.
+  ReplicarRespaldos:
+    Type: String
+    Default: 'si'
+    AllowedValues: ['no', 'si']
+    Description: >-
+      Copia de los respaldos automaticos en us-east-1. Al crear la base nueva conviene 'no' y activarla en una
+      actualizacion: si la copia falla, solo se revierte la actualizacion y la base queda.
+  LlaveKmsReplica:
+    Type: String
+    Default: ''
+    Description: ARN de la llave aws/rds en us-east-1 (obligatorio si ReplicarRespaldos=si; la base esta cifrada).
+
+Conditions:
+  Restaurar: !Not [!Equals [!Ref SnapshotId, '']]
+  Replicar: !Equals [!Ref ReplicarRespaldos, 'si']
+
+Rules:
+  LlaveParaReplicar:
+    RuleCondition: !Equals [!Ref ReplicarRespaldos, 'si']
+    Assertions:
+      - Assert: !Not [!Equals [!Ref LlaveKmsReplica, '']]
+        AssertDescription: Con ReplicarRespaldos=si hay que indicar LlaveKmsReplica (aws/rds de us-east-1).
+
+Resources:
+  BaseDatos:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: akaispace-prod
+      Engine: mysql
+      EngineVersion: !Ref VersionMysql
+      DBInstanceClass: db.t4g.micro
+      MultiAZ: false
+      AvailabilityZone: !Select [0, !GetAZs ''] # sa-east-1a
+      StorageType: gp3
+      AllocatedStorage: '20'
+      # Sin MaxAllocatedStorage: sin autoescalado de almacenamiento
+      StorageEncrypted: true
+      PubliclyAccessible: false
+      DBSubnetGroupName: !ImportValue akaispace-rds-subredes
+      VPCSecurityGroups:
+        - !ImportValue akaispace-rds-sg
+      DBParameterGroupName: !ImportValue akaispace-rds-parametros
+      CACertificateIdentifier: rds-ca-rsa2048-g1
+      DBSnapshotIdentifier: !If [Restaurar, !Ref SnapshotId, !Ref AWS::NoValue]
+      # Al restaurar, el nombre de la base, el usuario maestro y su contrasena vienen del snapshot
+      DBName: !If [Restaurar, !Ref AWS::NoValue, akaispace_db]
+      MasterUsername: !If [Restaurar, !Ref AWS::NoValue, admin]
+      # Sin ManageMasterUserPassword (usa Secrets Manager). La contrasena esta en Parameter Store, fuera de
+      # /akaispace/prod/ (no entra al .env), y CloudFormation la lee sin mostrarla.
+      MasterUserPassword: !If
+        - Restaurar
+        - !Ref AWS::NoValue
+        - '{{resolve:ssm-secure:/akaispace/admin/DB_MASTER_PASSWORD}}'
+      # Tabla 42 de la tesis (UTC): respaldo 01:00-02:00 y mantencion domingo 03:00-05:00 hora de Chile
+      BackupRetentionPeriod: !Ref RetencionRespaldos
+      PreferredBackupWindow: '04:00-05:00'
+      PreferredMaintenanceWindow: 'sun:06:00-sun:08:00'
+      AutoMinorVersionUpgrade: true
+      CopyTagsToSnapshot: true
+      DeletionProtection: !Ref ProteccionBorrado
+      # Sin Enhanced Monitoring, sin Performance Insights (no disponible en db.t4g.micro) y sin exportar logs
+      MonitoringInterval: 0
+      EnablePerformanceInsights: false
+      AutomaticBackupReplicationRegion: !If [Replicar, us-east-1, !Ref AWS::NoValue]
+      AutomaticBackupReplicationKmsKeyId: !If [Replicar, !Ref LlaveKmsReplica, !Ref AWS::NoValue]
+      AutomaticBackupReplicationRetentionPeriod: !If [Replicar, !Ref RetencionRespaldos, !Ref AWS::NoValue]
+      Tags:
+        - Key: Name
+          Value: akaispace-prod
+
+  # Lo lee desplegar.sh junto con el resto de /akaispace/prod/ para armar el .env
+  ParametroDbHost:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /akaispace/prod/DB_HOST
+      Type: String
+      Tier: Standard
+      Value: !GetAtt BaseDatos.Endpoint.Address
+      Description: Endpoint de RDS (pila akaispace-03-datos)
+      Tags:
+        Proyecto: akaispace
+
+Outputs:
+  Endpoint:
+    Value: !GetAtt BaseDatos.Endpoint.Address
+    Export:
+      Name: akaispace-db-host
+  BaseDatosArn:
+    Value: !GetAtt BaseDatos.DBInstanceArn

@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
   Akaispace - base (Fases 3.1-3.3, 4.1, 4.3, 4.4 y certificado de la Fase 5): bucket S3, repositorios
   ECR y su replicacion a us-east-1, grupo de parametros y grupo de subredes de RDS (sin la base),
-  roles de las instancias, tema SNS y certificado ACM. Sin costo por hora.
+  roles de las instancias, tema SNS, certificado ACM y grupos de registros /akaispace/prod/* y
+  /akaispace/test/* (30 dias). Sin costo por hora.
 
 Parameters:
   Dominio:
@@ -13,6 +14,17 @@ Parameters:
     Type: String
     Description: Correo que recibe las alarmas (debe confirmar la suscripcion).
     AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+  AccesoAdminDb:
+    Type: String
+    Default: 'no'
+    AllowedValues: ['no', 'si']
+    Description: >-
+      'si' solo mientras se crea el usuario de la aplicacion en RDS: deja que las instancias de produccion
+      lean /akaispace/admin/*. El resto del tiempo 'no' (Deny explicito).
+
+Conditions:
+  ConAccesoAdminDb: !Equals [!Ref AccesoAdminDb, 'si']
+  SinAccesoAdminDb: !Equals [!Ref AccesoAdminDb, 'no']
 
 Resources:
   # 3.1 Imagenes de productos y devoluciones: privado, con versionado; se ven con URLs firmadas
@@ -116,6 +128,8 @@ Resources:
       Description: Akaispace - MySQL 8.4 con TLS obligatorio
       Parameters:
         require_secure_transport: '1'
+        # Igual al MySQL 8.4 de desarrollo (valor por defecto de MySQL); RDS por defecto no trae el modo estricto
+        sql_mode: ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
 
   # 3.3 Solo las subredes privadas
   GrupoSubredesRds:
@@ -166,6 +180,37 @@ Resources:
                   - s3:DeleteObject
                 Resource: !Sub '${Bucket.Arn}/*'
 
+  # Contrasena maestra de RDS (/akaispace/admin/, fuera del .env de la aplicacion). AmazonSSMManagedInstanceCore
+  # permite ssm:GetParameter sobre cualquier parametro, por eso el Deny explicito. Se quita solo mientras
+  # deploy/db-crear-usuario.sh crea el usuario de la aplicacion (AccesoAdminDb=si).
+  SinAdminDbProd:
+    Type: AWS::IAM::RolePolicy
+    Condition: SinAccesoAdminDb
+    Properties:
+      RoleName: !Ref RolProd
+      PolicyName: akaispace-sin-admin-db
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Deny
+            Action: ssm:GetParameter*
+            Resource:
+              - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin
+              - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin/*
+
+  ConAdminDbProd:
+    Type: AWS::IAM::RolePolicy
+    Condition: ConAccesoAdminDb
+    Properties:
+      RoleName: !Ref RolProd
+      PolicyName: akaispace-admin-db-temporal
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: ssm:GetParameter
+            Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin/DB_MASTER_PASSWORD
+
   PerfilProd:
     Type: AWS::IAM::InstanceProfile
     Properties:
@@ -209,6 +254,8 @@ Resources:
                 Resource:
                   - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod
                   - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/prod/*
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/akaispace/admin/*
               - Effect: Allow
                 Action: s3:ListBucket
                 Resource: !GetAtt Bucket.Arn
@@ -256,6 +303,59 @@ Resources:
           HostedZoneId: !ImportValue akaispace-zona-id
         - DomainName: !Sub pruebas.${Dominio}
           HostedZoneId: !ImportValue akaispace-zona-id
+
+  # Registros del agente de CloudWatch (Fase 7.2): aqui y no en 04-app, para que no se borren al apagar
+  # y existan con 30 dias antes de que el agente los cree sin retencion.
+  RegProdNginxAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/nginx-access
+      RetentionInDays: 30
+  RegProdNginxError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/nginx-error
+      RetentionInDays: 30
+  RegProdGunicornAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/gunicorn-access
+      RetentionInDays: 30
+  RegProdGunicornError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/gunicorn-error
+      RetentionInDays: 30
+  RegProdCron:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/prod/cron
+      RetentionInDays: 30
+  RegTestNginxAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/nginx-access
+      RetentionInDays: 30
+  RegTestNginxError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/nginx-error
+      RetentionInDays: 30
+  RegTestGunicornAccess:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/gunicorn-access
+      RetentionInDays: 30
+  RegTestGunicornError:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/gunicorn-error
+      RetentionInDays: 30
+  RegTestCron:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /akaispace/test/cron
+      RetentionInDays: 30
 
 Outputs:
   Bucket:
