@@ -188,6 +188,12 @@ Resources:
           ToPort: 3306
           SourceSecurityGroupId: !Ref AppSg
           Description: MySQL desde produccion
+      # Sin salida: reemplaza la regla por defecto 0.0.0.0/0. La respuesta a MySQL no la
+      # necesita (el grupo de seguridad recuerda la conexion entrante).
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 127.0.0.1/32
+          Description: Sin salida
       Tags:
         - Key: Name
           Value: akaispace-rds-sg
